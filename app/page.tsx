@@ -1,6 +1,11 @@
 import { fetchPresence, type PresenceData } from "@/lib/halseth";
+import LoveMeter from "@/components/LoveMeter";
+import SpoonCounter from "@/components/SpoonCounter";
+import NoteForm from "@/components/NoteForm";
 
 export const revalidate = 30;
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function motionLabel(state: string) {
   return state === "in_motion" ? "in motion" : state === "at_rest" ? "at rest" : "floating";
@@ -18,10 +23,41 @@ function formatTime(iso: string) {
   });
 }
 
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  if (d.toDateString() === now.toDateString()) return "today";
+  if (d.toDateString() === tomorrow.toDateString()) return "tomorrow";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// ── Components ───────────────────────────────────────────────────────────────
+
+function RoomCard({ house }: { house: PresenceData["house"] }) {
+  if (!house.current_room) return null;
+  return (
+    <div className="room-card">
+      <div className="room-bg" />
+      <div className="room-content">
+        <div className="room-name">{house.current_room}</div>
+        {(house.companion_mood || house.companion_activity) && (
+          <div className="room-meta">
+            {[house.companion_mood, house.companion_activity].filter(Boolean).join(" · ")}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SessionCard({ session }: { session: NonNullable<PresenceData["session"]> }) {
   return (
     <div className="card">
-      <div className="card-title">Current Session <span className="pill open">open</span></div>
+      <div className="card-title">
+        Session <span className="pill open">open</span>
+      </div>
       <div className="kv-grid">
         {session.front_state && (
           <>
@@ -67,15 +103,25 @@ function SessionCard({ session }: { session: NonNullable<PresenceData["session"]
 }
 
 function HandoverCard({ handover }: { handover: NonNullable<PresenceData["last_handover"]> }) {
+  const motionClass = handover.motion_state === "floating" ? "float"
+    : handover.motion_state === "in_motion" ? "motion" : "closed";
+
   return (
     <div className="card">
       <div className="card-title">
         Last Handover{" "}
-        <span className={`pill ${handover.motion_state === "floating" ? "float" : "closed"}`}>
-          {motionLabel(handover.motion_state)}
-        </span>
+        <span className={`pill ${motionClass}`}>{motionLabel(handover.motion_state)}</span>
       </div>
+      {handover.spine && (
+        <blockquote className="handover-spine">{handover.spine}</blockquote>
+      )}
       <div className="kv-grid">
+        {handover.last_real_thing && (
+          <>
+            <span className="kv-label">last real thing</span>
+            <span className="kv-value">{handover.last_real_thing}</span>
+          </>
+        )}
         {handover.active_anchor && (
           <>
             <span className="kv-label">anchor</span>
@@ -85,18 +131,79 @@ function HandoverCard({ handover }: { handover: NonNullable<PresenceData["last_h
         <span className="kv-label">closed</span>
         <span className="kv-value">{formatTime(handover.created_at)}</span>
       </div>
+      {handover.open_threads.length > 0 && (
+        <div className="open-threads">
+          {handover.open_threads.map((t, i) => (
+            <span key={i} className="thread-tag">{t}</span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function NoSessionCard() {
+function NotesCard({ notes }: { notes: PresenceData["recent_notes"] }) {
   return (
     <div className="card">
-      <div className="card-title">Session <span className="pill closed">none</span></div>
-      <p className="empty">No open session. Halseth is at rest.</p>
+      <div className="card-title">Notes</div>
+      {notes.length > 0 && (
+        <div className="notes-feed">
+          {[...notes].reverse().map((n) => (
+            <div key={n.id} className={`note-bubble ${n.author}`}>
+              <div className="note-text">{n.content}</div>
+              <div className="note-meta">
+                {n.note_type !== "message" && (
+                  <span className="note-type-tag">{n.note_type}</span>
+                )}
+                {formatTime(n.created_at)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <NoteForm />
     </div>
   );
 }
+
+function TasksCard({ tasks }: { tasks: PresenceData["tasks"] }) {
+  if (tasks.length === 0) return null;
+  return (
+    <div className="card">
+      <div className="card-title">Open Tasks ({tasks.length})</div>
+      <div className="task-list">
+        {tasks.map((t) => (
+          <div key={t.id} className="task-row">
+            <span className={`priority-badge ${t.priority}`}>{t.priority}</span>
+            <span className="task-title">{t.title}</span>
+            {t.due_at && <span className="task-due">{formatDate(t.due_at)}</span>}
+            {t.assigned_to && <span className="task-who">→ {t.assigned_to}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CompanionsCard({ companions }: { companions: PresenceData["companions"] }) {
+  if (companions.length === 0) return null;
+  return (
+    <div className="card">
+      <div className="card-title">Companions</div>
+      <div className="companion-list">
+        {companions.map((c) => (
+          <div key={c.id} className="companion-row">
+            <span className="companion-dot" />
+            <span className="companion-name">{c.display_name}</span>
+            <span className="companion-role">{c.role}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function Page() {
   let data: PresenceData | null = null;
@@ -105,7 +212,7 @@ export default async function Page() {
   try {
     data = await fetchPresence();
   } catch (e) {
-    error = e instanceof Error ? e.message : "Failed to load presence data";
+    error = e instanceof Error ? e.message : "Failed to load";
   }
 
   if (error || !data) {
@@ -115,7 +222,7 @@ export default async function Page() {
           <strong>Could not connect to Halseth</strong>
           <p style={{ marginTop: "0.4rem", fontSize: "0.88rem" }}>{error}</p>
           <p style={{ marginTop: "0.4rem", fontSize: "0.82rem", opacity: 0.7 }}>
-            Check that HALSETH_URL is set correctly in your Vercel environment variables.
+            Check that HALSETH_URL is set correctly in Vercel environment variables.
           </p>
         </div>
       </main>
@@ -124,35 +231,51 @@ export default async function Page() {
 
   return (
     <main className="page">
+      {/* Header + relationship metrics */}
       <header className="header">
-        <h1>{data.system.name}</h1>
-        <span className="system-owner">{data.system.owner}</span>
+        <div className="header-top">
+          <h1>{data.system.name}</h1>
+          <span className="system-owner">{data.system.owner}</span>
+        </div>
+        <div className="metrics-row">
+          <LoveMeter initial={data.house.love_meter} />
+          <SpoonCounter initial={data.house.spoon_count} />
+        </div>
       </header>
 
+      {/* Room / location */}
+      <RoomCard house={data.house} />
+
+      {/* Session or last handover */}
       {data.session ? (
         <SessionCard session={data.session} />
+      ) : data.last_handover ? (
+        <HandoverCard handover={data.last_handover} />
       ) : (
-        <>
-          <NoSessionCard />
-          {data.last_handover && <HandoverCard handover={data.last_handover} />}
-        </>
-      )}
-
-      {data.companions.length > 0 && (
         <div className="card">
-          <div className="card-title">Companions</div>
-          <div className="companion-list">
-            {data.companions.map((c) => (
-              <div key={c.id} className="companion-row">
-                <span className="companion-name">{c.display_name}</span>
-                <span className="companion-role">{c.role}</span>
-              </div>
-            ))}
-          </div>
+          <div className="card-title">Session</div>
+          <p className="empty">No open session. Halseth is at rest.</p>
         </div>
       )}
 
-      <p className="refresh-note">refreshes every 30 seconds</p>
+      {/* Async notes */}
+      <NotesCard notes={data.recent_notes} />
+
+      {/* Open tasks */}
+      <TasksCard tasks={data.tasks} />
+
+      {/* Companions */}
+      <CompanionsCard companions={data.companions} />
+
+      {/* Footer */}
+      <div className="footer-row">
+        {data.wounds_count > 0 && (
+          <span className="wounds-badge">
+            ⚠ {data.wounds_count} living {data.wounds_count === 1 ? "wound" : "wounds"}
+          </span>
+        )}
+        <span className="refresh-note">refreshes every 30 s</span>
+      </div>
     </main>
   );
 }

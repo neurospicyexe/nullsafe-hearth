@@ -3,6 +3,14 @@ export type PresenceData = {
     name: string;
     owner: string;
   };
+  house: {
+    current_room: string | null;
+    companion_mood: string | null;
+    companion_activity: string | null;
+    spoon_count: number;
+    love_meter: number;
+    updated_at: string;
+  };
   session: {
     id: string;
     front_state: string | null;
@@ -16,10 +24,29 @@ export type PresenceData = {
   } | null;
   last_handover: {
     id: string;
+    spine: string;
+    last_real_thing: string | null;
+    open_threads: string[];
     active_anchor: string | null;
     motion_state: "in_motion" | "at_rest" | "floating";
     created_at: string;
   } | null;
+  tasks: Array<{
+    id: string;
+    title: string;
+    priority: "low" | "normal" | "high" | "urgent";
+    status: string;
+    due_at: string | null;
+    assigned_to: string | null;
+  }>;
+  wounds_count: number;
+  recent_notes: Array<{
+    id: string;
+    author: string;
+    content: string;
+    note_type: string;
+    created_at: string;
+  }>;
   companions: Array<{
     id: string;
     display_name: string;
@@ -32,7 +59,6 @@ export async function fetchPresence(): Promise<PresenceData> {
   if (!base) throw new Error("HALSETH_URL is not set");
 
   const res = await fetch(`${base}/presence`, {
-    // Revalidate every 30 seconds so the dashboard stays fresh.
     next: { revalidate: 30 },
   });
 
