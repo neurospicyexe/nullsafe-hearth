@@ -1,0 +1,147 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:       #0d0d0f;
+  --surface:  #16161a;
+  --border:   #2a2a32;
+  --text:     #e8e6f0;
+  --muted:    #7a7a8e;
+  --accent:   #9b7fd4;
+  --warm:     #c4a882;
+  --green:    #6bbf82;
+  --red:      #c46b6b;
+  --radius:   10px;
+  --gap:      1.25rem;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100dvh;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+
+.header h1 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.header .system-owner {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.card-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.9rem;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--border);
+  color: var(--text);
+}
+
+.pill.open   { background: #1e3829; color: var(--green); }
+.pill.closed { background: #2e1a1a; color: var(--red); }
+.pill.float  { background: #1e1a2e; color: var(--accent); }
+
+.kv-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1.25rem;
+  align-items: baseline;
+}
+
+.kv-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.kv-value {
+  font-size: 0.92rem;
+}
+
+.empty {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.companion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.companion-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.companion-name {
+  font-weight: 500;
+}
+
+.companion-role {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.refresh-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.error-card {
+  background: #2e1a1a;
+  border: 1px solid #5c2a2a;
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  color: var(--red);
+}
