@@ -518,6 +518,194 @@ body {
   text-align: right;
 }
 
+/* ── Biometrics ─────────────────────────────────────────────────────────────── */
+
+.biometric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.65rem 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.biometric-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.biometric-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.biometric-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hrv-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.hrv-dot.green { background: var(--green); }
+.hrv-dot.warm  { background: var(--warm); }
+.hrv-dot.red   { background: var(--red); }
+
+.sleep-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.05rem 0.35rem;
+  border-radius: 3px;
+  text-transform: lowercase;
+  background: var(--surface2);
+  color: var(--muted);
+}
+.sleep-badge.good      { color: var(--green); background: rgba(107,191,130,0.1); }
+.sleep-badge.excellent { color: var(--green); background: rgba(107,191,130,0.15); }
+.sleep-badge.fair      { color: var(--warm);  background: rgba(196,168,130,0.1); }
+.sleep-badge.poor      { color: var(--red);   background: rgba(196,107,107,0.1); }
+
+.biometric-recorded {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+/* ── Personality ────────────────────────────────────────────────────────────── */
+
+.personality-count {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: auto;
+}
+
+.valence-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+}
+
+.valence-row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr 2rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.valence-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.valence-track {
+  height: 5px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.valence-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+  background: var(--accent);
+}
+.valence-fill.toward  { background: var(--green); }
+.valence-fill.tender  { background: var(--pink); }
+.valence-fill.neutral { background: var(--muted); }
+.valence-fill.repair  { background: var(--warm); }
+.valence-fill.rupture { background: var(--red); }
+
+.valence-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.initiated-row {
+  display: flex;
+  gap: 1.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+}
+
+.initiated-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.initiated-pct {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.initiated-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: lowercase;
+}
+
+/* ── Dreams ─────────────────────────────────────────────────────────────────── */
+
+.dream-card {
+  background: #14111e;
+  border-color: #2a2240;
+}
+
+.dream-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+}
+
+.dream-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dream-text {
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.55;
+  padding-left: 1.1rem;
+  position: relative;
+}
+.dream-text::before {
+  content: "\2605";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-size: 0.65rem;
+  top: 0.25em;
+  font-style: normal;
+}
+
+.dream-meta {
+  font-size: 0.68rem;
+  color: var(--muted);
+  padding-left: 1.1rem;
+}
+
 /* ── Misc ───────────────────────────────────────────────────────────────────── */
 
 .empty {

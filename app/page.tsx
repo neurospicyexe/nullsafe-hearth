@@ -2,6 +2,9 @@ import { fetchPresence, type PresenceData } from "@/lib/halseth";
 import LoveMeter from "@/components/LoveMeter";
 import SpoonCounter from "@/components/SpoonCounter";
 import NoteForm from "@/components/NoteForm";
+import BiometricCard from "@/components/BiometricCard";
+import PersonalityCard from "@/components/PersonalityCard";
+import DreamCard from "@/components/DreamCard";
 
 export const revalidate = 30;
 
@@ -258,14 +261,27 @@ export default async function Page() {
         </div>
       )}
 
+      {/* Biometrics */}
+      {data.latest_biometrics && (
+        <BiometricCard biometrics={data.latest_biometrics} />
+      )}
+
       {/* Async notes */}
       <NotesCard notes={data.recent_notes} />
+
+      {/* Dreams */}
+      <DreamCard dreams={data.recent_dreams} />
 
       {/* Open tasks */}
       <TasksCard tasks={data.tasks} />
 
       {/* Companions */}
       <CompanionsCard companions={data.companions} />
+
+      {/* Relational shape */}
+      {data.personality && (
+        <PersonalityCard personality={data.personality} />
+      )}
 
       {/* Footer */}
       <div className="footer-row">

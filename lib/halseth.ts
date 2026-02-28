@@ -47,6 +47,26 @@ export type PresenceData = {
     note_type: string;
     created_at: string;
   }>;
+  recent_dreams: Array<{
+    id: string;
+    content: string;
+    created_at: string;
+  }>;
+  latest_biometrics: {
+    hrv_resting: number | null;
+    resting_hr: number | null;
+    sleep_hours: number | null;
+    sleep_quality: string | null;
+    steps: number | null;
+    active_energy: number | null;
+    stress_score: number | null;
+    recorded_at: string;
+  } | null;
+  personality: {
+    valence: Record<string, number>;
+    initiated_by: Record<string, number>;
+    total_deltas: number;
+  } | null;
   companions: Array<{
     id: string;
     display_name: string;
