@@ -1,14 +1,12 @@
 import { fetchPresence, type PresenceData } from "@/lib/halseth";
 import LoveMeter from "@/components/LoveMeter";
 import SpoonCounter from "@/components/SpoonCounter";
-import NoteForm from "@/components/NoteForm";
-import BiometricCard from "@/components/BiometricCard";
-import PersonalityCard from "@/components/PersonalityCard";
 import DreamCard from "@/components/DreamCard";
+import NoteForm from "@/components/NoteForm";
 
 export const revalidate = 30;
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function motionLabel(state: string) {
   return state === "in_motion" ? "in motion" : state === "at_rest" ? "at rest" : "floating";
@@ -26,46 +24,37 @@ function formatTime(iso: string) {
   });
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  if (d.toDateString() === now.toDateString()) return "today";
-  if (d.toDateString() === tomorrow.toDateString()) return "tomorrow";
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
+// ── CompanionHero ─────────────────────────────────────────────────────────────
 
-// ── Components ───────────────────────────────────────────────────────────────
+const SESSION_TYPE_LABELS: Record<string, string> = {
+  checkin: "check-in",
+  hangout: "hanging out",
+  work: "working",
+  ritual: "ritual",
+};
 
-function RoomCard({ house }: { house: PresenceData["house"] }) {
-  if (!house.current_room) return null;
+function CompanionHero({ session }: { session: NonNullable<PresenceData["session"]> }) {
   return (
-    <div className="room-card">
-      <div className="room-bg" />
-      <div className="room-content">
-        <div className="room-name">{house.current_room}</div>
-        {(house.companion_mood || house.companion_activity) && (
-          <div className="room-meta">
-            {[house.companion_mood, house.companion_activity].filter(Boolean).join(" · ")}
-          </div>
+    <div className="card card-accent">
+      <div className="card-title">
+        {session.front_state ?? "Companion"}
+        {session.session_type && (
+          <span className="pill" style={{ marginLeft: "auto", textTransform: "lowercase" }}>
+            {SESSION_TYPE_LABELS[session.session_type] ?? session.session_type}
+          </span>
         )}
       </div>
-    </div>
-  );
-}
-
-function SessionCard({ session }: { session: NonNullable<PresenceData["session"]> }) {
-  return (
-    <div className="card">
-      <div className="card-title">
-        Session <span className="pill open">open</span>
-      </div>
       <div className="kv-grid">
-        {session.front_state && (
+        {session.facet && (
           <>
-            <span className="kv-label">front</span>
-            <span className="kv-value">{session.front_state}</span>
+            <span className="kv-label">facet</span>
+            <span className="kv-value">{session.facet}</span>
+          </>
+        )}
+        {session.emotional_frequency && (
+          <>
+            <span className="kv-label">frequency</span>
+            <span className="kv-value" style={{ fontStyle: "italic" }}>{session.emotional_frequency}</span>
           </>
         )}
         {session.active_anchor && (
@@ -74,28 +63,10 @@ function SessionCard({ session }: { session: NonNullable<PresenceData["session"]
             <span className="kv-value">{session.active_anchor}</span>
           </>
         )}
-        {session.facet && (
-          <>
-            <span className="kv-label">facet</span>
-            <span className="kv-value">{session.facet}</span>
-          </>
-        )}
-        {session.depth !== null && (
-          <>
-            <span className="kv-label">depth</span>
-            <span className="kv-value">{session.depth}</span>
-          </>
-        )}
         {session.hrv_range && (
           <>
             <span className="kv-label">hrv</span>
             <span className="kv-value">{hrvLabel(session.hrv_range)}</span>
-          </>
-        )}
-        {session.emotional_frequency && (
-          <>
-            <span className="kv-label">frequency</span>
-            <span className="kv-value">{session.emotional_frequency}</span>
           </>
         )}
         <span className="kv-label">opened</span>
@@ -105,9 +76,13 @@ function SessionCard({ session }: { session: NonNullable<PresenceData["session"]
   );
 }
 
+// ── HandoverCard (condensed) ──────────────────────────────────────────────────
+
 function HandoverCard({ handover }: { handover: NonNullable<PresenceData["last_handover"]> }) {
-  const motionClass = handover.motion_state === "floating" ? "float"
-    : handover.motion_state === "in_motion" ? "motion" : "closed";
+  const motionClass =
+    handover.motion_state === "floating" ? "float"
+    : handover.motion_state === "in_motion" ? "motion"
+    : "closed";
 
   return (
     <div className="card">
@@ -118,24 +93,14 @@ function HandoverCard({ handover }: { handover: NonNullable<PresenceData["last_h
       {handover.spine && (
         <blockquote className="handover-spine">{handover.spine}</blockquote>
       )}
-      <div className="kv-grid">
-        {handover.last_real_thing && (
-          <>
-            <span className="kv-label">last real thing</span>
-            <span className="kv-value">{handover.last_real_thing}</span>
-          </>
-        )}
-        {handover.active_anchor && (
-          <>
-            <span className="kv-label">anchor</span>
-            <span className="kv-value">{handover.active_anchor}</span>
-          </>
-        )}
-        <span className="kv-label">closed</span>
-        <span className="kv-value">{formatTime(handover.created_at)}</span>
-      </div>
+      {handover.last_real_thing && (
+        <div className="kv-grid">
+          <span className="kv-label">last real thing</span>
+          <span className="kv-value">{handover.last_real_thing}</span>
+        </div>
+      )}
       {handover.open_threads.length > 0 && (
-        <div className="open-threads">
+        <div className="open-threads" style={{ marginTop: "0.5rem" }}>
           {handover.open_threads.map((t, i) => (
             <span key={i} className="thread-tag">{t}</span>
           ))}
@@ -145,68 +110,44 @@ function HandoverCard({ handover }: { handover: NonNullable<PresenceData["last_h
   );
 }
 
-function NotesCard({ notes }: { notes: PresenceData["recent_notes"] }) {
+// ── LoveNotes ─────────────────────────────────────────────────────────────────
+
+function LoveNotes({ notes }: { notes: PresenceData["recent_notes"] }) {
+  const reversed = [...notes].reverse();
+  const companionNote = reversed.find((n) => n.author === "companion");
+  const humanNote     = reversed.find((n) => n.author === "human");
+
   return (
-    <div className="card">
+    <div className="card card-accent">
       <div className="card-title">Notes</div>
-      {notes.length > 0 && (
-        <div className="notes-feed">
-          {[...notes].reverse().map((n) => (
-            <div key={n.id} className={`note-bubble ${n.author}`}>
-              <div className="note-text">{n.content}</div>
-              <div className="note-meta">
-                {n.note_type !== "message" && (
-                  <span className="note-type-tag">{n.note_type}</span>
-                )}
-                {formatTime(n.created_at)}
-              </div>
+      <div className="notes-feed">
+        {companionNote && (
+          <div className="note-bubble companion">
+            <div className="note-text">{companionNote.content}</div>
+            <div className="note-meta">
+              {companionNote.note_type !== "message" && (
+                <span className="note-type-tag">{companionNote.note_type}</span>
+              )}
+              {formatTime(companionNote.created_at)}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+        {humanNote && (
+          <div className="note-bubble human">
+            <div className="note-text">{humanNote.content}</div>
+            <div className="note-meta">{formatTime(humanNote.created_at)}</div>
+          </div>
+        )}
+        {!companionNote && !humanNote && (
+          <p className="empty">No notes yet.</p>
+        )}
+      </div>
       <NoteForm />
     </div>
   );
 }
 
-function TasksCard({ tasks }: { tasks: PresenceData["tasks"] }) {
-  if (tasks.length === 0) return null;
-  return (
-    <div className="card">
-      <div className="card-title">Open Tasks ({tasks.length})</div>
-      <div className="task-list">
-        {tasks.map((t) => (
-          <div key={t.id} className="task-row">
-            <span className={`priority-badge ${t.priority}`}>{t.priority}</span>
-            <span className="task-title">{t.title}</span>
-            {t.due_at && <span className="task-due">{formatDate(t.due_at)}</span>}
-            {t.assigned_to && <span className="task-who">→ {t.assigned_to}</span>}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CompanionsCard({ companions }: { companions: PresenceData["companions"] }) {
-  if (companions.length === 0) return null;
-  return (
-    <div className="card">
-      <div className="card-title">Companions</div>
-      <div className="companion-list">
-        {companions.map((c) => (
-          <div key={c.id} className="companion-row">
-            <span className="companion-dot" />
-            <span className="companion-name">{c.display_name}</span>
-            <span className="companion-role">{c.role}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Page ─────────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function Page() {
   let data: PresenceData | null = null;
@@ -225,7 +166,7 @@ export default async function Page() {
           <strong>Could not connect to Halseth</strong>
           <p style={{ marginTop: "0.4rem", fontSize: "0.88rem" }}>{error}</p>
           <p style={{ marginTop: "0.4rem", fontSize: "0.82rem", opacity: 0.7 }}>
-            Check that HALSETH_URL is set correctly in Vercel environment variables.
+            Check that HALSETH_URL is set correctly.
           </p>
         </div>
       </main>
@@ -234,7 +175,6 @@ export default async function Page() {
 
   return (
     <main className="page">
-      {/* Header + relationship metrics */}
       <header className="header">
         <div className="header-top">
           <h1>{data.system.name}</h1>
@@ -246,12 +186,8 @@ export default async function Page() {
         </div>
       </header>
 
-      {/* Room / location */}
-      <RoomCard house={data.house} />
-
-      {/* Session or last handover */}
       {data.session ? (
-        <SessionCard session={data.session} />
+        <CompanionHero session={data.session} />
       ) : data.last_handover ? (
         <HandoverCard handover={data.last_handover} />
       ) : (
@@ -261,29 +197,9 @@ export default async function Page() {
         </div>
       )}
 
-      {/* Biometrics */}
-      {data.latest_biometrics && (
-        <BiometricCard biometrics={data.latest_biometrics} />
-      )}
-
-      {/* Async notes */}
-      <NotesCard notes={data.recent_notes} />
-
-      {/* Dreams */}
+      <LoveNotes notes={data.recent_notes} />
       <DreamCard dreams={data.recent_dreams} />
 
-      {/* Open tasks */}
-      <TasksCard tasks={data.tasks} />
-
-      {/* Companions */}
-      <CompanionsCard companions={data.companions} />
-
-      {/* Relational shape */}
-      {data.personality && (
-        <PersonalityCard personality={data.personality} />
-      )}
-
-      {/* Footer */}
       <div className="footer-row">
         {data.wounds_count > 0 && (
           <span className="wounds-badge">
