@@ -1,8 +1,43 @@
+// ── Base ──────────────────────────────────────────────────────────────────
+
+function base() {
+  const url = process.env.HALSETH_URL;
+  if (!url) throw new Error("HALSETH_URL is not set");
+  return url;
+}
+
+function authHeader(): Record<string, string> {
+  const s = process.env.HALSETH_SECRET;
+  return s ? { Authorization: `Bearer ${s}` } : {};
+}
+
+async function hGet<T>(path: string, revalidate = 30): Promise<T> {
+  const res = await fetch(`${base()}${path}`, {
+    headers: authHeader(),
+    next: { revalidate },
+  });
+  if (!res.ok) throw new Error(`Halseth ${path} → ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+// Returns null on any error — for endpoints not yet deployed on Halseth
+async function hGetSafe<T>(path: string, revalidate = 30): Promise<T | null> {
+  try {
+    const res = await fetch(`${base()}${path}`, {
+      headers: authHeader(),
+      next: { revalidate },
+    });
+    if (!res.ok) return null;
+    return res.json() as Promise<T>;
+  } catch {
+    return null;
+  }
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────
+
 export type PresenceData = {
-  system: {
-    name: string;
-    owner: string;
-  };
+  system: { name: string; owner: string };
   house: {
     current_room: string | null;
     companion_mood: string | null;
@@ -145,21 +180,26 @@ export type MindData = {
   recent_journals: MindJournalEntry[];
 };
 
-// ── Biometrics (standalone) ───────────────────────────────────────────────────
+// ── Biometrics ────────────────────────────────────────────────────────────────
 
 export type BiometricSnapshot = {
+  id?: string;
+  recorded_at: string;
+  logged_at?: string;
+  source?: string;
   hrv_resting: number | null;
   resting_hr: number | null;
   sleep_hours: number | null;
   sleep_quality: string | null;
+  stress_score: number | null;
   steps: number | null;
   active_energy: number | null;
-  stress_score: number | null;
-  recorded_at: string;
+  notes?: string | null;
 };
 
 // ── Deltas ────────────────────────────────────────────────────────────────────
 
+/** Strict form — returned by /deltas (cross-companion, v0.4 only) */
 export type Delta = {
   id: string;
   session_id: string | null;
@@ -170,23 +210,170 @@ export type Delta = {
   created_at: string;
 };
 
+/** Looser form — returned by /companions/:id/deltas (may have nulls) */
+export type RelationalDelta = {
+  id: string;
+  companion_id: string;
+  session_id: string | null;
+  agent: string | null;
+  delta_text: string | null;
+  valence: "toward" | "neutral" | "tender" | "rupture" | "repair" | null;
+  initiated_by: "architect" | "companion" | "mutual" | null;
+  created_at: string;
+};
+
 // ── Wounds ────────────────────────────────────────────────────────────────────
 
 export type Wound = {
   id: string;
-  subject: string;
+  name?: string;
+  subject?: string;
   description: string | null;
   created_at: string;
+  last_visited?: string | null;
 };
 
-export async function fetchPresence(): Promise<PresenceData | null> {
-  const base = process.env.HALSETH_URL;
-  if (!base) return null;
+/** Alias for compatibility with older pages */
+export type LivingWound = Wound;
 
-  const res = await fetch(`${base}/presence`, {
-    next: { revalidate: 30 },
-  });
+// ── Private zone types ────────────────────────────────────────────────────────
 
-  if (!res.ok) throw new Error(`Halseth /presence returned ${res.status}`);
-  return res.json() as Promise<PresenceData>;
+export type HandoverPacket = {
+  id: string;
+  session_id: string;
+  created_at: string;
+  spine: string;
+  active_anchor: string | null;
+  last_real_thing: string | null;
+  open_threads: string | null; // JSON array string
+  motion_state: "in_motion" | "at_rest" | "floating";
+  returned: number | null;
+};
+
+export type CompanionJournalEntry = {
+  id: string;
+  created_at: string;
+  agent: "drevan" | "cypher" | "gaia";
+  note_text: string;
+  tags: string | null; // JSON array string
+  session_id: string | null;
+};
+
+export type CypherAuditEntry = {
+  id: string;
+  session_id: string;
+  created_at: string;
+  entry_type:
+    | "decision"
+    | "contradiction"
+    | "clause_update"
+    | "falsification"
+    | "scope_correction";
+  content: string;
+  verdict_tag: string | null;
+  supersedes_id: string | null;
+};
+
+export type GaiaWitnessEntry = {
+  id: string;
+  session_id: string;
+  created_at: string;
+  witness_type:
+    | "survival"
+    | "boundary"
+    | "seal"
+    | "affirm"
+    | "lane_enforcement";
+  content: string;
+  seal_phrase: string | null;
+};
+
+export type Routine = {
+  id: string;
+  routine_name: string;
+  owner: string | null;
+  logged_at: string;
+  notes: string | null;
+};
+
+export type Note = {
+  id: string;
+  created_at: string;
+  author: string;
+  content: string;
+  note_type: string;
+};
+
+// ── Fetch functions — existing endpoints ──────────────────────────────────────
+
+export async function fetchPresence(): Promise<PresenceData> {
+  return hGet<PresenceData>("/presence");
+}
+
+export async function fetchBiometrics(limit = 14): Promise<BiometricSnapshot[]> {
+  return hGet<BiometricSnapshot[]>(`/biometrics?limit=${limit}`);
+}
+
+export async function fetchNotes(limit = 30): Promise<Note[]> {
+  return (await hGetSafe<Note[]>(`/notes?limit=${limit}`)) ?? [];
+}
+
+// Fetches per-companion deltas, filters to spec v0.4 rows (delta_text populated)
+export async function fetchCompanionDeltas(
+  companionId: string,
+  limit = 50,
+): Promise<RelationalDelta[]> {
+  const raw = await hGetSafe<RelationalDelta[]>(
+    `/companions/${companionId}/deltas`,
+  );
+  if (!raw) return [];
+  return raw.filter((d) => d.delta_text !== null).slice(-limit);
+}
+
+export async function fetchBridge(): Promise<BridgeData | null> {
+  return hGetSafe<BridgeData>("/bridge/shared", 30);
+}
+
+// ── Fetch functions — endpoints awaiting Halseth deployment ──────────────────
+// These return null until the endpoint exists on Halseth.
+
+export async function fetchHandovers(
+  limit = 20,
+): Promise<HandoverPacket[] | null> {
+  return hGetSafe<HandoverPacket[]>(`/handovers?limit=${limit}`);
+}
+
+export async function fetchCompanionJournal(
+  agent?: string,
+  limit = 20,
+): Promise<CompanionJournalEntry[] | null> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (agent) q.set("agent", agent);
+  return hGetSafe<CompanionJournalEntry[]>(`/companion-journal?${q}`);
+}
+
+export async function fetchCypherAudit(
+  limit = 20,
+): Promise<CypherAuditEntry[] | null> {
+  return hGetSafe<CypherAuditEntry[]>(`/cypher-audit?limit=${limit}`);
+}
+
+export async function fetchGaiaWitness(
+  limit = 20,
+): Promise<GaiaWitnessEntry[] | null> {
+  return hGetSafe<GaiaWitnessEntry[]>(`/gaia-witness?limit=${limit}`);
+}
+
+export async function fetchWounds(): Promise<LivingWound[] | null> {
+  return hGetSafe<LivingWound[]>("/wounds");
+}
+
+export async function fetchRoutinesToday(): Promise<Routine[] | null> {
+  return hGetSafe<Routine[]>("/routines?today=true");
+}
+
+export async function fetchAllDeltas(
+  limit = 50,
+): Promise<RelationalDelta[] | null> {
+  return hGetSafe<RelationalDelta[]>(`/deltas?limit=${limit}`);
 }
