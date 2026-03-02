@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import TabBar from "@/components/TabBar";
+import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
   title: "Hearth",
@@ -15,8 +15,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
-        <TabBar />
+        <div className="shell">
+          <Nav />
+          <main className="content">{children}</main>
+        </div>
       </body>
     </html>
   );
