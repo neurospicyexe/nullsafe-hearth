@@ -20,28 +20,58 @@ export function RoutineStatusClient({
     )
   );
 
-  async function markDone(routine: RoutineName) {
-    if (done.has(routine)) return;
-    setDone((prev) => new Set(Array.from(prev).concat(routine)));
-    await fetch("/api/routines", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ routine_name: routine }),
-    });
+  async function toggle(routine: RoutineName) {
+    if (done.has(routine)) {
+      // Uncheck — UI only, Halseth has no un-log endpoint
+      setDone((prev) => {
+        const next = new Set(Array.from(prev));
+        next.delete(routine);
+        return next;
+      });
+    } else {
+      // Check — log to Halseth
+      setDone((prev) => new Set(Array.from(prev).concat(routine)));
+      await fetch("/api/routines", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ routine_name: routine }),
+      });
+    }
   }
+
+  const doneCount = done.size;
+  const total = ROUTINES.length;
 
   return (
     <div className="card">
-      <div className="card-title">Today&apos;s Routines</div>
+      <div className="card-title">
+        Today&apos;s Routines
+        <span
+          className="pill"
+          style={{
+            marginLeft: "auto",
+            background: doneCount === total ? "rgba(107,191,130,0.15)" : "var(--surface2)",
+            color: doneCount === total ? "var(--green)" : "var(--muted)",
+            border: `1px solid ${doneCount === total ? "var(--green)" : "var(--border)"}`,
+          }}
+        >
+          {doneCount} / {total}
+        </span>
+      </div>
+      <p style={{ fontSize: "0.72rem", color: "var(--muted)", margin: "0 0 0.75rem" }}>
+        Tap to mark done · tap again to uncheck
+      </p>
       <div className="routine-grid">
         {ROUTINES.map((r) => (
           <button
             key={r}
             className={`routine-pip-row${done.has(r) ? " done" : ""}`}
-            onClick={() => markDone(r)}
+            onClick={() => toggle(r)}
           >
             <span className="routine-pip" />
-            <span className="routine-name">{r}</span>
+            <span className="routine-name">
+              {done.has(r) ? "✓ " : ""}{r}
+            </span>
           </button>
         ))}
       </div>
