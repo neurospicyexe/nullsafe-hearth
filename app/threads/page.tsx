@@ -185,7 +185,7 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
 
 export default async function ThreadsPage() {
   const [presence, deltas, wounds, gaiaNotes] = await Promise.all([
-    fetchPresence(),
+    fetchPresence().catch(() => null),
     fetchDeltas(),
     fetchWounds(),
     fetchGaiaNotes(),
