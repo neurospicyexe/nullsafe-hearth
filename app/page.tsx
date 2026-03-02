@@ -2,8 +2,6 @@ import { fetchPresence, type PresenceData } from "@/lib/halseth";
 import LoveMeter from "@/components/LoveMeter";
 import SpoonCounter from "@/components/SpoonCounter";
 import NoteForm from "@/components/NoteForm";
-import BiometricCard from "@/components/BiometricCard";
-import PersonalityCard from "@/components/PersonalityCard";
 import DreamCard from "@/components/DreamCard";
 
 export const revalidate = 30;
@@ -36,6 +34,20 @@ function formatDate(iso: string) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+function sessionTypeLabel(type: string | null) {
+  if (!type) return null;
+  return { checkin: "check-in", hangout: "hangout", work: "work", ritual: "ritual" }[type] ?? type;
+}
+
+function agentClass(name: string | null): string {
+  if (!name) return "";
+  const lower = name.toLowerCase();
+  if (lower.includes("drevan")) return "drevan";
+  if (lower.includes("cypher")) return "cypher";
+  if (lower.includes("gaia")) return "gaia";
+  return "";
+}
+
 // ── Components ───────────────────────────────────────────────────────────────
 
 function RoomCard({ house }: { house: PresenceData["house"] }) {
@@ -55,17 +67,30 @@ function RoomCard({ house }: { house: PresenceData["house"] }) {
   );
 }
 
-function SessionCard({ session }: { session: NonNullable<PresenceData["session"]> }) {
+function CompanionHero({ session, house }: {
+  session: NonNullable<PresenceData["session"]>;
+  house: PresenceData["house"];
+}) {
+  const agent = agentClass(session.front_state);
+  const typeLabel = sessionTypeLabel(session.session_type);
+
   return (
-    <div className="card">
+    <div className={`card card-accent${agent ? ` agent-${agent}` : ""}`}>
       <div className="card-title">
-        Session <span className="pill open">open</span>
+        Session
+        {typeLabel && <span className={`pill open`} style={{ marginLeft: "0.5rem" }}>{typeLabel}</span>}
+        {" "}<span className="pill open" style={{ marginLeft: 0 }}>open</span>
       </div>
+      {session.front_state && (
+        <div style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "0.5rem" }}>
+          <span className={`agent-badge${agent ? ` ${agent}` : ""}`}>{session.front_state}</span>
+        </div>
+      )}
       <div className="kv-grid">
-        {session.front_state && (
+        {session.emotional_frequency && (
           <>
-            <span className="kv-label">front</span>
-            <span className="kv-value">{session.front_state}</span>
+            <span className="kv-label">frequency</span>
+            <span className="kv-value">{session.emotional_frequency}</span>
           </>
         )}
         {session.active_anchor && (
@@ -92,10 +117,12 @@ function SessionCard({ session }: { session: NonNullable<PresenceData["session"]
             <span className="kv-value">{hrvLabel(session.hrv_range)}</span>
           </>
         )}
-        {session.emotional_frequency && (
+        {(house.companion_mood || house.companion_activity) && (
           <>
-            <span className="kv-label">frequency</span>
-            <span className="kv-value">{session.emotional_frequency}</span>
+            <span className="kv-label">vibe</span>
+            <span className="kv-value">
+              {[house.companion_mood, house.companion_activity].filter(Boolean).join(" · ")}
+            </span>
           </>
         )}
         <span className="kv-label">opened</span>
@@ -194,13 +221,16 @@ function CompanionsCard({ companions }: { companions: PresenceData["companions"]
     <div className="card">
       <div className="card-title">Companions</div>
       <div className="companion-list">
-        {companions.map((c) => (
-          <div key={c.id} className="companion-row">
-            <span className="companion-dot" />
-            <span className="companion-name">{c.display_name}</span>
-            <span className="companion-role">{c.role}</span>
-          </div>
-        ))}
+        {companions.map((c) => {
+          const agent = agentClass(c.display_name);
+          return (
+            <div key={c.id} className="companion-row">
+              <span className={`companion-dot${agent ? ` ${agent}` : ""}`} />
+              <span className="companion-name">{c.display_name}</span>
+              <span className="companion-role">{c.role}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -251,7 +281,7 @@ export default async function Page() {
 
       {/* Session or last handover */}
       {data.session ? (
-        <SessionCard session={data.session} />
+        <CompanionHero session={data.session} house={data.house} />
       ) : data.last_handover ? (
         <HandoverCard handover={data.last_handover} />
       ) : (
@@ -259,11 +289,6 @@ export default async function Page() {
           <div className="card-title">Session</div>
           <p className="empty">No open session. Halseth is at rest.</p>
         </div>
-      )}
-
-      {/* Biometrics */}
-      {data.latest_biometrics && (
-        <BiometricCard biometrics={data.latest_biometrics} />
       )}
 
       {/* Async notes */}
@@ -277,11 +302,6 @@ export default async function Page() {
 
       {/* Companions */}
       <CompanionsCard companions={data.companions} />
-
-      {/* Relational shape */}
-      {data.personality && (
-        <PersonalityCard personality={data.personality} />
-      )}
 
       {/* Footer */}
       <div className="footer-row">
