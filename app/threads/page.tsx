@@ -198,7 +198,7 @@ export default async function ThreadsPage() {
       </header>
       <EmotionalLandscape deltas={deltas} />
       <RecentDeltas deltas={deltas} />
-      {presence.personality && <PersonalityCard personality={presence.personality} />}
+      {presence?.personality && <PersonalityCard personality={presence.personality} />}
       <GaiaPanel wounds={wounds} notes={gaiaNotes} />
     </main>
   );

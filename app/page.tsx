@@ -164,9 +164,11 @@ export default async function Page() {
       <main className="page">
         <div className="error-card">
           <strong>Could not connect to Halseth</strong>
-          <p style={{ marginTop: "0.4rem", fontSize: "0.88rem" }}>{error}</p>
+          <p style={{ marginTop: "0.4rem", fontSize: "0.88rem" }}>
+            {error ?? "HALSETH_URL is not configured."}
+          </p>
           <p style={{ marginTop: "0.4rem", fontSize: "0.82rem", opacity: 0.7 }}>
-            Check that HALSETH_URL is set correctly.
+            Add HALSETH_URL (and HALSETH_SECRET) in Vercel → Settings → Environment Variables.
           </p>
         </div>
       </main>
