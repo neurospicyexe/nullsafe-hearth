@@ -185,7 +185,7 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
 
 export default async function ThreadsPage() {
   const [presence, deltas, wounds, gaiaNotes] = await Promise.all([
-    fetchPresence(),
+    fetchPresence().catch(() => null),
     fetchDeltas(),
     fetchWounds(),
     fetchGaiaNotes(),
@@ -198,7 +198,7 @@ export default async function ThreadsPage() {
       </header>
       <EmotionalLandscape deltas={deltas} />
       <RecentDeltas deltas={deltas} />
-      {presence.personality && <PersonalityCard personality={presence.personality} />}
+      {presence?.personality && <PersonalityCard personality={presence.personality} />}
       <GaiaPanel wounds={wounds} notes={gaiaNotes} />
     </main>
   );

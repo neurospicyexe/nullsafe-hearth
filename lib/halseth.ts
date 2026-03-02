@@ -179,9 +179,9 @@ export type Wound = {
   created_at: string;
 };
 
-export async function fetchPresence(): Promise<PresenceData> {
+export async function fetchPresence(): Promise<PresenceData | null> {
   const base = process.env.HALSETH_URL;
-  if (!base) throw new Error("HALSETH_URL is not set");
+  if (!base) return null;
 
   const res = await fetch(`${base}/presence`, {
     next: { revalidate: 30 },
