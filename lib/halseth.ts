@@ -11,8 +11,14 @@ function authHeader(): Record<string, string> {
   return s ? { Authorization: `Bearer ${s}` } : {};
 }
 
+function fetchWithTimeout(url: string, options: RequestInit & { next?: { revalidate: number } }, ms = 10000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function hGet<T>(path: string, revalidate = 30): Promise<T> {
-  const res = await fetch(`${base()}${path}`, {
+  const res = await fetchWithTimeout(`${base()}${path}`, {
     headers: authHeader(),
     next: { revalidate },
   });
@@ -23,7 +29,7 @@ async function hGet<T>(path: string, revalidate = 30): Promise<T> {
 // Returns null on any error — for endpoints not yet deployed on Halseth
 async function hGetSafe<T>(path: string, revalidate = 30): Promise<T | null> {
   try {
-    const res = await fetch(`${base()}${path}`, {
+    const res = await fetchWithTimeout(`${base()}${path}`, {
       headers: authHeader(),
       next: { revalidate },
     });
