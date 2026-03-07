@@ -129,7 +129,9 @@ export function SharedListsClient({ lists }: { lists: BridgeData["lists"] }) {
 
 // ── Bridge Status ─────────────────────────────────────────────────────────────
 
-export function BridgeStatusClient({ sharing }: { sharing: BridgeData["sharing"] }) {
+type SharingState = { tasks: boolean; events: boolean; lists: boolean };
+
+export function BridgeStatusClient({ sharing }: { sharing: SharingState }) {
   const [state, setState] = useState(sharing);
   const [saving, setSaving] = useState<string | null>(null);
 
