@@ -245,6 +245,8 @@ export type HandoverPacket = {
   open_threads: string | null; // JSON array string
   motion_state: "in_motion" | "at_rest" | "floating";
   returned: number | null;
+  session_type: string | null;
+  session_front_state: string | null;
 };
 
 export type CompanionJournalEntry = {
