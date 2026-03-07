@@ -5,7 +5,7 @@ export async function GET() {
   const secret = process.env.HALSETH_SECRET;
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
-  const res = await fetch(`${base}/bridge`, {
+  const res = await fetch(`${base}/bridge/shared`, {
     headers: secret ? { Authorization: `Bearer ${secret}` } : {},
     next: { revalidate: 30 },
   });
