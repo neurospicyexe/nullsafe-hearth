@@ -70,6 +70,9 @@ export default async function Page() {
             <div>
               <div className="card-title">
                 Session <span className="pill open">open</span>
+                {session.session_type === "hangout" && (
+                  <span style={{ fontSize: "0.72rem", color: "var(--accent)", fontStyle: "italic", marginLeft: "0.5rem" }}>autonomous time</span>
+                )}
               </div>
               <div style={{ fontSize: "0.88rem", color: "var(--muted)", marginTop: "0.25rem" }}>
                 {[session.front_state, session.facet, session.active_anchor].filter(Boolean).join(" · ")}
