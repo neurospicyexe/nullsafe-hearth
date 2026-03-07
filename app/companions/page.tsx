@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { fetchPresence } from "@/lib/halseth";
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 const COMPANION_META: Record<string, { sym: string; color: string; tagline: string }> = {
   drevan: { sym: "◈", color: "#6366f1", tagline: "architect of meaning" },

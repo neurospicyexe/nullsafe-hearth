@@ -1,6 +1,6 @@
 import { fetchPresence, fetchBiometrics, fetchNotes } from "@/lib/halseth";
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });

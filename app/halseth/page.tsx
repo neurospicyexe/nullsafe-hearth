@@ -1,7 +1,7 @@
 import HalsethRoom, { type RoomConfig } from "@/components/HalsethRoom";
 import { fetchPresence } from "@/lib/halseth";
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 // Hardcoded room config — images live at rooms/{key}.jpg in the Halseth R2 bucket.
 // Placeholder gradients are used until images are uploaded via /assets/upload.

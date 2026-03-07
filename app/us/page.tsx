@@ -1,7 +1,7 @@
 import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas } from "@/lib/halseth";
 import Link from "next/link";
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {

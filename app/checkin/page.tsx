@@ -2,7 +2,7 @@ import BiometricCard from "@/components/BiometricCard";
 import { type BiometricSnapshot } from "@/lib/halseth";
 import { UplinkFormClient, RoutineStatusClient } from "./client";
 
-export const revalidate = 0; // always fresh
+export const dynamic = 'force-dynamic';
 
 async function fetchBiometrics(): Promise<BiometricSnapshot | null> {
   const base = process.env.HALSETH_URL;

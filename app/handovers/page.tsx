@@ -1,6 +1,6 @@
 import { fetchHandovers } from "@/lib/halseth";
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {

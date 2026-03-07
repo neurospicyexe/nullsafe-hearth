@@ -1,7 +1,7 @@
 import { type MindData, type MindJournalEntry, type CompanionNote } from "@/lib/halseth";
 import { CompanionNotesFeedClient, CompanionNoteFormClient, JournalFormClient } from "./client";
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 async function fetchMind(): Promise<MindData | null> {
   const base = process.env.MIND_URL ?? process.env.HALSETH_URL;

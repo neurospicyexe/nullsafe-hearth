@@ -1,7 +1,7 @@
 import PersonalityCard from "@/components/PersonalityCard";
 import { fetchPresence, type Delta, type Wound, type CompanionNote } from "@/lib/halseth";
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 async function fetchDeltas(): Promise<Delta[]> {
   const base = process.env.HALSETH_URL;
