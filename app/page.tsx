@@ -17,6 +17,7 @@ const NAV_TILES = [
   { href: "/us",         sym: "♥",  label: "Us",          desc: "the relationship" },
   { href: "/companions", sym: "◉",  label: "Companions",  desc: "Drevan · Cypher · Gaia" },
   { href: "/feelings",   sym: "〜", label: "Feelings",    desc: "relational deltas" },
+  { href: "/dreams",     sym: "◌",  label: "Dreams",      desc: "autonomous processing" },
   { href: "/handovers",  sym: "↩",  label: "Handovers",   desc: "session history" },
   { href: "/user",       sym: "⊕",  label: "You",         desc: "biometrics & state" },
   { href: "/uplink",     sym: "↑",  label: "Uplink",      desc: "daily check-in" },

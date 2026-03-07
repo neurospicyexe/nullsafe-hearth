@@ -11,30 +11,24 @@ const AUTH = (): Record<string, string> => {
   return s ? { Authorization: `Bearer ${s}` } : {};
 };
 
-// GET /api/feelings?limit=N
-// Proxies to Halseth /deltas endpoint.
-// Returns [] if endpoint doesn't exist yet (404).
+// GET /api/feelings?limit=N&type=dreams
+// type=dreams -> proxies to /dreams; default -> proxies to /deltas
 export async function GET(req: Request) {
-  const url = new URL(req.url);
+  const url   = new URL(req.url);
   const limit = url.searchParams.get("limit") ?? "50";
+  const type  = url.searchParams.get("type");
+
+  const path = type === "dreams"
+    ? `/dreams?limit=${limit}`
+    : `/deltas?limit=${limit}`;
 
   try {
-    const base = BASE();
-    const res = await fetch(`${base}/deltas?limit=${limit}`, {
+    const res = await fetch(`${BASE()}${path}`, {
       headers: AUTH(),
       next: { revalidate: 15 },
     });
-
-    if (res.status === 404) {
-      return NextResponse.json([]);
-    }
-
-    if (!res.ok) {
-      return NextResponse.json([], { status: 200 });
-    }
-
-    const data = await res.json();
-    return NextResponse.json(data);
+    if (!res.ok) return NextResponse.json([]);
+    return NextResponse.json(await res.json());
   } catch {
     return NextResponse.json([]);
   }
