@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const base = () => process.env.HALSETH_URL!;
-const authHeader = () => {
+const authHeader = (): Record<string, string> => {
   const s = process.env.HALSETH_SECRET;
   return s ? { Authorization: `Bearer ${s}` } : {};
 };
