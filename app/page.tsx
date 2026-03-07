@@ -3,7 +3,7 @@ import { fetchPresence, type PresenceData } from "@/lib/halseth";
 import LoveMeter from "@/components/LoveMeter";
 import SpoonCounter from "@/components/SpoonCounter";
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {

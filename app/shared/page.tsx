@@ -1,6 +1,6 @@
 import { fetchTasks, fetchEvents, fetchLists, fetchBridge } from "@/lib/halseth";
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 function formatDate(iso: string | null) {
   if (!iso) return null;
