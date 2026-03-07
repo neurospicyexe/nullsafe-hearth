@@ -419,3 +419,31 @@ export async function fetchLists(name?: string): Promise<ListItem[]> {
   const q = name ? `?name=${encodeURIComponent(name)}` : "";
   return (await hGetSafe<ListItem[]>(`/lists${q}`)) ?? [];
 }
+
+export type Dream = {
+  id: string;
+  companion_id: "drevan" | "cypher" | "gaia";
+  dream_type: "processing" | "questioning" | "memory" | "play" | "integrating";
+  content: string;
+  generated_at: string;
+  session_id: string | null;
+};
+
+export type DreamSeed = {
+  id: string;
+  created_at: string;
+  content: string;
+  for_companion: "drevan" | "cypher" | "gaia" | null;
+  claimed_at: string | null;
+  claimed_by: string | null;
+};
+
+export async function fetchDreams(companionId?: string, limit = 20): Promise<Dream[]> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (companionId) q.set("companion_id", companionId);
+  return (await hGetSafe<Dream[]>(`/dreams?${q}`)) ?? [];
+}
+
+export async function fetchDreamSeeds(): Promise<DreamSeed[]> {
+  return (await hGetSafe<DreamSeed[]>("/dream-seeds")) ?? [];
+}
