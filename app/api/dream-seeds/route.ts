@@ -9,7 +9,7 @@ const authHeader = () => {
 export async function GET() {
   const res = await fetch(`${base()}/dream-seeds`, {
     headers: authHeader(),
-    cache: "no-store",
+    next: { revalidate: 0 },
   });
   if (!res.ok) return NextResponse.json([], { status: 200 });
   return NextResponse.json(await res.json());
