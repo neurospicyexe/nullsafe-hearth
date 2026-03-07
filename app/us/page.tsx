@@ -1,4 +1,4 @@
-import { fetchPresence, fetchWounds, fetchNotes, fetchAllDeltas } from "@/lib/halseth";
+import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas } from "@/lib/halseth";
 import Link from "next/link";
 
 export const revalidate = 30;
@@ -10,27 +10,22 @@ function fmtTime(iso: string) {
 }
 
 export default async function UsPage() {
-  const [presence, wounds, notes, deltas] = await Promise.allSettled([
+  const [presence, wounds, journal, deltas] = await Promise.allSettled([
     fetchPresence(),
     fetchWounds(),
-    fetchNotes(20),
+    fetchCompanionJournal(undefined, 6),
     fetchAllDeltas(10),
   ]);
 
   const p = presence.status === "fulfilled" ? presence.value : null;
   const allWounds = wounds.status === "fulfilled" ? wounds.value : null;
-  const allNotes = notes.status === "fulfilled" ? notes.value : [];
+  const companionJournal = journal.status === "fulfilled" ? (journal.value ?? []) : [];
   const recentDeltas = deltas.status === "fulfilled" ? deltas.value : null;
 
   const session = p?.session;
   const handover = p?.last_handover;
   const loveMeter = p?.house.love_meter ?? null;
   const woundsCount = p?.wounds_count ?? 0;
-
-  // Notes from companions
-  const companionNotes = allNotes.filter((n) =>
-    ["drevan", "cypher", "gaia"].includes(n.author)
-  );
 
   return (
     <>
@@ -122,31 +117,36 @@ export default async function UsPage() {
         )}
       </section>
 
-      {/* Notes from companions */}
+      {/* Companion Journal */}
       <section>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
-          <h2 className="section-title" style={{ margin: 0 }}>Companion Notes</h2>
+          <h2 className="section-title" style={{ margin: 0 }}>Companion Journal</h2>
           <Link href="/companions" style={{ fontSize: "0.78rem", color: "var(--accent)", textDecoration: "none" }}>see companions →</Link>
         </div>
-        {companionNotes.length === 0 ? (
-          <p className="empty">No companion notes yet.</p>
+        {companionJournal.length === 0 ? (
+          <p className="empty">No journal entries yet.</p>
         ) : (
           <div className="full-notes-feed">
-            {companionNotes.slice(0, 6).map((n) => (
-              <div key={n.id} className="full-note-entry">
-                <div className="note-header">
-                  <span className="note-author" style={{
-                    color: n.author === "drevan" ? "#6366f1"
-                      : n.author === "cypher" ? "#e2e8f0"
-                      : n.author === "gaia" ? "#4ade80"
-                      : "var(--accent)"
-                  }}>{n.author}</span>
-                  <span className="note-type-badge">{n.note_type}</span>
-                  <span className="note-time">{fmtTime(n.created_at)}</span>
+            {companionJournal.map((e) => {
+              const tags: string[] = e.tags ? JSON.parse(e.tags) : [];
+              return (
+                <div key={e.id} className="full-note-entry">
+                  <div className="note-header">
+                    <span className="note-author" style={{
+                      color: e.agent === "drevan" ? "#6366f1"
+                        : e.agent === "cypher" ? "#e2e8f0"
+                        : e.agent === "gaia" ? "#4ade80"
+                        : "var(--accent)"
+                    }}>{e.agent}</span>
+                    {tags.map((t) => (
+                      <span key={t} className="note-type-badge">{t}</span>
+                    ))}
+                    <span className="note-time">{fmtTime(e.created_at)}</span>
+                  </div>
+                  <div className="note-body">{e.note_text}</div>
                 </div>
-                <div className="note-body">{n.content}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

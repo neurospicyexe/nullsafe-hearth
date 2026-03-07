@@ -147,14 +147,11 @@ export type BridgeListItem = {
 };
 
 export type BridgeData = {
+  system: string;
+  enabled: string[];
   tasks: BridgeTask[];
   events: BridgeEvent[];
   lists: BridgeListItem[];
-  sharing: {
-    tasks: boolean;
-    events: boolean;
-    lists: boolean;
-  };
 };
 
 // ── Mind (knowledge graph) ────────────────────────────────────────────────────
@@ -304,6 +301,35 @@ export type Note = {
   note_type: string;
 };
 
+export type Task = {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: "urgent" | "high" | "normal" | "low";
+  status: "open" | "in_progress" | "done";
+  due_at: string | null;
+  assigned_to: string | null;
+  created_by: string | null;
+};
+
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string | null;
+  category: string | null;
+};
+
+export type ListItem = {
+  id: string;
+  list_name: string;
+  item_text: string;
+  added_by: string | null;
+  added_at: string;
+  completed: number;
+};
+
 // ── Fetch functions — existing endpoints ──────────────────────────────────────
 
 export async function fetchPresence(): Promise<PresenceData> {
@@ -376,4 +402,18 @@ export async function fetchAllDeltas(
   limit = 50,
 ): Promise<RelationalDelta[] | null> {
   return hGetSafe<RelationalDelta[]>(`/deltas?limit=${limit}`);
+}
+
+export async function fetchTasks(status?: string): Promise<Task[]> {
+  const q = status ? `?status=${status}` : "";
+  return (await hGetSafe<Task[]>(`/tasks${q}`)) ?? [];
+}
+
+export async function fetchEvents(): Promise<CalendarEvent[]> {
+  return (await hGetSafe<CalendarEvent[]>("/events")) ?? [];
+}
+
+export async function fetchLists(name?: string): Promise<ListItem[]> {
+  const q = name ? `?name=${encodeURIComponent(name)}` : "";
+  return (await hGetSafe<ListItem[]>(`/lists${q}`)) ?? [];
 }
