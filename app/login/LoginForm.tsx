@@ -16,17 +16,23 @@ export default function LoginForm() {
     setLoading(true);
     setError("");
 
-    const res = await fetch(`/api/auth?from=${encodeURIComponent(from)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret: value }),
-    });
+    try {
+      const res = await fetch(`/api/auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: value }),
+      });
 
-    if (res.ok || res.redirected) {
-      router.push(from);
-      router.refresh();
-    } else {
-      setError("Incorrect passphrase.");
+      if (res.ok) {
+        router.push(from);
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Incorrect passphrase.");
+        setLoading(false);
+      }
+    } catch {
+      setError("An error occurred during login.");
       setLoading(false);
     }
   }
