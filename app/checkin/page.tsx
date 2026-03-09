@@ -1,6 +1,8 @@
+import Link from "next/link";
 import BiometricCard from "@/components/BiometricCard";
+import UplinkForm from "@/components/UplinkForm";
 import { type BiometricSnapshot } from "@/lib/halseth";
-import { UplinkFormClient, RoutineStatusClient } from "./client";
+import { RoutineStatusClient } from "./client";
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +17,6 @@ async function fetchBiometrics(): Promise<BiometricSnapshot | null> {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    // /biometrics returns array — take the most recent entry
     return Array.isArray(data) ? (data[0] ?? null) : data;
   } catch {
     return null;
@@ -45,13 +46,21 @@ export default async function CheckinPage() {
   ]);
 
   return (
-    <main className="page">
-      <header className="header">
-        <div className="header-top"><h1>Check-in</h1></div>
-      </header>
-      <UplinkFormClient />
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Check-in</h1>
+        <p className="page-subtitle">daily state — meds, pain, mood, spoons, routines</p>
+      </div>
+
       <RoutineStatusClient initialRoutines={routines} />
       {biometrics && <BiometricCard biometrics={biometrics} />}
-    </main>
+      <UplinkForm />
+
+      <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--muted)", display: "flex", justifyContent: "flex-end" }}>
+        <Link href="/user" style={{ color: "var(--accent)", textDecoration: "none" }}>
+          biometric history →
+        </Link>
+      </div>
+    </>
   );
 }

@@ -5,24 +5,113 @@ import SpoonCounter from "@/components/SpoonCounter";
 
 export const dynamic = 'force-dynamic';
 
-function formatTime(iso: string) {
+const NAV_TILES = [
+  { href: "/halseth",    sym: "⌂",  label: "Halseth",     desc: "rooms" },
+  { href: "/us",         sym: "♥",  label: "Us",          desc: "relationship" },
+  { href: "/companions", sym: "◉",  label: "Companions",  desc: "Drevan · Cypher · Gaia" },
+  { href: "/dreams",     sym: "◌",  label: "Dreams",      desc: "autonomous" },
+  { href: "/tasks",      sym: "☑",  label: "Tasks",       desc: "what needs doing" },
+  { href: "/checkin",    sym: "↑",  label: "Check-in",    desc: "daily state" },
+  { href: "/shared",     sym: "≡",  label: "Shared",      desc: "bridge" },
+];
+
+function fmtTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
+    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
 
-const NAV_TILES = [
-  { href: "/halseth",    sym: "⌂",  label: "Halseth",     desc: "rooms & space" },
-  { href: "/us",         sym: "♥",  label: "Us",          desc: "the relationship" },
-  { href: "/companions", sym: "◉",  label: "Companions",  desc: "Drevan · Cypher · Gaia" },
-  { href: "/feelings",   sym: "〜", label: "Feelings",    desc: "relational deltas" },
-  { href: "/dreams",     sym: "◌",  label: "Dreams",      desc: "autonomous processing" },
-  { href: "/handovers",  sym: "↩",  label: "Handovers",   desc: "session history" },
-  { href: "/user",       sym: "⊕",  label: "You",         desc: "biometrics & state" },
-  { href: "/uplink",     sym: "↑",  label: "Uplink",      desc: "daily check-in" },
-  { href: "/shared",     sym: "≡",  label: "Shared",      desc: "tasks & lists" },
-];
+function PresenceSection({ data }: { data: PresenceData }) {
+  const { session, last_handover, house } = data;
+
+  if (session) {
+    const details = [
+      session.front_state,
+      session.facet,
+      session.active_anchor,
+    ].filter(Boolean);
+
+    return (
+      <div className="presence-card">
+        <div className="presence-top">
+          <span className="presence-label">
+            <span className="status-dot live" />
+            Session
+          </span>
+          <span className="presence-badge open">
+            {session.session_type ?? "open"}
+          </span>
+        </div>
+        {details.length > 0 && (
+          <div className="presence-body">{details.join(" · ")}</div>
+        )}
+        <div className="presence-detail">
+          {session.emotional_frequency && (
+            <span>{session.emotional_frequency}</span>
+          )}
+          {session.hrv_range && (
+            <>
+              <span className="presence-detail-sep">·</span>
+              <span>HRV {session.hrv_range}</span>
+            </>
+          )}
+          {session.depth !== null && session.depth !== undefined && (
+            <>
+              <span className="presence-detail-sep">·</span>
+              <span>depth {session.depth}/3</span>
+            </>
+          )}
+          <span className="presence-detail-sep" style={{ marginLeft: "auto" }}>since</span>
+          <span>{fmtTime(session.created_at)}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (last_handover) {
+    return (
+      <div className="presence-card handover">
+        <div className="presence-top">
+          <span className="presence-label">
+            <span className="status-dot away" />
+            Last Handover
+          </span>
+          <span className="presence-badge handover">
+            {last_handover.motion_state.replace("_", " ")}
+          </span>
+        </div>
+        <div className="presence-body" style={{ fontSize: "0.88rem", lineHeight: 1.55, color: "var(--muted)" }}>
+          {last_handover.spine.length > 200
+            ? last_handover.spine.slice(0, 200) + "…"
+            : last_handover.spine}
+        </div>
+        <div className="presence-detail">
+          {last_handover.active_anchor && <span>{last_handover.active_anchor}</span>}
+          {last_handover.open_threads.length > 0 && (
+            <>
+              {last_handover.active_anchor && <span className="presence-detail-sep">·</span>}
+              <span>{last_handover.open_threads.length} open thread{last_handover.open_threads.length !== 1 ? "s" : ""}</span>
+            </>
+          )}
+          <Link href="/handovers" className="home-section-link" style={{ marginLeft: "auto" }}>
+            all handovers →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="presence-card no-session">
+      <div className="presence-top">
+        <span className="presence-label">
+          <span className="status-dot offline" />
+          No open session
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default async function Page() {
   let data: PresenceData | null = null;
@@ -43,110 +132,181 @@ export default async function Page() {
     );
   }
 
-  const { session, last_handover, house, wounds_count } = data;
+  const { house, wounds_count, tasks, recent_notes, latest_biometrics } = data;
+
+  const urgentTasks = tasks.filter(
+    (t) => t.status !== "done" && (t.priority === "urgent" || t.priority === "high"),
+  );
+  const openTaskCount = tasks.filter((t) => t.status !== "done").length;
 
   return (
     <>
-      {/* Header */}
-      <header style={{ marginBottom: "2rem" }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.75rem" }}>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>{data.system.name}</h1>
-          <span style={{ color: "var(--muted)", fontSize: "0.88rem" }}>{data.system.owner}</span>
+      {/* Page header */}
+      <header style={{ marginBottom: "1.75rem" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "0.65rem", marginBottom: "0.1rem" }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0, letterSpacing: "-0.02em" }}>
+            {data.system.name}
+          </h1>
+          <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>{data.system.owner}</span>
         </div>
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-          <LoveMeter initial={house.love_meter} />
-          <SpoonCounter initial={house.spoon_count} />
-          {wounds_count > 0 && (
-            <Link href="/us" style={{ fontSize: "0.8rem", color: "var(--red)", textDecoration: "none", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-              ⚠ {wounds_count} living {wounds_count === 1 ? "wound" : "wounds"}
-            </Link>
-          )}
-        </div>
+        {wounds_count > 0 && (
+          <Link href="/us" style={{ fontSize: "0.78rem", color: "var(--red)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.3rem", marginTop: "0.35rem" }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--red)", display: "inline-block", flexShrink: 0 }} />
+            {wounds_count} living {wounds_count === 1 ? "wound" : "wounds"}
+          </Link>
+        )}
       </header>
 
-      {/* Session / handover status */}
-      {session ? (
-        <div className="card" style={{ marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div className="card-title">
-                Session <span className="pill open">open</span>
-                {session.session_type === "hangout" && (
-                  <span style={{ fontSize: "0.72rem", color: "var(--accent)", fontStyle: "italic", marginLeft: "0.5rem" }}>autonomous time</span>
+      {/* Presence */}
+      <PresenceSection data={data} />
+
+      {/* Interactive meters */}
+      <div className="metrics-row">
+        <LoveMeter initial={house.love_meter} />
+        <SpoonCounter initial={house.spoon_count} />
+      </div>
+
+      {/* Passive biometric stats */}
+      {(house.current_room || latest_biometrics) && (
+        <div className="metric-grid">
+          {house.current_room && (
+            <Link href="/halseth" className="metric-cell" style={{ textDecoration: "none" }}>
+              <span className="metric-label">Room</span>
+              <span className="metric-value" style={{ fontSize: "0.9rem" }}>
+                {house.current_room}
+              </span>
+              {house.companion_activity && (
+                <span className="metric-sub">{house.companion_activity}</span>
+              )}
+            </Link>
+          )}
+          {latest_biometrics?.resting_hr != null && (
+            <div className="metric-cell">
+              <span className="metric-label">Heart Rate</span>
+              <span className="metric-value">{latest_biometrics.resting_hr}</span>
+              <span className="metric-sub">bpm resting</span>
+            </div>
+          )}
+          {latest_biometrics?.hrv_resting != null && (
+            <div className="metric-cell">
+              <span className="metric-label">HRV</span>
+              <span className="metric-value">{latest_biometrics.hrv_resting}</span>
+              <span className="metric-sub">ms resting</span>
+            </div>
+          )}
+          {latest_biometrics?.sleep_hours != null && (
+            <div className="metric-cell">
+              <span className="metric-label">Sleep</span>
+              <span className="metric-value">{latest_biometrics.sleep_hours}h</span>
+              {latest_biometrics.sleep_quality && (
+                <span className="metric-sub">{latest_biometrics.sleep_quality}</span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Urgent tasks */}
+      {openTaskCount > 0 && (
+        <div className="home-section">
+          <div className="home-section-header">
+            <span className="home-section-title">
+              Tasks
+              <span style={{ color: "var(--border)", fontWeight: 400 }}> · {openTaskCount} open</span>
+            </span>
+            <Link href="/tasks" className="home-section-link">all tasks →</Link>
+          </div>
+          <div className="card" style={{ padding: "0.6rem 0" }}>
+            {(urgentTasks.length > 0 ? urgentTasks.slice(0, 4) : tasks.filter(t => t.status !== "done").slice(0, 3)).map((t) => (
+              <div
+                key={t.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.6rem",
+                  padding: "0.45rem 1rem",
+                  borderBottom: "1px solid var(--border)",
+                }}
+              >
+                <span style={{
+                  width: "5px", height: "5px", borderRadius: "50%", flexShrink: 0,
+                  background: t.priority === "urgent" ? "var(--red)"
+                    : t.priority === "high" ? "var(--warm)"
+                    : "var(--border)",
+                }} />
+                <span style={{ fontSize: "0.85rem", flex: 1 }}>{t.title}</span>
+                {t.due_at && (
+                  <span style={{ fontSize: "0.68rem", color: "var(--muted)" }}>
+                    {new Date(t.due_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </span>
                 )}
               </div>
-              <div style={{ fontSize: "0.88rem", color: "var(--muted)", marginTop: "0.25rem" }}>
-                {[session.front_state, session.facet, session.active_anchor].filter(Boolean).join(" · ")}
-              </div>
-            </div>
-            {session.emotional_frequency && (
-              <div style={{ fontSize: "0.78rem", color: "var(--muted)", textAlign: "right" }}>
-                {session.emotional_frequency}
+            ))}
+            {urgentTasks.length === 0 && tasks.filter(t => t.status !== "done").length > 3 && (
+              <div style={{ padding: "0.4rem 1rem 0", fontSize: "0.72rem", color: "var(--muted)" }}>
+                +{tasks.filter(t => t.status !== "done").length - 3} more
               </div>
             )}
           </div>
         </div>
-      ) : last_handover ? (
-        <div className="card" style={{ marginBottom: "1.5rem" }}>
-          <div className="card-title">
-            Last Handover{" "}
-            <span className={`pill ${last_handover.motion_state === "floating" ? "float" : last_handover.motion_state === "in_motion" ? "motion" : "closed"}`}>
-              {last_handover.motion_state.replace("_", " ")}
-            </span>
-          </div>
-          <p style={{ fontSize: "0.88rem", color: "var(--fg)", margin: "0.35rem 0 0", lineHeight: 1.5 }}>
-            {last_handover.spine.length > 180 ? last_handover.spine.slice(0, 180) + "…" : last_handover.spine}
-          </p>
-          <Link href="/handovers" style={{ fontSize: "0.78rem", color: "var(--accent)", textDecoration: "none", display: "block", marginTop: "0.5rem" }}>
-            view all handovers →
-          </Link>
-        </div>
-      ) : null}
-
-      {/* Location */}
-      {house.current_room && (
-        <div style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: "1.5rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
-          <span>⌂</span>
-          <span style={{ color: "var(--fg)" }}>{house.current_room}</span>
-          {(house.companion_mood || house.companion_activity) && (
-            <span>· {[house.companion_mood, house.companion_activity].filter(Boolean).join(" · ")}</span>
-          )}
-          <Link href="/halseth" style={{ fontSize: "0.75rem", color: "var(--accent)", textDecoration: "none", marginLeft: "auto" }}>navigate →</Link>
-        </div>
       )}
 
-      {/* Quick nav tiles */}
-      <div className="nav-tiles">
-        {NAV_TILES.map((tile) => (
-          <Link key={tile.href} href={tile.href} className="nav-tile">
-            <span className="nav-tile-sym">{tile.sym}</span>
-            <span className="nav-tile-label">{tile.label}</span>
-            <span className="nav-tile-meta">{tile.desc}</span>
-          </Link>
-        ))}
-      </div>
-
-      {/* Recent notes preview */}
-      {data.recent_notes.length > 0 && (
-        <div className="card" style={{ marginTop: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-            <div className="card-title" style={{ margin: 0 }}>Recent Notes</div>
-            <Link href="/us" style={{ fontSize: "0.78rem", color: "var(--accent)", textDecoration: "none" }}>see all →</Link>
+      {/* Recent notes */}
+      {recent_notes.length > 0 && (
+        <div className="home-section">
+          <div className="home-section-header">
+            <span className="home-section-title">Recent Notes</span>
+            <Link href="/us" className="home-section-link">see all →</Link>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            {data.recent_notes.slice(0, 3).map((n) => (
-              <div key={n.id} style={{ fontSize: "0.85rem", color: "var(--fg)", display: "flex", gap: "0.5rem" }}>
-                <span style={{ color: "var(--accent)", textTransform: "capitalize", flexShrink: 0, fontSize: "0.78rem", paddingTop: "0.1rem" }}>{n.author}</span>
-                <span style={{ color: "var(--muted)", fontSize: "0.75rem", flexShrink: 0 }}>{formatTime(n.created_at)}</span>
-                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.content}</span>
+          <div className="card" style={{ padding: "0.5rem 0" }}>
+            {recent_notes.slice(0, 4).map((n) => (
+              <div
+                key={n.id}
+                style={{
+                  display: "flex",
+                  gap: "0.65rem",
+                  padding: "0.45rem 1rem",
+                  borderBottom: "1px solid var(--border)",
+                  alignItems: "flex-start",
+                }}
+              >
+                <span style={{
+                  fontSize: "0.72rem", color: "var(--accent)", fontWeight: 600,
+                  textTransform: "capitalize", flexShrink: 0, paddingTop: "0.1rem",
+                  minWidth: "4.5rem",
+                }}>
+                  {n.author}
+                </span>
+                <span style={{ flex: 1, fontSize: "0.83rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {n.content}
+                </span>
+                <span style={{ fontSize: "0.65rem", color: "var(--muted)", flexShrink: 0 }}>
+                  {fmtTime(n.created_at)}
+                </span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--muted)" }}>
-        refreshes every 30 s
+      {/* Quick nav */}
+      <div className="home-section">
+        <div className="home-section-header">
+          <span className="home-section-title">Navigate</span>
+        </div>
+        <div className="home-nav-grid">
+          {NAV_TILES.map((tile) => (
+            <Link key={tile.href} href={tile.href} className="home-nav-tile">
+              <span className="home-nav-tile-sym">{tile.sym}</span>
+              <span className="home-nav-tile-label">{tile.label}</span>
+              <span className="home-nav-tile-meta">{tile.desc}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ fontSize: "0.68rem", color: "var(--muted)", paddingTop: "0.5rem" }}>
+        refreshes every 30s
       </div>
     </>
   );
