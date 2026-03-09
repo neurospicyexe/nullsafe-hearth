@@ -17,8 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Incorrect passphrase" }, { status: 401 });
   }
 
-  const from = request.nextUrl.searchParams.get("from") ?? "/";
-  const response = NextResponse.redirect(new URL(from, request.url));
+  const response = NextResponse.json({ success: true });
 
   response.cookies.set("hearth_session", secret, {
     httpOnly: true,
