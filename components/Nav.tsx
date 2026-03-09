@@ -8,10 +8,9 @@ const NAV = [
   { href: "/halseth",    label: "Halseth",    sym: "⌂" },
   { href: "/us",         label: "Us",         sym: "♥" },
   { href: "/companions", label: "Companions", sym: "◉" },
-  { href: "/feelings",   label: "Feelings",   sym: "〜" },
-  { href: "/handovers",  label: "Handovers",  sym: "↩" },
-  { href: "/user",       label: "You",        sym: "⊕" },
-  { href: "/uplink",     label: "Uplink",     sym: "↑" },
+  { href: "/dreams",     label: "Dreams",     sym: "◌" },
+  { href: "/tasks",      label: "Tasks",      sym: "☑" },
+  { href: "/checkin",    label: "Check-in",   sym: "↑" },
   { href: "/shared",     label: "Shared",     sym: "≡" },
 ];
 

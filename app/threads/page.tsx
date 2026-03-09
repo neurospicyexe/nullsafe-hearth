@@ -192,14 +192,15 @@ export default async function ThreadsPage() {
   ]);
 
   return (
-    <main className="page">
-      <header className="header">
-        <div className="header-top"><h1>Threads</h1></div>
-      </header>
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Threads</h1>
+        <p className="page-subtitle">emotional landscape — relational moments and personality over time</p>
+      </div>
       <EmotionalLandscape deltas={deltas} />
       <RecentDeltas deltas={deltas} />
       {presence?.personality && <PersonalityCard personality={presence.personality} />}
       <GaiaPanel wounds={wounds} notes={gaiaNotes} />
-    </main>
+    </>
   );
 }
