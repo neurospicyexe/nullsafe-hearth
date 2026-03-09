@@ -5,12 +5,7 @@ export async function POST(request: NextRequest) {
   const secret = process.env.HALSETH_SECRET;
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
-  const raw = await request.json();
-  const body = {
-    author:    typeof raw.author    === "string" ? raw.author    : undefined,
-    content:   typeof raw.content   === "string" ? raw.content   : undefined,
-    note_type: typeof raw.note_type === "string" ? raw.note_type : undefined,
-  };
+  const body = await request.json();
   const res = await fetch(`${base}/notes`, {
     method: "POST",
     headers: {
@@ -20,6 +15,6 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify(body),
   });
 
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }

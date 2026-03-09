@@ -6,12 +6,12 @@ export async function GET(request: NextRequest) {
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
   const { searchParams } = new URL(request.url);
-  const limit = Math.max(1, Math.min(parseInt(searchParams.get("limit") ?? "10", 10) || 10, 100));
+  const limit = searchParams.get("limit") ?? "10";
 
   const res = await fetch(`${base}/deltas?limit=${limit}`, {
     headers: secret ? { Authorization: `Bearer ${secret}` } : {},
     next: { revalidate: 30 },
   });
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }

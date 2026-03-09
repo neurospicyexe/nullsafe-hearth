@@ -24,17 +24,12 @@ export async function POST(request: NextRequest) {
   const base = process.env.HALSETH_URL;
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
-  const raw = await request.json();
-  const body = {
-    routine_name: typeof raw.routine_name === "string" ? raw.routine_name : undefined,
-    owner:        typeof raw.owner        === "string" ? raw.owner        : undefined,
-    notes:        typeof raw.notes        === "string" ? raw.notes        : undefined,
-  };
+  const body = await request.json();
   const res = await fetch(`${base}/routines`, {
     method: "POST",
     headers: authHeaders(true),
     body: JSON.stringify(body),
   });
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
