@@ -128,15 +128,16 @@ export default async function MindPage() {
   const [mind, notes] = await Promise.all([fetchMind(), fetchCompanionNotes()]);
 
   return (
-    <main className="page">
-      <header className="header">
-        <div className="header-top"><h1>Mind</h1></div>
-      </header>
+    <>
+      <div className="page-header">
+        <h1 className="page-title">Mind</h1>
+        <p className="page-subtitle">companion notes, journals, and knowledge graph health</p>
+      </div>
       {mind?.health && <MindHealthPanel health={mind.health} />}
       <CompanionNotesFeedClient initialNotes={notes} />
       <CompanionNoteFormClient />
       {mind?.recent_journals && <JournalFeed journals={mind.recent_journals} />}
       <JournalFormClient />
-    </main>
+    </>
   );
 }
