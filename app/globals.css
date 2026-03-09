@@ -2704,3 +2704,175 @@ input[type="range"] {
 .home-nav-tile-sym   { font-size: 1rem; line-height: 1; }
 .home-nav-tile-label { font-size: 0.72rem; font-weight: 600; color: var(--fg); }
 .home-nav-tile-meta  { font-size: 0.62rem; color: var(--muted); }
+
+/* ── Letters / note-passing system ──────────────────────────────────────────── */
+
+.letter-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.letter-bubble {
+  display: flex;
+  flex-direction: column;
+  max-width: 88%;
+}
+
+.letter-bubble.outgoing {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.letter-bubble.incoming {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.letter-body {
+  padding: 0.6rem 0.9rem;
+  border-radius: 14px;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.letter-bubble.outgoing .letter-body {
+  background: #1e1a38;
+  border: 1px solid #3a3060;
+  border-bottom-right-radius: 4px;
+  color: var(--text);
+}
+
+.letter-bubble.incoming .letter-body {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  color: var(--text);
+}
+
+.letter-meta {
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  padding: 0 0.15rem;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.letter-write-btn {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.letter-write-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.letter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+
+.letter-textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-family: inherit;
+  padding: 0.6rem 0.75rem;
+  resize: vertical;
+  min-height: 80px;
+  width: 100%;
+  line-height: 1.55;
+}
+
+.letter-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.letter-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.letter-cancel-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0.3rem 0.5rem;
+}
+
+.letter-cancel-btn:hover { color: var(--text); }
+
+.letter-send-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.letter-send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.letter-send-btn:hover:not(:disabled) { opacity: 0.85; }
+
+/* Inbox entry (us page) */
+.inbox-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.inbox-entry:last-child { border-bottom: none; }
+
+.inbox-from {
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-width: 4.5rem;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+.inbox-preview {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbox-time {
+  font-size: 0.65rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}

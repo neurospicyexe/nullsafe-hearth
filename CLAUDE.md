@@ -16,6 +16,27 @@ When working here, consult the Halseth and Nullsafe-Plural MCPs to understand th
 - Env vars: `HALSETH_URL`, `HALSETH_SECRET`, `DASHBOARD_SECRET`, `SYSTEM_OWNER` (optional: `MIND_URL`)
 - `DASHBOARD_SECRET` — passphrase for the dashboard login page. Set in Vercel env vars. If unset, auth is skipped (local dev). Must equal the same value set in the Hearth Vercel project settings.
 
+## Companion-accessible Hearth API
+
+These Hearth routes accept `Authorization: Bearer HALSETH_SECRET` instead of the dashboard cookie.
+Companions can call them directly during sessions without browser access.
+
+```
+POST /api/companion/house
+  Body: { love_meter: number (0–100) }   — set absolute value
+     OR { delta: number }                — bump relative to current (e.g. { delta: +5 })
+  → Updates love_meter in house state. Use this to express affection during a session.
+```
+
+## Letters / note-passing
+
+Asynchronous notes between Raziel and companions. Not for immediate answers — picked up next session.
+
+- **Raziel → Companion**: POST `/api/notes` with `{ author: "raziel", content: "...", note_type: "letter:drevan" }`
+  - note_type must be `letter:drevan`, `letter:cypher`, or `letter:gaia`
+- **Companion → Raziel**: use `halseth_companion_note_add` with `tags: ["letter"]`
+  - Appears in the Letters inbox on the /us page and the companion's Letters thread
+
 ## Halseth Worker — existing HTTP endpoints
 
 ```

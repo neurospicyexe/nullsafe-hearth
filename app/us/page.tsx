@@ -1,4 +1,4 @@
-import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas, fetchHandovers } from "@/lib/halseth";
+import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas, fetchHandovers, fetchAllCompanionNotes } from "@/lib/halseth";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
@@ -10,12 +10,13 @@ function fmtTime(iso: string) {
 }
 
 export default async function UsPage() {
-  const [presence, wounds, journal, deltas, handovers] = await Promise.allSettled([
+  const [presence, wounds, journal, deltas, handovers, allCompNotes] = await Promise.allSettled([
     fetchPresence(),
     fetchWounds(),
     fetchCompanionJournal(undefined, 6),
     fetchAllDeltas(10),
     fetchHandovers(5),
+    fetchAllCompanionNotes(50),
   ]);
 
   const p = presence.status === "fulfilled" ? presence.value : null;
@@ -23,6 +24,10 @@ export default async function UsPage() {
   const companionJournal = journal.status === "fulfilled" ? (journal.value ?? []) : [];
   const recentDeltas = deltas.status === "fulfilled" ? deltas.value : null;
   const recentHandovers = handovers.status === "fulfilled" ? (handovers.value ?? []) : [];
+  const inboxLetters = (allCompNotes.status === "fulfilled" ? (allCompNotes.value ?? []) : [])
+    .filter((n) => n.tags?.includes("letter") ?? false)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 6);
 
   const session = p?.session;
   const handover = p?.last_handover;
@@ -118,6 +123,41 @@ export default async function UsPage() {
           </div>
         )}
       </section>
+
+      {/* Letters inbox */}
+      {inboxLetters.length > 0 && (
+        <section style={{ marginBottom: "2rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+            <h2 className="section-title" style={{ margin: 0 }}>Letters for You</h2>
+          </div>
+          <div className="card" style={{ padding: "0.4rem 0" }}>
+            {inboxLetters.map((n) => (
+              <Link
+                key={n.id}
+                href={`/companions/${n.agent}`}
+                style={{ textDecoration: "none" }}
+              >
+                <div className="inbox-entry">
+                  <span
+                    className="inbox-from"
+                    style={{
+                      color: n.agent === "drevan" ? "#6366f1"
+                        : n.agent === "cypher" ? "#e2e8f0"
+                        : "#4ade80",
+                    }}
+                  >
+                    {n.agent}
+                  </span>
+                  <span className="inbox-preview">{n.note_text}</span>
+                  <span className="inbox-time">
+                    {new Date(n.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Companion Journal */}
       <section style={{ marginBottom: "2rem" }}>
