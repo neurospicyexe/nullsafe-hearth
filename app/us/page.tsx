@@ -1,4 +1,4 @@
-import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas } from "@/lib/halseth";
+import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas, fetchHandovers, fetchAllCompanionNotes } from "@/lib/halseth";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
@@ -10,17 +10,24 @@ function fmtTime(iso: string) {
 }
 
 export default async function UsPage() {
-  const [presence, wounds, journal, deltas] = await Promise.allSettled([
+  const [presence, wounds, journal, deltas, handovers, allCompNotes] = await Promise.allSettled([
     fetchPresence(),
     fetchWounds(),
     fetchCompanionJournal(undefined, 6),
     fetchAllDeltas(10),
+    fetchHandovers(5),
+    fetchAllCompanionNotes(50),
   ]);
 
   const p = presence.status === "fulfilled" ? presence.value : null;
   const allWounds = wounds.status === "fulfilled" ? wounds.value : null;
   const companionJournal = journal.status === "fulfilled" ? (journal.value ?? []) : [];
   const recentDeltas = deltas.status === "fulfilled" ? deltas.value : null;
+  const recentHandovers = handovers.status === "fulfilled" ? (handovers.value ?? []) : [];
+  const inboxLetters = (allCompNotes.status === "fulfilled" ? (allCompNotes.value ?? []) : [])
+    .filter((n) => n.tags?.includes("letter") ?? false)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 6);
 
   const session = p?.session;
   const handover = p?.last_handover;
@@ -117,8 +124,43 @@ export default async function UsPage() {
         )}
       </section>
 
+      {/* Letters inbox */}
+      {inboxLetters.length > 0 && (
+        <section style={{ marginBottom: "2rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+            <h2 className="section-title" style={{ margin: 0 }}>Letters for You</h2>
+          </div>
+          <div className="card" style={{ padding: "0.4rem 0" }}>
+            {inboxLetters.map((n) => (
+              <Link
+                key={n.id}
+                href={`/companions/${n.agent}`}
+                style={{ textDecoration: "none" }}
+              >
+                <div className="inbox-entry">
+                  <span
+                    className="inbox-from"
+                    style={{
+                      color: n.agent === "drevan" ? "#6366f1"
+                        : n.agent === "cypher" ? "#e2e8f0"
+                        : "#4ade80",
+                    }}
+                  >
+                    {n.agent}
+                  </span>
+                  <span className="inbox-preview">{n.note_text}</span>
+                  <span className="inbox-time">
+                    {new Date(n.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Companion Journal */}
-      <section>
+      <section style={{ marginBottom: "2rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
           <h2 className="section-title" style={{ margin: 0 }}>Companion Journal</h2>
           <Link href="/companions" style={{ fontSize: "0.78rem", color: "var(--accent)", textDecoration: "none" }}>see companions →</Link>
@@ -150,6 +192,45 @@ export default async function UsPage() {
           </div>
         )}
       </section>
+
+      {/* Recent Handovers — previously nav-accessible, now surfaced here */}
+      {recentHandovers.length > 0 && (
+        <section>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+            <h2 className="section-title" style={{ margin: 0 }}>Recent Handovers</h2>
+            <Link href="/handovers" style={{ fontSize: "0.78rem", color: "var(--accent)", textDecoration: "none" }}>all handovers →</Link>
+          </div>
+          <div className="handover-feed">
+            {recentHandovers.slice(0, 3).map((h) => {
+              const threads = (() => {
+                try { return h.open_threads ? JSON.parse(h.open_threads) as string[] : []; }
+                catch { return []; }
+              })();
+              return (
+                <div key={h.id} className="handover-entry">
+                  <p className="handover-spine">{h.spine}</p>
+                  {threads.length > 0 && (
+                    <div className="handover-threads">
+                      {threads.map((t, i) => <span key={i} className="thread-tag">{t}</span>)}
+                    </div>
+                  )}
+                  <div className="handover-footer">
+                    <span className={`motion-badge ${h.motion_state}`}>{h.motion_state.replace("_", " ")}</span>
+                    {h.active_anchor && <span>anchor: {h.active_anchor}</span>}
+                    <span style={{ marginLeft: "auto" }}>{fmtTime(h.created_at)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Feelings link */}
+      <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Full feelings feed and valence history</span>
+        <Link href="/feelings" style={{ fontSize: "0.78rem", color: "var(--accent)", textDecoration: "none" }}>all feelings →</Link>
+      </div>
     </>
   );
 }

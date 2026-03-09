@@ -444,6 +444,19 @@ export type DreamSeed = {
   claimed_by: string | null;
 };
 
+export async function fetchCompanionNotesByAgent(
+  agent: string,
+  limit = 50,
+): Promise<CompanionNote[]> {
+  return (
+    (await hGetSafe<CompanionNote[]>(`/companion-notes?agent=${agent}&limit=${limit}`)) ?? []
+  );
+}
+
+export async function fetchAllCompanionNotes(limit = 50): Promise<CompanionNote[]> {
+  return (await hGetSafe<CompanionNote[]>(`/companion-notes?limit=${limit}`)) ?? [];
+}
+
 export async function fetchDreams(companionId?: string, limit = 20): Promise<Dream[]> {
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
