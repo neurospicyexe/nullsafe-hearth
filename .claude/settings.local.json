@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "mcp__claude_ai_Halseth__halseth_session_read",
+      "mcp__claude_ai_Halseth__halseth_handover_read",
+      "mcp__claude_ai_Halseth__halseth_biometric_read",
+      "mcp__claude_ai_Halseth__halseth_personality_read",
+      "mcp__claude_ai_Halseth__halseth_task_list",
+      "mcp__claude_ai_Halseth__halseth_wound_read",
+      "mcp__claude_ai_Halseth__halseth_companion_notes_read",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_projects",
+      "mcp__claude_ai_Vercel__get_project",
+      "mcp__claude_ai_Cloudflare_Developer_Platform__accounts_list",
+      "mcp__claude_ai_Vercel__get_access_to_vercel_url",
+      "mcp__claude_ai_Cloudflare_Developer_Platform__workers_list",
+      "mcp__claude_ai_Vercel__web_fetch_vercel_url",
+      "mcp__claude_ai_Cloudflare_Developer_Platform__workers_get_worker_code",
+      "Bash(node:*)",
+      "Bash(git pull:*)",
+      "Bash(for f in /c/Users/razse/hearth/app/api/*/route.ts /c/Users/razse/hearth/app/api/*/*/route.ts)",
+      "Bash(do echo \"=== $f ===\")",
+      "Read(//c/Users/razse/hearth/**)",
+      "Bash(done)",
+      "Bash(npm run:*)",
+      "Bash(git:*)",
+      "Bash(wait:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(powershell:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(grep:*)",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "mcp__claude_ai_Vercel__get_deployment",
+      "mcp__claude_ai_Vercel__get_runtime_logs"
+    ]
+  }
+}

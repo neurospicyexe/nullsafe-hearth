@@ -15,7 +15,7 @@ const AUTH = (): Record<string, string> => {
 // type=dreams -> proxies to /dreams; default -> proxies to /deltas
 export async function GET(req: Request) {
   const url   = new URL(req.url);
-  const limit = url.searchParams.get("limit") ?? "50";
+  const limit = Math.max(1, Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 100));
   const type  = url.searchParams.get("type");
 
   const path = type === "dreams"

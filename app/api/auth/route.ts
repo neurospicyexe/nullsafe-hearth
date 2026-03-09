@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
+  const secret = process.env.DASHBOARD_SECRET;
+  if (!secret) {
+    return NextResponse.json({ error: "Auth not configured" }, { status: 500 });
+  }
+
+  let body: { secret?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  if (!body.secret || body.secret !== secret) {
+    return NextResponse.json({ error: "Incorrect passphrase" }, { status: 401 });
+  }
+
+  const from = request.nextUrl.searchParams.get("from") ?? "/";
+  const response = NextResponse.redirect(new URL(from, request.url));
+
+  response.cookies.set("hearth_session", secret, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    path: "/",
+  });
+
+  return response;
+}
