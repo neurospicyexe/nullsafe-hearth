@@ -7,6 +7,7 @@ import {
   fetchCypherAudit,
   fetchGaiaWitness,
   fetchNotes,
+  fetchCompanionNotesByAgent,
 } from "@/lib/halseth";
 import type {
   CompanionJournalEntry,
@@ -14,9 +15,9 @@ import type {
   CypherAuditEntry,
   GaiaWitnessEntry,
   Note,
+  CompanionNote,
 } from "@/lib/halseth";
-
-export const revalidate = 60;
+import { LetterFormClient } from "./client";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
@@ -193,25 +194,96 @@ function NotesSection({ notes, companionId }: { notes: Note[]; companionId: stri
   );
 }
 
+// ── Letters ───────────────────────────────────────────────────────────────────
+
+type LetterItem =
+  | { kind: "incoming"; note: CompanionNote; at: string }
+  | { kind: "outgoing"; note: Note;          at: string };
+
+function LettersSection({
+  incoming,
+  outgoing,
+  companionId,
+  config,
+}: {
+  incoming: CompanionNote[];
+  outgoing: Note[];
+  companionId: string;
+  config: { display: string; color: string };
+}) {
+  const letters: LetterItem[] = [
+    ...incoming.map((n): LetterItem => ({ kind: "incoming", note: n, at: n.created_at })),
+    ...outgoing.map((n): LetterItem => ({ kind: "outgoing", note: n, at: n.created_at })),
+  ].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <LetterFormClient companionId={companionId} companionName={config.display} />
+
+      {letters.length === 0 ? (
+        <p className="empty" style={{ fontSize: "0.82rem", marginTop: "0.25rem" }}>
+          No letters yet. Write something — {config.display} will find it next session.
+        </p>
+      ) : (
+        <div className="letter-thread">
+          {letters.map((item) => {
+            if (item.kind === "incoming") {
+              return (
+                <div key={item.note.id} className="letter-bubble incoming">
+                  <div className="letter-body">{item.note.note_text}</div>
+                  <div className="letter-meta">
+                    <span style={{ color: config.color, fontWeight: 600 }}>
+                      {config.display}
+                    </span>
+                    <span>·</span>
+                    <span>{fmtTime(item.note.created_at)}</span>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div key={item.note.id} className="letter-bubble outgoing">
+                <div className="letter-body">{item.note.content}</div>
+                <div className="letter-meta">
+                  <span>{fmtTime(item.note.created_at)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function CompanionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  // Fetch companion-specific data in parallel
-  const [journal, deltas, notes, audit, witness] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness] = await Promise.allSettled([
     fetchCompanionJournal(id, 20),
     fetchCompanionDeltas(id, 30),
-    fetchNotes(50),
+    fetchNotes(100),
+    fetchCompanionNotesByAgent(id, 50),
     id === "cypher" ? fetchCypherAudit(20) : Promise.resolve(null as CypherAuditEntry[] | null),
-    id === "gaia" ? fetchGaiaWitness(20) : Promise.resolve(null as GaiaWitnessEntry[] | null),
+    id === "gaia"   ? fetchGaiaWitness(20)  : Promise.resolve(null as GaiaWitnessEntry[] | null),
   ]);
 
-  const journalEntries = journal.status === "fulfilled" ? journal.value : null;
-  const deltaEntries = deltas.status === "fulfilled" ? deltas.value : [];
-  const allNotes = notes.status === "fulfilled" ? notes.value : [];
-  const auditEntries = audit.status === "fulfilled" ? audit.value : null;
-  const witnessEntries = witness.status === "fulfilled" ? witness.value : null;
+  const journalEntries  = journal.status       === "fulfilled" ? journal.value       : null;
+  const deltaEntries    = deltas.status        === "fulfilled" ? deltas.value        : [];
+  const allNotes        = notes.status         === "fulfilled" ? notes.value         : [];
+  const allCompNotes    = companionNotes.status === "fulfilled" ? companionNotes.value : [];
+  const auditEntries    = audit.status         === "fulfilled" ? audit.value         : null;
+  const witnessEntries  = witness.status       === "fulfilled" ? witness.value       : null;
+
+  // Letters: outgoing = notes of type "letter:{id}", incoming = comp-notes tagged "letter"
+  const lettersOut = allNotes.filter((n) => n.note_type === `letter:${id}`);
+  const lettersIn  = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
+  // Regular notes = those authored by the companion (excluding letters)
+  const regularNotes = allNotes.filter(
+    (n) => n.author === id && n.note_type !== `letter:${id}`,
+  );
 
   return (
     <div data-companion={id}>
@@ -239,6 +311,17 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
+      {/* Letters — first, most personal */}
+      <section style={{ marginBottom: "2rem" }}>
+        <h2 className="section-title">Letters</h2>
+        <LettersSection
+          incoming={lettersIn}
+          outgoing={lettersOut}
+          companionId={id}
+          config={config}
+        />
+      </section>
+
       {/* Identity journal */}
       <section style={{ marginBottom: "2rem" }}>
         <h2 className="section-title">Identity Journal</h2>
@@ -251,11 +334,13 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         <DeltasSection deltas={deltaEntries} />
       </section>
 
-      {/* Notes */}
-      <section style={{ marginBottom: "2rem" }}>
-        <h2 className="section-title">Notes</h2>
-        <NotesSection notes={allNotes} companionId={id} />
-      </section>
+      {/* Notes from companion */}
+      {regularNotes.length > 0 && (
+        <section style={{ marginBottom: "2rem" }}>
+          <h2 className="section-title">Notes</h2>
+          <NotesSection notes={regularNotes} companionId={id} />
+        </section>
+      )}
 
       {/* Cypher-specific: audit log */}
       {id === "cypher" && (
