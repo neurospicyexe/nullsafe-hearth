@@ -2963,3 +2963,17 @@ input[type="range"] {
   color: var(--border);
   font-style: italic;
 }
+
+/* ── Biometric Form ───────────────────────────────────────────────────────── */
+.bio-form { display: flex; flex-direction: column; gap: 1rem; }
+.bio-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
+.bio-form-field { display: flex; flex-direction: column; gap: 0.3rem; }
+.bio-form-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.bio-form-input,
+.bio-form-select { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--fg); font-size: 0.88rem; padding: 0.45rem 0.65rem; width: 100%; }
+.bio-form-textarea { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--fg); font-size: 0.85rem; padding: 0.5rem 0.65rem; width: 100%; resize: vertical; min-height: 60px; }
+.bio-form-submit { background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius); padding: 0.5rem 1.25rem; font-size: 0.88rem; font-weight: 600; cursor: pointer; align-self: flex-start; }
+.bio-form-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.bio-form-status { font-size: 0.8rem; color: var(--muted); }
+.bio-form-status.ok { color: var(--green, #4ade80); }
+.bio-form-status.err { color: var(--red); }
