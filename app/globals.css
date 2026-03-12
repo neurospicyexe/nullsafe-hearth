@@ -2973,6 +2973,7 @@ input[type="range"] {
 .bio-form-select { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--fg); font-size: 0.88rem; padding: 0.45rem 0.65rem; width: 100%; }
 .bio-form-textarea { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--fg); font-size: 0.85rem; padding: 0.5rem 0.65rem; width: 100%; resize: vertical; min-height: 60px; }
 .bio-form-submit { background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius); padding: 0.5rem 1.25rem; font-size: 0.88rem; font-weight: 600; cursor: pointer; align-self: flex-start; }
+.bio-form-submit:hover:not(:disabled) { opacity: 0.85; }
 .bio-form-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 .bio-form-status { font-size: 0.8rem; color: var(--muted); }
 .bio-form-status.ok { color: var(--green, #4ade80); }
