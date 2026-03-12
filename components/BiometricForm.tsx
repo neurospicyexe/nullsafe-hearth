@@ -42,13 +42,24 @@ export default function BiometricForm() {
 
     const payload: Record<string, number | string> = {};
 
-    if (form.hrv_resting !== '') payload.hrv_resting = Number(form.hrv_resting);
-    if (form.resting_hr !== '') payload.resting_hr = Number(form.resting_hr);
-    if (form.sleep_hours !== '') payload.sleep_hours = Number(form.sleep_hours);
+    const hrv_resting_val = Number(form.hrv_resting);
+    if (form.hrv_resting !== '' && !isNaN(hrv_resting_val)) payload.hrv_resting = hrv_resting_val;
+    const resting_hr_val = Number(form.resting_hr);
+    if (form.resting_hr !== '' && !isNaN(resting_hr_val)) payload.resting_hr = resting_hr_val;
+    const sleep_hours_val = Number(form.sleep_hours);
+    if (form.sleep_hours !== '' && !isNaN(sleep_hours_val)) payload.sleep_hours = sleep_hours_val;
     if (form.sleep_quality !== '') payload.sleep_quality = form.sleep_quality;
-    if (form.steps !== '') payload.steps = Number(form.steps);
-    if (form.stress_score !== '') payload.stress_score = Number(form.stress_score);
+    const steps_val = Number(form.steps);
+    if (form.steps !== '' && !isNaN(steps_val)) payload.steps = steps_val;
+    const stress_score_val = Number(form.stress_score);
+    if (form.stress_score !== '' && !isNaN(stress_score_val)) payload.stress_score = stress_score_val;
     if (form.notes.trim() !== '') payload.notes = form.notes.trim();
+
+    if (Object.keys(payload).length === 0) {
+      setErrorMsg('Enter at least one value.');
+      setStatus('err');
+      return;
+    }
 
     try {
       const res = await fetch('/api/biometrics', {
@@ -107,6 +118,7 @@ export default function BiometricForm() {
             name="sleep_hours"
             type="number"
             step="0.5"
+            min={0}
             className="bio-form-input"
             placeholder="hours"
             value={form.sleep_hours}
