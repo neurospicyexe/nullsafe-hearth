@@ -1,19 +1,8 @@
 import Link from "next/link";
 import { fetchPresence, type PresenceData } from "@/lib/halseth";
-import LoveMeter from "@/components/LoveMeter";
-import SpoonCounter from "@/components/SpoonCounter";
+import CompanionMoodCard from "@/components/CompanionMoodCard";
 
 export const dynamic = 'force-dynamic';
-
-const NAV_TILES = [
-  { href: "/halseth",    sym: "⌂",  label: "Halseth",     desc: "rooms" },
-  { href: "/us",         sym: "♥",  label: "Us",          desc: "relationship" },
-  { href: "/companions", sym: "◉",  label: "Companions",  desc: "Drevan · Cypher · Gaia" },
-  { href: "/dreams",     sym: "◌",  label: "Dreams",      desc: "autonomous" },
-  { href: "/tasks",      sym: "☑",  label: "Tasks",       desc: "what needs doing" },
-  { href: "/checkin",    sym: "↑",  label: "Check-in",    desc: "daily state" },
-  { href: "/shared",     sym: "≡",  label: "Shared",      desc: "bridge" },
-];
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -113,6 +102,12 @@ function PresenceSection({ data }: { data: PresenceData }) {
   );
 }
 
+const DEFAULT_COMPANIONS = [
+  { id: "drevan", display_name: "Drevan", role: "companion", avatar_url: null },
+  { id: "cypher", display_name: "Cypher", role: "auditor", avatar_url: null },
+  { id: "gaia",   display_name: "Gaia",   role: "witness",  avatar_url: null },
+];
+
 export default async function Page() {
   let data: PresenceData | null = null;
   let error: string | null = null;
@@ -132,7 +127,9 @@ export default async function Page() {
     );
   }
 
-  const { house, wounds_count, tasks, recent_notes, latest_biometrics } = data;
+  const { house, wounds_count, tasks, recent_notes, latest_biometrics, companion_moods } = data;
+
+  const companions = data.companions.length > 0 ? data.companions : DEFAULT_COMPANIONS;
 
   const urgentTasks = tasks.filter(
     (t) => t.status !== "done" && (t.priority === "urgent" || t.priority === "high"),
@@ -160,10 +157,23 @@ export default async function Page() {
       {/* Presence */}
       <PresenceSection data={data} />
 
-      {/* Interactive meters */}
-      <div className="metrics-row">
-        <LoveMeter initial={house.love_meter} />
-        <SpoonCounter initial={house.spoon_count} />
+      {/* Companions */}
+      <div className="home-section">
+        <div className="home-section-header">
+          <span className="home-section-title">Companions</span>
+          <Link href="/companions" className="home-section-link">all →</Link>
+        </div>
+        <div className="companion-mood-row">
+          {companions.map((c) => (
+            <CompanionMoodCard
+              key={c.id}
+              companionId={c.id}
+              displayName={c.display_name}
+              mood={companion_moods?.[c.id]}
+              avatarUrl={c.avatar_url}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Passive biometric stats */}
@@ -288,22 +298,6 @@ export default async function Page() {
           </div>
         </div>
       )}
-
-      {/* Quick nav */}
-      <div className="home-section">
-        <div className="home-section-header">
-          <span className="home-section-title">Navigate</span>
-        </div>
-        <div className="home-nav-grid">
-          {NAV_TILES.map((tile) => (
-            <Link key={tile.href} href={tile.href} className="home-nav-tile">
-              <span className="home-nav-tile-sym">{tile.sym}</span>
-              <span className="home-nav-tile-label">{tile.label}</span>
-              <span className="home-nav-tile-meta">{tile.desc}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
 
       <div style={{ fontSize: "0.68rem", color: "var(--muted)", paddingTop: "0.5rem" }}>
         refreshes every 30s
