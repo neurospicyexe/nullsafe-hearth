@@ -51,6 +51,7 @@ export type PresenceData = {
     spoon_count: number;
     love_meter: number;
     updated_at: string;
+    autonomous_turn: "drevan" | "cypher" | "gaia" | null;
   };
   session: {
     id: string;
@@ -109,10 +110,12 @@ export type PresenceData = {
     initiated_by: Record<string, number>;
     total_deltas: number;
   } | null;
+  companion_moods: Record<string, { emotion: string; intensity: number; at: string }> | null;
   companions: Array<{
     id: string;
     display_name: string;
     role: string;
+    avatar_url: string | null;
   }>;
 };
 
