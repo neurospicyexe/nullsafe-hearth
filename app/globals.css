@@ -2876,3 +2876,90 @@ input[type="range"] {
   color: var(--muted);
   flex-shrink: 0;
 }
+
+/* ── Companion mood row ──────────────────────────────────────────────────── */
+
+.companion-mood-row {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.companion-mood-card {
+  flex: 1;
+  min-width: 130px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--c, var(--accent)) 30%, var(--border));
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.companion-mood-card:hover {
+  background: var(--surface2);
+  border-color: color-mix(in srgb, var(--c, var(--accent)) 60%, var(--border));
+}
+
+.companion-mood-avatar {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.companion-mood-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--c, var(--accent)) 50%, transparent);
+  object-fit: cover;
+}
+
+.companion-mood-sym {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.companion-mood-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.companion-mood-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.companion-mood-state {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.companion-mood-emotion {
+  font-size: 0.8rem;
+  color: var(--text);
+  text-transform: lowercase;
+}
+
+.companion-mood-intensity {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.companion-mood-absent {
+  font-size: 0.75rem;
+  color: var(--border);
+  font-style: italic;
+}
