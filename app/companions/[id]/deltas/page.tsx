@@ -15,7 +15,7 @@ export default async function CompanionDeltasPage({ params }: { params: Promise<
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
-  const deltaEntries = await fetchCompanionDeltas(id, 200);
+  const deltaEntries = await fetchCompanionDeltas(id, 200).catch(() => []);
 
   return (
     <div>
