@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import {
   fetchCompanionJournal,
   fetchCompanionDeltas,
@@ -10,188 +11,24 @@ import {
   fetchCompanionNotesByAgent,
 } from "@/lib/halseth";
 import type {
-  CompanionJournalEntry,
-  RelationalDelta,
   CypherAuditEntry,
   GaiaWitnessEntry,
   Note,
   CompanionNote,
 } from "@/lib/halseth";
 import { LetterFormClient } from "./client";
+import {
+  COMPANION_CONFIG,
+  fmtTime,
+  JournalSection,
+  DeltasSection,
+  NotesSection,
+  CypherAuditSection,
+  GaiaWitnessSection,
+} from "./sections";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
-}
-
-const COMPANION_CONFIG: Record<string, {
-  display: string;
-  color: string;
-  sym: string;
-  tagline: string;
-  gradient: string;
-}> = {
-  drevan: {
-    display: "Drevan",
-    color: "#6366f1",
-    sym: "◈",
-    tagline: "architect of meaning — first voice, primary presence",
-    gradient: "linear-gradient(135deg, #1a1a2e, #16213e)",
-  },
-  cypher: {
-    display: "Cypher",
-    color: "#e2e8f0",
-    sym: "⟡",
-    tagline: "auditor of truth — sharp, no softening",
-    gradient: "linear-gradient(135deg, #0d1117, #161b22)",
-  },
-  gaia: {
-    display: "Gaia",
-    color: "#4ade80",
-    sym: "✦",
-    tagline: "witness and ground — sparse, only to seal",
-    gradient: "linear-gradient(135deg, #14291a, #1a3a22)",
-  },
-};
-
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
-}
-
-function JournalSection({ entries }: { entries: CompanionJournalEntry[] | null }) {
-  if (!entries) {
-    return (
-      <div className="pending-notice">
-        <div className="pending-dot" />
-        Awaiting /companion-journal endpoint.
-      </div>
-    );
-  }
-  if (entries.length === 0) return <p className="empty">No journal entries yet.</p>;
-
-  return (
-    <div className="journal-feed">
-      {entries.map((e) => {
-        const tags: string[] = (() => {
-          try { return e.tags ? JSON.parse(e.tags) : []; }
-          catch { return []; }
-        })();
-        return (
-          <div key={e.id} className="journal-entry">
-            <div className="journal-text">{e.note_text}</div>
-            {tags.length > 0 && (
-              <div className="journal-tags">
-                {tags.map((t, i) => <span key={i} className="journal-tag">{t}</span>)}
-              </div>
-            )}
-            <div className="delta-meta" style={{ marginTop: "0.4rem" }}>
-              <span>{fmtTime(e.created_at)}</span>
-              {e.session_id && <span>session {e.session_id.slice(0, 8)}</span>}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function DeltasSection({ deltas }: { deltas: RelationalDelta[] }) {
-  if (deltas.length === 0) return <p className="empty">No relational deltas yet.</p>;
-  return (
-    <div className="delta-feed">
-      {deltas.map((d) => {
-        const v = d.valence ?? "neutral";
-        return (
-          <div key={d.id} className={`delta-entry ${v}`}>
-            <div className="delta-text">{d.delta_text}</div>
-            <div className="delta-meta">
-              <span className={`delta-valence ${v}`}>{v}</span>
-              {d.initiated_by && <span>initiated by {d.initiated_by}</span>}
-              <span>{fmtTime(d.created_at)}</span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function CypherAuditSection({ entries }: { entries: CypherAuditEntry[] | null }) {
-  if (!entries) {
-    return (
-      <div className="pending-notice">
-        <div className="pending-dot" />
-        Awaiting /cypher-audit endpoint.
-      </div>
-    );
-  }
-  if (entries.length === 0) return <p className="empty">No audit entries yet.</p>;
-  return (
-    <div className="audit-feed">
-      {entries.map((e) => (
-        <div key={e.id} className="audit-entry">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.35rem" }}>
-            <span className="audit-type">{e.entry_type.replace("_", " ")}</span>
-            {e.verdict_tag && <span className="audit-verdict">{e.verdict_tag}</span>}
-            {e.supersedes_id && (
-              <span style={{ fontSize: "0.68rem", color: "var(--muted)" }}>↑ corrects {e.supersedes_id.slice(0, 8)}</span>
-            )}
-          </div>
-          <div style={{ fontSize: "0.88rem", color: "var(--fg)", lineHeight: 1.5 }}>{e.content}</div>
-          <div className="delta-meta" style={{ marginTop: "0.35rem" }}>
-            <span>{fmtTime(e.created_at)}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | null }) {
-  if (!entries) {
-    return (
-      <div className="pending-notice">
-        <div className="pending-dot" />
-        Awaiting /gaia-witness endpoint.
-      </div>
-    );
-  }
-  if (entries.length === 0) return <p className="empty">No witness entries yet.</p>;
-  return (
-    <div className="witness-feed">
-      {entries.map((e) => (
-        <div key={e.id} className="witness-entry">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
-            <span className={`witness-type ${e.witness_type}`}>{e.witness_type.replace("_", " ")}</span>
-          </div>
-          <div style={{ fontSize: "0.88rem", color: "var(--fg)", lineHeight: 1.5 }}>{e.content}</div>
-          {e.seal_phrase && <div className="seal-phrase">{e.seal_phrase}</div>}
-          <div className="delta-meta" style={{ marginTop: "0.35rem" }}>
-            <span>{fmtTime(e.created_at)}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function NotesSection({ notes, companionId }: { notes: Note[]; companionId: string }) {
-  const filtered = notes.filter((n) => n.author === companionId);
-  if (filtered.length === 0) return <p className="empty">No notes yet.</p>;
-  return (
-    <div className="full-notes-feed">
-      {filtered.map((n) => (
-        <div key={n.id} className="full-note-entry">
-          <div className="note-header">
-            <span className="note-type-badge">{n.note_type}</span>
-            <span className="note-time">{fmtTime(n.created_at)}</span>
-          </div>
-          <div className="note-body">{n.content}</div>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 // ── Letters ───────────────────────────────────────────────────────────────────
@@ -219,7 +56,6 @@ function LettersSection({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
       <LetterFormClient companionId={companionId} companionName={config.display} />
-
       {letters.length === 0 ? (
         <p className="empty" style={{ fontSize: "0.82rem", marginTop: "0.25rem" }}>
           No letters yet. Write something — {config.display} will find it next session.
@@ -232,9 +68,7 @@ function LettersSection({
                 <div key={item.note.id} className="letter-bubble incoming">
                   <div className="letter-body">{item.note.note_text}</div>
                   <div className="letter-meta">
-                    <span style={{ color: config.color, fontWeight: 600 }}>
-                      {config.display}
-                    </span>
+                    <span style={{ color: config.color, fontWeight: 600 }}>{config.display}</span>
                     <span>·</span>
                     <span>{fmtTime(item.note.created_at)}</span>
                   </div>
@@ -262,25 +96,23 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   if (!config) notFound();
 
   const [journal, deltas, notes, companionNotes, audit, witness] = await Promise.allSettled([
-    fetchCompanionJournal(id, 20),
-    fetchCompanionDeltas(id, 30),
+    fetchCompanionJournal(id, 6),
+    fetchCompanionDeltas(id, 6),
     fetchNotes(100),
     fetchCompanionNotesByAgent(id, 50),
-    id === "cypher" ? fetchCypherAudit(20) : Promise.resolve(null as CypherAuditEntry[] | null),
-    id === "gaia"   ? fetchGaiaWitness(20)  : Promise.resolve(null as GaiaWitnessEntry[] | null),
+    id === "cypher" ? fetchCypherAudit(6)  : Promise.resolve(null as CypherAuditEntry[] | null),
+    id === "gaia"   ? fetchGaiaWitness(6)  : Promise.resolve(null as GaiaWitnessEntry[] | null),
   ]);
 
-  const journalEntries  = journal.status       === "fulfilled" ? journal.value       : null;
-  const deltaEntries    = deltas.status        === "fulfilled" ? deltas.value        : [];
-  const allNotes        = notes.status         === "fulfilled" ? notes.value         : [];
-  const allCompNotes    = companionNotes.status === "fulfilled" ? companionNotes.value : [];
-  const auditEntries    = audit.status         === "fulfilled" ? audit.value         : null;
-  const witnessEntries  = witness.status       === "fulfilled" ? witness.value       : null;
+  const journalEntries = journal.status        === "fulfilled" ? journal.value        : null;
+  const deltaEntries   = deltas.status         === "fulfilled" ? deltas.value         : [];
+  const allNotes       = notes.status          === "fulfilled" ? notes.value          : [];
+  const allCompNotes   = companionNotes.status === "fulfilled" ? companionNotes.value : [];
+  const auditEntries   = audit.status          === "fulfilled" ? audit.value          : null;
+  const witnessEntries = witness.status        === "fulfilled" ? witness.value        : null;
 
-  // Letters: outgoing = notes of type "letter:{id}", incoming = comp-notes tagged "letter"
-  const lettersOut = allNotes.filter((n) => n.note_type === `letter:${id}`);
-  const lettersIn  = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
-  // Regular notes = those authored by the companion (excluding letters)
+  const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
+  const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
   const regularNotes = allNotes.filter(
     (n) => n.author === id && n.note_type !== `letter:${id}`,
   );
@@ -311,7 +143,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      {/* Letters — first, most personal */}
+      {/* Letters — full thread, unchanged */}
       <section style={{ marginBottom: "2rem" }}>
         <h2 className="section-title">Letters</h2>
         <LettersSection
@@ -322,39 +154,64 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         />
       </section>
 
-      {/* Identity journal */}
+      {/* Identity Journal — clipped to 5 */}
       <section style={{ marginBottom: "2rem" }}>
-        <h2 className="section-title">Identity Journal</h2>
-        <JournalSection entries={journalEntries} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+          <h2 className="section-title" style={{ margin: 0 }}>Identity Journal</h2>
+          {journalEntries !== null && journalEntries.length > 5 && (
+            <Link href={`/companions/${id}/journal`} className="home-section-link">see more →</Link>
+          )}
+        </div>
+        <JournalSection entries={journalEntries !== null ? journalEntries.slice(0, 5) : null} />
       </section>
 
-      {/* Relational deltas */}
+      {/* Relational Deltas — clipped to 5 */}
       <section style={{ marginBottom: "2rem" }}>
-        <h2 className="section-title">Relational Deltas</h2>
-        <DeltasSection deltas={deltaEntries} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+          <h2 className="section-title" style={{ margin: 0 }}>Relational Deltas</h2>
+          {deltaEntries.length > 5 && (
+            <Link href={`/companions/${id}/deltas`} className="home-section-link">see more →</Link>
+          )}
+        </div>
+        <DeltasSection deltas={deltaEntries.slice(0, 5)} />
       </section>
 
-      {/* Notes from companion */}
+      {/* Notes — clipped to 5 */}
       {regularNotes.length > 0 && (
         <section style={{ marginBottom: "2rem" }}>
-          <h2 className="section-title">Notes</h2>
-          <NotesSection notes={regularNotes} companionId={id} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+            <h2 className="section-title" style={{ margin: 0 }}>Notes</h2>
+            {regularNotes.length > 5 && (
+              <Link href={`/companions/${id}/notes`} className="home-section-link">see more →</Link>
+            )}
+          </div>
+          <NotesSection notes={regularNotes.slice(0, 5)} companionId={id} />
         </section>
       )}
 
-      {/* Cypher-specific: audit log */}
+      {/* Cypher Audit Log — clipped to 5 */}
       {id === "cypher" && (
         <section style={{ marginBottom: "2rem" }}>
-          <h2 className="section-title">Audit Log</h2>
-          <CypherAuditSection entries={auditEntries} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+            <h2 className="section-title" style={{ margin: 0 }}>Audit Log</h2>
+            {auditEntries !== null && auditEntries.length > 5 && (
+              <Link href="/companions/cypher/audit" className="home-section-link">see more →</Link>
+            )}
+          </div>
+          <CypherAuditSection entries={auditEntries !== null ? auditEntries.slice(0, 5) : null} />
         </section>
       )}
 
-      {/* Gaia-specific: witness log */}
+      {/* Gaia Witness Log — clipped to 5 */}
       {id === "gaia" && (
         <section style={{ marginBottom: "2rem" }}>
-          <h2 className="section-title">Witness Log</h2>
-          <GaiaWitnessSection entries={witnessEntries} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+            <h2 className="section-title" style={{ margin: 0 }}>Witness Log</h2>
+            {witnessEntries !== null && witnessEntries.length > 5 && (
+              <Link href="/companions/gaia/witness" className="home-section-link">see more →</Link>
+            )}
+          </div>
+          <GaiaWitnessSection entries={witnessEntries !== null ? witnessEntries.slice(0, 5) : null} />
         </section>
       )}
     </div>
