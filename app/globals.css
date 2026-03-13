@@ -2978,3 +2978,50 @@ input[type="range"] {
 .bio-form-status { font-size: 0.8rem; color: var(--muted); }
 .bio-form-status.ok { color: var(--green, #4ade80); }
 .bio-form-status.err { color: var(--red); }
+
+/* ── Search Overlay ───────────────────────────────────────────────────────── */
+.search-backdrop {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
+  z-index: 100; display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 6rem;
+}
+.search-panel {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); width: min(640px, 90vw);
+  max-height: 70vh; display: flex; flex-direction: column; overflow: hidden;
+}
+.search-input {
+  width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border);
+  color: var(--fg); font-size: 1rem; padding: 1rem 1.25rem; outline: none;
+}
+.search-chips {
+  display: flex; gap: 0.5rem; padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.search-chip {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 999px; color: var(--muted); cursor: pointer;
+  font-size: 0.75rem; padding: 0.2rem 0.75rem;
+}
+.search-chip.active {
+  background: var(--accent); border-color: var(--accent); color: var(--bg);
+}
+.search-results { overflow-y: auto; flex: 1; padding: 0.5rem 0; }
+.search-result-group { padding: 0.25rem 0; }
+.search-result-group-label {
+  font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.4rem 1.25rem 0.2rem;
+}
+.search-result-row {
+  display: flex; gap: 0.75rem; align-items: baseline;
+  padding: 0.45rem 1.25rem; cursor: pointer; text-decoration: none;
+  color: var(--fg);
+}
+.search-result-row:hover { background: rgba(255,255,255,0.04); }
+.search-result-text {
+  flex: 1; font-size: 0.85rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.search-result-meta { font-size: 0.68rem; color: var(--muted); flex-shrink: 0; }
+.search-empty { padding: 2rem 1.25rem; text-align: center; font-size: 0.85rem; color: var(--muted); }
+.search-loading { padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--muted); }
