@@ -63,6 +63,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const [activeChip, setActiveChip] = useState<ChipValue>("all");
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Reset state and autofocus when open changes
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     setResults(null);
     setLoading(false);
     setActiveChip("all");
+    setError(null);
     if (open && inputRef.current) {
       inputRef.current.focus();
     }
@@ -95,20 +97,27 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     }
 
     setLoading(true);
+    setError(null);
+    const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetch(`/api/search?q=${encodeURIComponent(q)}&type=${activeChip}`)
+      fetch(`/api/search?q=${encodeURIComponent(q)}&type=${activeChip}`, { signal: controller.signal })
         .then((res) => res.json())
         .then((data: SearchResponse) => {
           setResults(data);
           setLoading(false);
         })
-        .catch(() => {
+        .catch((err: unknown) => {
+          if (err instanceof Error && err.name === "AbortError") return;
           setResults(null);
+          setError("Search unavailable");
           setLoading(false);
         });
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [q, activeChip, open]);
 
   if (!open) return null;
@@ -117,7 +126,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     results !== null &&
     GROUP_ORDER.some((key) => results[key].length > 0);
 
-  const showEmpty = q.trim() !== "" && !loading && results !== null && !hasResults;
+  const showEmpty = q.trim() !== "" && !loading && error === null && results !== null && !hasResults;
 
   return (
     <div
@@ -127,6 +136,9 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
       <div
         className="search-panel"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search"
       >
         <input
           ref={inputRef}
@@ -154,7 +166,11 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
             <div className="search-loading">searching…</div>
           )}
 
-          {!loading && results !== null && GROUP_ORDER.map((key) => {
+          {!loading && error !== null && (
+            <div className="search-empty">{error}</div>
+          )}
+
+          {!loading && error === null && results !== null && GROUP_ORDER.map((key) => {
             const group = results[key];
             if (group.length === 0) return null;
             return (
