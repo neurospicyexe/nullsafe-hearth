@@ -26,7 +26,7 @@ export default function Nav() {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setSearchOpen(true);
+        setSearchOpen(prev => !prev);
       }
     };
     window.addEventListener("keydown", handler);
@@ -54,6 +54,7 @@ export default function Nav() {
           className="nav-search-btn"
           onClick={() => setSearchOpen(true)}
           title="Search (⌘K)"
+          aria-label="Search"
         >
           <span className="nav-sym">⌕</span>
           <span className="nav-label">Search</span>
@@ -77,6 +78,7 @@ export default function Nav() {
           className="nav-bottom-item nav-search-btn"
           onClick={() => setSearchOpen(true)}
           title="Search"
+          aria-label="Search"
         >
           <span className="nav-sym">⌕</span>
           <span className="nav-bottom-label">Search</span>
