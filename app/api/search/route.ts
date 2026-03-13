@@ -72,7 +72,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const dreams: SearchResult[] = (rawDreams ?? [])
       .filter((d: Dream) => matches(d.content, q))
       .map((d: Dream) => ({
-        id: d.id, type: "dream" as const, text: d.content, created_at: d.generated_at, url: "/dreams",
+        id: d.id, type: "dream" as const, text: d.content, created_at: d.generated_at /* Dream has no created_at; generated_at is the timestamp */, url: "/dreams",
       }));
 
     const handovers: SearchResult[] = (rawHandovers ?? [])
