@@ -11,8 +11,8 @@ function fmtTime(iso: string) {
 function agentColor(agent: string): string {
   switch (agent) {
     case "drevan": return "var(--accent)";
-    case "cypher": return "#a78bfa";
-    case "gaia":   return "#34d399";
+    case "cypher": return "#e2e8f0";
+    case "gaia":   return "#4ade80";
     default:       return "var(--muted)";
   }
 }
