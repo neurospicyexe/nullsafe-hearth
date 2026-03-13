@@ -815,6 +815,27 @@ body {
   color: var(--accent);
 }
 
+.nav-search-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-search-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
 .nav-sym {
   font-size: 1rem;
   width: 1.2rem;
