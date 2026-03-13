@@ -177,8 +177,8 @@ export default async function UsPage() {
       <section style={{ marginBottom: "2rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
           <h2 className="section-title" style={{ margin: 0 }}>Companion Journal</h2>
-          {companionJournal.length > 0 && companionJournal[0].agent && (
-            <Link href={`/companions/${companionJournal[0].agent}`} style={{ fontSize: "0.78rem", color: "var(--accent)", textDecoration: "none" }}>
+          {companionJournal.length > 5 && (
+            <Link href="/journal" style={{ fontSize: "0.78rem", color: "var(--accent)", textDecoration: "none" }}>
               see more →
             </Link>
           )}
