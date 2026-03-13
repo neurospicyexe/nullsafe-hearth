@@ -815,6 +815,27 @@ body {
   color: var(--accent);
 }
 
+.nav-search-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-search-btn:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
 .nav-sym {
   font-size: 1rem;
   width: 1.2rem;
@@ -2652,7 +2673,7 @@ input[type="range"] {
 
 /* ── Home section headers ────────────────────────────────────────────────────── */
 
-.home-section { display: flex; flex-direction: column; gap: 0.5rem; }
+.home-section { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem; }
 
 .home-section-header {
   display: flex;
@@ -2876,3 +2897,152 @@ input[type="range"] {
   color: var(--muted);
   flex-shrink: 0;
 }
+
+/* ── Companion mood row ──────────────────────────────────────────────────── */
+
+.companion-mood-row {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.companion-mood-card {
+  flex: 1;
+  min-width: 130px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--c, var(--accent)) 30%, var(--border));
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.companion-mood-card:hover {
+  background: var(--surface2);
+  border-color: color-mix(in srgb, var(--c, var(--accent)) 60%, var(--border));
+}
+
+.companion-mood-avatar {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.companion-mood-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--c, var(--accent)) 50%, transparent);
+  object-fit: cover;
+}
+
+.companion-mood-sym {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.companion-mood-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.companion-mood-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.companion-mood-state {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.companion-mood-emotion {
+  font-size: 0.8rem;
+  color: var(--text);
+  text-transform: lowercase;
+}
+
+.companion-mood-intensity {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.companion-mood-absent {
+  font-size: 0.75rem;
+  color: var(--border);
+  font-style: italic;
+}
+
+/* ── Biometric Form ───────────────────────────────────────────────────────── */
+.bio-form { display: flex; flex-direction: column; gap: 1rem; }
+.bio-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
+.bio-form-field { display: flex; flex-direction: column; gap: 0.3rem; }
+.bio-form-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.bio-form-input,
+.bio-form-select { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--fg); font-size: 0.88rem; padding: 0.45rem 0.65rem; width: 100%; }
+.bio-form-textarea { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--fg); font-size: 0.85rem; padding: 0.5rem 0.65rem; width: 100%; resize: vertical; min-height: 60px; }
+.bio-form-submit { background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius); padding: 0.5rem 1.25rem; font-size: 0.88rem; font-weight: 600; cursor: pointer; align-self: flex-start; }
+.bio-form-submit:hover:not(:disabled) { opacity: 0.85; }
+.bio-form-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.bio-form-status { font-size: 0.8rem; color: var(--muted); }
+.bio-form-status.ok { color: var(--green, #4ade80); }
+.bio-form-status.err { color: var(--red); }
+
+/* ── Search Overlay ───────────────────────────────────────────────────────── */
+.search-backdrop {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
+  z-index: 100; display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 6rem;
+}
+.search-panel {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); width: min(640px, 90vw);
+  max-height: 70vh; display: flex; flex-direction: column; overflow: hidden;
+}
+.search-input {
+  width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border);
+  color: var(--fg); font-size: 1rem; padding: 1rem 1.25rem; outline: none;
+}
+.search-chips {
+  display: flex; gap: 0.5rem; padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.search-chip {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 999px; color: var(--muted); cursor: pointer;
+  font-family: inherit; font-size: 0.75rem; padding: 0.2rem 0.75rem;
+}
+.search-chip.active {
+  background: var(--accent); border-color: var(--accent); color: var(--bg);
+}
+.search-results { overflow-y: auto; flex: 1; padding: 0.5rem 0; }
+.search-result-group { padding: 0.25rem 0; }
+.search-result-group-label {
+  font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.4rem 1.25rem 0.2rem;
+}
+.search-result-row {
+  display: flex; gap: 0.75rem; align-items: baseline;
+  padding: 0.45rem 1.25rem; cursor: pointer; text-decoration: none;
+  color: var(--fg);
+}
+.search-result-row:hover { background: rgba(255,255,255,0.04); }
+.search-result-text {
+  flex: 1; font-size: 0.85rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.search-result-meta { font-size: 0.68rem; color: var(--muted); flex-shrink: 0; }
+.search-empty { padding: 2rem 1.25rem; text-align: center; font-size: 0.85rem; color: var(--muted); }
+.search-loading { padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--muted); }

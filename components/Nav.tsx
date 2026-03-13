@@ -1,24 +1,37 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SearchOverlay from "./SearchOverlay";
 
 const NAV = [
-  { href: "/",           label: "Home",       sym: "◈" },
-  { href: "/halseth",    label: "Halseth",    sym: "⌂" },
-  { href: "/us",         label: "Us",         sym: "♥" },
-  { href: "/companions", label: "Companions", sym: "◉" },
-  { href: "/dreams",     label: "Dreams",     sym: "◌" },
-  { href: "/tasks",      label: "Tasks",      sym: "☑" },
-  { href: "/checkin",    label: "Check-in",   sym: "↑" },
-  { href: "/shared",     label: "Shared",     sym: "≡" },
+  { href: "/",        label: "Home",     sym: "◈" },
+  { href: "/halseth", label: "Halseth",  sym: "⌂" },
+  { href: "/us",      label: "Us",       sym: "♥" },
+  { href: "/dreams",  label: "Dreams",   sym: "◌" },
+  { href: "/tasks",   label: "Tasks",    sym: "☑" },
+  { href: "/checkin", label: "Check-in", sym: "↑" },
+  { href: "/shared",  label: "Shared",   sym: "≡" },
 ];
 
 export default function Nav() {
   const path = usePathname();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const isActive = (href: string) =>
     href === "/" ? path === "/" : path.startsWith(href);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   return (
     <>
@@ -37,6 +50,15 @@ export default function Nav() {
             </Link>
           ))}
         </div>
+        <button
+          className="nav-search-btn"
+          onClick={() => setSearchOpen(true)}
+          title="Search (⌘K)"
+          aria-label="Search"
+        >
+          <span className="nav-sym">⌕</span>
+          <span className="nav-label">Search</span>
+        </button>
       </nav>
 
       {/* Bottom bar — mobile */}
@@ -52,7 +74,18 @@ export default function Nav() {
             <span className="nav-bottom-label">{item.label}</span>
           </Link>
         ))}
+        <button
+          className="nav-bottom-item nav-search-btn"
+          onClick={() => setSearchOpen(true)}
+          title="Search"
+          aria-label="Search"
+        >
+          <span className="nav-sym">⌕</span>
+          <span className="nav-bottom-label">Search</span>
+        </button>
       </nav>
+
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }

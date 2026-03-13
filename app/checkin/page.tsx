@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BiometricCard from "@/components/BiometricCard";
+import BiometricForm from "@/components/BiometricForm";
 import UplinkForm from "@/components/UplinkForm";
 import { type BiometricSnapshot } from "@/lib/halseth";
 import { RoutineStatusClient } from "./client";
@@ -54,6 +55,10 @@ export default async function CheckinPage() {
 
       <RoutineStatusClient initialRoutines={routines} />
       {biometrics && <BiometricCard biometrics={biometrics} />}
+
+      <h2 className="section-title">Biometrics</h2>
+      <BiometricForm />
+
       <UplinkForm />
 
       <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--muted)", display: "flex", justifyContent: "flex-end" }}>
