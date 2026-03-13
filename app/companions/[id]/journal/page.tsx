@@ -10,7 +10,8 @@ export function generateStaticParams() {
 }
 
 export default async function CompanionJournalPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const id = rawId.toLowerCase();
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
