@@ -2652,7 +2652,7 @@ input[type="range"] {
 
 /* ── Home section headers ────────────────────────────────────────────────────── */
 
-.home-section { display: flex; flex-direction: column; gap: 0.5rem; }
+.home-section { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem; }
 
 .home-section-header {
   display: flex;
