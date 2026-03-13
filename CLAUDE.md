@@ -129,7 +129,25 @@ Full OWASP + vibesec audit run 2026-03-09. No fixes applied yet.
 
 `DASHBOARD_SECRET` env var → user visits `/login` → enters passphrase → `POST /api/auth` sets httpOnly `hearth_session` cookie → middleware validates on every request. No `DASHBOARD_SECRET` = open (local dev). Set it in Vercel project settings.
 
+## Next.js 15 patterns
+
+- `params` is a `Promise` in App Router: `const { id: rawId } = await params; const id = rawId.toLowerCase();`
+- Sub-pages must declare their own `generateStaticParams` — not inherited from parent route segments
+
+## Companion pages
+
+- Shared section components + `COMPANION_CONFIG` (colors, display names) live in `app/companions/[id]/sections.tsx` — import from there
+- Companion colors: drevan=`var(--accent)`, cypher=`#e2e8f0`, gaia=`#4ade80` — use these everywhere, do NOT invent new colors
+- Sub-pages exist at `/companions/[id]/journal`, `/companions/[id]/deltas`, `/companions/[id]/notes`, `/companions/cypher/audit`, `/companions/gaia/witness`
+- `fetchCompanionJournal(undefined, 200)` — pass `undefined` as agent to fetch all companions' entries (used by `/journal`)
+- 5-item clip pattern: fetch 6, `.slice(0, 5)` display, `"see more →"` Link with `className="home-section-link"` if `count > 5`
+
+## Search
+
+- `components/SearchOverlay.tsx` — full-text search UI, triggered by Cmd+K/Ctrl+K from Nav
+- `app/api/search/route.ts` — search API, accepts `?q=` and `?type=all|feelings|journal|dreams|handovers|tasks`
+
 ## Vercel
 
 - Live URL: https://nullsafe-hearth-1gvo.vercel.app
-- All pages prerender with `revalidate: 30` — Vercel CDN may serve stale for up to 5 min
+- Data pages use `export const dynamic = 'force-dynamic'` (server-rendered on every request, no CDN caching)
