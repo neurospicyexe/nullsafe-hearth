@@ -39,6 +39,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() ?? "";
   if (!q) return NextResponse.json({ error: "q is required" }, { status: 400 });
+  if (q.length > 200) return NextResponse.json({ error: "q too long" }, { status: 400 });
 
   const rawType = searchParams.get("type") ?? "all";
   const type: SearchType = ["all", "feelings", "journal", "dreams", "handovers", "tasks"].includes(rawType)
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       want("journal")   ? fetchCompanionJournal(undefined, 200) : Promise.resolve(null),
       want("dreams")    ? fetchDreams(undefined, 200)        : Promise.resolve(null),
       want("handovers") ? fetchHandovers(100)                : Promise.resolve(null),
-      want("tasks")     ? fetchTasks()                       : Promise.resolve([]),
+      want("tasks")     ? fetchTasks() /* returns all statuses including done */ : Promise.resolve([]),
     ]);
 
     const feelings: SearchResult[] = (rawFeelings ?? [])
