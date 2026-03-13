@@ -163,7 +163,7 @@ export default async function Page() {
       <div className="home-section">
         <div className="home-section-header">
           <span className="home-section-title">Companions</span>
-          <Link href="/companions" className="home-section-link">all →</Link>
+          <Link href="/us" className="home-section-link">all →</Link>
         </div>
         <div className="companion-mood-row">
           {companions.map((c) => (
