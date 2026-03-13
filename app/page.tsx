@@ -139,7 +139,7 @@ export default async function Page() {
   return (
     <>
       {/* Page header */}
-      <header style={{ marginBottom: "1.75rem" }}>
+      <header style={{ marginBottom: "2rem" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: "0.65rem", marginBottom: "0.1rem" }}>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0, letterSpacing: "-0.02em" }}>
             {data.system.name}
@@ -155,7 +155,9 @@ export default async function Page() {
       </header>
 
       {/* Presence */}
-      <PresenceSection data={data} />
+      <div style={{ marginBottom: "2rem" }}>
+        <PresenceSection data={data} />
+      </div>
 
       {/* Companions */}
       <div className="home-section">
@@ -178,7 +180,7 @@ export default async function Page() {
 
       {/* Passive biometric stats */}
       {(house.current_room || latest_biometrics) && (
-        <div className="metric-grid">
+        <div className="metric-grid" style={{ marginBottom: "2rem" }}>
           {house.current_room && (
             <Link href="/halseth" className="metric-cell" style={{ textDecoration: "none" }}>
               <span className="metric-label">Room</span>
