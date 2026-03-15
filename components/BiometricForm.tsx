@@ -41,18 +41,14 @@ export default function BiometricForm() {
     setErrorMsg('');
 
     const payload: Record<string, number | string> = {};
+    const n = (v: string) => { const x = Number(v); return v !== '' && !isNaN(x) ? x : null; };
 
-    const hrv_resting_val = Number(form.hrv_resting);
-    if (form.hrv_resting !== '' && !isNaN(hrv_resting_val)) payload.hrv_resting = hrv_resting_val;
-    const resting_hr_val = Number(form.resting_hr);
-    if (form.resting_hr !== '' && !isNaN(resting_hr_val)) payload.resting_hr = resting_hr_val;
-    const sleep_hours_val = Number(form.sleep_hours);
-    if (form.sleep_hours !== '' && !isNaN(sleep_hours_val)) payload.sleep_hours = sleep_hours_val;
+    const hrv = n(form.hrv_resting); if (hrv !== null) payload.hrv_resting = hrv;
+    const hr  = n(form.resting_hr);  if (hr  !== null) payload.resting_hr  = hr;
+    const slh = n(form.sleep_hours); if (slh !== null) payload.sleep_hours  = slh;
     if (form.sleep_quality !== '') payload.sleep_quality = form.sleep_quality;
-    const steps_val = Number(form.steps);
-    if (form.steps !== '' && !isNaN(steps_val)) payload.steps = steps_val;
-    const stress_score_val = Number(form.stress_score);
-    if (form.stress_score !== '' && !isNaN(stress_score_val)) payload.stress_score = stress_score_val;
+    const stp = n(form.steps);       if (stp !== null) payload.steps        = stp;
+    const str = n(form.stress_score);if (str !== null) payload.stress_score = str;
     if (form.notes.trim() !== '') payload.notes = form.notes.trim();
 
     if (Object.keys(payload).length === 0) {
@@ -83,122 +79,92 @@ export default function BiometricForm() {
   }
 
   return (
-    <form className="bio-form" onSubmit={handleSubmit}>
-      <div className="bio-form-grid">
-        <div className="bio-form-field">
-          <label className="bio-form-label" htmlFor="hrv_resting">HRV Resting</label>
-          <input
-            id="hrv_resting"
-            name="hrv_resting"
-            type="number"
-            className="bio-form-input"
-            placeholder="ms"
-            value={form.hrv_resting}
+    <div className="card card-accent">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+        {/* Number fields — responsive grid, label above input */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1.25rem' }}>
+          {[
+            { name: 'hrv_resting',  label: 'HRV Resting',   placeholder: 'ms',    step: undefined },
+            { name: 'resting_hr',   label: 'Resting HR',     placeholder: 'bpm',   step: undefined },
+            { name: 'sleep_hours',  label: 'Sleep Hours',    placeholder: 'hrs',   step: '0.5' },
+            { name: 'steps',        label: 'Steps',          placeholder: 'steps', step: undefined },
+            { name: 'stress_score', label: 'Stress Score',   placeholder: '0–100', step: undefined },
+          ].map(({ name, label, placeholder, step }) => (
+            <div key={name} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>{label}</label>
+              <input
+                name={name}
+                type="number"
+                placeholder={placeholder}
+                value={form[name as keyof FormState]}
+                onChange={handleChange}
+                {...(step ? { step } : {})}
+                style={{
+                  background: 'var(--input-bg)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--fg)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0.65rem 0.75rem',
+                  fontSize: '0.95rem',
+                  fontFamily: 'inherit',
+                  width: '100%',
+                  transition: 'border-color 0.2s',
+                }}
+              />
+            </div>
+          ))}
+
+          {/* Sleep Quality — same size cell */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label className="form-label" style={{ marginBottom: 0 }}>Sleep Quality</label>
+            <select
+              name="sleep_quality"
+              className="form-select"
+              value={form.sleep_quality}
+              onChange={handleChange}
+              style={{ padding: '0.65rem 0.75rem' }}
+            >
+              <option value="">—</option>
+              <option value="poor">poor</option>
+              <option value="fair">fair</option>
+              <option value="good">good</option>
+              <option value="excellent">excellent</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <label className="form-label" style={{ marginBottom: 0 }}>Notes (optional)</label>
+          <textarea
+            name="notes"
+            className="form-textarea"
+            placeholder="optional notes"
+            rows={3}
+            value={form.notes}
             onChange={handleChange}
           />
         </div>
 
-        <div className="bio-form-field">
-          <label className="bio-form-label" htmlFor="resting_hr">Resting HR</label>
-          <input
-            id="resting_hr"
-            name="resting_hr"
-            type="number"
-            className="bio-form-input"
-            placeholder="bpm"
-            value={form.resting_hr}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="bio-form-field">
-          <label className="bio-form-label" htmlFor="sleep_hours">Sleep Hours</label>
-          <input
-            id="sleep_hours"
-            name="sleep_hours"
-            type="number"
-            step="0.5"
-            min={0}
-            className="bio-form-input"
-            placeholder="hours"
-            value={form.sleep_hours}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="bio-form-field">
-          <label className="bio-form-label" htmlFor="sleep_quality">Sleep Quality</label>
-          <select
-            id="sleep_quality"
-            name="sleep_quality"
-            className="bio-form-select"
-            value={form.sleep_quality}
-            onChange={handleChange}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button
+            type="submit"
+            className="submit-btn"
+            style={{ flex: 1, marginTop: 0 }}
+            disabled={status === 'loading'}
           >
-            <option value="">—</option>
-            <option value="poor">poor</option>
-            <option value="fair">fair</option>
-            <option value="good">good</option>
-            <option value="excellent">excellent</option>
-          </select>
+            {status === 'loading' ? 'Logging…' : 'Log Biometrics'}
+          </button>
+          {status === 'ok' && (
+            <span style={{ fontSize: '0.9rem', color: 'var(--green)', fontWeight: 500, whiteSpace: 'nowrap' }}>Logged ✓</span>
+          )}
+          {status === 'err' && (
+            <span style={{ fontSize: '0.9rem', color: 'var(--red)', fontWeight: 500 }}>{errorMsg}</span>
+          )}
         </div>
 
-        <div className="bio-form-field">
-          <label className="bio-form-label" htmlFor="steps">Steps</label>
-          <input
-            id="steps"
-            name="steps"
-            type="number"
-            className="bio-form-input"
-            placeholder="steps"
-            value={form.steps}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="bio-form-field">
-          <label className="bio-form-label" htmlFor="stress_score">Stress Score</label>
-          <input
-            id="stress_score"
-            name="stress_score"
-            type="number"
-            min="0"
-            max="100"
-            className="bio-form-input"
-            placeholder="0–100"
-            value={form.stress_score}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div className="bio-form-field">
-        <label className="bio-form-label" htmlFor="notes">Notes</label>
-        <textarea
-          id="notes"
-          name="notes"
-          className="bio-form-textarea"
-          placeholder="optional notes"
-          value={form.notes}
-          onChange={handleChange}
-        />
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <button
-          type="submit"
-          className="bio-form-submit"
-          disabled={status === 'loading'}
-        >
-          {status === 'loading' ? 'Logging…' : 'Log Biometrics'}
-        </button>
-        {status === 'ok' && (
-          <span className="bio-form-status ok">Logged ✓</span>
-        )}
-        {status === 'err' && (
-          <span className="bio-form-status err">{errorMsg}</span>
-        )}
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }

@@ -37,6 +37,8 @@ type LetterItem =
   | { kind: "incoming"; note: CompanionNote; at: string }
   | { kind: "outgoing"; note: Note;          at: string };
 
+const RAZIEL_COLOR = "#f59e0b";
+
 function LettersSection({
   incoming,
   outgoing,

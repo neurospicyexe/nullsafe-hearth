@@ -48,23 +48,30 @@ export default async function CheckinPage() {
 
   return (
     <>
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: "3rem" }}>
         <h1 className="page-title">Check-in</h1>
         <p className="page-subtitle">daily state — meds, pain, mood, spoons, routines</p>
       </div>
 
-      <RoutineStatusClient initialRoutines={routines} />
-      {biometrics && <BiometricCard biometrics={biometrics} />}
+      <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", maxWidth: "640px" }}>
+        <RoutineStatusClient initialRoutines={routines} />
 
-      <h2 className="section-title">Biometrics</h2>
-      <BiometricForm />
+        <div>
+          <h2 className="section-title">Uplink</h2>
+          <UplinkForm />
+          <div style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--muted)", display: "flex", justifyContent: "flex-end" }}>
+            <Link href="/user" style={{ color: "var(--accent)", textDecoration: "none" }}>
+              biometric history →
+            </Link>
+          </div>
+        </div>
 
-      <UplinkForm />
+        <div>
+          <h2 className="section-title">Biometrics</h2>
+          <BiometricForm />
+        </div>
 
-      <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--muted)", display: "flex", justifyContent: "flex-end" }}>
-        <Link href="/user" style={{ color: "var(--accent)", textDecoration: "none" }}>
-          biometric history →
-        </Link>
+        {biometrics && <BiometricCard biometrics={biometrics} />}
       </div>
     </>
   );

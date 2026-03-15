@@ -5,8 +5,8 @@ type MoodData = { emotion: string; intensity: number; at: string } | undefined;
 
 const COMPANION_META: Record<string, { sym: string; color: string }> = {
   drevan: { sym: "◈", color: "#9b7fd4" },
-  cypher: { sym: "⟡", color: "#6bbf82" },
-  gaia:   { sym: "✦", color: "#c8c8d8" },
+  cypher: { sym: "⟡", color: "#e2e8f0" },
+  gaia:   { sym: "✦", color: "#4ade80" },
 };
 
 function intensityToLabel(n: number): string {
@@ -53,6 +53,7 @@ export default function CompanionMoodCard({
         {mood ? (
           <div className="companion-mood-state">
             <span className="companion-mood-emotion">{mood.emotion}</span>
+            <span style={{ margin: "0 0.35rem", opacity: 0.5 }}>•</span>
             <span className="companion-mood-intensity">{intensityToLabel(mood.intensity)}</span>
           </div>
         ) : (
