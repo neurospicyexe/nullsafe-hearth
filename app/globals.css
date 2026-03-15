@@ -1076,6 +1076,96 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .tp-item:last-child { border-bottom: none; }
 .tp-item.tp-item-done { opacity: 0.38; }
 .tp-item.tp-item-done .tp-item-text { text-decoration: line-through; color: var(--text-muted); }
+
+/* ── Bridge / Shared Page ────────────────────────────────────────────────── */
+.bridge-card {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+.bridge-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.02);
+}
+.bridge-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--border-strong); }
+.bridge-dot.connected { background: var(--green); box-shadow: 0 0 6px rgba(74,222,128,0.5); }
+.bridge-card-title { font-size: 0.82rem; font-weight: 600; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.06em; }
+.bridge-card-sub { font-size: 0.72rem; color: var(--text-muted); margin-left: auto; }
+.bridge-rows { display: flex; flex-direction: column; }
+.bridge-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.15s;
+}
+.bridge-row:last-child { border-bottom: none; }
+.bridge-row.active { background: rgba(74,222,128,0.04); }
+.bridge-row-info { flex: 1; display: flex; flex-direction: column; gap: 0.2rem; }
+.bridge-row-name { font-size: 0.88rem; font-weight: 500; color: var(--text-main); text-transform: capitalize; }
+.bridge-row-desc { font-size: 0.72rem; color: var(--text-muted); }
+.bridge-toggle {
+  flex-shrink: 0;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255,255,255,0.04);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 64px;
+  text-align: center;
+}
+.bridge-toggle:hover { border-color: var(--green); color: var(--green); }
+.bridge-toggle.on { background: rgba(74,222,128,0.12); border-color: var(--green); color: var(--green); }
+.bridge-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.02);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.bridge-from-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(99,102,241,0.12);
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.bridge-badge { background: rgba(99,102,241,0.12) !important; color: var(--accent) !important; }
+
+/* ── Routine reset button ────────────────────────────────────────────────── */
+.routine-reset-btn {
+  display: block;
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: color 0.12s;
+}
+.routine-reset-btn:hover { color: var(--text-main); }
 .tp-rcheck {
   flex-shrink: 0;
   width: 18px;

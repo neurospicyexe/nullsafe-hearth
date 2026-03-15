@@ -1,11 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { type BridgeData } from "@/lib/halseth";
+
+function Check() {
+  return (
+    <svg viewBox="0 0 10 8" aria-hidden>
+      <polyline points="1.5,4.2 3.8,6.8 8.5,1.5" />
+    </svg>
+  );
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+const BRIDGE_DESC: Record<string, string> = {
+  tasks:  "your open tasks and priorities",
+  events: "calendar events and schedule",
+  lists:  "shopping and shared checklists",
+};
 
 // ── Shared Goals ──────────────────────────────────────────────────────────────
 
 export function SharedGoalsClient({ tasks }: { tasks: BridgeData["tasks"] }) {
+  const router = useRouter();
   const [done, setDone] = useState<Set<string>>(
     new Set(tasks.filter((t) => t.status === "done").map((t) => t.id))
   );
@@ -22,41 +42,45 @@ export function SharedGoalsClient({ tasks }: { tasks: BridgeData["tasks"] }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "task_status", id, status: isDone ? "open" : "done" }),
     });
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <div className="card">
-        <div className="card-title">Shared Goals</div>
-        <p className="empty">No shared tasks from partner.</p>
-      </div>
-    );
+    router.refresh();
   }
 
   return (
-    <div className="card">
-      <div className="card-title">Shared Goals</div>
-      <div className="task-list">
-        {tasks.map((t) => (
-          <div key={t.id} className="shared-item-row">
-            <input
-              type="checkbox"
-              className="shared-checkbox"
-              checked={done.has(t.id)}
-              onChange={() => toggle(t.id)}
-            />
-            <span
-              className="shared-item-title"
-              style={{
-                textDecoration: done.has(t.id) ? "line-through" : "none",
-                opacity: done.has(t.id) ? 0.5 : 1,
-              }}
+    <div className="tp-shell" style={{ marginBottom: "1.25rem" }}>
+      <div className="bridge-section-header">
+        <span>Shared Goals</span>
+        <span className="bridge-from-badge">from partner</span>
+      </div>
+      <div className="tp-content">
+        {tasks.length === 0 ? (
+          <div className="tp-empty">no shared tasks from partner yet</div>
+        ) : (
+          tasks.map((t, i) => (
+            <div
+              key={t.id}
+              className={`tp-task${done.has(t.id) ? " tp-done" : ""}`}
+              style={{ animationDelay: `${i * 26}ms` }}
             >
-              {t.title}
-            </span>
-            <span className={`priority-badge ${t.priority}`}>{t.priority}</span>
-          </div>
-        ))}
+              <span className={`tp-strip tp-strip-${t.priority}`} />
+              <button
+                className={`tp-check${done.has(t.id) ? " on" : ""}`}
+                onClick={() => toggle(t.id)}
+              >
+                <Check />
+              </button>
+              <div className="tp-task-body">
+                <span className="tp-task-title">{t.title}</span>
+                <div className="tp-task-meta">
+                  {t.priority !== "normal" && (
+                    <span className={`tp-badge tp-badge-${t.priority}`}>{t.priority}</span>
+                  )}
+                  <span className="tp-badge bridge-badge">bridge</span>
+                  {t.due_at && <span className="tp-badge">due {fmtDate(t.due_at)}</span>}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -65,6 +89,7 @@ export function SharedGoalsClient({ tasks }: { tasks: BridgeData["tasks"] }) {
 // ── Shared Lists ──────────────────────────────────────────────────────────────
 
 export function SharedListsClient({ lists }: { lists: BridgeData["lists"] }) {
+  const router = useRouter();
   const [completed, setCompleted] = useState<Set<string>>(
     new Set(lists.filter((l) => l.completed).map((l) => l.id))
   );
@@ -77,6 +102,7 @@ export function SharedListsClient({ lists }: { lists: BridgeData["lists"] }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "list_complete", id }),
     });
+    router.refresh();
   }
 
   const grouped = lists.reduce<Record<string, BridgeData["lists"]>>((acc, item) => {
@@ -84,45 +110,40 @@ export function SharedListsClient({ lists }: { lists: BridgeData["lists"] }) {
     return acc;
   }, {});
 
-  if (lists.length === 0) {
-    return (
-      <div className="card">
-        <div className="card-title">Shared Lists</div>
-        <p className="empty">No shared list items from partner.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="card">
-      <div className="card-title">Shared Lists</div>
-      {Object.entries(grouped).map(([listName, items]) => (
-        <div key={listName} style={{ marginBottom: "0.75rem" }}>
-          <div style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.35rem" }}>
-            {listName}
-          </div>
-          {items.map((item) => (
-            <div key={item.id} className="shared-item-row">
-              <input
-                type="checkbox"
-                className="shared-checkbox"
-                checked={completed.has(item.id)}
-                onChange={() => complete(item.id)}
-                disabled={completed.has(item.id)}
-              />
-              <span
-                className="shared-item-title"
-                style={{
-                  textDecoration: completed.has(item.id) ? "line-through" : "none",
-                  opacity: completed.has(item.id) ? 0.5 : 1,
-                }}
-              >
-                {item.item_text}
-              </span>
+    <div className="tp-shell" style={{ marginBottom: "1.25rem" }}>
+      <div className="bridge-section-header">
+        <span>Shared Lists</span>
+        <span className="bridge-from-badge">from partner</span>
+      </div>
+      <div className="tp-content" style={{ padding: "0.25rem 0" }}>
+        {lists.length === 0 ? (
+          <div className="tp-empty">no shared lists from partner yet</div>
+        ) : (
+          Object.entries(grouped).map(([listName, items]) => (
+            <div key={listName}>
+              <div className="tp-list-header">{listName}</div>
+              {items.map((item, i) => (
+                <div
+                  key={item.id}
+                  className={`tp-item${completed.has(item.id) ? " tp-item-done" : ""}`}
+                  style={{ animationDelay: `${i * 20}ms` }}
+                >
+                  <button
+                    className={`tp-rcheck${completed.has(item.id) ? " on" : ""}`}
+                    onClick={() => complete(item.id)}
+                    disabled={completed.has(item.id)}
+                  >
+                    <Check />
+                  </button>
+                  <span className="tp-item-text">{item.item_text}</span>
+                  <span className="tp-badge bridge-badge" style={{ flexShrink: 0 }}>bridge</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ))}
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -148,28 +169,25 @@ export function BridgeStatusClient({ sharing }: { sharing: SharingState }) {
   }
 
   return (
-    <div className="card">
-      <div className="card-title">Your Sharing</div>
-      <div className="task-list">
+    <div className="bridge-card">
+      <div className="bridge-card-header">
+        <div className="bridge-dot connected" />
+        <span className="bridge-card-title">Your Sharing</span>
+        <span className="bridge-card-sub">controls what your partner can see</span>
+      </div>
+      <div className="bridge-rows">
         {(["tasks", "events", "lists"] as const).map((cat) => (
-          <div key={cat} className="task-row">
-            <span className="task-title" style={{ textTransform: "capitalize" }}>{cat}</span>
+          <div key={cat} className={`bridge-row${state[cat] ? " active" : ""}`}>
+            <div className="bridge-row-info">
+              <span className="bridge-row-name">{cat}</span>
+              <span className="bridge-row-desc">{BRIDGE_DESC[cat]}</span>
+            </div>
             <button
+              className={`bridge-toggle${state[cat] ? " on" : ""}`}
               onClick={() => toggle(cat)}
               disabled={saving === cat}
-              style={{
-                background: state[cat] ? "rgba(107,191,130,0.15)" : "var(--surface2)",
-                border: `1px solid ${state[cat] ? "var(--green)" : "var(--border)"}`,
-                color: state[cat] ? "var(--green)" : "var(--muted)",
-                borderRadius: "5px",
-                fontSize: "0.72rem",
-                fontWeight: 600,
-                padding: "0.15rem 0.6rem",
-                cursor: saving === cat ? "not-allowed" : "pointer",
-                opacity: saving === cat ? 0.6 : 1,
-              }}
             >
-              {state[cat] ? "on" : "off"}
+              {saving === cat ? "…" : state[cat] ? "sharing" : "off"}
             </button>
           </div>
         ))}
