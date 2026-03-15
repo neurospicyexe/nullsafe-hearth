@@ -105,9 +105,11 @@ input, select, textarea { font-family: inherit; outline: none; }
 }
 .app-main {
   flex: 1;
+  min-width: 0;
   padding: 2.5rem 2rem;
   max-width: 900px;
   margin: 0 auto;
+  overflow-x: hidden;
 }
 
 /* ── Navigation (Desktop fixed left, Mobile bottom float) ────────────────── */
@@ -206,7 +208,7 @@ input, select, textarea { font-family: inherit; outline: none; }
 }
 
 /* ── Cards & Glass Panels ────────────────────────────────────────────────── */
-.card, .companion-mood-row > div {
+.card {
   background: var(--surface-glass);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -215,7 +217,7 @@ input, select, textarea { font-family: inherit; outline: none; }
   padding: 1.5rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
-.card:hover, .companion-mood-row > div:hover {
+.card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--border-strong);
@@ -301,16 +303,53 @@ input, select, textarea { font-family: inherit; outline: none; }
 .state-cell-label, .anchor-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; }
 .state-cell-value, .anchor-value { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
 
-/* Companion Moods */
+/* Companion Moods — row container */
 .companion-mood-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
-.mood-card { display: flex; flex-direction: column; gap: 0.5rem; }
-.mood-name { font-weight: 600; font-size: 1.05rem; }
-.mood-desc { font-size: 0.85rem; color: var(--text-muted); }
-.companion-mood-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
-.companion-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: var(--surface-base); }
-.companion-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-.companion-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: var(--text-muted); }
-.no-mood { color: var(--text-muted); font-style: italic; font-size: 0.85rem; }
+
+/* Companion Mood Card — Link element */
+.companion-mood-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: var(--text-main);
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0;
+}
+.companion-mood-card:hover {
+  border-color: var(--c, var(--accent));
+  background: var(--surface-glass-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  filter: none;
+  text-shadow: none;
+}
+.companion-mood-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  border: 2px solid var(--c, var(--border-strong));
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.companion-mood-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.companion-mood-sym { font-size: 1.35rem; color: var(--c, var(--accent)); line-height: 1; }
+.companion-mood-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.companion-mood-name { font-size: 0.95rem; font-weight: 600; line-height: 1.2; }
+.companion-mood-state { display: flex; align-items: center; gap: 0.25rem; font-size: 0.82rem; flex-wrap: wrap; }
+.companion-mood-emotion { color: var(--text-main); font-weight: 500; }
+.companion-mood-intensity { color: var(--text-muted); }
+.companion-mood-absent { color: var(--text-muted); font-style: italic; }
 
 /* ── Forms, Inputs & Buttons ─────────────────────────────────────────────── */
 .form-field { margin-bottom: 1.25rem; }
