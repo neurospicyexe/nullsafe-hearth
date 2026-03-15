@@ -20,9 +20,6 @@ export default function Nav() {
   const path = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // Login page gets no nav — otherwise sidebar/bottom-bar links bypass auth
-  if (path === "/login") return null;
-
   const isActive = (href: string) =>
     href === "/" ? path === "/" : path.startsWith(href);
 
@@ -36,6 +33,9 @@ export default function Nav() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  // Login page gets no nav — after all hooks so rules-of-hooks is satisfied
+  if (path === "/login") return null;
 
   return (
     <>
