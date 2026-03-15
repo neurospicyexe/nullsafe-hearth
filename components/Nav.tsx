@@ -6,18 +6,22 @@ import { usePathname } from "next/navigation";
 import SearchOverlay from "./SearchOverlay";
 
 const NAV = [
-  { href: "/",        label: "Home",     sym: "◈" },
-  { href: "/halseth", label: "Halseth",  sym: "⌂" },
-  { href: "/us",      label: "Us",       sym: "♥" },
-  { href: "/dreams",  label: "Dreams",   sym: "◌" },
-  { href: "/tasks",   label: "Tasks",    sym: "☑" },
-  { href: "/checkin", label: "Check-in", sym: "↑" },
-  { href: "/shared",  label: "Shared",   sym: "≡" },
+  { href: "/",          label: "Home",      sym: "◈" },
+  { href: "/halseth",   label: "Halseth",   sym: "⌂" },
+  { href: "/us",        label: "Us",        sym: "♥" },
+  { href: "/handovers", label: "Handovers", sym: "↹" },
+  { href: "/dreams",    label: "Dreams",    sym: "◌" },
+  { href: "/tasks",     label: "Tasks",     sym: "☑" },
+  { href: "/checkin",   label: "Check-in",  sym: "↑" },
+  { href: "/shared",    label: "Shared",    sym: "≡" },
 ];
 
 export default function Nav() {
   const path = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Login page gets no nav — otherwise sidebar/bottom-bar links bypass auth
+  if (path === "/login") return null;
 
   const isActive = (href: string) =>
     href === "/" ? path === "/" : path.startsWith(href);

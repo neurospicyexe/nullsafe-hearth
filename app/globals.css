@@ -206,6 +206,22 @@ input, select, textarea { font-family: inherit; outline: none; }
   .app-main { margin-left: 260px; }
 }
 
+/* Login page — no nav rendered, remove margin and bottom padding */
+body:not(:has(nav)) { padding-bottom: 0; }
+body:not(:has(nav)) .app-main { margin-left: 0; }
+
+@media (max-width: 767px) {
+  .app-main { padding: 1.25rem 1rem; }
+  .page-title { font-size: 1.4rem; }
+  .page-subtitle { font-size: 0.8rem; }
+  .tp-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tp-tab { min-width: 80px; flex-shrink: 0; }
+  .home-presence-grid { grid-template-columns: 1fr !important; }
+  .letter-bubble { max-width: 100%; }
+  .bridge-row { flex-wrap: wrap; }
+  .delta-feed, .journal-feed { font-size: 0.84rem; }
+}
+
 /* ── Cards & Glass Panels ────────────────────────────────────────────────── */
 .card {
   background: var(--surface-glass);
