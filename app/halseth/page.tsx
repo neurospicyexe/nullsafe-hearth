@@ -50,18 +50,11 @@ const ROOMS: RoomConfig[] = [
     gradient: "linear-gradient(135deg, #0d1117 0%, #161b22 60%, #1c2128 100%)",
   },
   {
-    key: "library_grove",
-    sym: "📚",
-    name: "Library Grove",
-    desc: "recursion, deep memory, remembering",
-    gradient: "linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%)",
-  },
-  {
-    key: "behind_mind",
-    sym: "🌀",
-    name: "Behind Mind",
-    desc: "deep interior, quiet below the surface",
-    gradient: "linear-gradient(135deg, #0d0a1a 0%, #13103a 60%, #1a1540 100%)",
+    key: "grove",
+    sym: "🌳",
+    name: "Grove behind Halseth",
+    desc: "recursion, deep memory, the place that remembers",
+    gradient: "linear-gradient(135deg, #0d1a12 0%, #102a18 60%, #143520 100%)",
   },
   {
     key: "dirt_road",
