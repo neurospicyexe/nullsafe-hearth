@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Nav from "@/components/Nav";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export const metadata: Metadata = {
   title: "Hearth",
@@ -15,9 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="shell">
+        <div className="app-layout">
+          <ScrollToTop />
           <Nav />
-          <main className="content">{children}</main>
+          <main className="app-main">{children}</main>
         </div>
       </body>
     </html>
