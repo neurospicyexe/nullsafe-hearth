@@ -23,29 +23,52 @@ function fmtDateTime(iso: string) {
 
 // ── Tasks ──────────────────────────────────────────────────────────────────────
 
+const TWO_HOURS = 2 * 60 * 60 * 1000;
+
 function TaskSection({ tasks }: { tasks: Task[] }) {
   const [items, setItems] = useState(tasks);
   const [showDone, setShowDone] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [recentDone, setRecentDone] = useState<Map<string, number>>(new Map());
 
   const active = items.filter((t) => t.status !== "done");
   const done = items.filter((t) => t.status === "done");
   const visible = showDone ? items : active;
 
-  async function setStatus(id: string, status: "open" | "done") {
+  const now = Date.now();
+  const undoable = items.filter(
+    (t) => t.status === "done" && recentDone.has(t.id) && now - recentDone.get(t.id)! < TWO_HOURS,
+  );
+
+  async function markDone(id: string) {
     setBusy(id);
     const res = await fetch(`/api/tasks/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status: "done" }),
     });
     if (res.ok) {
-      setItems((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+      setItems((prev) => prev.map((t) => (t.id === id ? { ...t, status: "done" } : t)));
+      setRecentDone((prev) => new Map(prev).set(id, Date.now()));
     }
     setBusy(null);
   }
 
-  if (visible.length === 0) {
+  async function undoDone(id: string) {
+    setBusy(id);
+    const res = await fetch(`/api/tasks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "open" }),
+    });
+    if (res.ok) {
+      setItems((prev) => prev.map((t) => (t.id === id ? { ...t, status: "open" } : t)));
+      setRecentDone((prev) => { const next = new Map(prev); next.delete(id); return next; });
+    }
+    setBusy(null);
+  }
+
+  if (visible.length === 0 && undoable.length === 0) {
     return (
       <>
         {done.length > 0 && (
@@ -63,6 +86,14 @@ function TaskSection({ tasks }: { tasks: Task[] }) {
 
   return (
     <>
+      {undoable.map((task) => (
+        <div key={`undo-${task.id}`} className="tp-undo-row">
+          <span>✓ {task.title}</span>
+          <button className="tp-undo-btn" onClick={() => undoDone(task.id)} disabled={busy === task.id}>
+            undo
+          </button>
+        </div>
+      ))}
       {done.length > 0 && (
         <div className="tp-ctrl">
           <span className="tp-ctrl-label">
@@ -83,12 +114,8 @@ function TaskSection({ tasks }: { tasks: Task[] }) {
           <span className={`tp-dot tp-dot-${task.status}`} />
           <button
             className={`tp-check${task.status === "done" ? " on" : ""}`}
-            onClick={() =>
-              task.status === "done"
-                ? setStatus(task.id, "open")
-                : setStatus(task.id, "done")
-            }
-            disabled={busy === task.id}
+            onClick={() => task.status !== "done" && markDone(task.id)}
+            disabled={busy === task.id || task.status === "done"}
           >
             <Check />
           </button>
