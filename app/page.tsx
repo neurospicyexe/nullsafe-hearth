@@ -29,7 +29,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
             Session
           </span>
           <span className="presence-badge open">
-            {session.session_type ?? "open"}
+            {(session.session_type ?? "open").replace(/([a-z])([A-Z])/g, "$1 $2").replace("sessionwork", "session work")}
           </span>
         </div>
         {details.length > 0 && (
