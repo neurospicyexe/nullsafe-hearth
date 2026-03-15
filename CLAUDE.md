@@ -40,7 +40,7 @@ Asynchronous notes between Raziel and companions. Not for immediate answers — 
 ## Halseth Worker — existing HTTP endpoints
 
 ```
-GET  /presence          — main data bundle (public, no auth needed)
+GET  /presence          — main data bundle (auth-gated — `HALSETH_SECRET` Bearer required)
 GET  /house             — house state
 POST /house             — update spoon_count, love_meter, current_room, etc.
 GET  /notes?limit=N     — companion_notes table (author, content, note_type)
@@ -105,7 +105,7 @@ Local MCP server (stdio transport, NOT HTTP). Source: `C:\dev\nullsafe-second-br
 
 ## Security
 
-Full OWASP + vibesec audit run 2026-03-09. No fixes applied yet.
+Full OWASP + vibesec audit run 2026-03-09.
 
 ### Fixes applied (2026-03-09)
 

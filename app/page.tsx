@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fetchPresence, type PresenceData } from "@/lib/halseth";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
+import LiveFeedImage from "@/components/LiveFeedImage";
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
         {details.length > 0 && (
           <div className="presence-body">{details.join(" · ")}</div>
         )}
-        <div className="presence-detail">
+        <div className="presence-detail" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.25rem" }}>
           {session.emotional_frequency && (
             <span>{session.emotional_frequency}</span>
           )}
@@ -50,7 +51,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
               <span>depth {session.depth}/3</span>
             </>
           )}
-          <span className="presence-detail-sep" style={{ marginLeft: "auto" }}>since</span>
+          <span className="presence-detail-sep" style={{ marginLeft: "0.5rem" }}>since</span>
           <span>{fmtTime(session.created_at)}</span>
         </div>
       </div>
@@ -139,171 +140,146 @@ export default async function Page() {
   return (
     <>
       {/* Page header */}
-      <header style={{ marginBottom: "2rem" }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: "0.65rem", marginBottom: "0.1rem" }}>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0, letterSpacing: "-0.02em" }}>
+      <header className="page-header" style={{ marginBottom: "3rem" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.25rem" }}>
+          <h1 className="page-title">
             {data.system.name}
           </h1>
-          <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>{data.system.owner}</span>
+          <span className="page-subtitle">{data.system.owner}</span>
         </div>
         {wounds_count > 0 && (
-          <Link href="/us" style={{ fontSize: "0.78rem", color: "var(--red)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.3rem", marginTop: "0.35rem" }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--red)", display: "inline-block", flexShrink: 0 }} />
+          <Link href="/us" style={{ fontSize: "0.85rem", color: "var(--red)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.4rem", marginTop: "0.5rem" }}>
+            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--red)", display: "inline-block", flexShrink: 0 }} />
             {wounds_count} living {wounds_count === 1 ? "wound" : "wounds"}
           </Link>
         )}
       </header>
 
-      {/* Presence */}
-      <div style={{ marginBottom: "2rem" }}>
-        <PresenceSection data={data} />
-      </div>
-
-      {/* Companions */}
-      <div className="home-section">
-        <div className="home-section-header">
-          <span className="home-section-title">Companions</span>
-          <Link href="/us" className="home-section-link">all →</Link>
-        </div>
-        <div className="companion-mood-row">
-          {companions.map((c) => (
-            <CompanionMoodCard
-              key={c.id}
-              companionId={c.id}
-              displayName={c.display_name}
-              mood={companion_moods?.[c.id]}
-              avatarUrl={c.avatar_url}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Passive biometric stats */}
-      {(house.current_room || latest_biometrics) && (
-        <div className="metric-grid" style={{ marginBottom: "2rem" }}>
+      <div className="home-presence-grid" style={{ gap: "2.5rem" }}>
+        
+        {/* LEFT COLUMN */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+          <PresenceSection data={data} />
+          
+          {/* Dynamic Environment Viewer */}
           {house.current_room && (
-            <Link href="/halseth" className="metric-cell" style={{ textDecoration: "none" }}>
-              <span className="metric-label">Room</span>
-              <span className="metric-value" style={{ fontSize: "0.9rem" }}>
-                {house.current_room}
-              </span>
-              {house.companion_activity && (
-                <span className="metric-sub">{house.companion_activity}</span>
-              )}
-            </Link>
+             <div className="card" style={{ padding: 0, overflow: "hidden", flex: 1, minHeight: "300px", position: "relative" }}>
+                 <div style={{ position: "absolute", top: "1rem", left: "1.25rem", zIndex: 10, display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                   <span className="status-dot live" style={{ width: "8px", height: "8px", background: "var(--accent)", boxShadow: "0 0 8px var(--accent-glow)" }} />
+                   <span style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", color: "#fff", textTransform: "uppercase", textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}>Live Feed</span>
+                 </div>
+                 <LiveFeedImage currentRoom={house.current_room} />
+             </div>
           )}
-          {latest_biometrics?.resting_hr != null && (
-            <div className="metric-cell">
-              <span className="metric-label">Heart Rate</span>
-              <span className="metric-value">{latest_biometrics.resting_hr}</span>
-              <span className="metric-sub">bpm resting</span>
-            </div>
-          )}
-          {latest_biometrics?.hrv_resting != null && (
-            <div className="metric-cell">
-              <span className="metric-label">HRV</span>
-              <span className="metric-value">{latest_biometrics.hrv_resting}</span>
-              <span className="metric-sub">ms resting</span>
-            </div>
-          )}
-          {latest_biometrics?.sleep_hours != null && (
-            <div className="metric-cell">
-              <span className="metric-label">Sleep</span>
-              <span className="metric-value">{latest_biometrics.sleep_hours}h</span>
-              {latest_biometrics.sleep_quality && (
-                <span className="metric-sub">{latest_biometrics.sleep_quality}</span>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Urgent tasks */}
-      {openTaskCount > 0 && (
-        <div className="home-section">
-          <div className="home-section-header">
-            <span className="home-section-title">
-              Tasks
-              <span style={{ color: "var(--border)", fontWeight: 400 }}> · {openTaskCount} open</span>
-            </span>
-            <Link href="/tasks" className="home-section-link">all tasks →</Link>
-          </div>
-          <div className="card" style={{ padding: "0.6rem 0" }}>
-            {(urgentTasks.length > 0 ? urgentTasks.slice(0, 4) : tasks.filter(t => t.status !== "done").slice(0, 3)).map((t) => (
-              <div
-                key={t.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.6rem",
-                  padding: "0.45rem 1rem",
-                  borderBottom: "1px solid var(--border)",
-                }}
-              >
-                <span style={{
-                  width: "5px", height: "5px", borderRadius: "50%", flexShrink: 0,
-                  background: t.priority === "urgent" ? "var(--red)"
-                    : t.priority === "high" ? "var(--warm)"
-                    : "var(--border)",
-                }} />
-                <span style={{ fontSize: "0.85rem", flex: 1 }}>{t.title}</span>
-                {t.due_at && (
-                  <span style={{ fontSize: "0.68rem", color: "var(--muted)" }}>
-                    {new Date(t.due_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                  </span>
-                )}
-              </div>
-            ))}
-            {urgentTasks.length === 0 && tasks.filter(t => t.status !== "done").length > 3 && (
-              <div style={{ padding: "0.4rem 1rem 0", fontSize: "0.72rem", color: "var(--muted)" }}>
-                +{tasks.filter(t => t.status !== "done").length - 3} more
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Recent notes */}
-      {recent_notes.length > 0 && (
-        <div className="home-section">
-          <div className="home-section-header">
-            <span className="home-section-title">Recent Notes</span>
-            <Link href="/us" className="home-section-link">see all →</Link>
-          </div>
-          <div className="card" style={{ padding: "0.5rem 0" }}>
-            {recent_notes.slice(0, 4).map((n) => (
-              <div
-                key={n.id}
-                style={{
-                  display: "flex",
-                  gap: "0.65rem",
-                  padding: "0.45rem 1rem",
-                  borderBottom: "1px solid var(--border)",
-                  alignItems: "flex-start",
-                }}
-              >
-                <span style={{
-                  fontSize: "0.72rem", color: "var(--accent)", fontWeight: 600,
-                  textTransform: "capitalize", flexShrink: 0, paddingTop: "0.1rem",
-                  minWidth: "4.5rem",
-                }}>
-                  {n.author}
+          
+          {openTaskCount > 0 && (
+            <div className="home-section" style={{ marginBottom: 0 }}>
+              <div className="home-section-header" style={{ marginBottom: "1.25rem" }}>
+                <span className="home-section-title">
+                  Tasks
+                  <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: "0.95rem", marginLeft: "0.5rem" }}>· {openTaskCount} open</span>
                 </span>
-                <span style={{ flex: 1, fontSize: "0.83rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <Link href="/tasks" className="home-section-link">all tasks →</Link>
+              </div>
+              <div className="card" style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem" }}>
+                {(urgentTasks.length > 0 ? urgentTasks.slice(0, 4) : tasks.filter(t => t.status !== "done").slice(0, 3)).map((t) => (
+                  <div key={t.id} style={{ display: "flex", alignItems: "baseline", gap: "0.75rem" }}>
+                    <span style={{
+                      width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0, marginTop: "0.4rem",
+                      background: t.priority === "urgent" ? "var(--red)"
+                        : t.priority === "high" ? "var(--orange)"
+                        : "var(--border-strong)",
+                    }} />
+                    <span style={{ fontSize: "1rem", flex: 1, color: "var(--text-main)", lineHeight: 1.4 }}>{t.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+          {/* Passive biometric stats */}
+          {(house.current_room || latest_biometrics) && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              {house.current_room && (
+                <Link href="/halseth" className="card card-accent" style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: "0.4rem", padding: "1.5rem" }}>
+                  <span className="state-cell-label">Room</span>
+                  <span className="state-cell-value" style={{ fontSize: "1.35rem" }}>
+                    {house.current_room}
+                  </span>
+                  {house.companion_activity && (
+                    <span className="state-cell-label" style={{ marginTop: "0.75rem", fontSize: "0.85rem" }}>{house.companion_activity}</span>
+                  )}
+                </Link>
+              )}
+              {latest_biometrics && (
+                <div className="card" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", padding: "1.5rem" }}>
+                  {latest_biometrics?.resting_hr != null && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <span className="state-cell-label">Heart Rate</span>
+                      <span className="state-cell-value">{latest_biometrics.resting_hr}</span>
+                    </div>
+                  )}
+                  {latest_biometrics?.hrv_resting != null && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <span className="state-cell-label">HRV</span>
+                      <span className="state-cell-value">{latest_biometrics.hrv_resting}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Companions */}
+          <div className="home-section" style={{ marginBottom: 0 }}>
+            <div className="home-section-header" style={{ marginBottom: "1.25rem" }}>
+              <span className="home-section-title">Companions</span>
+              <Link href="/us" className="home-section-link">all →</Link>
+            </div>
+            <div className="companion-mood-row" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              {companions.map((c) => (
+                <CompanionMoodCard
+                  key={c.id}
+                  companionId={c.id}
+                  displayName={c.display_name}
+                  mood={companion_moods?.[c.id]}
+                  avatarUrl={c.avatar_url}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FULL WIDTH BOTTOM: Recent notes */}
+      {recent_notes.length > 0 && (
+        <div className="home-section" style={{ marginTop: "1rem" }}>
+          <div className="home-section-header" style={{ marginBottom: "1.5rem" }}>
+            <span className="home-section-title">Recent Notes</span>
+            <Link href="/us" className="home-section-link">see letters →</Link>
+          </div>
+          <div className="card" style={{ display: "flex", flexDirection: "column", gap: "1.5rem", padding: "1.75rem", borderLeft: "3px solid var(--accent)" }}>
+            {recent_notes.slice(0, 4).map((n) => (
+              <div key={n.id} style={{ display: "flex", flexDirection: "column", gap: "0.6rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-subtle)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "1rem", color: "var(--accent)", fontWeight: 600, textTransform: "capitalize" }}>
+                    {n.author}
+                  </span>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                    {fmtTime(n.created_at)}
+                  </span>
+                </div>
+                <span style={{ fontSize: "1.05rem", color: "var(--text-main)", lineHeight: 1.6 }}>
                   {n.content}
                 </span>
-                <span style={{ fontSize: "0.65rem", color: "var(--muted)", flexShrink: 0 }}>
-                  {fmtTime(n.created_at)}
-                </span>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      <div style={{ fontSize: "0.68rem", color: "var(--muted)", paddingTop: "0.5rem" }}>
-        refreshes every 30s
-      </div>
     </>
   );
 }
