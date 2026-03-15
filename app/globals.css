@@ -289,6 +289,100 @@ input, select, textarea { font-family: inherit; outline: none; }
 .motion-badge.floating { background: hsla(280, 70%, 50%, 0.15); color: hsl(280, 80%, 75%); }
 .returned-badge { padding: 0.2rem 0.5rem; border-radius: 12px; font-weight: 500; background: hsla(150, 70%, 50%, 0.15); color: var(--green); }
 
+/* Journal entries */
+.journal-feed { display: flex; flex-direction: column; gap: 0.75rem; }
+.journal-entry {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  transition: all 0.25s ease;
+}
+.journal-entry:hover { border-color: var(--border-strong); background: var(--surface-glass-hover); }
+.journal-text { font-size: 0.95rem; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; margin-bottom: 0.5rem; }
+.journal-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem; }
+.journal-tag { font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 10px; border: 1px solid var(--border-strong); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Letters */
+.letter-write-btn {
+  width: 100%;
+  background: var(--surface-glass);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  text-align: center;
+}
+.letter-write-btn:hover { background: var(--surface-glass-hover); border-color: var(--accent); }
+.letter-form {
+  background: var(--surface-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.letter-textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 0.75rem;
+  resize: vertical;
+  min-height: 100px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  -webkit-appearance: none; appearance: none;
+}
+.letter-textarea:focus { outline: none; border-color: var(--accent); }
+.letter-form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; align-items: center; }
+.letter-cancel-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.letter-cancel-btn:hover { border-color: var(--border-strong); color: var(--fg); }
+.letter-send-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+.letter-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.letter-thread { display: flex; flex-direction: column; gap: 0.75rem; }
+.letter-bubble {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+}
+.letter-bubble.incoming { border-left: 3px solid var(--accent); }
+.letter-bubble.outgoing { border-left: 3px solid var(--border-strong); opacity: 0.85; }
+.letter-body { font-size: 0.95rem; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; margin-bottom: 0.5rem; }
+.letter-meta { display: flex; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); align-items: center; }
+
 /* Top cells (Love meter, anchor) */
 .state-cell, .anchor-block {
   background: var(--surface-glass);
