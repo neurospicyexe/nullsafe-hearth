@@ -137,8 +137,8 @@ Full OWASP + vibesec audit run 2026-03-09.
 ## Companion pages
 
 - Shared section components + `COMPANION_CONFIG` (colors, display names) live in `app/companions/[id]/sections.tsx` — import from there
-- Companion colors: drevan=`var(--accent)`, cypher=`#e2e8f0`, gaia=`#4ade80` — use these everywhere, do NOT invent new colors
-- Sub-pages exist at `/companions/[id]/journal`, `/companions/[id]/deltas`, `/companions/[id]/notes`, `/companions/cypher/audit`, `/companions/gaia/witness`
+- Companion colors: drevan=`var(--accent)`, cypher=`#e2e8f0`, gaia=`#4ade80`, Raziel=`#f59e0b` — use these everywhere, do NOT invent new colors
+- Sub-pages exist at `/companions/[id]/journal`, `/companions/[id]/deltas`, `/companions/[id]/notes`, `/companions/[id]/letters` (full letter thread), `/companions/cypher/audit`, `/companions/gaia/witness`
 - `fetchCompanionJournal(undefined, 200)` — pass `undefined` as agent to fetch all companions' entries (used by `/journal`)
 - 5-item clip pattern: fetch 6, `.slice(0, 5)` display, `"see more →"` Link with `className="home-section-link"` if `count > 5`
 
