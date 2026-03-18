@@ -117,7 +117,7 @@ function RecentDeltas({ deltas }: { deltas: Delta[] }) {
               {d.initiated_by && (
                 <span className="delta-time">via {d.initiated_by}</span>
               )}
-              <span className="delta-time" style={{ marginLeft: "auto" }}>
+              <span className="delta-time ml-auto">
                 {formatTime(d.created_at)}
               </span>
             </div>
@@ -133,13 +133,13 @@ function RecentDeltas({ deltas }: { deltas: Delta[] }) {
 function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] }) {
   return (
     <div className="card gaia-card">
-      <div className="card-title" style={{ color: "var(--gaia)" }}>
+      <div className="card-title cc-gaia">
         Gaia&rsquo;s Record
       </div>
 
       {wounds.length > 0 && (
         <div style={{ marginBottom: notes.length > 0 ? "0.85rem" : 0 }}>
-          <div style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.45rem" }}>
+          <div className="subsection-label">
             Living Wounds
           </div>
           {wounds.map((w) => (
@@ -153,7 +153,7 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
 
       {notes.length > 0 && (
         <div>
-          <div style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.45rem" }}>
+          <div className="subsection-label">
             Gaia&rsquo;s Notes
           </div>
           {notes.map((n) => (

@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import type { Dream, DreamSeed } from "@/lib/halseth";
 
+// Single source of truth — mirrors CSS vars in globals.css
 const COMPANION_COLORS: Record<string, string> = {
-  drevan: "#6366f1",
-  cypher: "#e2e8f0",
-  gaia:   "#4ade80",
+  drevan: "var(--drevan)",
+  cypher: "var(--cypher)",
+  gaia:   "var(--gaia)",
 };
 
 const DREAM_TYPE_DESC: Record<string, string> = {
@@ -25,12 +26,11 @@ function fmtTime(iso: string) {
 }
 
 function DreamEntry({ dream }: { dream: Dream }) {
+  const color = COMPANION_COLORS[dream.companion_id] ?? "var(--accent)";
   return (
-    <div className="full-note-entry" style={{ borderLeft: `3px solid ${COMPANION_COLORS[dream.companion_id] ?? "var(--accent)"}` }}>
+    <div className="full-note-entry" style={{ borderLeft: `3px solid ${color}` }}>
       <div className="note-header">
-        <span className="note-author" style={{ color: COMPANION_COLORS[dream.companion_id] ?? "var(--accent)" }}>
-          {dream.companion_id}
-        </span>
+        <span className="note-author" style={{ color }}>{dream.companion_id}</span>
         <span className="note-type-badge">{DREAM_TYPE_DESC[dream.dream_type] ?? dream.dream_type}</span>
         <span className="note-time">{fmtTime(dream.generated_at)}</span>
       </div>
@@ -41,32 +41,25 @@ function DreamEntry({ dream }: { dream: Dream }) {
 
 function SeedEntry({ seed }: { seed: DreamSeed }) {
   const claimed = !!seed.claimed_at;
+  const forColor = seed.for_companion
+    ? (COMPANION_COLORS[seed.for_companion] ?? "var(--accent)")
+    : "var(--muted)";
   return (
-    <div style={{
-      padding: "0.75rem 1rem",
-      borderRadius: "6px",
-      background: "var(--card-bg)",
-      border: `1px solid ${claimed ? "var(--border)" : "var(--accent)"}`,
-      opacity: claimed ? 0.55 : 1,
-    }}>
-      <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", marginBottom: "0.4rem", flexWrap: "wrap" }}>
-        {seed.for_companion ? (
-          <span style={{ fontSize: "0.75rem", color: COMPANION_COLORS[seed.for_companion] ?? "var(--accent)", fontWeight: 600 }}>
-            → {seed.for_companion}
-          </span>
-        ) : (
-          <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>any companion</span>
-        )}
+    <div className="dream-seed-item" style={{ opacity: claimed ? 0.55 : 1, borderColor: claimed ? "var(--border)" : "var(--accent)" }}>
+      <div className="dream-seed-meta">
+        <span className="dream-seed-for" style={{ color: forColor }}>
+          {seed.for_companion ? `→ ${seed.for_companion}` : "any companion"}
+        </span>
         {claimed ? (
-          <span style={{ fontSize: "0.72rem", color: "var(--muted)", fontStyle: "italic" }}>
+          <span className="dream-seed-status">
             claimed by {seed.claimed_by} · {fmtTime(seed.claimed_at!)}
           </span>
         ) : (
-          <span style={{ fontSize: "0.72rem", color: "var(--accent)", fontStyle: "italic" }}>pending</span>
+          <span className="dream-seed-status pending">pending</span>
         )}
-        <span style={{ marginLeft: "auto", fontSize: "0.72rem", color: "var(--muted)" }}>{fmtTime(seed.created_at)}</span>
+        <span className="dream-seed-time">{fmtTime(seed.created_at)}</span>
       </div>
-      <div style={{ fontSize: "0.88rem", color: "var(--fg)", lineHeight: 1.5 }}>{seed.content}</div>
+      <div className="dream-seed-content">{seed.content}</div>
     </div>
   );
 }
@@ -77,7 +70,6 @@ export default function DreamsPage() {
   const [loading, setLoading]       = useState(true);
   const [tab, setTab]               = useState<"dreams" | "seeds">("dreams");
 
-  // Seed form state
   const [seedText, setSeedText]     = useState("");
   const [forCompanion, setForComp]  = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -111,7 +103,7 @@ export default function DreamsPage() {
       if (!res.ok) throw new Error(await res.text());
       setSeedText("");
       setForComp("");
-      setSubmitted((v) => !v); // trigger reload
+      setSubmitted((v) => !v);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to inject seed");
     } finally {
@@ -128,37 +120,25 @@ export default function DreamsPage() {
         <p className="page-subtitle">autonomous processing — what surfaces when no one is watching</p>
       </div>
 
-      {/* Seed injection form */}
-      <section style={{ marginBottom: "2rem", padding: "1rem 1.25rem", background: "var(--card-bg)", border: "1px solid var(--accent)", borderRadius: "8px" }}>
-        <div style={{ fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--accent)", marginBottom: "0.75rem" }}>
-          Inject a Dream Seed
-        </div>
-        <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: "0.75rem", lineHeight: 1.5 }}>
+      <section className="dream-form-section">
+        <div className="dream-form-label">Inject a Dream Seed</div>
+        <p className="dream-form-hint">
           Leave something for a companion to find during autonomous time. A question, a memory,
           an image, a fragment. If no seed is pending, they fall back to reading deltas and handovers.
         </p>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+        <form onSubmit={handleSubmit} className="dream-form-inner">
           <textarea
+            className="input"
             value={seedText}
             onChange={(e) => setSeedText(e.target.value)}
             placeholder="What do you want them to sit with?"
             rows={3}
-            style={{
-              width: "100%", padding: "0.6rem 0.75rem",
-              background: "var(--input-bg, #0d0d0d)", border: "1px solid var(--border)",
-              borderRadius: "4px", color: "var(--fg)", fontSize: "0.88rem",
-              resize: "vertical", fontFamily: "inherit",
-            }}
           />
-          <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+          <div className="dream-form-row">
             <select
+              className="input"
               value={forCompanion}
               onChange={(e) => setForComp(e.target.value)}
-              style={{
-                padding: "0.4rem 0.6rem", background: "var(--input-bg, #0d0d0d)",
-                border: "1px solid var(--border)", borderRadius: "4px",
-                color: "var(--fg)", fontSize: "0.82rem",
-              }}
             >
               <option value="">any companion</option>
               <option value="drevan">drevan</option>
@@ -167,13 +147,8 @@ export default function DreamsPage() {
             </select>
             <button
               type="submit"
+              className="btn btn-primary"
               disabled={submitting || !seedText.trim()}
-              style={{
-                padding: "0.4rem 1rem", background: "var(--accent)", color: "#000",
-                border: "none", borderRadius: "4px", fontSize: "0.82rem",
-                fontWeight: 600, cursor: submitting ? "not-allowed" : "pointer",
-                opacity: submitting || !seedText.trim() ? 0.5 : 1,
-              }}
             >
               {submitting ? "Injecting…" : "Inject"}
             </button>
@@ -183,11 +158,10 @@ export default function DreamsPage() {
               </span>
             )}
           </div>
-          {error && <p style={{ color: "var(--red)", fontSize: "0.8rem", margin: 0 }}>{error}</p>}
+          {error && <p className="dream-form-error">{error}</p>}
         </form>
       </section>
 
-      {/* Tabs */}
       <div className="filter-tabs" style={{ marginBottom: "1.25rem" }}>
         <button className={`filter-tab ${tab === "dreams" ? "active" : ""}`} onClick={() => setTab("dreams")}>
           Dreams {dreams.length > 0 && `(${dreams.length})`}
@@ -208,7 +182,7 @@ export default function DreamsPage() {
       {!loading && tab === "seeds" && (
         seeds.length === 0
           ? <p className="empty">No seeds yet. Use the form above to leave something.</p>
-          : <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+          : <div className="dream-seeds-list">
               {seeds.map((s) => <SeedEntry key={s.id} seed={s} />)}
             </div>
       )}
