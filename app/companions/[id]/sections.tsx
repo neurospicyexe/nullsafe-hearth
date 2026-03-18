@@ -69,7 +69,7 @@ export function JournalSection({ entries }: { entries: CompanionJournalEntry[] |
                 {tags.map((t, i) => <span key={i} className="journal-tag">{t}</span>)}
               </div>
             )}
-            <div className="delta-meta" style={{ marginTop: "0.4rem" }}>
+            <div className="delta-meta delta-meta-mt">
               <span>{fmtTime(e.created_at)}</span>
               {e.session_id && <span>session {e.session_id.slice(0, 8)}</span>}
             </div>
@@ -135,15 +135,15 @@ export function CypherAuditSection({ entries }: { entries: CypherAuditEntry[] | 
     <div className="audit-feed">
       {entries.map((e) => (
         <div key={e.id} className="audit-entry">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.35rem" }}>
+          <div className="entry-meta-row">
             <span className="audit-type">{e.entry_type.replace("_", " ")}</span>
             {e.verdict_tag && <span className="audit-verdict">{e.verdict_tag}</span>}
             {e.supersedes_id && (
-              <span style={{ fontSize: "0.68rem", color: "var(--muted)" }}>↑ corrects {e.supersedes_id.slice(0, 8)}</span>
+              <span className="entry-supersedes">↑ corrects {e.supersedes_id.slice(0, 8)}</span>
             )}
           </div>
-          <div style={{ fontSize: "0.88rem", color: "var(--fg)", lineHeight: 1.5 }}>{e.content}</div>
-          <div className="delta-meta" style={{ marginTop: "0.35rem" }}>
+          <div className="entry-content">{e.content}</div>
+          <div className="delta-meta delta-meta-mt">
             <span>{fmtTime(e.created_at)}</span>
           </div>
         </div>
@@ -166,12 +166,12 @@ export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | 
     <div className="witness-feed">
       {entries.map((e) => (
         <div key={e.id} className="witness-entry">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
+          <div className="entry-meta-row">
             <span className={`witness-type ${e.witness_type}`}>{e.witness_type.replace("_", " ")}</span>
           </div>
-          <div style={{ fontSize: "0.88rem", color: "var(--fg)", lineHeight: 1.5 }}>{e.content}</div>
+          <div className="entry-content">{e.content}</div>
           {e.seal_phrase && <div className="seal-phrase">{e.seal_phrase}</div>}
-          <div className="delta-meta" style={{ marginTop: "0.35rem" }}>
+          <div className="delta-meta delta-meta-mt">
             <span>{fmtTime(e.created_at)}</span>
           </div>
         </div>
