@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function LiveFeedImage({ currentRoom }: { currentRoom: string }) {
+export default function LiveFeedImage({ src, currentRoom }: { src: string; currentRoom: string }) {
   const [error, setError] = useState(false);
 
   if (error) {
@@ -18,7 +18,7 @@ export default function LiveFeedImage({ currentRoom }: { currentRoom: string }) 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`https://static.halseth.neurospicyexe.workers.dev/${currentRoom}.webp`}
+      src={src}
       alt={`Current view of ${currentRoom}`}
       style={{
         width: "100%", height: "100%", position: "absolute", inset: 0, objectFit: "cover",

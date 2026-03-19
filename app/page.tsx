@@ -150,7 +150,10 @@ export default async function Page() {
                 <span className="live-dot" />
                 <span className="live-feed-label">Live Feed</span>
               </div>
-              <LiveFeedImage currentRoom={house.current_room} />
+              <LiveFeedImage
+                src={`${process.env.HALSETH_URL}/assets/rooms/${house.current_room}.jpg`}
+                currentRoom={house.current_room}
+              />
             </div>
           )}
 
