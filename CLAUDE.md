@@ -149,7 +149,6 @@ Full OWASP + vibesec audit run 2026-03-09.
 
 ## Vercel
 
-- Live URL: https://nullsafe-hearth-1gvo.vercel.app
 - Data pages use `export const dynamic = 'force-dynamic'` (server-rendered on every request, no CDN caching)
 
 # context-mode — MANDATORY routing rules
