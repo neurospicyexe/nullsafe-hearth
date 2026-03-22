@@ -40,7 +40,7 @@ export default function Nav() {
   return (
     <>
       {/* Sidebar — desktop */}
-      <nav className="nav-sidebar">
+      <nav className="nav-sidebar" aria-label="Main navigation">
         <div className="nav-wordmark">Hearth</div>
         <div className="nav-links">
           {NAV.map((item) => (
@@ -49,7 +49,7 @@ export default function Nav() {
               href={item.href}
               className={`nav-link ${isActive(item.href) ? "active" : ""}`}
             >
-              <span className="nav-sym">{item.sym}</span>
+              <span className="nav-sym" aria-hidden="true">{item.sym}</span>
               <span className="nav-label">{item.label}</span>
             </Link>
           ))}
@@ -60,13 +60,13 @@ export default function Nav() {
           title="Search (⌘K)"
           aria-label="Search"
         >
-          <span className="nav-sym">⌕</span>
+          <span className="nav-sym" aria-hidden="true">⌕</span>
           <span className="nav-label">Search</span>
         </button>
       </nav>
 
       {/* Bottom bar — mobile */}
-      <nav className="nav-bottom">
+      <nav className="nav-bottom" aria-label="Mobile navigation">
         {NAV.map((item) => (
           <Link
             key={item.href}
@@ -74,7 +74,7 @@ export default function Nav() {
             className={`nav-bottom-item ${isActive(item.href) ? "active" : ""}`}
             title={item.label}
           >
-            <span className="nav-sym">{item.sym}</span>
+            <span className="nav-sym" aria-hidden="true">{item.sym}</span>
             <span className="nav-bottom-label">{item.label}</span>
           </Link>
         ))}
@@ -84,7 +84,7 @@ export default function Nav() {
           title="Search"
           aria-label="Search"
         >
-          <span className="nav-sym">⌕</span>
+          <span className="nav-sym" aria-hidden="true">⌕</span>
           <span className="nav-bottom-label">Search</span>
         </button>
       </nav>
