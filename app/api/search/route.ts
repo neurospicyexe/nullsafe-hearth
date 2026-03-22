@@ -5,18 +5,22 @@ import {
   fetchDreams,
   fetchHandovers,
   fetchTasks,
+  fetchWounds,
+  fetchAllCompanionNotes,
   type RelationalDelta,
   type CompanionJournalEntry,
   type Dream,
   type HandoverPacket,
   type Task,
+  type LivingWound,
+  type CompanionNote,
 } from "@/lib/halseth";
 
-type SearchType = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks";
+type SearchType = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
 
 type SearchResult = {
   id: string;
-  type: "feeling" | "journal" | "dream" | "handover" | "task";
+  type: "feeling" | "journal" | "dream" | "handover" | "task" | "note" | "wound";
   text: string;
   created_at: string;
   url: string;
@@ -29,6 +33,8 @@ type SearchResponse = {
   dreams: SearchResult[];
   handovers: SearchResult[];
   tasks: SearchResult[];
+  notes: SearchResult[];
+  wounds: SearchResult[];
 };
 
 function matches(text: string | null | undefined, q: string): boolean {
@@ -42,19 +48,21 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (q.length > 200) return NextResponse.json({ error: "q too long" }, { status: 400 });
 
   const rawType = searchParams.get("type") ?? "all";
-  const type: SearchType = ["all", "feelings", "journal", "dreams", "handovers", "tasks"].includes(rawType)
+  const type: SearchType = ["all", "feelings", "journal", "dreams", "handovers", "tasks", "notes", "wounds"].includes(rawType)
     ? (rawType as SearchType)
     : "all";
 
   const want = (t: Exclude<SearchType, "all">) => type === "all" || type === t;
 
   try {
-    const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawTasks] = await Promise.all([
+    const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawTasks, rawWounds, rawNotes] = await Promise.all([
       want("feelings")  ? fetchAllDeltas(200)               : Promise.resolve(null),
       want("journal")   ? fetchCompanionJournal(undefined, 200) : Promise.resolve(null),
       want("dreams")    ? fetchDreams(undefined, 200)        : Promise.resolve(null),
       want("handovers") ? fetchHandovers(100)                : Promise.resolve(null),
       want("tasks")     ? fetchTasks() /* returns all statuses including done */ : Promise.resolve([]),
+      want("wounds")    ? fetchWounds()                      : Promise.resolve(null),
+      want("notes")     ? fetchAllCompanionNotes(200)        : Promise.resolve(null),
     ]);
 
     const feelings: SearchResult[] = (rawFeelings ?? [])
@@ -73,7 +81,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const dreams: SearchResult[] = (rawDreams ?? [])
       .filter((d: Dream) => matches(d.content, q))
       .map((d: Dream) => ({
-        id: d.id, type: "dream" as const, text: d.content, created_at: d.generated_at /* Dream has no created_at; generated_at is the timestamp */, url: "/dreams",
+        id: d.id, type: "dream" as const, text: d.content, created_at: d.generated_at, url: "/dreams",
       }));
 
     const handovers: SearchResult[] = (rawHandovers ?? [])
@@ -87,8 +95,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .map((t: Task) => ({
         id: t.id, type: "task" as const, text: t.title, created_at: t.due_at ?? "", url: "/tasks",
       }));
+      
+    const wounds: SearchResult[] = (rawWounds ?? [])
+      .filter((w: LivingWound) => matches(w.name, q) || matches(w.description, q))
+      .map((w: LivingWound) => ({
+        id: w.id, type: "wound" as const, text: w.name ?? "", created_at: w.created_at, url: "/us",
+      }));
+      
+    const notes: SearchResult[] = (rawNotes ?? [])
+      .filter((n: CompanionNote) => matches(n.note_text, q))
+      .map((n: CompanionNote) => ({
+        id: n.id, type: "note" as const, text: n.note_text, created_at: n.created_at, url: `/companions/${n.agent}`, agent: n.agent,
+      }));
 
-    const result: SearchResponse = { feelings, journal, dreams, handovers, tasks };
+    const result: SearchResponse = { feelings, journal, dreams, handovers, tasks, wounds, notes };
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ error: "Search unavailable" }, { status: 500 });
