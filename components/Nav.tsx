@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import SearchOverlay from "./SearchOverlay";
+
+const SearchOverlay = dynamic(() => import("./SearchOverlay"), { ssr: false });
 
 const NAV = [
   { href: "/",          label: "Home",      sym: "◈" },
@@ -22,6 +24,8 @@ export default function Nav() {
 
   const isActive = (href: string) =>
     href === "/" ? path === "/" : path.startsWith(href);
+
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -89,7 +93,7 @@ export default function Nav() {
         </button>
       </nav>
 
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchOverlay open={searchOpen} onClose={closeSearch} />
     </>
   );
 }

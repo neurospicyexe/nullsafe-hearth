@@ -203,7 +203,8 @@ input, select, textarea { font-family: inherit; }
 .nav-sidebar .nav-search-btn { margin-top: auto; border-radius: var(--radius-md); }
 .nav-sidebar .nav-search-btn:hover { background: var(--surface-raised); color: var(--text-main); }
 
-@media (min-width: 768px) {
+/* ── Desktop (1024px+) — sidebar visible ────────────────────────────────── */
+@media (min-width: 1024px) {
   .nav-sidebar { display: flex; }
   .nav-bottom { display: none; }
   body { padding-bottom: 0; }
@@ -214,6 +215,17 @@ input, select, textarea { font-family: inherit; }
 body:not(:has(nav)) { padding-bottom: 0; }
 body:not(:has(nav)) .app-main { margin-left: 0; }
 
+/* ── Tablet (768–1023px) — bottom nav, wider padding, 2-col home ─────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-main { padding: 2rem 2rem; }
+  .page-title { font-size: 2.2rem; }
+  .home-presence-grid { grid-template-columns: 3fr 2fr; gap: 2rem; }
+  .search-backdrop { padding-top: 3rem; }
+  /* Larger touch targets for bottom nav items */
+  .nav-bottom-item { min-height: 44px; padding: 0.6rem 0.75rem; }
+}
+
+/* ── Mobile (≤767px) ─────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .app-main { padding: 1.25rem 1rem; }
   .page-title { font-size: 1.4rem; }
@@ -224,6 +236,22 @@ body:not(:has(nav)) .app-main { margin-left: 0; }
   .letter-bubble { max-width: 100%; }
   .bridge-row { flex-wrap: wrap; }
   .delta-feed, .journal-feed { font-size: 0.84rem; }
+  /* Touch targets — 44px minimum */
+  .nav-bottom-item { min-height: 44px; padding: 0.55rem 0.6rem; }
+  /* Search: near-top position, full rounded corners (not half-sheet) */
+  .search-backdrop { padding-top: 0.75rem; align-items: flex-start; }
+  .search-panel { max-height: 92vh; }
+  /* Tighter biometrics grid on phone */
+  .biometrics-2col { gap: 1rem; padding: 1.25rem; }
+}
+
+/* ── Tiny phone (≤400px) — icon-only bottom nav ──────────────────────────── */
+@media (max-width: 400px) {
+  .nav-bottom-label { display: none; }
+  .nav-bottom { padding: 0.35rem; }
+  .nav-bottom-item { padding: 0.75rem 0.6rem; min-width: 40px; }
+  .app-main { padding: 1rem 0.75rem; }
+  .page-title { font-size: 1.25rem; }
 }
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */
@@ -627,7 +655,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   margin-bottom: 2rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .home-presence-grid {
     grid-template-columns: repeat(2, 1fr);
   }
