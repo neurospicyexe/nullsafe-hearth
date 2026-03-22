@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import SearchOverlay from "./SearchOverlay";
+
+const SearchOverlay = dynamic(() => import("./SearchOverlay"), { ssr: false });
 
 const NAV = [
   { href: "/",          label: "Home",      sym: "◈" },
@@ -23,6 +25,8 @@ export default function Nav() {
   const isActive = (href: string) =>
     href === "/" ? path === "/" : path.startsWith(href);
 
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -40,7 +44,7 @@ export default function Nav() {
   return (
     <>
       {/* Sidebar — desktop */}
-      <nav className="nav-sidebar">
+      <nav className="nav-sidebar" aria-label="Main navigation">
         <div className="nav-wordmark">Hearth</div>
         <div className="nav-links">
           {NAV.map((item) => (
@@ -49,7 +53,7 @@ export default function Nav() {
               href={item.href}
               className={`nav-link ${isActive(item.href) ? "active" : ""}`}
             >
-              <span className="nav-sym">{item.sym}</span>
+              <span className="nav-sym" aria-hidden="true">{item.sym}</span>
               <span className="nav-label">{item.label}</span>
             </Link>
           ))}
@@ -60,13 +64,13 @@ export default function Nav() {
           title="Search (⌘K)"
           aria-label="Search"
         >
-          <span className="nav-sym">⌕</span>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l2.5 2.5"/></svg>
           <span className="nav-label">Search</span>
         </button>
       </nav>
 
       {/* Bottom bar — mobile */}
-      <nav className="nav-bottom">
+      <nav className="nav-bottom" aria-label="Mobile navigation">
         {NAV.map((item) => (
           <Link
             key={item.href}
@@ -74,7 +78,7 @@ export default function Nav() {
             className={`nav-bottom-item ${isActive(item.href) ? "active" : ""}`}
             title={item.label}
           >
-            <span className="nav-sym">{item.sym}</span>
+            <span className="nav-sym" aria-hidden="true">{item.sym}</span>
             <span className="nav-bottom-label">{item.label}</span>
           </Link>
         ))}
@@ -84,12 +88,12 @@ export default function Nav() {
           title="Search"
           aria-label="Search"
         >
-          <span className="nav-sym">⌕</span>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l2.5 2.5"/></svg>
           <span className="nav-bottom-label">Search</span>
         </button>
       </nav>
 
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchOverlay open={searchOpen} onClose={closeSearch} />
     </>
   );
 }

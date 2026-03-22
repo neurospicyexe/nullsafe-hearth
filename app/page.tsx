@@ -22,7 +22,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
     ].filter(Boolean);
 
     return (
-      <div className="presence-card">
+      <div className="presence-card open">
         <div className="presence-top">
           <span className="presence-label">
             <span className="status-dot live" />

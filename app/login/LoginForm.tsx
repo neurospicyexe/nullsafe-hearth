@@ -50,13 +50,12 @@ export default function LoginForm() {
         autoFocus
         autoComplete="current-password"
         style={{
-          background: "var(--bg)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius)",
-          color: "var(--text)",
+          background: "var(--bg-color)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "var(--radius-md)",
+          color: "var(--text-main)",
           padding: "0.6rem 0.875rem",
           fontSize: "1rem",
-          outline: "none",
           width: "100%",
         }}
       />
@@ -69,7 +68,7 @@ export default function LoginForm() {
         style={{
           background: "var(--accent)",
           border: "none",
-          borderRadius: "var(--radius)",
+          borderRadius: "var(--radius-md)",
           color: "#fff",
           cursor: loading ? "default" : "pointer",
           fontSize: "0.9rem",
