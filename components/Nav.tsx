@@ -60,7 +60,7 @@ export default function Nav() {
           title="Search (⌘K)"
           aria-label="Search"
         >
-          <span className="nav-sym" aria-hidden="true">⌕</span>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l2.5 2.5"/></svg>
           <span className="nav-label">Search</span>
         </button>
       </nav>
@@ -84,7 +84,7 @@ export default function Nav() {
           title="Search"
           aria-label="Search"
         >
-          <span className="nav-sym" aria-hidden="true">⌕</span>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l2.5 2.5"/></svg>
           <span className="nav-bottom-label">Search</span>
         </button>
       </nav>
