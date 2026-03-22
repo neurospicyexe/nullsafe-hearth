@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type ChipValue = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks";
+type ChipValue = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
 
 type SearchResult = {
   id: string;
-  type: "feeling" | "journal" | "dream" | "handover" | "task";
+  type: "feeling" | "journal" | "dream" | "handover" | "task" | "note" | "wound";
   text: string;
   created_at: string;
   url: string;
@@ -20,26 +20,32 @@ type SearchResponse = {
   dreams: SearchResult[];
   handovers: SearchResult[];
   tasks: SearchResult[];
+  notes: SearchResult[];
+  wounds: SearchResult[];
 };
 
 const CHIPS: { label: string; value: ChipValue }[] = [
   { label: "All", value: "all" },
-  { label: "Feelings", value: "feelings" },
+  { label: "Tasks", value: "tasks" },
+  { label: "Notes", value: "notes" },
   { label: "Journal", value: "journal" },
+  { label: "Feelings", value: "feelings" },
   { label: "Dreams", value: "dreams" },
   { label: "Handovers", value: "handovers" },
-  { label: "Tasks", value: "tasks" },
+  { label: "Wounds", value: "wounds" },
 ];
 
 const GROUP_LABELS: Record<keyof SearchResponse, string> = {
-  feelings: "FEELINGS",
-  journal: "JOURNAL",
+  tasks: "TASKS",
+  notes: "NOTES & LETTERS",
+  journal: "COMPANION JOURNAL",
+  feelings: "FEELINGS & DELTAS",
   dreams: "DREAMS",
   handovers: "HANDOVERS",
-  tasks: "TASKS",
+  wounds: "LIVING WOUNDS",
 };
 
-const GROUP_ORDER: (keyof SearchResponse)[] = ["feelings", "journal", "dreams", "handovers", "tasks"];
+const GROUP_ORDER: (keyof SearchResponse)[] = ["tasks", "notes", "wounds", "journal", "feelings", "dreams", "handovers"];
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return "";
@@ -124,7 +130,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
   const hasResults =
     results !== null &&
-    GROUP_ORDER.some((key) => results[key].length > 0);
+    GROUP_ORDER.some((key) => results && results[key] && results[key].length > 0);
 
   const showEmpty = q.trim() !== "" && !loading && error === null && results !== null && !hasResults;
 
@@ -161,6 +167,10 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           ))}
         </div>
 
+        <span className="sr-only" aria-live="polite" aria-atomic="true">
+          {loading ? "Searching…" : error ? "Search unavailable." : showEmpty ? `No results for ${q}.` : hasResults ? `Results found for ${q}.` : ""}
+        </span>
+
         <div className="search-results">
           {loading && (
             <div className="search-loading">searching…</div>
@@ -172,7 +182,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
           {!loading && error === null && results !== null && GROUP_ORDER.map((key) => {
             const group = results[key];
-            if (group.length === 0) return null;
+            if (!group || group.length === 0) return null;
             return (
               <div key={key} className="search-result-group">
                 <div className="search-result-group-label">{GROUP_LABELS[key]}</div>
