@@ -66,9 +66,9 @@ body {
 }
 
 /* Typography elements */
-a { color: var(--accent); text-decoration: none; transition: all 0.2s ease; }
+a { color: var(--accent); text-decoration: none; transition: color 0.2s var(--ease-out), opacity 0.2s var(--ease-out), filter 0.2s var(--ease-out); }
 a:hover { filter: brightness(1.15); }
-button { font-family: inherit; cursor: pointer; transition: all 0.2s ease; }
+button { font-family: inherit; cursor: pointer; transition: color 0.2s var(--ease-out), background 0.2s var(--ease-out), border-color 0.2s var(--ease-out), opacity 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out); }
 input, select, textarea { font-family: inherit; }
 /* Consistent focus ring — replaces browser defaults with something on-brand */
 :focus-visible {
@@ -1331,7 +1331,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .room-activity { margin-top: 0.75rem; font-size: 0.85rem; }
 
 /* ── Notes card (home) ───────────────────────────────────────────────────── */
-.notes-card { display: flex; flex-direction: column; gap: 1.5rem; padding: 1.75rem; border-left: 3px solid var(--accent); }
+.notes-card { display: flex; flex-direction: column; gap: 1.5rem; padding: 1.75rem; border-top: 2px solid var(--accent); }
 .note-item { display: flex; flex-direction: column; gap: 0.6rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); }
 .note-item:last-child { border-bottom: none; padding-bottom: 0; }
 .note-item-header { display: flex; justify-content: space-between; align-items: center; }
