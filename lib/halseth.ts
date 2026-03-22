@@ -92,6 +92,7 @@ export type PresenceData = {
   }>;
   recent_dreams: Array<{
     id: string;
+    companion_id: string;
     content: string;
     created_at: string;
   }>;
