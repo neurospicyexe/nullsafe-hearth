@@ -16,6 +16,9 @@ export async function PATCH(
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
   const { id } = await params;
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  }
   const raw = await request.json();
   if (
     typeof raw.status !== "string" ||

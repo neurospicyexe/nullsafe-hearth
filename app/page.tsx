@@ -144,7 +144,7 @@ export default async function Page() {
         <div className="home-col">
           <PresenceSection data={data} />
 
-          {house.current_room && (
+          {house.current_room && /^[a-z0-9_-]+$/i.test(house.current_room) && (
             <div className="card live-feed-card">
               <div className="live-feed-badge">
                 <span className="live-dot" />
