@@ -42,6 +42,7 @@ Asynchronous notes between Raziel and companions.
 GET  /presence          -- main data bundle (auth-gated)
 GET  /house             -- house state
 POST /house             -- update spoon_count, love_meter, current_room, etc.
+GET  /soma              -- companion SOMA state for drevan/cypher/gaia (single query)
 GET  /notes?limit=N     -- companion_notes table
 POST /notes             -- create note
 GET  /biometrics        -- list snapshots
