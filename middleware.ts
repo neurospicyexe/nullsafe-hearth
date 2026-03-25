@@ -16,6 +16,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Protect all routes except login page, Next internals, and static files.
-  matcher: ["/((?!login|_next/static|_next/image|favicon\\.ico).*)"],
+  // Protect all routes except login page, auth API, Next internals, and static files.
+  // api/companion/* uses its own HALSETH_SECRET Bearer auth — no cookie needed.
+  matcher: ["/((?!api/auth|api/companion|login|_next/static|_next/image|favicon\\.ico).*)"],
 };

@@ -51,6 +51,7 @@ export type PresenceData = {
     spoon_count: number;
     love_meter: number;
     updated_at: string;
+    autonomous_turn: "drevan" | "cypher" | "gaia" | null;
   };
   session: {
     id: string;
@@ -91,6 +92,7 @@ export type PresenceData = {
   }>;
   recent_dreams: Array<{
     id: string;
+    companion_id: string;
     content: string;
     created_at: string;
   }>;
@@ -109,10 +111,12 @@ export type PresenceData = {
     initiated_by: Record<string, number>;
     total_deltas: number;
   } | null;
+  companion_moods: Record<string, { emotion: string; intensity: number; at: string }> | null;
   companions: Array<{
     id: string;
     display_name: string;
     role: string;
+    avatar_url: string | null;
   }>;
 };
 
@@ -444,6 +448,19 @@ export type DreamSeed = {
   claimed_by: string | null;
 };
 
+export async function fetchCompanionNotesByAgent(
+  agent: string,
+  limit = 50,
+): Promise<CompanionNote[]> {
+  return (
+    (await hGetSafe<CompanionNote[]>(`/companion-notes?agent=${agent}&limit=${limit}`)) ?? []
+  );
+}
+
+export async function fetchAllCompanionNotes(limit = 50): Promise<CompanionNote[]> {
+  return (await hGetSafe<CompanionNote[]>(`/companion-notes?limit=${limit}`)) ?? [];
+}
+
 export async function fetchDreams(companionId?: string, limit = 20): Promise<Dream[]> {
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
@@ -452,4 +469,92 @@ export async function fetchDreams(companionId?: string, limit = 20): Promise<Dre
 
 export async function fetchDreamSeeds(): Promise<DreamSeed[]> {
   return (await hGetSafe<DreamSeed[]>("/dream-seeds")) ?? [];
+}
+
+// ── Human Journal ─────────────────────────────────────────────────────────────
+
+export type HumanJournalEntry = {
+  id: string;
+  created_at: string;
+  entry_text: string;
+  emotion_tag: string | null;
+  sub_emotion: string | null;
+  mood_score: number | null;
+  tags: string | null; // JSON array string
+};
+
+export async function fetchHumanJournal(limit = 50): Promise<HumanJournalEntry[]> {
+  return (await hGetSafe<HumanJournalEntry[]>(`/journal?limit=${limit}`)) ?? [];
+}
+
+// ── SOMA Feelings ─────────────────────────────────────────────────────────────
+
+export type SomaFeeling = {
+  id: string;
+  companion_id: string;
+  session_id: string | null;
+  emotion: string;
+  sub_emotion: string | null;
+  intensity: number; // 0-100
+  source: string | null;
+  created_at: string;
+};
+
+export async function fetchSomaFeelings(
+  companionId?: string,
+  limit = 50,
+): Promise<SomaFeeling[]> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (companionId) q.set("companion_id", companionId);
+  return (await hGetSafe<SomaFeeling[]>(`/feelings?${q}`)) ?? [];
+}
+
+// ── Sessions ──────────────────────────────────────────────────────────────────
+
+export type SessionEntry = {
+  id: string;
+  created_at: string;
+  updated_at: string | null;
+  front_state: string | null;
+  co_con: string | null;
+  emotional_frequency: string | null;
+  active_anchor: string | null;
+  facet: string | null;
+  notes: string | null;
+};
+
+export async function fetchSessions(days = 30, limit = 100): Promise<SessionEntry[]> {
+  return (
+    (await hGetSafe<SessionEntry[]>(`/sessions?days=${days}&limit=${limit}`)) ?? []
+  );
+}
+
+// ── Companion Blocks ──────────────────────────────────────────────────────────
+
+export type CompanionBlock = {
+  id: string;
+  channel_id: string | null;
+  block_type: string;
+  content: string;
+  created_at: string;
+};
+
+export async function fetchPersonaBlocks(
+  companionId: string,
+  limit = 20,
+): Promise<CompanionBlock[]> {
+  const data = await hGetSafe<{ blocks: CompanionBlock[] }>(
+    `/persona-blocks?companion_id=${encodeURIComponent(companionId)}&limit=${limit}`,
+  );
+  return data?.blocks ?? [];
+}
+
+export async function fetchHumanBlocks(
+  companionId: string,
+  limit = 20,
+): Promise<CompanionBlock[]> {
+  const data = await hGetSafe<{ blocks: CompanionBlock[] }>(
+    `/human-blocks?companion_id=${encodeURIComponent(companionId)}&limit=${limit}`,
+  );
+  return data?.blocks ?? [];
 }

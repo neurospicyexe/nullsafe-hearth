@@ -5,7 +5,20 @@ export async function POST(request: NextRequest) {
   const secret = process.env.HALSETH_SECRET;
   if (!base) return NextResponse.json({ error: "MIND_URL / HALSETH_URL not set" }, { status: 500 });
 
-  const body = await request.json();
+  let raw: unknown;
+  try { raw = await request.json(); }
+  catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
+
+  if (typeof raw !== "object" || raw === null) {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+  const r = raw as Record<string, unknown>;
+
+  // Allowlist: only forward known journal fields
+  const body: Record<string, unknown> = {};
+  if (typeof r["entry"] === "string") body["entry"] = r["entry"];
+  if (Array.isArray(r["tags"])) body["tags"] = (r["tags"] as unknown[]).filter((t) => typeof t === "string");
+
   const res = await fetch(`${base}/mind/journal`, {
     method: "POST",
     headers: {
