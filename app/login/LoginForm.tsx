@@ -16,17 +16,23 @@ export default function LoginForm() {
     setLoading(true);
     setError("");
 
-    const res = await fetch(`/api/auth?from=${encodeURIComponent(from)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret: value }),
-    });
+    try {
+      const res = await fetch(`/api/auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: value }),
+      });
 
-    if (res.ok || res.redirected) {
-      router.push(from);
-      router.refresh();
-    } else {
-      setError("Incorrect passphrase.");
+      if (res.ok) {
+        router.push(from);
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Incorrect passphrase.");
+        setLoading(false);
+      }
+    } catch {
+      setError("An error occurred during login.");
       setLoading(false);
     }
   }
@@ -44,13 +50,12 @@ export default function LoginForm() {
         autoFocus
         autoComplete="current-password"
         style={{
-          background: "var(--bg)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius)",
-          color: "var(--text)",
+          background: "var(--bg-color)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "var(--radius-md)",
+          color: "var(--text-main)",
           padding: "0.6rem 0.875rem",
           fontSize: "1rem",
-          outline: "none",
           width: "100%",
         }}
       />
@@ -63,7 +68,7 @@ export default function LoginForm() {
         style={{
           background: "var(--accent)",
           border: "none",
-          borderRadius: "var(--radius)",
+          borderRadius: "var(--radius-md)",
           color: "#fff",
           cursor: loading ? "default" : "pointer",
           fontSize: "0.9rem",

@@ -63,14 +63,14 @@ export default async function HandoversPage() {
                     {h.motion_state.replace("_", " ")}
                   </span>
                   {h.session_type === "hangout" && (
-                    <span style={{ fontSize: "0.72rem", color: "var(--accent)", fontStyle: "italic" }}>autonomous</span>
+                    <span className="badge-autonomous">autonomous</span>
                   )}
                   {h.session_front_state && (
-                    <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>{h.session_front_state}</span>
+                    <span className="handover-front-state">{h.session_front_state}</span>
                   )}
                   {h.active_anchor && <span>anchor: {h.active_anchor}</span>}
                   {h.returned ? <span className="returned-badge">returned</span> : null}
-                  <span style={{ marginLeft: "auto" }}>{formatTime(h.created_at)}</span>
+                  <span className="ml-auto">{formatTime(h.created_at)}</span>
                 </div>
               </div>
             );
