@@ -42,7 +42,13 @@
       "mcp__Desktop_Commander__start_process",
       "mcp__Desktop_Commander__read_process_output",
       "mcp__Desktop_Commander__edit_block",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__plugin_context-mode_context-mode__ctx_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file",
+      "Bash(python3:*)",
+      "Bash(npm i:*)",
+      "mcp__plugin_context-mode_context-mode__ctx_search"
     ]
   }
 }

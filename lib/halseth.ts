@@ -549,6 +549,36 @@ export async function fetchPersonaBlocks(
   return data?.blocks ?? [];
 }
 
+// ── SOMA State ────────────────────────────────────────────────────────────────
+
+export type CompanionSomaState = {
+  companion_id: string;
+  soma_float_1: number | null;
+  soma_float_2: number | null;
+  soma_float_3: number | null;
+  float_1_label: string | null;
+  float_2_label: string | null;
+  float_3_label: string | null;
+  compound_state: string | null;
+  current_mood: string | null;
+  surface_emotion: string | null;
+  surface_intensity: number | null;
+  undercurrent_emotion: string | null;
+  undercurrent_intensity: number | null;
+  updated_at: string;
+} | null;
+
+export type SomaData = {
+  drevan: CompanionSomaState;
+  cypher: CompanionSomaState;
+  gaia: CompanionSomaState;
+  fetched_at: string;
+};
+
+export async function fetchSomaStates(): Promise<SomaData | null> {
+  return hGetSafe<SomaData>("/soma", 0);
+}
+
 export async function fetchHumanBlocks(
   companionId: string,
   limit = 20,
