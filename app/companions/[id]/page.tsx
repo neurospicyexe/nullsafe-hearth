@@ -206,6 +206,18 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           <GaiaWitnessSection entries={witnessEntries !== null ? witnessEntries.slice(0, 5) : null} />
         </section>
       )}
+
+      {/* Quick links to companion sub-pages */}
+      <section className="page-section">
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <Link href={`/companions/${id}/feelings`} className="home-section-link">
+            SOMA feelings →
+          </Link>
+          <Link href={`/companions/${id}/blocks`} className="home-section-link">
+            memory blocks →
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

@@ -11,6 +11,7 @@ const NAV = [
   { href: "/",          label: "Home",      sym: "◈" },
   { href: "/halseth",   label: "Halseth",   sym: "⌂" },
   { href: "/us",        label: "Us",        sym: "♥" },
+  { href: "/sessions",  label: "Sessions",  sym: "⊙" },
   { href: "/handovers", label: "Handovers", sym: "↹" },
   { href: "/dreams",    label: "Dreams",    sym: "◌" },
   { href: "/tasks",     label: "Tasks",     sym: "☑" },

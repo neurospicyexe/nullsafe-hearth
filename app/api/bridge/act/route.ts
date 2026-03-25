@@ -5,7 +5,21 @@ export async function POST(request: NextRequest) {
   const secret = process.env.HALSETH_SECRET;
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
-  const body = await request.json();
+  let raw: unknown;
+  try { raw = await request.json(); }
+  catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
+
+  if (typeof raw !== "object" || raw === null) {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+  const r = raw as Record<string, unknown>;
+
+  // Allowlist: only forward known fields that /bridge/act accepts
+  const body: Record<string, unknown> = {};
+  if (typeof r["action"] === "string") body["action"] = r["action"];
+  if (typeof r["id"] === "string") body["id"] = r["id"];
+  if (typeof r["status"] === "string") body["status"] = r["status"];
+
   const res = await fetch(`${base}/bridge/act`, {
     method: "POST",
     headers: {
