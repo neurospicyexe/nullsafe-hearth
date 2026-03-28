@@ -23,12 +23,7 @@ export default async function HandoversPage() {
         <p className="page-subtitle">session close packets — what carried between sessions</p>
       </div>
 
-      {!handovers ? (
-        <div className="pending-notice">
-          <div className="pending-dot" />
-          Awaiting Halseth /handovers endpoint — will populate once deployed.
-        </div>
-      ) : handovers.length === 0 ? (
+      {!handovers?.length ? (
         <p className="empty">No handover packets yet.</p>
       ) : (
         <div className="handover-feed">
