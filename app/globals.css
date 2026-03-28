@@ -1352,11 +1352,43 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 
 /* ── State stats cluster (home right col) ────────────────────────────────── */
 .state-stats-group { display: flex; flex-direction: column; gap: 1.25rem; }
-.biometrics-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 1.5rem; }
-.biometric-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+.biometrics-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+/* Draw cell borders via box-shadow so they don't double up */
+.biometric-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.25rem 1.5rem;
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* Kill right border on even cells (right column), kill bottom on last row */
+.biometric-cell:nth-child(even)              { border-right: none; }
+.biometric-cell:last-child                   { border-bottom: none; }
+.biometric-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
 .state-cell-value-lg { font-size: 1.35rem; }
 .room-link { text-decoration: none; display: flex; flex-direction: column; gap: 0.4rem; padding: 1.5rem; }
 .room-activity { margin-top: 0.75rem; font-size: 0.85rem; }
+
+/* ── Mini stat bar (love meter etc.) ─────────────────────────────────────── */
+.stat-mini-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.35rem;
+}
+.stat-mini-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s var(--ease-out);
+}
 
 /* ── Notes card (home) ───────────────────────────────────────────────────── */
 .notes-card { display: flex; flex-direction: column; gap: 1.5rem; padding: 1.75rem; border-top: 2px solid var(--accent); }
