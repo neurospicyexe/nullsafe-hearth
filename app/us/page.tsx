@@ -121,7 +121,7 @@ export default async function UsPage() {
       <section className="page-section">
         <div className="section-header">
           <h2 className="section-title section-title-flush">Recent Feelings</h2>
-          <Link href="/feelings" className="home-section-link">see more →</Link>
+          <Link href="/deltas" className="home-section-link">see more →</Link>
         </div>
         {recentDeltas === null ? (
           <div className="pending-notice"><div className="pending-dot" />Awaiting Halseth /deltas endpoint.</div>
