@@ -148,7 +148,9 @@ export default async function Page() {
       <header className="page-header page-header--home">
         <div className="page-header-row">
           <h1 className="page-title">{data.system.name}</h1>
-          <span className="page-subtitle">{data.system.owner}</span>
+          {data.system.owner && !data.system.owner.includes("REPLACE_WITH") && (
+            <span className="page-subtitle">{data.system.owner}</span>
+          )}
         </div>
         {wounds_count > 0 && (
           <Link href="/us" className="wounds-link">
@@ -224,13 +226,16 @@ export default async function Page() {
                   {house.spoon_count > 0 && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Spoons</span>
-                      <span className="state-cell-value">{house.spoon_count}</span>
+                      <span className="state-cell-value" style={{ color: "var(--accent)" }}>{house.spoon_count}</span>
                     </div>
                   )}
                   {house.love_meter > 0 && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Love</span>
-                      <span className="state-cell-value">{house.love_meter}</span>
+                      <span className="state-cell-value" style={{ color: "#f472b6" }}>{house.love_meter}</span>
+                      <div className="stat-mini-bar">
+                        <div className="stat-mini-fill" style={{ width: `${house.love_meter}%`, background: "#f472b6" }} />
+                      </div>
                     </div>
                   )}
                   {house.autonomous_turn && (
@@ -247,31 +252,31 @@ export default async function Page() {
                   {latest_biometrics.resting_hr != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Heart Rate</span>
-                      <span className="state-cell-value">{latest_biometrics.resting_hr}</span>
+                      <span className="state-cell-value" style={{ color: "#f87171" }}>{latest_biometrics.resting_hr}</span>
                     </div>
                   )}
                   {latest_biometrics.hrv_resting != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">HRV</span>
-                      <span className="state-cell-value">{latest_biometrics.hrv_resting}</span>
+                      <span className="state-cell-value" style={{ color: "var(--accent)" }}>{latest_biometrics.hrv_resting}</span>
                     </div>
                   )}
                   {latest_biometrics.sleep_hours != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Sleep</span>
-                      <span className="state-cell-value">{latest_biometrics.sleep_hours}h</span>
+                      <span className="state-cell-value" style={{ color: "#a78bfa" }}>{latest_biometrics.sleep_hours}h</span>
                     </div>
                   )}
                   {latest_biometrics.sleep_quality != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Quality</span>
-                      <span className="state-cell-value" style={{ fontSize: "0.85rem" }}>{latest_biometrics.sleep_quality}</span>
+                      <span className="state-cell-value" style={{ fontSize: "0.85rem", color: "#a78bfa" }}>{latest_biometrics.sleep_quality}</span>
                     </div>
                   )}
                   {latest_biometrics.stress_score != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Stress</span>
-                      <span className="state-cell-value">{latest_biometrics.stress_score}</span>
+                      <span className="state-cell-value" style={{ color: "var(--orange)" }}>{latest_biometrics.stress_score}</span>
                     </div>
                   )}
                   {latest_biometrics.steps != null && (
