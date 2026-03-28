@@ -4,6 +4,9 @@ import type {
   CypherAuditEntry,
   GaiaWitnessEntry,
   Note,
+  WmOrientData,
+  SynthesisSummary,
+  InterCompanionNote,
 } from "@/lib/halseth";
 
 export type CompanionConfig = {
@@ -176,6 +179,128 @@ export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | 
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+export function ContinuitySection({ data }: { data: WmOrientData | null }) {
+  if (!data) return <p className="empty">No continuity data.</p>;
+
+  const hasHandoff = data.latest_handoff !== null;
+  const hasThreads = data.top_threads.length > 0;
+  const hasNotes = data.recent_notes.length > 0;
+
+  if (!hasHandoff && !hasThreads && !hasNotes) {
+    return <p className="empty">No continuity data yet.</p>;
+  }
+
+  return (
+    <div className="continuity-block">
+      {hasHandoff && data.latest_handoff && (
+        <div className="continuity-handoff">
+          <div className="continuity-handoff-title">{data.latest_handoff.title}</div>
+          <div className="continuity-handoff-summary">{data.latest_handoff.summary}</div>
+          {data.latest_handoff.next_steps && (
+            <div className="continuity-next-steps">next: {data.latest_handoff.next_steps}</div>
+          )}
+          <div className="delta-meta delta-meta-mt">
+            <span>{fmtTime(data.latest_handoff.created_at)}</span>
+            {data.open_thread_count > 0 && (
+              <span>{data.open_thread_count} open thread{data.open_thread_count !== 1 ? "s" : ""}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {hasThreads && (
+        <div className="continuity-threads">
+          {data.top_threads.map((t) => (
+            <div key={t.thread_key} className="continuity-thread">
+              <span className={`thread-status-dot ${t.status}`} />
+              <span className="thread-title">{t.title}</span>
+              {t.lane && <span className="thread-lane">{t.lane}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hasNotes && (
+        <div className="continuity-notes">
+          {data.recent_notes.map((n) => (
+            <div key={n.note_id} className={`continuity-note salience-${n.salience}`}>
+              <span className="continuity-note-text">{n.content}</span>
+              <span className="continuity-note-time">{fmtTime(n.created_at)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function SynthesisSummarySection({ entries, companionId }: { entries: SynthesisSummary[]; companionId: string }) {
+  const filtered = entries.filter(
+    (e) => e.companion_id === companionId || e.companion_id === null,
+  );
+  if (filtered.length === 0) return <p className="empty">No synthesis summaries yet.</p>;
+  return (
+    <div className="synthesis-feed">
+      {filtered.map((e) => (
+        <div key={e.id} className="synthesis-entry">
+          <div className="entry-meta-row">
+            <span className="synthesis-type">{e.summary_type.replace("_", " ")}</span>
+            {e.thread_key && <span className="synthesis-thread">{e.thread_key}</span>}
+            {e.companion_id === null && <span className="synthesis-cross">cross-companion</span>}
+          </div>
+          {e.content && <div className="entry-content">{e.content}</div>}
+          <div className="delta-meta delta-meta-mt">
+            <span>{fmtTime(e.created_at)}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function InterCompanionNotesSection({
+  notes,
+  companionId,
+}: {
+  notes: InterCompanionNote[];
+  companionId: string;
+}) {
+  const relevant = notes.filter(
+    (n) => n.from_id === companionId || n.to_id === companionId || n.to_id === null,
+  );
+  if (relevant.length === 0) return <p className="empty">No inter-companion notes yet.</p>;
+  return (
+    <div className="icn-feed">
+      {relevant.map((n) => {
+        const tags: string[] = (() => {
+          try { return n.tags ? JSON.parse(n.tags) : []; }
+          catch { return []; }
+        })();
+        const isBroadcast = n.to_id === null;
+        const isIncoming = n.to_id === companionId;
+        return (
+          <div key={n.id} className={`icn-entry ${isIncoming ? "icn-incoming" : isBroadcast ? "icn-broadcast" : "icn-outgoing"}`}>
+            <div className="icn-header">
+              <span className="icn-from">{n.from_id}</span>
+              <span className="icn-arrow">→</span>
+              <span className="icn-to">{n.to_id ?? "all"}</span>
+            </div>
+            <div className="icn-text">{n.note_text}</div>
+            {tags.length > 0 && (
+              <div className="journal-tags">
+                {tags.map((t, i) => <span key={i} className="journal-tag">{t}</span>)}
+              </div>
+            )}
+            <div className="delta-meta delta-meta-mt">
+              <span>{fmtTime(n.created_at)}</span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

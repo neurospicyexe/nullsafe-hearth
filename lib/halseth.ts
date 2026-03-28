@@ -588,3 +588,75 @@ export async function fetchHumanBlocks(
   );
   return data?.blocks ?? [];
 }
+
+// ── WebMind Continuity ────────────────────────────────────────────────────────
+
+export type WmSessionHandoff = {
+  handoff_id: string;
+  title: string;
+  summary: string;
+  next_steps: string | null;
+  open_loops: string | null;
+  state_hint: string | null;
+  created_at: string;
+};
+
+export type WmMindThread = {
+  thread_key: string;
+  title: string;
+  status: string;
+  priority: number;
+  lane: string | null;
+  context: string | null;
+  last_touched_at: string;
+};
+
+export type WmContinuityNote = {
+  note_id: string;
+  content: string;
+  salience: string;
+  thread_key: string | null;
+  note_type: string;
+  created_at: string;
+};
+
+export type WmOrientData = {
+  latest_handoff: WmSessionHandoff | null;
+  open_thread_count: number;
+  top_threads: WmMindThread[];
+  recent_notes: WmContinuityNote[];
+};
+
+export async function fetchWmOrient(agentId: string): Promise<WmOrientData | null> {
+  return hGetSafe<WmOrientData>(`/mind/orient/${encodeURIComponent(agentId)}`, 0);
+}
+
+// ── Synthesis Summaries ───────────────────────────────────────────────────────
+
+export type SynthesisSummary = {
+  id: string;
+  companion_id: string | null;
+  summary_type: string;
+  content: string | null;
+  thread_key: string | null;
+  created_at: string;
+};
+
+export async function fetchSynthesisSummaries(limit = 20): Promise<SynthesisSummary[]> {
+  return (await hGetSafe<SynthesisSummary[]>(`/ingest/synthesis-summaries?limit=${limit}`)) ?? [];
+}
+
+// ── Inter-Companion Notes ─────────────────────────────────────────────────────
+
+export type InterCompanionNote = {
+  id: string;
+  from_id: string;
+  to_id: string | null;
+  note_text: string;
+  tags: string | null;
+  created_at: string;
+};
+
+export async function fetchInterCompanionNotes(limit = 30): Promise<InterCompanionNote[]> {
+  return (await hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`)) ?? [];
+}
