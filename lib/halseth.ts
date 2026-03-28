@@ -345,7 +345,7 @@ export type ListItem = {
 // ── Fetch functions — existing endpoints ──────────────────────────────────────
 
 export async function fetchPresence(): Promise<PresenceData> {
-  return hGet<PresenceData>("/presence");
+  return hGet<PresenceData>("/presence", 0);
 }
 
 export async function fetchBiometrics(limit = 14): Promise<BiometricSnapshot[]> {
