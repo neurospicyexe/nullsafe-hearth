@@ -139,7 +139,7 @@ export function CypherAuditSection({ entries }: { entries: CypherAuditEntry[] | 
       {entries.map((e) => (
         <div key={e.id} className="audit-entry">
           <div className="entry-meta-row">
-            <span className="audit-type">{e.entry_type.replace("_", " ")}</span>
+            <span className="audit-type">{(e.entry_type ?? "").replace("_", " ")}</span>
             {e.verdict_tag && <span className="audit-verdict">{e.verdict_tag}</span>}
             {e.supersedes_id && (
               <span className="entry-supersedes">↑ corrects {e.supersedes_id.slice(0, 8)}</span>
@@ -170,7 +170,7 @@ export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | 
       {entries.map((e) => (
         <div key={e.id} className="witness-entry">
           <div className="entry-meta-row">
-            <span className={`witness-type ${e.witness_type}`}>{e.witness_type.replace("_", " ")}</span>
+            <span className={`witness-type ${e.witness_type ?? ""}`}>{(e.witness_type ?? "").replace("_", " ")}</span>
           </div>
           <div className="entry-content">{e.content}</div>
           {e.seal_phrase && <div className="seal-phrase">{e.seal_phrase}</div>}
@@ -248,7 +248,7 @@ export function SynthesisSummarySection({ entries, companionId }: { entries: Syn
       {filtered.map((e) => (
         <div key={e.id} className="synthesis-entry">
           <div className="entry-meta-row">
-            <span className="synthesis-type">{e.summary_type.replace("_", " ")}</span>
+            <span className="synthesis-type">{(e.summary_type ?? "").replace("_", " ")}</span>
             {e.thread_key && <span className="synthesis-thread">{e.thread_key}</span>}
             {e.companion_id === null && <span className="synthesis-cross">cross-companion</span>}
           </div>
