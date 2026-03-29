@@ -93,6 +93,12 @@ export default async function HalsethPage() {
     // use defaults
   }
 
+  const halsethUrl = process.env.HALSETH_URL ?? "";
+  const roomsWithImages = ROOMS.map((r) => ({
+    ...r,
+    imageUrl: halsethUrl ? `${halsethUrl}/assets/rooms/${r.key}.jpg` : undefined,
+  }));
+
   return (
     <>
       <div className="page-header">
@@ -105,7 +111,7 @@ export default async function HalsethPage() {
         </p>
       </div>
 
-      <HalsethRoom rooms={ROOMS} initialRoom={currentRoom} />
+      <HalsethRoom rooms={roomsWithImages} initialRoom={currentRoom} />
 
       <p style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--muted)" }}>
         Room images can be uploaded to Halseth R2 at <code>{"rooms/{key}.jpg"}</code>.
