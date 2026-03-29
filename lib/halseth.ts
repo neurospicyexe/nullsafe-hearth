@@ -660,3 +660,53 @@ export type InterCompanionNote = {
 export async function fetchInterCompanionNotes(limit = 30): Promise<InterCompanionNote[]> {
   return (await hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`)) ?? [];
 }
+
+// ── WebMind: Open Loops ───────────────────────────────────────────────────────
+
+export type OpenLoop = {
+  id: string;
+  companion_id: "drevan" | "cypher" | "gaia";
+  loop_text: string;
+  weight: number;
+  opened_at: string;
+  closed_at: string | null;
+};
+
+export async function fetchLoops(agentId: string, includeClosed = false): Promise<OpenLoop[]> {
+  const q = includeClosed ? "?include_closed=true" : "";
+  const res = await hGetSafe<{ loops: OpenLoop[] }>(`/mind/loops/${agentId}${q}`, 0);
+  return res?.loops ?? [];
+}
+
+// ── WebMind: Sitting Notes ────────────────────────────────────────────────────
+
+export type SittingNote = {
+  note_id: string;
+  content: string;
+  note_type: string;
+  created_at: string;
+  sit_text: string | null;
+  sat_at: string;
+};
+
+export async function fetchSittingNotes(agentId: string): Promise<SittingNote[]> {
+  const res = await hGetSafe<{ notes: SittingNote[] }>(`/mind/sitting/${agentId}`, 0);
+  return res?.notes ?? [];
+}
+
+// ── WebMind: Relational State ─────────────────────────────────────────────────
+
+export type RelationalState = {
+  id: string;
+  companion_id: "drevan" | "cypher" | "gaia";
+  toward: string;
+  state_text: string;
+  weight: number;
+  state_type: "feeling" | "witness" | "held";
+  noted_at: string;
+};
+
+export async function fetchRelationalHistory(agentId: string, limit = 30): Promise<RelationalState[]> {
+  const res = await hGetSafe<{ states: RelationalState[] }>(`/mind/relational/${agentId}?limit=${limit}`, 0);
+  return res?.states ?? [];
+}
