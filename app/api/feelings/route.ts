@@ -20,6 +20,8 @@ export async function GET(req: Request) {
 
   const path = type === "dreams"
     ? `/dreams?limit=${limit}`
+    : type === "companion-dreams"
+    ? `/ingest/companion-dreams?limit=${limit}`
     : `/deltas?limit=${limit}`;
 
   try {
