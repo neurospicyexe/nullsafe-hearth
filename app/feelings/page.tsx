@@ -8,11 +8,7 @@ const COMPANION_COLORS: Record<string, string> = {
   gaia:   "#4ade80",
 };
 
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
-}
+import ClientTime from "@/components/ClientTime";
 
 export default async function FeelingsPage() {
   const feelings = await fetchSomaFeelings(undefined, 100);
@@ -37,7 +33,7 @@ export default async function FeelingsPage() {
                   <span style={{ color, fontWeight: 600 }}>{f.companion_id}</span>
                   {f.intensity != null && <span>intensity {f.intensity}</span>}
                   {f.source && <span>{f.source}</span>}
-                  <span className="ml-auto">{fmtTime(f.created_at)}</span>
+                  <span className="ml-auto"><ClientTime iso={f.created_at} /></span>
                 </div>
               </div>
             );

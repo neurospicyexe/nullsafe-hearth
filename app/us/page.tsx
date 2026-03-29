@@ -1,14 +1,9 @@
 import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas, fetchHandovers, fetchAllCompanionNotes } from "@/lib/halseth";
 import Link from "next/link";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
+import ClientTime from "@/components/ClientTime";
 
 export const dynamic = 'force-dynamic';
-
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
-}
 
 export default async function UsPage() {
   const [presence, wounds, journal, deltas, handovers, allCompNotes] = await Promise.allSettled([
@@ -137,7 +132,7 @@ export default async function UsPage() {
                   <div className="delta-meta">
                     <span className={`delta-valence ${v}`}>{v}</span>
                     {d.agent && <span>by {d.agent}</span>}
-                    <span>{fmtTime(d.created_at)}</span>
+                    <span><ClientTime iso={d.created_at} /></span>
                   </div>
                 </div>
               );
@@ -187,7 +182,7 @@ export default async function UsPage() {
                       {tags.map((t) => (
                         <span key={t} className="note-type-badge">{t}</span>
                       ))}
-                      <span className="note-time">{fmtTime(e.created_at)}</span>
+                      <span className="note-time"><ClientTime iso={e.created_at} /></span>
                     </div>
                     <div className="note-body">{e.note_text}</div>
                   </div>
@@ -222,7 +217,7 @@ export default async function UsPage() {
                   <div className="handover-footer">
                     <span className={`motion-badge ${h.motion_state ?? ""}`}>{(h.motion_state ?? "unknown").replace("_", " ")}</span>
                     {h.active_anchor && <span>anchor: {h.active_anchor}</span>}
-                    <span className="ml-auto">{fmtTime(h.created_at)}</span>
+                    <span className="ml-auto"><ClientTime iso={h.created_at} /></span>
                   </div>
                 </div>
               );

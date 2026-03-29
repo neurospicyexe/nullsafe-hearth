@@ -1,15 +1,11 @@
 import Link from "next/link";
-import { fetchPresence, fetchSynthesisSummaries, type PresenceData, type SynthesisSummary } from "@/lib/halseth";
+import { fetchPresence, fetchSynthesisSummaries, fetchMindDreams, type PresenceData, type SynthesisSummary, type WmDream } from "@/lib/halseth";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
 import LiveFeedImage from "@/components/LiveFeedImage";
 
 export const dynamic = 'force-dynamic';
 
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
-}
+import ClientTime from "@/components/ClientTime";
 
 function PresenceSection({ data }: { data: PresenceData }) {
   const { session, last_handover } = data;
@@ -44,7 +40,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
             <><span className="presence-detail-sep">·</span><span>depth {session.depth}/3</span></>
           )}
           <span className="presence-detail-sep ml-auto">since</span>
-          <span>{fmtTime(session.created_at)}</span>
+          <span><ClientTime iso={session.created_at} /></span>
         </div>
       </div>
     );
@@ -81,7 +77,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
             </>
           )}
           <span className="presence-detail-sep ml-auto">·</span>
-          <span style={{ opacity: 0.5 }}>{fmtTime(last_handover.created_at)}</span>
+          <span style={{ opacity: 0.5 }}><ClientTime iso={last_handover.created_at} /></span>
           <Link href="/handovers" className="home-section-link" style={{ marginLeft: "0.5rem" }}>all →</Link>
         </div>
       </div>
@@ -111,11 +107,21 @@ export default async function Page() {
   let error: string | null = null;
   let synthesisSummaries: SynthesisSummary[] = [];
 
+  let mindDreams: WmDream[] = [];
+
   try {
-    [data, synthesisSummaries] = await Promise.all([
+    const [presenceResult, synthResult, ...dreamResults] = await Promise.all([
       fetchPresence(),
       fetchSynthesisSummaries(6),
+      fetchMindDreams("drevan", 3),
+      fetchMindDreams("cypher", 3),
+      fetchMindDreams("gaia", 3),
     ]);
+    data = presenceResult;
+    synthesisSummaries = synthResult;
+    mindDreams = (dreamResults.flat() as WmDream[])
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load";
     // fetchSynthesisSummaries returns [] on failure so only presence error matters
@@ -321,7 +327,7 @@ export default async function Page() {
               <div key={n.id} className="note-item">
                 <div className="note-item-header">
                   <span className="note-item-author">{n.author}</span>
-                  <span className="note-item-time">{fmtTime(n.created_at)}</span>
+                  <span className="note-item-time"><ClientTime iso={n.created_at} /></span>
                 </div>
                 <span className="note-item-content">{n.content}</span>
               </div>
@@ -330,24 +336,39 @@ export default async function Page() {
         </div>
       )}
 
-      {recent_dreams.length > 0 && (
+      {(mindDreams.length > 0 || recent_dreams.length > 0) && (
         <div className="home-section" style={{ marginTop: "1rem" }}>
           <div className="home-section-header">
             <span className="home-section-title">Recent Dreams</span>
             <Link href="/dreams" className="home-section-link">all dreams →</Link>
           </div>
           <div className="card notes-card">
-            {recent_dreams.slice(0, 3).map((d) => (
-              <div key={d.id} className="note-item">
-                <div className="note-item-header">
-                  <span className="note-item-author">{d.companion_id}</span>
-                  <span className="note-item-time">{fmtTime(d.created_at)}</span>
-                </div>
-                <span className="note-item-content">
-                  {d.content.length > 200 ? d.content.slice(0, 200) + "…" : d.content}
-                </span>
-              </div>
-            ))}
+            {mindDreams.length > 0
+              ? mindDreams.map((d) => (
+                  <div key={d.id} className="note-item">
+                    <div className="note-item-header">
+                      <span className="note-item-author">{d.companion_id}</span>
+                      {d.dream_type && (
+                        <span className="note-item-author" style={{ opacity: 0.5 }}>{d.dream_type.replace("_", " ")}</span>
+                      )}
+                      <span className="note-item-time"><ClientTime iso={d.created_at} /></span>
+                    </div>
+                    <span className="note-item-content">
+                      {d.dream_text.length > 200 ? d.dream_text.slice(0, 200) + "…" : d.dream_text}
+                    </span>
+                  </div>
+                ))
+              : recent_dreams.slice(0, 3).map((d) => (
+                  <div key={d.id} className="note-item">
+                    <div className="note-item-header">
+                      <span className="note-item-author">{d.companion_id}</span>
+                      <span className="note-item-time"><ClientTime iso={d.created_at} /></span>
+                    </div>
+                    <span className="note-item-content">
+                      {d.content.length > 200 ? d.content.slice(0, 200) + "…" : d.content}
+                    </span>
+                  </div>
+                ))}
           </div>
         </div>
       )}
@@ -363,7 +384,7 @@ export default async function Page() {
                 <div className="note-item-header">
                   <span className="note-item-author">{s.companion_id ?? "cross-companion"}</span>
                   <span className="note-item-author" style={{ opacity: 0.5 }}>{s.summary_type.replace("_", " ")}</span>
-                  <span className="note-item-time">{fmtTime(s.created_at)}</span>
+                  <span className="note-item-time"><ClientTime iso={s.created_at} /></span>
                 </div>
                 {s.content && (
                   <span className="note-item-content">

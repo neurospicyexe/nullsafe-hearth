@@ -51,11 +51,7 @@ async function fetchGaiaNotes(): Promise<CompanionNote[]> {
   }
 }
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
-}
+import ClientTime from "@/components/ClientTime";
 
 // ── Emotional Landscape ───────────────────────────────────────────────────────
 
@@ -118,7 +114,7 @@ function RecentDeltas({ deltas }: { deltas: Delta[] }) {
                 <span className="delta-time">via {d.initiated_by}</span>
               )}
               <span className="delta-time ml-auto">
-                {formatTime(d.created_at)}
+                <ClientTime iso={d.created_at} />
               </span>
             </div>
           </div>
@@ -167,7 +163,7 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
                 {n.tags?.map((tag) => (
                   <span key={tag} className="companion-note-tag">{tag}</span>
                 ))}
-                <span className="companion-note-time">{formatTime(n.created_at)}</span>
+                <span className="companion-note-time"><ClientTime iso={n.created_at} /></span>
               </div>
             </div>
           ))}

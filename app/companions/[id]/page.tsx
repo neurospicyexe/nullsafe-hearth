@@ -13,6 +13,10 @@ import {
   fetchSynthesisSummaries,
   fetchInterCompanionNotes,
   fetchSomaStates,
+  fetchSomaFeelings,
+  fetchLoops,
+  fetchSittingNotes,
+  fetchRelationalHistory,
 } from "@/lib/halseth";
 import type {
   CypherAuditEntry,
@@ -20,6 +24,10 @@ import type {
   Note,
   CompanionNote,
   CompanionSomaState,
+  SomaFeeling,
+  OpenLoop,
+  SittingNote,
+  RelationalState,
 } from "@/lib/halseth";
 import { LetterFormClient } from "./client";
 import {
@@ -33,6 +41,10 @@ import {
   ContinuitySection,
   SynthesisSummarySection,
   InterCompanionNotesSection,
+  SomaFeelingsSection,
+  OpenLoopsSection,
+  SittingNotesSection,
+  RelationalStateSection,
 } from "./sections";
 
 export function generateStaticParams() {
@@ -105,7 +117,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational] = await Promise.allSettled([
     fetchCompanionJournal(id, 6),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
@@ -116,19 +128,27 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
     fetchSynthesisSummaries(20),
     fetchInterCompanionNotes(30),
     fetchSomaStates(),
+    fetchSomaFeelings(id, 6),
+    fetchLoops(id),
+    fetchSittingNotes(id),
+    fetchRelationalHistory(id, 12),
   ]);
 
-  const journalEntries = journal.status        === "fulfilled" ? journal.value        : null;
-  const deltaEntries   = deltas.status         === "fulfilled" ? deltas.value         : [];
-  const allNotes       = notes.status          === "fulfilled" ? notes.value          : [];
-  const allCompNotes   = companionNotes.status === "fulfilled" ? companionNotes.value : [];
-  const auditEntries   = audit.status          === "fulfilled" ? audit.value          : null;
-  const witnessEntries = witness.status        === "fulfilled" ? witness.value        : null;
-  const orientData     = orient.status         === "fulfilled" ? orient.value         : null;
-  const summaryEntries = synthesis.status      === "fulfilled" ? synthesis.value      : [];
-  const icNoteEntries  = icNotes.status        === "fulfilled" ? icNotes.value        : [];
-  const somaData       = soma.status           === "fulfilled" ? soma.value           : null;
-  const companionSoma  = somaData ? (somaData[id as keyof typeof somaData] as CompanionSomaState) : null;
+  const journalEntries  = journal.status        === "fulfilled" ? journal.value        : null;
+  const deltaEntries    = deltas.status         === "fulfilled" ? deltas.value         : [];
+  const allNotes        = notes.status          === "fulfilled" ? notes.value          : [];
+  const allCompNotes    = companionNotes.status === "fulfilled" ? companionNotes.value : [];
+  const auditEntries    = audit.status          === "fulfilled" ? audit.value          : null;
+  const witnessEntries  = witness.status        === "fulfilled" ? witness.value        : null;
+  const orientData      = orient.status         === "fulfilled" ? orient.value         : null;
+  const summaryEntries  = synthesis.status      === "fulfilled" ? synthesis.value      : [];
+  const icNoteEntries   = icNotes.status        === "fulfilled" ? icNotes.value        : [];
+  const somaData        = soma.status           === "fulfilled" ? soma.value           : null;
+  const companionSoma   = somaData ? (somaData[id as keyof typeof somaData] as CompanionSomaState) : null;
+  const feelingEntries  = feelings.status       === "fulfilled" ? (feelings.value as SomaFeeling[]) : [];
+  const loopEntries     = loops.status          === "fulfilled" ? (loops.value as OpenLoop[])       : [];
+  const sittingEntries  = sitting.status        === "fulfilled" ? (sitting.value as SittingNote[])  : [];
+  const relationalItems = relational.status     === "fulfilled" ? (relational.value as RelationalState[]) : [];
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
@@ -269,25 +289,51 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         <InterCompanionNotesSection notes={icNoteEntries.slice(0, 5)} companionId={id} />
       </section>
 
-      {/* Quick links to companion sub-pages */}
+      {/* SOMA Feelings — clipped to 6 */}
       <section className="page-section">
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          <Link href={`/companions/${id}/feelings`} className="home-section-link">
-            SOMA feelings →
-          </Link>
-          <Link href={`/companions/${id}/blocks`} className="home-section-link">
-            memory blocks →
-          </Link>
-          <Link href={`/companions/${id}/loops`} className="home-section-link">
-            open loops →
-          </Link>
-          <Link href={`/companions/${id}/sitting`} className="home-section-link">
-            sitting notes →
-          </Link>
-          <Link href={`/companions/${id}/relational`} className="home-section-link">
-            relational state →
-          </Link>
+        <div className="section-header">
+          <h2 className="section-title section-title-flush">SOMA Feelings</h2>
+          <Link href={`/companions/${id}/feelings`} className="home-section-link">all →</Link>
         </div>
+        <SomaFeelingsSection feelings={feelingEntries} color={config.color} />
+      </section>
+
+      {/* Open Loops */}
+      <section className="page-section">
+        <div className="section-header">
+          <h2 className="section-title section-title-flush">Open Loops</h2>
+          <Link href={`/companions/${id}/loops`} className="home-section-link">all →</Link>
+        </div>
+        <OpenLoopsSection loops={loopEntries} />
+      </section>
+
+      {/* Sitting Notes */}
+      <section className="page-section">
+        <div className="section-header">
+          <h2 className="section-title section-title-flush">Sitting Notes</h2>
+          <Link href={`/companions/${id}/sitting`} className="home-section-link">all →</Link>
+        </div>
+        <SittingNotesSection notes={sittingEntries} color={config.color} />
+      </section>
+
+      {/* Relational State */}
+      <section className="page-section">
+        <div className="section-header">
+          <h2 className="section-title section-title-flush">Relational State</h2>
+          <Link href={`/companions/${id}/relational`} className="home-section-link">full history →</Link>
+        </div>
+        <RelationalStateSection states={relationalItems} />
+      </section>
+
+      {/* Memory blocks link — data-heavy, sub-page only */}
+      <section className="page-section">
+        <div className="section-header">
+          <h2 className="section-title section-title-flush">Memory Blocks</h2>
+          <Link href={`/companions/${id}/blocks`} className="home-section-link">view →</Link>
+        </div>
+        <p className="empty" style={{ fontSize: "0.85rem" }}>
+          Full context blocks live on the sub-page.
+        </p>
       </section>
     </div>
   );
