@@ -61,7 +61,7 @@ export function JournalSection({ entries }: { entries: CompanionJournalEntry[] |
     <div className="journal-feed">
       {entries.map((e) => {
         const tags: string[] = (() => {
-          try { return e.tags ? JSON.parse(e.tags) : []; }
+          try { const p = e.tags ? JSON.parse(e.tags) : []; return Array.isArray(p) ? p : []; }
           catch { return []; }
         })();
         return (
@@ -277,7 +277,7 @@ export function InterCompanionNotesSection({
     <div className="icn-feed">
       {relevant.map((n) => {
         const tags: string[] = (() => {
-          try { return n.tags ? JSON.parse(n.tags) : []; }
+          try { const p = n.tags ? JSON.parse(n.tags) : []; return Array.isArray(p) ? p : []; }
           catch { return []; }
         })();
         const isBroadcast = n.to_id === null;

@@ -29,7 +29,7 @@ export default async function HandoversPage() {
         <div className="handover-feed">
           {handovers.map((h) => {
             const threads = (() => {
-              try { return h.open_threads ? JSON.parse(h.open_threads) as string[] : []; }
+              try { const p = h.open_threads ? JSON.parse(h.open_threads) : []; return Array.isArray(p) ? p as string[] : []; }
               catch { return []; }
             })();
 
