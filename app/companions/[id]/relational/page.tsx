@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { fetchRelationalHistory } from "@/lib/halseth";
+import { fetchRelationalHistory, type RelationalState } from "@/lib/halseth";
 import { COMPANION_CONFIG } from "../sections";
 
 export function generateStaticParams() {
