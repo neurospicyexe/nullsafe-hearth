@@ -7,6 +7,8 @@ import {
   fetchTasks,
   fetchWounds,
   fetchAllCompanionNotes,
+  fetchMindHandoffs,
+  fetchInterCompanionNotes,
   type RelationalDelta,
   type CompanionJournalEntry,
   type Dream,
@@ -14,6 +16,8 @@ import {
   type Task,
   type LivingWound,
   type CompanionNote,
+  type MindHandoff,
+  type InterCompanionNote,
 } from "@/lib/halseth";
 
 type SearchType = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
@@ -55,14 +59,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const want = (t: Exclude<SearchType, "all">) => type === "all" || type === t;
 
   try {
-    const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawTasks, rawWounds, rawNotes] = await Promise.all([
+    const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawMindHandoffs, rawTasks, rawWounds, rawNotes, rawInterNotes] = await Promise.all([
       want("feelings")  ? fetchAllDeltas(50)               : Promise.resolve(null),
       want("journal")   ? fetchCompanionJournal(undefined, 50) : Promise.resolve(null),
       want("dreams")    ? fetchDreams(undefined, 50)        : Promise.resolve(null),
       want("handovers") ? fetchHandovers(50)                : Promise.resolve(null),
+      want("handovers") ? fetchMindHandoffs(50)             : Promise.resolve(null),
       want("tasks")     ? fetchTasks()                      : Promise.resolve([]),
-      want("wounds")    ? fetchWounds()                      : Promise.resolve(null),
+      want("wounds")    ? fetchWounds()                     : Promise.resolve(null),
       want("notes")     ? fetchAllCompanionNotes(50)        : Promise.resolve(null),
+      want("notes")     ? fetchInterCompanionNotes(50)      : Promise.resolve(null),
     ]);
 
     const feelings: SearchResult[] = (rawFeelings ?? [])
@@ -84,11 +90,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         id: d.id, type: "dream" as const, text: d.content, created_at: d.generated_at, url: "/dreams",
       }));
 
-    const handovers: SearchResult[] = (rawHandovers ?? [])
-      .filter((h: HandoverPacket) => matches(h.spine, q))
-      .map((h: HandoverPacket) => ({
-        id: h.id, type: "handover" as const, text: h.spine, created_at: h.created_at, url: "/handovers",
-      }));
+    const handovers: SearchResult[] = [
+      ...(rawHandovers ?? [])
+        .filter((h: HandoverPacket) => matches(h.spine, q) || matches(h.last_real_thing, q))
+        .map((h: HandoverPacket) => ({
+          id: h.id, type: "handover" as const, text: h.spine, created_at: h.created_at, url: "/handovers",
+        })),
+      ...(rawMindHandoffs ?? [])
+        .filter((h: MindHandoff) => matches(h.title, q) || matches(h.summary, q) || matches(h.next_steps, q))
+        .map((h: MindHandoff) => ({
+          id: h.id, type: "handover" as const,
+          text: [h.title, h.summary].filter(Boolean).join(" — "),
+          created_at: h.created_at, url: "/handovers", agent: h.agent_id,
+        })),
+    ];
 
     const tasks: SearchResult[] = (rawTasks ?? [])
       .filter((t: Task) => matches(t.title, q))
@@ -102,11 +117,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         id: w.id, type: "wound" as const, text: w.name ?? "", created_at: w.created_at, url: "/us",
       }));
       
-    const notes: SearchResult[] = (rawNotes ?? [])
-      .filter((n: CompanionNote) => matches(n.note_text, q))
-      .map((n: CompanionNote) => ({
-        id: n.id, type: "note" as const, text: n.note_text, created_at: n.created_at, url: `/companions/${n.agent}`, agent: n.agent,
-      }));
+    const notes: SearchResult[] = [
+      ...(rawNotes ?? [])
+        .filter((n: CompanionNote) => matches(n.note_text, q))
+        .map((n: CompanionNote) => ({
+          id: n.id, type: "note" as const, text: n.note_text, created_at: n.created_at, url: `/companions/${n.agent}`, agent: n.agent,
+        })),
+      ...(rawInterNotes ?? [])
+        .filter((n: InterCompanionNote) => matches(n.content, q))
+        .map((n: InterCompanionNote) => ({
+          id: n.id, type: "note" as const, text: n.content, created_at: n.created_at,
+          url: "/us", agent: n.from_id,
+        })),
+    ];
 
     const result: SearchResponse = { feelings, journal, dreams, handovers, tasks, wounds, notes };
     return NextResponse.json(result);

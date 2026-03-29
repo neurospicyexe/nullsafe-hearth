@@ -1,4 +1,4 @@
-import { fetchHandovers } from "@/lib/halseth";
+import { fetchHandovers, fetchMindHandoffs } from "@/lib/halseth";
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,10 @@ function motionClass(state: string) {
 }
 
 export default async function HandoversPage() {
-  const handovers = await fetchHandovers(30);
+  const [handovers, mindHandoffs] = await Promise.all([
+    fetchHandovers(30),
+    fetchMindHandoffs(30),
+  ]);
 
   return (
     <>
@@ -70,6 +73,38 @@ export default async function HandoversPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      <div className="page-header" style={{ marginTop: "2.5rem" }}>
+        <h2 className="page-title" style={{ fontSize: "1.4rem" }}>WebMind Handoffs</h2>
+        <p className="page-subtitle">companion continuity — what they carried forward</p>
+      </div>
+
+      {!mindHandoffs.length ? (
+        <p className="empty">No WebMind handoffs yet.</p>
+      ) : (
+        <div className="handover-feed">
+          {mindHandoffs.map((h) => (
+            <div key={h.id} className="handover-entry">
+              <div className="handover-footer" style={{ marginBottom: "0.5rem" }}>
+                <span className="note-item-author">{h.agent_id}</span>
+                <span className="ml-auto">{formatTime(h.created_at)}</span>
+              </div>
+              {h.title && <p className="handover-spine">{h.title}</p>}
+              {h.summary && <p className="handover-last-real">{h.summary}</p>}
+              {h.next_steps && (
+                <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "0.4rem" }}>
+                  next: {h.next_steps}
+                </p>
+              )}
+              {h.state_hint && (
+                <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontStyle: "italic" }}>
+                  {h.state_hint}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </>

@@ -1,4 +1,4 @@
-import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas, fetchHandovers, fetchAllCompanionNotes } from "@/lib/halseth";
+import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas, fetchHandovers, fetchAllCompanionNotes, fetchInterCompanionNotes } from "@/lib/halseth";
 import Link from "next/link";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
 import ClientTime from "@/components/ClientTime";
@@ -6,13 +6,14 @@ import ClientTime from "@/components/ClientTime";
 export const dynamic = 'force-dynamic';
 
 export default async function UsPage() {
-  const [presence, wounds, journal, deltas, handovers, allCompNotes] = await Promise.allSettled([
+  const [presence, wounds, journal, deltas, handovers, allCompNotes, interNotes] = await Promise.allSettled([
     fetchPresence(),
     fetchWounds(),
     fetchCompanionJournal(undefined, 6),
     fetchAllDeltas(10),
     fetchHandovers(5),
     fetchAllCompanionNotes(6),
+    fetchInterCompanionNotes(10),
   ]);
 
   const p = presence.status === "fulfilled" ? presence.value : null;
@@ -24,6 +25,7 @@ export default async function UsPage() {
     .filter((n) => n.tags?.includes("letter") ?? false)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 6);
+  const companionNotes = interNotes.status === "fulfilled" ? (interNotes.value ?? []) : [];
 
   const session = p?.session;
   const handover = p?.last_handover;
@@ -222,6 +224,25 @@ export default async function UsPage() {
                 </div>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* Between Companions */}
+      {companionNotes.length > 0 && (
+        <section className="page-section">
+          <h2 className="section-title">Between Companions</h2>
+          <div className="full-notes-feed">
+            {companionNotes.slice(0, 8).map((n) => (
+              <div key={n.id} className="full-note-entry">
+                <div className="note-header">
+                  <span className={`note-author cc-${n.from_id}`}>{n.from_id}</span>
+                  {n.to_id && <span className="note-type-badge">→ {n.to_id}</span>}
+                  <span className="note-time"><ClientTime iso={n.created_at} /></span>
+                </div>
+                <div className="note-body">{n.content}</div>
+              </div>
+            ))}
           </div>
         </section>
       )}
