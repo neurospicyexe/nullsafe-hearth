@@ -179,7 +179,7 @@ export default async function UsPage() {
           : (
             <div className="full-notes-feed">
               {companionJournal.slice(0, 5).map((e) => {
-                const tags: string[] = e.tags ? JSON.parse(e.tags as unknown as string) : [];
+                const tags: string[] = (() => { try { const p = e.tags ? JSON.parse(e.tags as unknown as string) : []; return Array.isArray(p) ? p : []; } catch { return []; } })();
                 return (
                   <div key={e.id} className="full-note-entry">
                     <div className="note-header">
@@ -208,7 +208,7 @@ export default async function UsPage() {
           <div className="handover-feed">
             {recentHandovers.slice(0, 3).map((h) => {
               const threads = (() => {
-                try { return h.open_threads ? JSON.parse(h.open_threads) as string[] : []; }
+                try { const p = h.open_threads ? JSON.parse(h.open_threads) : []; return Array.isArray(p) ? p as string[] : []; }
                 catch { return []; }
               })();
               return (
