@@ -468,6 +468,34 @@ export async function fetchAllCompanionNotes(limit = 50): Promise<CompanionNote[
   return (await hGetSafe<CompanionNote[]>(`/companion-notes?limit=${limit}`)) ?? [];
 }
 
+export type MindHandoff = {
+  id: string;
+  agent_id: string;
+  title: string | null;
+  summary: string | null;
+  next_steps: string | null;
+  open_loops: string | null;
+  state_hint: string | null;
+  created_at: string;
+};
+
+export async function fetchMindHandoffs(limit = 30): Promise<MindHandoff[]> {
+  return (await hGetSafe<MindHandoff[]>(`/ingest/mind-handoffs?limit=${limit}`)) ?? [];
+}
+
+export type InterCompanionNote = {
+  id: string;
+  from_id: string;
+  to_id: string | null;
+  content: string;
+  read_at: string | null;
+  created_at: string;
+};
+
+export async function fetchInterCompanionNotes(limit = 30): Promise<InterCompanionNote[]> {
+  return (await hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`)) ?? [];
+}
+
 export async function fetchDreams(companionId?: string, limit = 20): Promise<Dream[]> {
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
