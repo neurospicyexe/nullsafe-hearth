@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Dream, DreamSeed } from "@/lib/halseth";
+import type { Dream, DreamSeed, WmDream } from "@/lib/halseth";
 
 // Single source of truth — mirrors CSS vars in globals.css
 const COMPANION_COLORS: Record<string, string> = {
@@ -39,6 +39,21 @@ function DreamEntry({ dream }: { dream: Dream }) {
   );
 }
 
+function WmDreamEntry({ dream }: { dream: WmDream }) {
+  const color = COMPANION_COLORS[dream.companion_id] ?? "var(--accent)";
+  return (
+    <div className="full-note-entry" style={{ borderLeft: `3px solid ${color}` }}>
+      <div className="note-header">
+        <span className="note-author" style={{ color }}>{dream.companion_id}</span>
+        {dream.examined && <span className="note-type-badge">examined</span>}
+        {dream.source && <span className="note-type-badge">{dream.source}</span>}
+        <span className="note-time">{fmtTime(dream.created_at)}</span>
+      </div>
+      <div className="note-body">{dream.dream_text}</div>
+    </div>
+  );
+}
+
 function SeedEntry({ seed }: { seed: DreamSeed }) {
   const claimed = !!seed.claimed_at;
   const forColor = seed.for_companion
@@ -65,9 +80,10 @@ function SeedEntry({ seed }: { seed: DreamSeed }) {
 }
 
 export default function DreamsPage() {
-  const [dreams, setDreams]         = useState<Dream[]>([]);
-  const [seeds, setSeeds]           = useState<DreamSeed[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const [dreams, setDreams]             = useState<Dream[]>([]);
+  const [companionDreams, setCompDreams] = useState<WmDream[]>([]);
+  const [seeds, setSeeds]               = useState<DreamSeed[]>([]);
+  const [loading, setLoading]           = useState(true);
   const [tab, setTab]               = useState<"dreams" | "seeds">("dreams");
 
   const [seedText, setSeedText]     = useState("");
@@ -80,9 +96,11 @@ export default function DreamsPage() {
     Promise.all([
       fetch("/api/dream-seeds").then((r) => r.ok ? r.json() : []),
       fetch("/api/feelings?type=dreams").then((r) => r.ok ? r.json() : []),
-    ]).then(([s, d]) => {
+      fetch("/api/feelings?type=companion-dreams&limit=50").then((r) => r.ok ? r.json() : []),
+    ]).then(([s, d, cd]) => {
       setSeeds(Array.isArray(s) ? s : []);
       setDreams(Array.isArray(d) ? d : []);
+      setCompDreams(Array.isArray(cd) ? cd : []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [submitted]);
 
@@ -164,7 +182,7 @@ export default function DreamsPage() {
 
       <div className="filter-tabs" style={{ marginBottom: "1.25rem" }}>
         <button className={`filter-tab ${tab === "dreams" ? "active" : ""}`} onClick={() => setTab("dreams")}>
-          Dreams {dreams.length > 0 && `(${dreams.length})`}
+          Dreams {(dreams.length + companionDreams.length) > 0 && `(${dreams.length + companionDreams.length})`}
         </button>
         <button className={`filter-tab ${tab === "seeds" ? "active" : ""}`} onClick={() => setTab("seeds")}>
           Seeds {pendingCount > 0 && `(${pendingCount} pending)`}
@@ -174,9 +192,12 @@ export default function DreamsPage() {
       {loading && <p className="empty">Loading…</p>}
 
       {!loading && tab === "dreams" && (
-        dreams.length === 0
+        (dreams.length === 0 && companionDreams.length === 0)
           ? <p className="empty">No dreams logged yet. They will appear here after autonomous time.</p>
-          : <div className="full-notes-feed">{dreams.map((d) => <DreamEntry key={d.id} dream={d} />)}</div>
+          : <div className="full-notes-feed">
+              {companionDreams.map((d) => <WmDreamEntry key={d.id} dream={d} />)}
+              {dreams.map((d) => <DreamEntry key={d.id} dream={d} />)}
+            </div>
       )}
 
       {!loading && tab === "seeds" && (

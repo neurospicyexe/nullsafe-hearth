@@ -762,3 +762,24 @@ export async function fetchMindDreams(agentId: string, limit = 5): Promise<WmDre
   const res = await hGetSafe<{ dreams: WmDream[] }>(`/mind/dreams/${encodeURIComponent(agentId)}?${q}`, 0);
   return res?.dreams ?? [];
 }
+
+export async function fetchCompanionDreams(companionId?: string, limit = 30): Promise<WmDream[]> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (companionId) q.set("companion_id", companionId);
+  return (await hGetSafe<WmDream[]>(`/ingest/companion-dreams?${q}`)) ?? [];
+}
+
+export type CompanionTension = {
+  id: string;
+  companion_id: string;
+  tension_text: string;
+  status: string;
+  source: string | null;
+  created_at: string;
+};
+
+export async function fetchTensions(companionId?: string, limit = 20): Promise<CompanionTension[]> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (companionId) q.set("companion_id", companionId);
+  return (await hGetSafe<CompanionTension[]>(`/ingest/tensions?${q}`)) ?? [];
+}
