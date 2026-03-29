@@ -278,6 +278,15 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           <Link href={`/companions/${id}/blocks`} className="home-section-link">
             memory blocks →
           </Link>
+          <Link href={`/companions/${id}/loops`} className="home-section-link">
+            open loops →
+          </Link>
+          <Link href={`/companions/${id}/sitting`} className="home-section-link">
+            sitting notes →
+          </Link>
+          <Link href={`/companions/${id}/relational`} className="home-section-link">
+            relational state →
+          </Link>
         </div>
       </section>
     </div>
