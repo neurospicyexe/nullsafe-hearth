@@ -144,7 +144,7 @@ export default async function Page() {
     );
   }
 
-  const { house, wounds_count, tasks, recent_notes, recent_dreams, latest_biometrics, companion_moods } = data;
+  const { house, wounds_count, tasks, recent_notes, recent_dreams, recent_companion_notes, latest_biometrics, companion_moods } = data;
   const companions = data.companions.length > 0 ? data.companions : DEFAULT_COMPANIONS;
   const urgentTasks = tasks.filter((t) => t.status !== "done" && (t.priority === "urgent" || t.priority === "high"));
   const openTaskCount = tasks.filter((t) => t.status !== "done").length;
@@ -369,6 +369,29 @@ export default async function Page() {
                     </span>
                   </div>
                 ))}
+          </div>
+        </div>
+      )}
+
+      {(recent_companion_notes && recent_companion_notes.length > 0) && (
+        <div className="home-section" style={{ marginTop: "1rem" }}>
+          <div className="home-section-header">
+            <span className="home-section-title">Companion Activity</span>
+            <Link href="/companions/drevan/journal" className="home-section-link">see all →</Link>
+          </div>
+          <div className="card notes-card">
+            {recent_companion_notes.slice(0, 5).map((n) => (
+              <div key={n.id} className="note-item">
+                <div className="note-item-header">
+                  <span className="note-item-author">{n.agent}</span>
+                  <span className="note-item-time"><ClientTime iso={n.created_at} /></span>
+                </div>
+                <span className="note-item-content">{n.note_text}</span>
+                {n.tags.length > 0 && (
+                  <span className="note-item-tags">{n.tags.join(" · ")}</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

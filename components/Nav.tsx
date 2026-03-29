@@ -14,6 +14,7 @@ const NAV = [
   { href: "/sessions",  label: "Sessions",  sym: "⊙" },
   { href: "/handovers", label: "Handovers", sym: "↹" },
   { href: "/dreams",    label: "Dreams",    sym: "◌" },
+  { href: "/feelings",  label: "Feelings",  sym: "◎" },
   { href: "/tasks",     label: "Tasks",     sym: "☑" },
   { href: "/checkin",   label: "Check-in",  sym: "↑" },
   { href: "/shared",    label: "Shared",    sym: "≡" },

@@ -96,6 +96,13 @@ export type PresenceData = {
     content: string;
     created_at: string;
   }>;
+  recent_companion_notes?: Array<{
+    id: string;
+    agent: string;
+    note_text: string;
+    tags: string[];
+    created_at: string;
+  }>;
   latest_biometrics: {
     hrv_resting: number | null;
     resting_hr: number | null;
