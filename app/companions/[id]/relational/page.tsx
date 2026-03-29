@@ -44,7 +44,7 @@ export default async function CompanionRelationalPage({ params }: { params: Prom
   const states = await fetchRelationalHistory(id, 50).catch(() => []);
 
   // Group by 'toward' target for display
-  const byTarget = states.reduce<Record<string, typeof states>>((acc, s) => {
+  const byTarget = states.reduce<Record<string, RelationalState[]>>((acc, s) => {
     (acc[s.toward] ??= []).push(s);
     return acc;
   }, {});
