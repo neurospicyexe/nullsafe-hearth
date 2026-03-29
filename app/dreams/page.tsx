@@ -45,8 +45,8 @@ function WmDreamEntry({ dream }: { dream: WmDream }) {
     <div className="full-note-entry" style={{ borderLeft: `3px solid ${color}` }}>
       <div className="note-header">
         <span className="note-author" style={{ color }}>{dream.companion_id}</span>
-        {dream.examined && <span className="note-type-badge">examined</span>}
-        {dream.source && <span className="note-type-badge">{dream.source}</span>}
+        {dream.examined_at && <span className="note-type-badge">examined</span>}
+        {dream.dream_type && <span className="note-type-badge">{dream.dream_type}</span>}
         <span className="note-time">{fmtTime(dream.created_at)}</span>
       </div>
       <div className="note-body">{dream.dream_text}</div>

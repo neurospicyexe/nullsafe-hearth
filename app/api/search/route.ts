@@ -124,9 +124,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           id: n.id, type: "note" as const, text: n.note_text, created_at: n.created_at, url: `/companions/${n.agent}`, agent: n.agent,
         })),
       ...(rawInterNotes ?? [])
-        .filter((n: InterCompanionNote) => matches(n.content, q))
+        .filter((n: InterCompanionNote) => matches(n.note_text, q))
         .map((n: InterCompanionNote) => ({
-          id: n.id, type: "note" as const, text: n.content, created_at: n.created_at,
+          id: n.id, type: "note" as const, text: n.note_text, created_at: n.created_at,
           url: "/us", agent: n.from_id,
         })),
     ];
