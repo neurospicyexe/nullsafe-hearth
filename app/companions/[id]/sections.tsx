@@ -7,6 +7,10 @@ import type {
   WmOrientData,
   SynthesisSummary,
   InterCompanionNote,
+  SomaFeeling,
+  OpenLoop,
+  SittingNote,
+  RelationalState,
 } from "@/lib/halseth";
 
 export type CompanionConfig = {
@@ -41,10 +45,10 @@ export const COMPANION_CONFIG: Record<string, CompanionConfig> = {
   },
 };
 
+import ClientTime from "@/components/ClientTime";
+
 export function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
+  return <ClientTime iso={iso} />;
 }
 
 export function JournalSection({ entries }: { entries: CompanionJournalEntry[] | null }) {
@@ -258,6 +262,139 @@ export function SynthesisSummarySection({ entries, companionId }: { entries: Syn
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Inline sub-page previews ──────────────────────────────────────────────────
+
+function IntensityBar({ value }: { value: number }) {
+  return (
+    <div style={{ height: "3px", background: "var(--border-subtle)", borderRadius: "2px", overflow: "hidden", width: "50px", flexShrink: 0 }}>
+      <div style={{ height: "100%", width: `${value}%`, background: "var(--accent)", borderRadius: "2px" }} />
+    </div>
+  );
+}
+
+function WeightBar({ value }: { value: number }) {
+  return (
+    <div style={{ height: "3px", background: "var(--border-subtle)", borderRadius: "2px", overflow: "hidden", width: "40px", flexShrink: 0 }}>
+      <div style={{ height: "100%", width: `${Math.min(value * 100, 100)}%`, background: "var(--orange)", borderRadius: "2px" }} />
+    </div>
+  );
+}
+
+const STATE_TYPE_COLOR: Record<string, string> = {
+  feeling: "var(--accent)",
+  witness: "#4ade80",
+  held:    "#a78bfa",
+};
+
+export function SomaFeelingsSection({ feelings, color }: { feelings: SomaFeeling[]; color: string }) {
+  if (feelings.length === 0) return <p className="empty">No SOMA feelings recorded yet.</p>;
+  return (
+    <div className="card" style={{ padding: "0.5rem 0" }}>
+      {feelings.map((f) => (
+        <div key={f.id} className="journal-row" style={{ alignItems: "center" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="journal-text" style={{ color }}>
+              {f.emotion}{f.sub_emotion ? ` · ${f.sub_emotion}` : ""}
+            </div>
+            {f.source && (
+              <span style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>{f.source}</span>
+            )}
+          </div>
+          <IntensityBar value={f.intensity} />
+          <span className="journal-time">{fmtTime(f.created_at)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function OpenLoopsSection({ loops }: { loops: OpenLoop[] }) {
+  const open = loops.filter((l) => !l.closed_at);
+  if (open.length === 0) return <p className="empty">No open loops right now.</p>;
+  return (
+    <div className="card" style={{ padding: "0.5rem 0" }}>
+      {open.map((loop) => (
+        <div key={loop.id} className="journal-row" style={{ alignItems: "center", gap: "0.75rem" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="journal-text">{loop.loop_text}</div>
+            <span className="journal-time">{fmtTime(loop.opened_at)}</span>
+          </div>
+          <WeightBar value={loop.weight} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const NOTE_TYPE_LABEL: Record<string, string> = {
+  message: "message",
+  "letter:drevan": "letter",
+  "letter:cypher": "letter",
+  "letter:gaia":   "letter",
+};
+
+export function SittingNotesSection({ notes, color }: { notes: SittingNote[]; color: string }) {
+  if (notes.length === 0) return <p className="empty">Nothing currently sitting.</p>;
+  return (
+    <div className="card" style={{ padding: "0.5rem 0" }}>
+      {notes.map((note) => (
+        <div key={note.note_id} className="journal-row" style={{ flexDirection: "column", gap: "0.4rem", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", width: "100%" }}>
+            <span className="note-type-badge" style={{ borderColor: color, color }}>
+              {NOTE_TYPE_LABEL[note.note_type] ?? note.note_type}
+            </span>
+            <span className="journal-time" style={{ marginLeft: "auto" }}>sitting since {fmtTime(note.sat_at)}</span>
+          </div>
+          <div className="journal-text">{note.content}</div>
+          {note.sit_text && (
+            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontStyle: "italic", paddingLeft: "0.5rem" }}>
+              {note.sit_text}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function RelationalStateSection({ states }: { states: RelationalState[] }) {
+  if (states.length === 0) return <p className="empty">No relational state recorded yet.</p>;
+  const byTarget = states.reduce<Record<string, RelationalState[]>>((acc, s) => {
+    (acc[s.toward] ??= []).push(s);
+    return acc;
+  }, {});
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      {Object.entries(byTarget).map(([toward, entries]) => {
+        const latest = entries[0];
+        return (
+          <div key={toward} className="card" style={{ padding: "0.75rem 1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.04em" }}>
+                → {toward}
+              </span>
+              <span
+                className="note-type-badge"
+                style={{
+                  borderColor: STATE_TYPE_COLOR[latest.state_type] ?? "var(--border-subtle)",
+                  color: STATE_TYPE_COLOR[latest.state_type] ?? "var(--text-muted)",
+                }}
+              >
+                {latest.state_type}
+              </span>
+            </div>
+            <div className="journal-text">{latest.state_text}</div>
+            <div className="delta-meta delta-meta-mt">
+              <span>{fmtTime(latest.noted_at)}</span>
+              {entries.length > 1 && <span>{entries.length} entries</span>}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

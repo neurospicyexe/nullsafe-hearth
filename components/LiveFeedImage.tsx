@@ -1,9 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function LiveFeedImage({ src, currentRoom }: { src: string; currentRoom: string }) {
+export default function LiveFeedImage({ src: baseSrc, currentRoom }: { src: string; currentRoom: string }) {
+  const [ts, setTs] = useState<number | null>(null);
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTs(Date.now());
+      setError(false);
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fullSrc = ts !== null ? `${baseSrc}?t=${ts}` : baseSrc;
 
   if (error) {
     return (
@@ -18,11 +29,11 @@ export default function LiveFeedImage({ src, currentRoom }: { src: string; curre
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={fullSrc}
       alt={`Current view of ${currentRoom}`}
       style={{
         width: "100%", height: "100%", position: "absolute", inset: 0, objectFit: "cover",
-        background: "var(--surface-base)", border: "none"
+        background: "var(--surface-base)", border: "none",
       }}
       onError={() => setError(true)}
     />

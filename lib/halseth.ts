@@ -365,7 +365,7 @@ export async function fetchCompanionDeltas(
     `/companions/${companionId}/deltas`,
   );
   if (!raw) return [];
-  return raw.filter((d) => d.delta_text !== null).slice(-limit);
+  return raw.filter((d) => d.delta_text !== null).slice(-limit).reverse();
 }
 
 export async function fetchBridge(): Promise<BridgeData | null> {
@@ -709,4 +709,21 @@ export type RelationalState = {
 export async function fetchRelationalHistory(agentId: string, limit = 30): Promise<RelationalState[]> {
   const res = await hGetSafe<{ states: RelationalState[] }>(`/mind/relational/${agentId}?limit=${limit}`, 0);
   return res?.states ?? [];
+}
+
+// ── WebMind: Dreams ───────────────────────────────────────────────────────────
+
+export type WmDream = {
+  id: string;
+  companion_id: string;
+  dream_text: string;
+  dream_type: string | null;
+  created_at: string;
+  examined_at: string | null;
+};
+
+export async function fetchMindDreams(agentId: string, limit = 5): Promise<WmDream[]> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  const res = await hGetSafe<{ dreams: WmDream[] }>(`/mind/dreams/${encodeURIComponent(agentId)}?${q}`, 0);
+  return res?.dreams ?? [];
 }
