@@ -692,10 +692,6 @@ export type InterCompanionNote = {
   created_at: string;
 };
 
-export async function fetchInterCompanionNotes(limit = 30): Promise<InterCompanionNote[]> {
-  return (await hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`)) ?? [];
-}
-
 // ── WebMind: Open Loops ───────────────────────────────────────────────────────
 
 export type OpenLoop = {
