@@ -59,7 +59,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
             Last Handover
           </span>
           <span className="presence-badge handover">
-            {last_handover.motion_state.replace("_", " ")}
+            {(last_handover.motion_state ?? "").replace("_", " ")}
           </span>
         </div>
         <div className="presence-body presence-body-muted">

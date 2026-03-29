@@ -55,7 +55,7 @@ export default async function HandoversPage() {
                 {/* Footer */}
                 <div className="handover-footer">
                   <span className={`motion-badge ${motionClass(h.motion_state)}`}>
-                    {h.motion_state.replace("_", " ")}
+                    {(h.motion_state ?? "unknown").replace("_", " ")}
                   </span>
                   {h.session_type === "hangout" && (
                     <span className="badge-autonomous">autonomous</span>

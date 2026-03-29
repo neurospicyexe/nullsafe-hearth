@@ -32,7 +32,7 @@ export default async function UsPage() {
 
   const session = p?.session;
   const handover = p?.last_handover;
-  const loveMeter = p?.house.love_meter ?? null;
+  const loveMeter = p?.house?.love_meter ?? null;
   const woundsCount = p?.wounds_count ?? 0;
 
   const companions = p?.companions ?? [
@@ -220,7 +220,7 @@ export default async function UsPage() {
                     </div>
                   )}
                   <div className="handover-footer">
-                    <span className={`motion-badge ${h.motion_state}`}>{h.motion_state.replace("_", " ")}</span>
+                    <span className={`motion-badge ${h.motion_state ?? ""}`}>{(h.motion_state ?? "unknown").replace("_", " ")}</span>
                     {h.active_anchor && <span>anchor: {h.active_anchor}</span>}
                     <span className="ml-auto">{fmtTime(h.created_at)}</span>
                   </div>
