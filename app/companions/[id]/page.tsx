@@ -17,6 +17,8 @@ import {
   fetchLoops,
   fetchSittingNotes,
   fetchRelationalHistory,
+  fetchLiveThreads,
+  fetchDriftLog,
 } from "@/lib/halseth";
 import type {
   CypherAuditEntry,
@@ -28,6 +30,8 @@ import type {
   OpenLoop,
   SittingNote,
   RelationalState,
+  LiveThread,
+  DriftEntry,
 } from "@/lib/halseth";
 import { LetterFormClient } from "./client";
 import {
@@ -45,6 +49,8 @@ import {
   OpenLoopsSection,
   SittingNotesSection,
   RelationalStateSection,
+  LiveThreadsSection,
+  DriftLogSection,
 } from "./sections";
 
 export function generateStaticParams() {
@@ -117,7 +123,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog] = await Promise.allSettled([
     fetchCompanionJournal(id, 6),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
@@ -132,6 +138,8 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
     fetchLoops(id),
     fetchSittingNotes(id),
     fetchRelationalHistory(id, 12),
+    fetchLiveThreads(id, "active", 10),
+    fetchDriftLog(id, 10),
   ]);
 
   const journalEntries  = journal.status        === "fulfilled" ? journal.value        : null;
@@ -148,7 +156,9 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const feelingEntries  = feelings.status       === "fulfilled" ? (feelings.value as SomaFeeling[]) : [];
   const loopEntries     = loops.status          === "fulfilled" ? (loops.value as OpenLoop[])       : [];
   const sittingEntries  = sitting.status        === "fulfilled" ? (sitting.value as SittingNote[])  : [];
-  const relationalItems = relational.status     === "fulfilled" ? (relational.value as RelationalState[]) : [];
+  const relationalItems  = relational.status    === "fulfilled" ? (relational.value as RelationalState[]) : [];
+  const threadItems      = liveThreads.status  === "fulfilled" ? (liveThreads.value as LiveThread[])     : [];
+  const driftItems       = driftLog.status     === "fulfilled" ? (driftLog.value as DriftEntry[])        : [];
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
@@ -324,6 +334,22 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         </div>
         <RelationalStateSection states={relationalItems} />
       </section>
+
+      {/* Live Threads */}
+      {threadItems.length > 0 && (
+        <section className="page-section">
+          <h2 className="section-title">Live Threads</h2>
+          <LiveThreadsSection threads={threadItems} />
+        </section>
+      )}
+
+      {/* Drift Log */}
+      {driftItems.length > 0 && (
+        <section className="page-section">
+          <h2 className="section-title">Drift Signals</h2>
+          <DriftLogSection entries={driftItems} />
+        </section>
+      )}
 
       {/* Memory blocks link — data-heavy, sub-page only */}
       <section className="page-section">

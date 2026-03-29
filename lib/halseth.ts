@@ -783,3 +783,68 @@ export async function fetchTensions(companionId?: string, limit = 20): Promise<C
   if (companionId) q.set("companion_id", companionId);
   return (await hGetSafe<CompanionTension[]>(`/ingest/tensions?${q}`)) ?? [];
 }
+
+export type SomaticSnapshot = {
+  id: string;
+  companion_id: string;
+  snapshot: string;
+  model_used: string;
+  stale_after: string;
+  created_at: string;
+};
+
+export async function fetchSomaticSnapshots(companionId?: string, limit = 10): Promise<SomaticSnapshot[]> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (companionId) q.set("companion_id", companionId);
+  return (await hGetSafe<SomaticSnapshot[]>(`/ingest/somatic-snapshots?${q}`)) ?? [];
+}
+
+export type DriftEntry = {
+  id: string;
+  companion_id: string;
+  signal_type: string;
+  context: string | null;
+  detected_at: string;
+};
+
+export async function fetchDriftLog(companionId?: string, limit = 20): Promise<DriftEntry[]> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (companionId) q.set("companion_id", companionId);
+  return (await hGetSafe<DriftEntry[]>(`/ingest/drift-log?${q}`)) ?? [];
+}
+
+export type LiveThread = {
+  id: string;
+  companion_id: string;
+  name: string;
+  flavor: string | null;
+  charge: string;
+  status: string;
+  active_since_count: number;
+  notes: string | null;
+  created_at: string;
+  closed_at: string | null;
+};
+
+export async function fetchLiveThreads(companionId?: string, status = "active", limit = 20): Promise<LiveThread[]> {
+  const q = new URLSearchParams({ limit: String(limit), status });
+  if (companionId) q.set("companion_id", companionId);
+  return (await hGetSafe<LiveThread[]>(`/ingest/live-threads?${q}`)) ?? [];
+}
+
+export type BasinHistory = {
+  id: string;
+  companion_id: string;
+  drift_score: number;
+  drift_type: string;
+  caleth_confirmed: number;
+  worst_basin: string | null;
+  notes: string | null;
+  recorded_at: string;
+};
+
+export async function fetchBasinHistory(companionId?: string, limit = 10): Promise<BasinHistory[]> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (companionId) q.set("companion_id", companionId);
+  return (await hGetSafe<BasinHistory[]>(`/ingest/basin-history?${q}`)) ?? [];
+}

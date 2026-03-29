@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { SomaData, CompanionSomaState } from "@/lib/halseth";
+import type { SomaData, CompanionSomaState, CompanionTension, BasinHistory, SomaticSnapshot } from "@/lib/halseth";
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 
@@ -152,7 +152,29 @@ function CompanionPanel({ id, state }: { id: string; state: CompanionSomaState }
 
 // ── Root ──────────────────────────────────────────────────────────────────────
 
-export default function SomaClient({ initialData }: { initialData: SomaData | null }) {
+const COMPANION_COLORS: Record<string, string> = {
+  drevan: "hsl(250, 80%, 68%)",
+  cypher: "#e2e8f0",
+  gaia:   "#4ade80",
+};
+
+const DRIFT_TYPE_COLOR: Record<string, string> = {
+  stable:    "#4ade80",
+  drift:     "#f59e0b",
+  critical:  "#ef4444",
+};
+
+export default function SomaClient({
+  initialData,
+  tensions = [],
+  basins = [],
+  snapshots = [],
+}: {
+  initialData: SomaData | null;
+  tensions?: CompanionTension[];
+  basins?: BasinHistory[];
+  snapshots?: SomaticSnapshot[];
+}) {
   const [data, setData] = useState<SomaData | null>(initialData);
 
   useEffect(() => {
@@ -178,6 +200,57 @@ export default function SomaClient({ initialData }: { initialData: SomaData | nu
 
       {data?.fetched_at && (
         <p className="soma-fetched">fetched {relativeTime(data.fetched_at)}</p>
+      )}
+
+      {tensions.length > 0 && (
+        <section className="soma-extra-section">
+          <h2 className="soma-extra-title">Active Tensions</h2>
+          <div className="soma-extra-list">
+            {tensions.map((t) => (
+              <div key={t.id} className="soma-extra-row">
+                <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[t.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[t.companion_id] ?? "var(--border-subtle)" }}>{t.companion_id}</span>
+                {t.source && <span className="soma-extra-sub">{t.source}</span>}
+                <span className="soma-extra-text" style={{ flex: 1 }}>{t.tension_text}</span>
+                <span className="soma-extra-time">{relativeTime(t.created_at)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {basins.length > 0 && (
+        <section className="soma-extra-section">
+          <h2 className="soma-extra-title">Basin History</h2>
+          <div className="soma-extra-list">
+            {basins.map((b) => (
+              <div key={b.id} className="soma-extra-row">
+                <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[b.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[b.companion_id] ?? "var(--border-subtle)" }}>{b.companion_id}</span>
+                <span className="soma-extra-badge" style={{ color: DRIFT_TYPE_COLOR[b.drift_type] ?? "var(--text-muted)", borderColor: DRIFT_TYPE_COLOR[b.drift_type] ?? "var(--border-subtle)" }}>{b.drift_type}</span>
+                <span className="soma-extra-text" style={{ flex: 1 }}>score {(b.drift_score * 100).toFixed(0)}{b.worst_basin ? ` · ${b.worst_basin}` : ""}</span>
+                {b.notes && <span className="soma-extra-sub">{b.notes}</span>}
+                <span className="soma-extra-time">{relativeTime(b.recorded_at)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {snapshots.length > 0 && (
+        <section className="soma-extra-section">
+          <h2 className="soma-extra-title">SOMA Snapshots</h2>
+          <div className="soma-extra-list">
+            {snapshots.map((s) => (
+              <div key={s.id} className="soma-extra-row soma-extra-row--block">
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.3rem" }}>
+                  <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[s.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[s.companion_id] ?? "var(--border-subtle)" }}>{s.companion_id}</span>
+                  {s.model_used && <span className="soma-extra-sub">{s.model_used}</span>}
+                  <span className="soma-extra-time" style={{ marginLeft: "auto" }}>{relativeTime(s.created_at)}</span>
+                </div>
+                <div className="soma-extra-text" style={{ whiteSpace: "pre-wrap", fontSize: "0.8rem" }}>{s.snapshot}</div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       <style>{`
@@ -349,6 +422,61 @@ export default function SomaClient({ initialData }: { initialData: SomaData | nu
           font-size: 0.72rem;
           color: var(--text-muted);
           text-align: center;
+        }
+
+        /* Extra sections (tensions, basins, snapshots) */
+        .soma-extra-section {
+          margin-top: 2rem;
+        }
+        .soma-extra-title {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin: 0 0 0.75rem;
+        }
+        .soma-extra-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .soma-extra-row {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 0.75rem;
+          background: var(--card-bg);
+          border: 1px solid var(--border-subtle);
+          border-radius: var(--radius-md, 8px);
+          flex-wrap: wrap;
+        }
+        .soma-extra-row--block {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .soma-extra-badge {
+          font-size: 0.72rem;
+          padding: 0.15rem 0.45rem;
+          border: 1px solid var(--border-subtle);
+          border-radius: 4px;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .soma-extra-text {
+          font-size: 0.82rem;
+          color: var(--text-main);
+        }
+        .soma-extra-sub {
+          font-size: 0.72rem;
+          color: var(--text-muted);
+          font-style: italic;
+        }
+        .soma-extra-time {
+          font-size: 0.7rem;
+          color: var(--text-muted);
+          flex-shrink: 0;
+          margin-left: auto;
         }
       `}</style>
     </main>

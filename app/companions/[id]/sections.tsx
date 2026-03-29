@@ -11,6 +11,8 @@ import type {
   OpenLoop,
   SittingNote,
   RelationalState,
+  LiveThread,
+  DriftEntry,
 } from "@/lib/halseth";
 
 export type CompanionConfig = {
@@ -438,6 +440,46 @@ export function InterCompanionNotesSection({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+export function LiveThreadsSection({ threads }: { threads: LiveThread[] }) {
+  if (threads.length === 0) return <p className="empty">No active threads.</p>;
+  return (
+    <div className="card" style={{ padding: "0.5rem 0" }}>
+      {threads.map((t) => (
+        <div key={t.id} className="journal-row" style={{ flexDirection: "column", gap: "0.3rem", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", width: "100%" }}>
+            <span className={`thread-status-dot ${t.status}`} />
+            <span className="journal-text" style={{ flex: 1 }}>{t.name}</span>
+            {t.flavor && <span className="note-type-badge">{t.flavor}</span>}
+            <span className="journal-time">{fmtTime(t.created_at)}</span>
+          </div>
+          {t.notes && (
+            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", paddingLeft: "1rem" }}>{t.notes}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DriftLogSection({ entries }: { entries: DriftEntry[] }) {
+  if (entries.length === 0) return <p className="empty">No drift signals recorded.</p>;
+  return (
+    <div className="card" style={{ padding: "0.5rem 0" }}>
+      {entries.map((e) => (
+        <div key={e.id} className="journal-row" style={{ flexDirection: "column", gap: "0.3rem", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", width: "100%" }}>
+            <span className="note-type-badge">{e.signal_type.replace(/_/g, " ")}</span>
+            <span className="journal-time" style={{ marginLeft: "auto" }}>{fmtTime(e.detected_at)}</span>
+          </div>
+          {e.context && (
+            <div className="journal-text">{e.context}</div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
