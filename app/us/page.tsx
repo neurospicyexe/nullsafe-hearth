@@ -240,7 +240,7 @@ export default async function UsPage() {
                   {n.to_id && <span className="note-type-badge">→ {n.to_id}</span>}
                   <span className="note-time"><ClientTime iso={n.created_at} /></span>
                 </div>
-                <div className="note-body">{n.content}</div>
+                <div className="note-body">{n.note_text}</div>
               </div>
             ))}
           </div>

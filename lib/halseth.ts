@@ -483,15 +483,6 @@ export async function fetchMindHandoffs(limit = 30): Promise<MindHandoff[]> {
   return (await hGetSafe<MindHandoff[]>(`/ingest/mind-handoffs?limit=${limit}`)) ?? [];
 }
 
-export type InterCompanionNote = {
-  id: string;
-  from_id: string;
-  to_id: string | null;
-  content: string;
-  read_at: string | null;
-  created_at: string;
-};
-
 export async function fetchInterCompanionNotes(limit = 30): Promise<InterCompanionNote[]> {
   return (await hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`)) ?? [];
 }
