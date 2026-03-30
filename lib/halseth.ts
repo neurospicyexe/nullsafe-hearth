@@ -678,8 +678,8 @@ export type InterCompanionNote = {
   id: string;
   from_id: string;
   to_id: string | null;
-  note_text: string;
-  tags: string | null;
+  content: string;
+  read_at: string | null;
   created_at: string;
 };
 
