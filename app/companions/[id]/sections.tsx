@@ -415,10 +415,6 @@ export function InterCompanionNotesSection({
   return (
     <div className="icn-feed">
       {relevant.map((n) => {
-        const tags: string[] = (() => {
-          try { const p = n.tags ? JSON.parse(n.tags) : []; return Array.isArray(p) ? p : []; }
-          catch { return []; }
-        })();
         const isBroadcast = n.to_id === null;
         const isIncoming = n.to_id === companionId;
         return (
@@ -428,12 +424,7 @@ export function InterCompanionNotesSection({
               <span className="icn-arrow">→</span>
               <span className="icn-to">{n.to_id ?? "all"}</span>
             </div>
-            <div className="icn-text">{n.note_text}</div>
-            {tags.length > 0 && (
-              <div className="journal-tags">
-                {tags.map((t, i) => <span key={i} className="journal-tag">{t}</span>)}
-              </div>
-            )}
+            <div className="icn-text">{n.content}</div>
             <div className="delta-meta delta-meta-mt">
               <span>{fmtTime(n.created_at)}</span>
             </div>

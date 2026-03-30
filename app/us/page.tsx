@@ -231,16 +231,21 @@ export default async function UsPage() {
       {/* Between Companions */}
       {companionNotes.length > 0 && (
         <section className="page-section">
-          <h2 className="section-title">Between Companions</h2>
+          <div className="section-header">
+            <h2 className="section-title section-title-flush">Between Companions</h2>
+            {companionNotes.length > 5 && (
+              <Link href="/companions" className="home-section-link">see more →</Link>
+            )}
+          </div>
           <div className="full-notes-feed">
-            {companionNotes.slice(0, 8).map((n) => (
+            {companionNotes.slice(0, 5).map((n) => (
               <div key={n.id} className="full-note-entry">
                 <div className="note-header">
                   <span className={`note-author cc-${n.from_id}`}>{n.from_id}</span>
                   {n.to_id && <span className="note-type-badge">→ {n.to_id}</span>}
                   <span className="note-time"><ClientTime iso={n.created_at} /></span>
                 </div>
-                <div className="note-body">{n.note_text}</div>
+                <div className="note-body">{n.content}</div>
               </div>
             ))}
           </div>
