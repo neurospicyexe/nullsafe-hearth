@@ -409,9 +409,9 @@ export default async function Page() {
                   <span className="note-item-author" style={{ opacity: 0.5 }}>{s.summary_type.replace("_", " ")}</span>
                   <span className="note-item-time"><ClientTime iso={s.created_at} /></span>
                 </div>
-                {s.content && (
+                {s.narrative && (
                   <span className="note-item-content">
-                    {s.content.length > 300 ? s.content.slice(0, 300) + "…" : s.content}
+                    {s.narrative.length > 300 ? s.narrative.slice(0, 300) + "…" : s.narrative}
                   </span>
                 )}
               </div>

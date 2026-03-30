@@ -255,10 +255,11 @@ export function SynthesisSummarySection({ entries, companionId }: { entries: Syn
         <div key={e.id} className="synthesis-entry">
           <div className="entry-meta-row">
             <span className="synthesis-type">{(e.summary_type ?? "").replace("_", " ")}</span>
-            {e.thread_key && <span className="synthesis-thread">{e.thread_key}</span>}
+            {e.subject && <span className="synthesis-thread">{e.subject}</span>}
             {e.companion_id === null && <span className="synthesis-cross">cross-companion</span>}
           </div>
-          {e.content && <div className="entry-content">{e.content}</div>}
+          {e.narrative && <div className="entry-content">{e.narrative}</div>}
+          {e.emotional_register && <div className="entry-meta-row"><span className="synthesis-type">{e.emotional_register}</span></div>}
           <div className="delta-meta delta-meta-mt">
             <span>{fmtTime(e.created_at)}</span>
           </div>

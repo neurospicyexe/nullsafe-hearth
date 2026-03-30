@@ -663,8 +663,10 @@ export type SynthesisSummary = {
   id: string;
   companion_id: string | null;
   summary_type: string;
-  content: string | null;
-  thread_key: string | null;
+  subject: string | null;
+  narrative: string | null;
+  emotional_register: string | null;
+  open_threads: string | null;
   created_at: string;
 };
 
