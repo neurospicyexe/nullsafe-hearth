@@ -209,9 +209,8 @@ export default function SomaClient({
             {tensions.map((t) => (
               <div key={t.id} className="soma-extra-row">
                 <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[t.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[t.companion_id] ?? "var(--border-subtle)" }}>{t.companion_id}</span>
-                {t.source && <span className="soma-extra-sub">{t.source}</span>}
                 <span className="soma-extra-text" style={{ flex: 1 }}>{t.tension_text}</span>
-                <span className="soma-extra-time">{relativeTime(t.created_at)}</span>
+                <span className="soma-extra-time">{relativeTime(t.first_noted_at)}</span>
               </div>
             ))}
           </div>
