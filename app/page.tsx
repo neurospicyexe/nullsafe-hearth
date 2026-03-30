@@ -377,7 +377,7 @@ export default async function Page() {
         <div className="home-section" style={{ marginTop: "1rem" }}>
           <div className="home-section-header">
             <span className="home-section-title">Companion Activity</span>
-            <Link href="/companions/drevan/journal" className="home-section-link">see all →</Link>
+            <Link href="/journal" className="home-section-link">see all →</Link>
           </div>
           <div className="card notes-card">
             {recent_companion_notes.slice(0, 5).map((n) => (

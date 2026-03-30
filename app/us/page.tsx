@@ -231,12 +231,7 @@ export default async function UsPage() {
       {/* Between Companions */}
       {companionNotes.length > 0 && (
         <section className="page-section">
-          <div className="section-header">
-            <h2 className="section-title section-title-flush">Between Companions</h2>
-            {companionNotes.length > 5 && (
-              <Link href="/companions" className="home-section-link">see more →</Link>
-            )}
-          </div>
+          <h2 className="section-title">Between Companions</h2>
           <div className="full-notes-feed">
             {companionNotes.slice(0, 5).map((n) => (
               <div key={n.id} className="full-note-entry">
