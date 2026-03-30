@@ -761,8 +761,9 @@ export type CompanionTension = {
   companion_id: string;
   tension_text: string;
   status: string;
-  source: string | null;
-  created_at: string;
+  first_noted_at: string;
+  last_surfaced_at: string | null;
+  notes: string | null;
 };
 
 export async function fetchTensions(companionId?: string, limit = 20): Promise<CompanionTension[]> {
