@@ -8,9 +8,9 @@ export async function GET() {
   const h: Record<string, string> = secret ? { Authorization: `Bearer ${secret}` } : {};
 
   const [healthRes, patternsRes, journalsRes] = await Promise.all([
-    fetch(`${base}/mind/health`,           { headers: h, next: { revalidate: 60 } }),
-    fetch(`${base}/mind/patterns?days=7`,  { headers: h, next: { revalidate: 60 } }),
-    fetch(`${base}/mind/recent?hours=168`, { headers: h, next: { revalidate: 60 } }),
+    fetch(`${base}/mind/health`,           { headers: h, cache: "no-store" }),
+    fetch(`${base}/mind/patterns?days=7`,  { headers: h, cache: "no-store" }),
+    fetch(`${base}/mind/recent?hours=168`, { headers: h, cache: "no-store" }),
   ]);
 
   const health          = healthRes.ok   ? await healthRes.json()   : { entities: 0, observations: 0, relations: 0, journals: 0, salience: {} };

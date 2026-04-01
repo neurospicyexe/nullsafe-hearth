@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const res = await fetch(`${base}/deltas?limit=${limit}`, {
     headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-    next: { revalidate: 30 },
+    cache: "no-store",
   });
   if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
   return NextResponse.json(await res.json());
