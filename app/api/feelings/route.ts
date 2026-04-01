@@ -27,7 +27,7 @@ export async function GET(req: Request) {
   try {
     const res = await fetch(`${BASE()}${path}`, {
       headers: AUTH(),
-      next: { revalidate: 15 },
+      cache: "no-store",
     });
     if (!res.ok) return NextResponse.json([]);
     return NextResponse.json(await res.json());

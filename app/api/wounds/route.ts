@@ -7,7 +7,7 @@ export async function GET() {
 
   const res = await fetch(`${base}/wounds`, {
     headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
