@@ -72,6 +72,7 @@ export type PresenceData = {
     open_threads: string[];
     active_anchor: string | null;
     motion_state: "in_motion" | "at_rest" | "floating";
+    facet: string | null;
     created_at: string;
   } | null;
   tasks: Array<{

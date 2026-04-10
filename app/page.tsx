@@ -56,6 +56,11 @@ function PresenceSection({ data }: { data: PresenceData }) {
           </span>
           <span className="presence-badge handover">
             {(last_handover.motion_state ?? "").replace("_", " ")}
+            {last_handover.facet && (
+              <span style={{ opacity: 0.7, marginLeft: "0.4rem", fontSize: "0.8em" }}>
+                · {last_handover.facet}
+              </span>
+            )}
           </span>
         </div>
         <div className="presence-body presence-body-muted">
