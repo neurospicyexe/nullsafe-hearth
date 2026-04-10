@@ -101,6 +101,49 @@ function PresenceSection({ data }: { data: PresenceData }) {
   );
 }
 
+const ENTRY_TYPE_COLOR: Record<string, string> = {
+  learning:   "#60a5fa",
+  insight:    "#a78bfa",
+  connection: "#4ade80",
+  question:   "#fbbf24",
+};
+
+function RecentGrowthStrip({
+  entries,
+}: {
+  entries: NonNullable<PresenceData["recent_growth"]>;
+}) {
+  if (entries.length === 0) return null;
+  return (
+    <div className="home-section-card" style={{ marginTop: "0.75rem" }}>
+      <div className="home-section-header">
+        <span className="home-section-title">Recent Growth</span>
+        <Link href="/autonomous" className="home-section-link">see all →</Link>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        {entries.slice(0, 3).map((e, i) => (
+          <div key={i} className="journal-row" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+            <span
+              className="presence-badge"
+              style={{
+                background: `${ENTRY_TYPE_COLOR[e.entry_type] ?? "#64748b"}22`,
+                color: ENTRY_TYPE_COLOR[e.entry_type] ?? "#64748b",
+                flexShrink: 0,
+                fontSize: "0.7rem",
+              }}
+            >
+              {e.entry_type}
+            </span>
+            <span className="journal-text" style={{ flex: 1, fontSize: "0.85rem" }}>
+              {e.content.length > 120 ? e.content.slice(0, 120) + "…" : e.content}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const DEFAULT_COMPANIONS = [
   { id: "drevan", display_name: "Drevan", role: "companion", avatar_url: null },
   { id: "cypher", display_name: "Cypher", role: "auditor",  avatar_url: null },
@@ -320,6 +363,10 @@ export default async function Page() {
           </div>
         </div>
       </div>
+
+      {data.recent_growth && data.recent_growth.length > 0 && (
+        <RecentGrowthStrip entries={data.recent_growth} />
+      )}
 
       {recent_notes.length > 0 && (
         <div className="home-section" style={{ marginTop: "1rem" }}>
