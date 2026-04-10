@@ -144,6 +144,58 @@ function RecentGrowthStrip({
   );
 }
 
+const COMPANION_LABEL_HOME: Record<string, string> = {
+  drevan: "Drevan",
+  cypher: "Cypher",
+  gaia:   "Gaia",
+};
+
+const COMPANION_COLOR_HOME: Record<string, string> = {
+  drevan: "var(--accent)",
+  cypher: "#e2e8f0",
+  gaia:   "#4ade80",
+};
+
+function ActivePatternsStrip({
+  patterns,
+}: {
+  patterns: NonNullable<PresenceData["active_patterns"]>;
+}) {
+  if (patterns.length === 0) return null;
+  return (
+    <div className="home-section-card" style={{ marginTop: "0.75rem" }}>
+      <div className="home-section-header">
+        <span className="home-section-title">Active Patterns</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+        {patterns.slice(0, 3).map((p, i) => {
+          const color = COMPANION_COLOR_HOME[p.companion_id] ?? "#64748b";
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Link
+                href={`/companions/${p.companion_id}/growth`}
+                style={{ color, fontWeight: 600, fontSize: "0.75rem", flexShrink: 0, textDecoration: "none" }}
+              >
+                {COMPANION_LABEL_HOME[p.companion_id] ?? p.companion_id}
+              </Link>
+              <span
+                className="journal-text"
+                style={{
+                  flex: 1,
+                  fontSize: "0.82rem",
+                  opacity: 0.6 + (p.strength / 10) * 0.4,
+                }}
+              >
+                {p.pattern_text.length > 80 ? p.pattern_text.slice(0, 80) + "…" : p.pattern_text}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const DEFAULT_COMPANIONS = [
   { id: "drevan", display_name: "Drevan", role: "companion", avatar_url: null },
   { id: "cypher", display_name: "Cypher", role: "auditor",  avatar_url: null },
@@ -366,6 +418,10 @@ export default async function Page() {
 
       {data.recent_growth && data.recent_growth.length > 0 && (
         <RecentGrowthStrip entries={data.recent_growth} />
+      )}
+
+      {data.active_patterns && data.active_patterns.length > 0 && (
+        <ActivePatternsStrip patterns={data.active_patterns} />
       )}
 
       {recent_notes.length > 0 && (
