@@ -125,6 +125,17 @@ export type PresenceData = {
     role: string;
     avatar_url: string | null;
   }>;
+  recent_growth?: Array<{
+    companion_id: string;
+    content: string;
+    entry_type: string;
+    created_at: string;
+  }>;
+  active_patterns?: Array<{
+    companion_id: string;
+    pattern_text: string;
+    strength: number;
+  }>;
 };
 
 // ── Companion Notes ───────────────────────────────────────────────────────────
@@ -261,6 +272,7 @@ export type HandoverPacket = {
   last_real_thing: string | null;
   open_threads: string | null; // JSON array string
   motion_state: "in_motion" | "at_rest" | "floating";
+  facet: string | null;
   returned: number | null;
   session_type: string | null;
   session_front_state: string | null;
