@@ -838,3 +838,92 @@ export async function fetchBasinHistory(companionId?: string, limit = 10): Promi
   if (companionId) q.set("companion_id", companionId);
   return (await hGetSafe<BasinHistory[]>(`/ingest/basin-history?${q}`)) ?? [];
 }
+
+// ── Growth (autonomous worker artifacts) ─────────────────────────────────────
+
+export type GrowthJournalEntry = {
+  id: string;
+  companion_id: string;
+  entry_type: "learning" | "insight" | "connection" | "question";
+  content: string;
+  source: "autonomous" | "conversation" | "reflection" | null;
+  tags_json: string; // JSON-encoded string[], parse with JSON.parse
+  created_at: string;
+};
+
+export type GrowthPattern = {
+  id: string;
+  companion_id: string;
+  pattern_text: string;
+  evidence_json: string; // JSON-encoded string[], parse with JSON.parse
+  strength: number; // 1–10
+  created_at: string;
+  updated_at: string;
+};
+
+export type GrowthMarker = {
+  id: string;
+  companion_id: string;
+  marker_type: "milestone" | "shift" | "realization";
+  description: string;
+  related_pattern_id: string | null;
+  created_at: string;
+};
+
+// ── Autonomy (autonomous worker execution) ────────────────────────────────────
+
+export type AutonomyRun = {
+  id: string;
+  companion_id: string;
+  run_type: "exploration" | "reflection" | "synthesis";
+  status: "pending" | "running" | "completed" | "failed";
+  started_at: string | null;
+  completed_at: string | null;
+  tokens_used: number;
+  artifacts_created: number;
+  error_message: string | null;
+  created_at: string;
+};
+
+export type AutonomySeed = {
+  id: string;
+  companion_id: string;
+  seed_type: "topic" | "question" | "reflection_prompt";
+  content: string;
+  priority: number;
+  used_at: string | null;
+  created_at: string;
+};
+
+// ── Phoenix WebMind ───────────────────────────────────────────────────────────
+
+export type PhoenixHealth = {
+  status: string;        // "ok"
+  service: string;       // "webmind"
+  version: string;
+  db_configured: boolean;
+};
+
+// Matches MindOrientResponse from Phoenix contracts.py
+export type PhoenixOrientState = {
+  agent_id: string;
+  top_threads: Array<{
+    thread_id: string;
+    title: string;
+    status: string;
+    lane: string;
+  }>;
+  recent_handoffs: Array<{
+    handoff_id: string;
+    title: string;
+    next_steps: string | null;
+    created_at: string;
+  }>;
+  recent_notes: Array<{
+    note_id: string;
+    note_text: string;
+    thread_key: string | null;
+    created_at: string;
+  }>;
+  generated_at: string;
+};
