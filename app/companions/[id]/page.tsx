@@ -162,11 +162,11 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const feelingEntries  = feelings.status       === "fulfilled" ? (feelings.value as SomaFeeling[]) : [];
   const loopEntries     = loops.status          === "fulfilled" ? (loops.value as OpenLoop[])       : [];
   const sittingEntries  = sitting.status        === "fulfilled" ? (sitting.value as SittingNote[])  : [];
-  const relationalItems  = relational.status    === "fulfilled" ? (relational.value as RelationalState[]) : [];
-  const threadItems      = liveThreads.status  === "fulfilled" ? (liveThreads.value as LiveThread[])     : [];
-  const driftItems          = driftLog.status      === "fulfilled" ? (driftLog.value as DriftEntry[])           : [];
-  const growthJournalItems  = growthJournal.status === "fulfilled" ? (growthJournal.value as GrowthJournalEntry[]) : [];
-  const autonomyRunItems    = autonomyRuns.status  === "fulfilled" ? (autonomyRuns.value as AutonomyRun[])         : [];
+  const relationalItems    = relational.status    === "fulfilled" ? (relational.value as RelationalState[]) : [];
+  const threadItems        = liveThreads.status   === "fulfilled" ? (liveThreads.value as LiveThread[])     : [];
+  const driftItems         = driftLog.status      === "fulfilled" ? (driftLog.value as DriftEntry[])           : [];
+  const growthJournalItems = growthJournal.status === "fulfilled" ? (growthJournal.value as GrowthJournalEntry[]) : [];
+  const autonomyRunItems   = autonomyRuns.status  === "fulfilled" ? (autonomyRuns.value as AutonomyRun[])         : [];
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
@@ -364,7 +364,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         <section className="page-section">
           <div className="section-header">
             <h2 className="section-title section-title-flush">Growth</h2>
-            <Link href={`/companions/${id}/growth`} className="home-section-link">View all →</Link>
+            <Link href={`/companions/${id}/growth`} className="home-section-link">see more →</Link>
           </div>
           <div className="section-list">
             {growthJournalItems.map((entry) => {
@@ -396,7 +396,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         <section className="page-section">
           <div className="section-header">
             <h2 className="section-title section-title-flush">Autonomy</h2>
-            <Link href={`/companions/${id}/autonomy`} className="home-section-link">View all →</Link>
+            <Link href={`/companions/${id}/autonomy`} className="home-section-link">see more →</Link>
           </div>
           <div className="section-list">
             {autonomyRunItems.map((run) => {
