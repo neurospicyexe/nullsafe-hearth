@@ -911,7 +911,7 @@ export type PhoenixOrientState = {
     thread_id: string;
     title: string;
     status: string;
-    lane: string;
+    lane: string | null;
   }>;
   recent_handoffs: Array<{
     handoff_id: string;
