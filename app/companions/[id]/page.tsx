@@ -19,6 +19,8 @@ import {
   fetchRelationalHistory,
   fetchLiveThreads,
   fetchDriftLog,
+  fetchGrowthJournal,
+  fetchAutonomyRuns,
 } from "@/lib/halseth";
 import type {
   CypherAuditEntry,
@@ -32,6 +34,8 @@ import type {
   RelationalState,
   LiveThread,
   DriftEntry,
+  GrowthJournalEntry,
+  AutonomyRun,
 } from "@/lib/halseth";
 import { LetterFormClient } from "./client";
 import {
@@ -123,7 +127,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns] = await Promise.allSettled([
     fetchCompanionJournal(id, 6),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
@@ -140,6 +144,8 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
     fetchRelationalHistory(id, 12),
     fetchLiveThreads(id, "active", 10),
     fetchDriftLog(id, 10),
+    fetchGrowthJournal(id, 3),
+    fetchAutonomyRuns(id, 3),
   ]);
 
   const journalEntries  = journal.status        === "fulfilled" ? journal.value        : null;
@@ -158,7 +164,9 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const sittingEntries  = sitting.status        === "fulfilled" ? (sitting.value as SittingNote[])  : [];
   const relationalItems  = relational.status    === "fulfilled" ? (relational.value as RelationalState[]) : [];
   const threadItems      = liveThreads.status  === "fulfilled" ? (liveThreads.value as LiveThread[])     : [];
-  const driftItems       = driftLog.status     === "fulfilled" ? (driftLog.value as DriftEntry[])        : [];
+  const driftItems          = driftLog.status      === "fulfilled" ? (driftLog.value as DriftEntry[])           : [];
+  const growthJournalItems  = growthJournal.status === "fulfilled" ? (growthJournal.value as GrowthJournalEntry[]) : [];
+  const autonomyRunItems    = autonomyRuns.status  === "fulfilled" ? (autonomyRuns.value as AutonomyRun[])         : [];
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
@@ -348,6 +356,70 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         <section className="page-section">
           <h2 className="section-title">Drift Signals</h2>
           <DriftLogSection entries={driftItems} />
+        </section>
+      )}
+
+      {/* Growth Preview */}
+      {growthJournalItems.length > 0 && (
+        <section className="page-section">
+          <div className="section-header">
+            <h2 className="section-title section-title-flush">Growth</h2>
+            <Link href={`/companions/${id}/growth`} className="home-section-link">View all →</Link>
+          </div>
+          <div className="section-list">
+            {growthJournalItems.map((entry) => {
+              const badgeColor =
+                entry.entry_type === "learning"   ? "#3b82f6" :
+                entry.entry_type === "insight"    ? "#a855f7" :
+                entry.entry_type === "connection" ? "#22c55e" :
+                entry.entry_type === "question"   ? "#f59e0b" : "#6b7280";
+              return (
+                <div key={entry.id} className="section-row">
+                  <span
+                    className="badge"
+                    style={{ background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44` }}
+                  >
+                    {entry.entry_type}
+                  </span>
+                  <span className="section-row-text">
+                    {entry.content.length > 120 ? entry.content.slice(0, 120) + "…" : entry.content}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Autonomy Preview */}
+      {autonomyRunItems.length > 0 && (
+        <section className="page-section">
+          <div className="section-header">
+            <h2 className="section-title section-title-flush">Autonomy</h2>
+            <Link href={`/companions/${id}/autonomy`} className="home-section-link">View all →</Link>
+          </div>
+          <div className="section-list">
+            {autonomyRunItems.map((run) => {
+              const statusColor =
+                run.status === "running"   ? "#eab308" :
+                run.status === "completed" ? "#22c55e" :
+                run.status === "failed"    ? "#ef4444" : "#6b7280";
+              return (
+                <div key={run.id} className="section-row">
+                  <span className="section-row-label">{run.run_type}</span>
+                  <span
+                    className="badge"
+                    style={{ background: `${statusColor}22`, color: statusColor, border: `1px solid ${statusColor}44` }}
+                  >
+                    {run.status}
+                  </span>
+                  <span className="section-row-meta">
+                    {run.started_at ? new Date(run.started_at).toLocaleDateString() : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </section>
       )}
 
