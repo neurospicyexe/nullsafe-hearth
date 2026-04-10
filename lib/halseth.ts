@@ -939,3 +939,87 @@ export type PhoenixOrientState = {
   }>;
   generated_at: string;
 };
+
+// ── Phoenix helper ────────────────────────────────────────────────────────────
+
+async function phoenixGet<T>(path: string): Promise<T | null> {
+  const url = process.env.PHOENIX_WEBMIND_URL;
+  if (!url) return null;
+  try {
+    const res = await fetchWithTimeout(`${url}${path}`, {
+      cache: "no-store" as RequestCache,
+    });
+    if (!res.ok) return null;
+    return res.json() as Promise<T>;
+  } catch {
+    return null;
+  }
+}
+
+// ── Growth fetch functions ────────────────────────────────────────────────────
+
+export async function fetchGrowthJournal(
+  companionId: string,
+  limit = 20,
+): Promise<GrowthJournalEntry[]> {
+  return (
+    (await hGetSafe<GrowthJournalEntry[]>(
+      `/mind/growth/journal/${companionId}?limit=${limit}`,
+    )) ?? []
+  );
+}
+
+export async function fetchGrowthPatterns(
+  companionId: string,
+): Promise<GrowthPattern[]> {
+  return (
+    (await hGetSafe<GrowthPattern[]>(
+      `/mind/growth/patterns/${companionId}`,
+    )) ?? []
+  );
+}
+
+export async function fetchGrowthMarkers(
+  companionId: string,
+): Promise<GrowthMarker[]> {
+  return (
+    (await hGetSafe<GrowthMarker[]>(
+      `/mind/growth/markers/${companionId}`,
+    )) ?? []
+  );
+}
+
+// ── Autonomy fetch functions ──────────────────────────────────────────────────
+
+export async function fetchAutonomyRuns(
+  companionId: string,
+  limit = 20,
+): Promise<AutonomyRun[]> {
+  return (
+    (await hGetSafe<AutonomyRun[]>(
+      `/mind/autonomy/runs/${companionId}?limit=${limit}`,
+    )) ?? []
+  );
+}
+
+export async function fetchAutonomySeeds(
+  companionId: string,
+): Promise<AutonomySeed[]> {
+  return (
+    (await hGetSafe<AutonomySeed[]>(
+      `/mind/autonomy/seeds/${companionId}`,
+    )) ?? []
+  );
+}
+
+// ── Phoenix fetch functions ───────────────────────────────────────────────────
+
+export async function fetchPhoenixHealth(): Promise<PhoenixHealth | null> {
+  return phoenixGet<PhoenixHealth>("/health");
+}
+
+export async function fetchPhoenixOrient(
+  agentId: "drevan" | "cypher" | "gaia",
+): Promise<PhoenixOrientState | null> {
+  return phoenixGet<PhoenixOrientState>(`/mind/orient/${agentId}`);
+}
