@@ -259,7 +259,7 @@ export default async function AutonomousPage() {
                     {sortedJournal.map((entry, i) => {
                       const typeColor = ENTRY_TYPE_COLOR[entry.entry_type] ?? "#64748b";
                       return (
-                        <div key={i} className="journal-row" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+                        <div key={entry.id} className="journal-row" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
                           <span
                             className="presence-badge"
                             style={{
@@ -294,7 +294,7 @@ export default async function AutonomousPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                     {topPatterns.map((p, i) => (
                       <span
-                        key={i}
+                        key={p.id}
                         className="journal-text"
                         style={{
                           fontSize: "0.82rem",
