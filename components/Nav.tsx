@@ -19,6 +19,8 @@ const NAV = [
   { href: "/checkin",   label: "Check-in",  sym: "↑" },
   { href: "/shared",    label: "Shared",    sym: "≡" },
   { href: "/soma",      label: "Soma",      sym: "◉" },
+  { href: "/autonomous", label: "Autonomous", sym: "⟳" },
+  { href: "/phoenix",   label: "Phoenix",   sym: "⌬" },
 ];
 
 export default function Nav() {
