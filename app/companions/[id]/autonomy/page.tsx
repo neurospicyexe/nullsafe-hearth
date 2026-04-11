@@ -252,11 +252,9 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
                         <p className="section-row-text" style={{ margin: 0 }}>
                           {seed.content}
                         </p>
-                        {seed.used_at && (
-                          <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
-                            used {fmtTime(seed.used_at)}
-                          </span>
-                        )}
+                        <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                          used {fmtTime(seed.used_at!)}
+                        </span>
                       </div>
                     );
                   })}
