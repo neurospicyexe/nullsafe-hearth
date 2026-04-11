@@ -908,6 +908,15 @@ export type AutonomySeed = {
   created_at: string;
 };
 
+export type AutonomyReflection = {
+  id: string;
+  run_id: string;
+  companion_id: string;
+  reflection_text: string;
+  new_seeds_json: string | null; // JSON-encoded string[], parse with JSON.parse
+  created_at: string;
+};
+
 // ── Phoenix WebMind ───────────────────────────────────────────────────────────
 
 export type PhoenixHealth = {
@@ -1006,6 +1015,16 @@ export async function fetchAutonomySeeds(
     `/mind/autonomy/seeds/${companionId}`,
   );
   return res?.seeds ?? [];
+}
+
+export async function fetchAutonomyReflections(
+  companionId: string,
+  limit = 10,
+): Promise<AutonomyReflection[]> {
+  const res = await hGetSafe<{ reflections: AutonomyReflection[] }>(
+    `/mind/autonomy/reflections/${companionId}?limit=${limit}`,
+  );
+  return res?.reflections ?? [];
 }
 
 // ── Phoenix fetch functions ───────────────────────────────────────────────────
