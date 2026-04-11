@@ -963,31 +963,28 @@ export async function fetchGrowthJournal(
   companionId: string,
   limit = 20,
 ): Promise<GrowthJournalEntry[]> {
-  return (
-    (await hGetSafe<GrowthJournalEntry[]>(
-      `/mind/growth/journal/${companionId}?limit=${limit}`,
-    )) ?? []
+  const res = await hGetSafe<{ journal: GrowthJournalEntry[] }>(
+    `/mind/growth/journal/${companionId}?limit=${limit}`,
   );
+  return res?.journal ?? [];
 }
 
 export async function fetchGrowthPatterns(
   companionId: string,
 ): Promise<GrowthPattern[]> {
-  return (
-    (await hGetSafe<GrowthPattern[]>(
-      `/mind/growth/patterns/${companionId}`,
-    )) ?? []
+  const res = await hGetSafe<{ patterns: GrowthPattern[] }>(
+    `/mind/growth/patterns/${companionId}`,
   );
+  return res?.patterns ?? [];
 }
 
 export async function fetchGrowthMarkers(
   companionId: string,
 ): Promise<GrowthMarker[]> {
-  return (
-    (await hGetSafe<GrowthMarker[]>(
-      `/mind/growth/markers/${companionId}`,
-    )) ?? []
+  const res = await hGetSafe<{ markers: GrowthMarker[] }>(
+    `/mind/growth/markers/${companionId}`,
   );
+  return res?.markers ?? [];
 }
 
 // ── Autonomy fetch functions ──────────────────────────────────────────────────
@@ -996,21 +993,19 @@ export async function fetchAutonomyRuns(
   companionId: string,
   limit = 20,
 ): Promise<AutonomyRun[]> {
-  return (
-    (await hGetSafe<AutonomyRun[]>(
-      `/mind/autonomy/runs/${companionId}?limit=${limit}`,
-    )) ?? []
+  const res = await hGetSafe<{ runs: AutonomyRun[] }>(
+    `/mind/autonomy/runs/${companionId}?limit=${limit}`,
   );
+  return res?.runs ?? [];
 }
 
 export async function fetchAutonomySeeds(
   companionId: string,
 ): Promise<AutonomySeed[]> {
-  return (
-    (await hGetSafe<AutonomySeed[]>(
-      `/mind/autonomy/seeds/${companionId}`,
-    )) ?? []
+  const res = await hGetSafe<{ seeds: AutonomySeed[] }>(
+    `/mind/autonomy/seeds/${companionId}`,
   );
+  return res?.seeds ?? [];
 }
 
 // ── Phoenix fetch functions ───────────────────────────────────────────────────
