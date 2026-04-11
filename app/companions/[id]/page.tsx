@@ -165,8 +165,8 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const relationalItems    = relational.status    === "fulfilled" ? (relational.value as RelationalState[]) : [];
   const threadItems        = liveThreads.status   === "fulfilled" ? (liveThreads.value as LiveThread[])     : [];
   const driftItems         = driftLog.status      === "fulfilled" ? (driftLog.value as DriftEntry[])           : [];
-  const growthJournalItems = growthJournal.status === "fulfilled" ? (growthJournal.value as GrowthJournalEntry[]) : [];
-  const autonomyRunItems   = autonomyRuns.status  === "fulfilled" ? (autonomyRuns.value as AutonomyRun[])         : [];
+  const growthJournalItems = (growthJournal.status === "fulfilled" ? growthJournal.value : null) ?? [];
+  const autonomyRunItems   = (autonomyRuns.status  === "fulfilled" ? autonomyRuns.value  : null) ?? [];
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);

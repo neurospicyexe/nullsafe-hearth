@@ -27,8 +27,8 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
     fetchAutonomySeeds(id),
   ]);
 
-  const runs   = runsRes.status   === "fulfilled" ? (runsRes.value   as AutonomyRun[])   : [];
-  const allSeeds = seedsRes.status === "fulfilled" ? (seedsRes.value as AutonomySeed[])  : [];
+  const runs   = (runsRes.status   === "fulfilled" ? runsRes.value   : null) ?? [];
+  const allSeeds = (seedsRes.status === "fulfilled" ? seedsRes.value : null) ?? [];
 
   const sortedRuns = [...runs].sort((a, b) => {
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
