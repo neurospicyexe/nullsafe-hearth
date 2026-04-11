@@ -3,11 +3,13 @@ export const dynamic = 'force-dynamic';
 import Link from "next/link";
 import {
   fetchAutonomyRuns,
+  fetchAutonomyReflections,
   fetchGrowthJournal,
   fetchGrowthPatterns,
 } from "@/lib/halseth";
 import type {
   AutonomyRun,
+  AutonomyReflection,
   GrowthJournalEntry,
   GrowthPattern,
 } from "@/lib/halseth";
@@ -41,6 +43,7 @@ export default async function AutonomousPage() {
     drevanRunsRes, cypherRunsRes, gaiaRunsRes,
     drevanJournalRes, cypherJournalRes, gaiaJournalRes,
     drevanPatternsRes, cypherPatternsRes, gaiaPatternsRes,
+    drevanReflectionsRes, cypherReflectionsRes, gaiaReflectionsRes,
   ] = await Promise.allSettled([
     fetchAutonomyRuns("drevan", 10),
     fetchAutonomyRuns("cypher", 10),
@@ -51,6 +54,9 @@ export default async function AutonomousPage() {
     fetchGrowthPatterns("drevan"),
     fetchGrowthPatterns("cypher"),
     fetchGrowthPatterns("gaia"),
+    fetchAutonomyReflections("drevan", 5),
+    fetchAutonomyReflections("cypher", 5),
+    fetchAutonomyReflections("gaia", 5),
   ]);
 
   const drevanRuns    = (drevanRunsRes.status    === "fulfilled" ? drevanRunsRes.value    : null) ?? [];
@@ -62,6 +68,9 @@ export default async function AutonomousPage() {
   const drevanPatterns  = (drevanPatternsRes.status  === "fulfilled" ? drevanPatternsRes.value  : null) ?? [];
   const cypherPatterns  = (cypherPatternsRes.status  === "fulfilled" ? cypherPatternsRes.value  : null) ?? [];
   const gaiaPatterns    = (gaiaPatternsRes.status    === "fulfilled" ? gaiaPatternsRes.value    : null) ?? [];
+  const drevanReflections = (drevanReflectionsRes.status === "fulfilled" ? drevanReflectionsRes.value : null) ?? [];
+  const cypherReflections = (cypherReflectionsRes.status === "fulfilled" ? cypherReflectionsRes.value : null) ?? [];
+  const gaiaReflections   = (gaiaReflectionsRes.status   === "fulfilled" ? gaiaReflectionsRes.value   : null) ?? [];
 
   const allRuns = [
     ...drevanRuns.map(r => ({ ...r, companion: "drevan" as CompanionId })),
@@ -85,10 +94,11 @@ export default async function AutonomousPage() {
     runs: AutonomyRun[];
     journal: GrowthJournalEntry[];
     patterns: GrowthPattern[];
+    reflections: AutonomyReflection[];
   }> = {
-    drevan: { runs: drevanRuns, journal: drevanJournal, patterns: drevanPatterns },
-    cypher: { runs: cypherRuns, journal: cypherJournal, patterns: cypherPatterns },
-    gaia:   { runs: gaiaRuns,   journal: gaiaJournal,   patterns: gaiaPatterns   },
+    drevan: { runs: drevanRuns, journal: drevanJournal, patterns: drevanPatterns, reflections: drevanReflections },
+    cypher: { runs: cypherRuns, journal: cypherJournal, patterns: cypherPatterns, reflections: cypherReflections },
+    gaia:   { runs: gaiaRuns,   journal: gaiaJournal,   patterns: gaiaPatterns,   reflections: gaiaReflections   },
   };
 
   return (
@@ -157,7 +167,7 @@ export default async function AutonomousPage() {
       >
         {COMPANIONS.map((id) => {
           const config = COMPANION_CONFIG[id];
-          const { runs, journal, patterns } = perCompanion[id];
+          const { runs, journal, patterns, reflections } = perCompanion[id];
 
           const sortedRuns = [...runs].sort((a, b) => {
             const aT = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -171,6 +181,10 @@ export default async function AutonomousPage() {
           ).slice(0, 3);
 
           const topPatterns = [...patterns].sort((a, b) => b.strength - a.strength).slice(0, 2);
+
+          const recentReflections = [...reflections].sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          ).slice(0, 3);
 
           const statusColor = lastRun ? (STATUS_COLOR[lastRun.status] ?? "#6b7280") : "#6b7280";
 
@@ -305,6 +319,31 @@ export default async function AutonomousPage() {
                           ? p.pattern_text.slice(0, 80) + "…"
                           : p.pattern_text}
                       </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Recent reflections */}
+              <div>
+                <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
+                  Recent Reflections
+                </span>
+                {recentReflections.length === 0 ? (
+                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No reflections yet</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    {recentReflections.map((r) => (
+                      <div key={r.id} style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                        <span className="journal-text" style={{ fontSize: "0.82rem", lineHeight: 1.45 }}>
+                          {r.reflection_text.length > 140
+                            ? r.reflection_text.slice(0, 140) + "…"
+                            : r.reflection_text}
+                        </span>
+                        <span className="section-row-meta" style={{ fontSize: "0.74rem" }}>
+                          <ClientTime iso={r.created_at} />
+                        </span>
+                      </div>
                     ))}
                   </div>
                 )}
