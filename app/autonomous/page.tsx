@@ -53,15 +53,15 @@ export default async function AutonomousPage() {
     fetchGrowthPatterns("gaia"),
   ]);
 
-  const drevanRuns    = drevanRunsRes.status    === "fulfilled" ? (drevanRunsRes.value    as AutonomyRun[])        : [];
-  const cypherRuns    = cypherRunsRes.status    === "fulfilled" ? (cypherRunsRes.value    as AutonomyRun[])        : [];
-  const gaiaRuns      = gaiaRunsRes.status      === "fulfilled" ? (gaiaRunsRes.value      as AutonomyRun[])        : [];
-  const drevanJournal = drevanJournalRes.status === "fulfilled" ? (drevanJournalRes.value as GrowthJournalEntry[]) : [];
-  const cypherJournal = cypherJournalRes.status === "fulfilled" ? (cypherJournalRes.value as GrowthJournalEntry[]) : [];
-  const gaiaJournal   = gaiaJournalRes.status   === "fulfilled" ? (gaiaJournalRes.value   as GrowthJournalEntry[]) : [];
-  const drevanPatterns  = drevanPatternsRes.status  === "fulfilled" ? (drevanPatternsRes.value  as GrowthPattern[]) : [];
-  const cypherPatterns  = cypherPatternsRes.status  === "fulfilled" ? (cypherPatternsRes.value  as GrowthPattern[]) : [];
-  const gaiaPatterns    = gaiaPatternsRes.status    === "fulfilled" ? (gaiaPatternsRes.value    as GrowthPattern[]) : [];
+  const drevanRuns    = (drevanRunsRes.status    === "fulfilled" ? drevanRunsRes.value    : null) ?? [];
+  const cypherRuns    = (cypherRunsRes.status    === "fulfilled" ? cypherRunsRes.value    : null) ?? [];
+  const gaiaRuns      = (gaiaRunsRes.status      === "fulfilled" ? gaiaRunsRes.value      : null) ?? [];
+  const drevanJournal = (drevanJournalRes.status === "fulfilled" ? drevanJournalRes.value : null) ?? [];
+  const cypherJournal = (cypherJournalRes.status === "fulfilled" ? cypherJournalRes.value : null) ?? [];
+  const gaiaJournal   = (gaiaJournalRes.status   === "fulfilled" ? gaiaJournalRes.value   : null) ?? [];
+  const drevanPatterns  = (drevanPatternsRes.status  === "fulfilled" ? drevanPatternsRes.value  : null) ?? [];
+  const cypherPatterns  = (cypherPatternsRes.status  === "fulfilled" ? cypherPatternsRes.value  : null) ?? [];
+  const gaiaPatterns    = (gaiaPatternsRes.status    === "fulfilled" ? gaiaPatternsRes.value    : null) ?? [];
 
   const allRuns = [
     ...drevanRuns.map(r => ({ ...r, companion: "drevan" as CompanionId })),

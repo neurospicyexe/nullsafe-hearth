@@ -30,9 +30,9 @@ export default async function GrowthPage({ params }: { params: Promise<{ id: str
     fetchGrowthMarkers(id),
   ]);
 
-  const allJournal  = journalRes.status  === "fulfilled" ? (journalRes.value  as GrowthJournalEntry[]) : [];
-  const allPatterns = patternsRes.status === "fulfilled" ? (patternsRes.value as GrowthPattern[])      : [];
-  const allMarkers  = markersRes.status  === "fulfilled" ? (markersRes.value  as GrowthMarker[])       : [];
+  const allJournal  = (journalRes.status  === "fulfilled" ? journalRes.value  : null) ?? [];
+  const allPatterns = (patternsRes.status === "fulfilled" ? patternsRes.value : null) ?? [];
+  const allMarkers  = (markersRes.status  === "fulfilled" ? markersRes.value  : null) ?? [];
 
   const hasMore = allJournal.length > 20;
   const journal = [...allJournal]
