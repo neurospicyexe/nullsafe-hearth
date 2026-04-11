@@ -25,7 +25,7 @@ export default async function GrowthPage({ params }: { params: Promise<{ id: str
   if (!config) notFound();
 
   const [journalRes, patternsRes, markersRes] = await Promise.allSettled([
-    fetchGrowthJournal(id, 51),
+    fetchGrowthJournal(id, 21),
     fetchGrowthPatterns(id),
     fetchGrowthMarkers(id),
   ]);
@@ -34,10 +34,9 @@ export default async function GrowthPage({ params }: { params: Promise<{ id: str
   const allPatterns = patternsRes.status === "fulfilled" ? (patternsRes.value as GrowthPattern[])      : [];
   const allMarkers  = markersRes.status  === "fulfilled" ? (markersRes.value  as GrowthMarker[])       : [];
 
-  const hasMore = allJournal.length > 50;
+  const hasMore = allJournal.length > 20;
   const journal = [...allJournal]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 50);
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const patterns = [...allPatterns].sort((a, b) => b.strength - a.strength);
 
@@ -214,9 +213,9 @@ export default async function GrowthPage({ params }: { params: Promise<{ id: str
               })}
             </div>
 
-            {(journal.length > 20 || hasMore) && (
+            {hasMore && (
               <p className="section-row-meta" style={{ marginTop: "0.75rem", fontSize: "0.82rem" }}>
-                Showing 20 of {hasMore ? "50+" : journal.length} entries
+                More entries available — view the full list
               </p>
             )}
           </>

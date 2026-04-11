@@ -5,7 +5,7 @@ import {
   fetchPhoenixOrient,
 } from "@/lib/halseth";
 import type { PhoenixHealth, PhoenixOrientState } from "@/lib/halseth";
-import { COMPANION_CONFIG } from "@/app/companions/[id]/sections";
+import { COMPANION_CONFIG, fmtTime } from "@/app/companions/[id]/sections";
 
 const COMPANIONS = ["drevan", "cypher", "gaia"] as const;
 type CompanionId = typeof COMPANIONS[number];
@@ -159,7 +159,7 @@ function OrientColumn({
                       </span>
                     )}
                     <span className="section-row-meta" style={{ fontSize: "0.75rem" }}>
-                      {new Date(h.created_at).toLocaleDateString()}
+                      {fmtTime(h.created_at)}
                     </span>
                   </div>
                 ))}
@@ -204,6 +204,8 @@ function OrientColumn({
 }
 
 export default async function PhoenixPage() {
+  const phoenixConfigured = !!process.env.PHOENIX_WEBMIND_URL;
+
   const [healthRes, drevanRes, cypherRes, gaiaRes] = await Promise.allSettled([
     fetchPhoenixHealth(),
     fetchPhoenixOrient("drevan"),
@@ -231,11 +233,17 @@ export default async function PhoenixPage() {
       {nothingAvailable ? (
         <div className="home-section-card">
           <p style={{ margin: 0, fontSize: "0.9rem", color: "#94a3b8" }}>
-            Phoenix WebMind is not configured or unreachable. Set{" "}
-            <code style={{ color: "#e2e8f0", background: "#1e293b", padding: "0.1rem 0.35rem", borderRadius: "4px" }}>
-              PHOENIX_WEBMIND_URL
-            </code>{" "}
-            in Vercel environment variables.
+            {!phoenixConfigured ? (
+              <>
+                Set{" "}
+                <code style={{ color: "#e2e8f0", background: "#1e293b", padding: "0.1rem 0.35rem", borderRadius: "4px" }}>
+                  PHOENIX_WEBMIND_URL
+                </code>{" "}
+                in Vercel environment variables to connect Phoenix WebMind.
+              </>
+            ) : (
+              "Phoenix WebMind is configured but unreachable. Check that the service is running at the configured URL."
+            )}
           </p>
         </div>
       ) : (

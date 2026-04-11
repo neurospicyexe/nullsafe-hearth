@@ -131,10 +131,10 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
                   {/* Timestamps */}
                   <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                     <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
-                      started: {run.started_at ? new Date(run.started_at).toLocaleDateString() : "—"}
+                      started: {run.started_at ? fmtTime(run.started_at) : "—"}
                     </span>
                     <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
-                      completed: {run.completed_at ? new Date(run.completed_at).toLocaleDateString() : "—"}
+                      completed: {run.completed_at ? fmtTime(run.completed_at) : "—"}
                     </span>
                   </div>
 

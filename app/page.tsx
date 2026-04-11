@@ -166,6 +166,7 @@ function ActivePatternsStrip({
     <div className="home-section-card" style={{ marginTop: "0.75rem" }}>
       <div className="home-section-header">
         <span className="home-section-title">Active Patterns</span>
+        <Link href="/autonomous" className="home-section-link">see all →</Link>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
         {patterns.slice(0, 3).map((p, i) => {
