@@ -10,12 +10,25 @@ When working here, consult the Halseth and Nullsafe-Plural MCPs to understand ac
 
 Part of the BBH suite -- see root `CLAUDE.md` for cross-project context.
 
+## Multi-Agent System Conventions
+
+When making changes to one identity/config file (e.g., Cypher), always check and apply the same changes to ALL sibling identity files (e.g., Drevan, Gaia, and any others in the same directory).
+
+## Project Scope
+
+When reviewing or fixing bugs across the multi-agent system, always scan ALL projects: Phoenix, Hearth, relay, discord_bot, and any archived directories. Never assume a directory doesn't exist without checking.
+
+## Testing
+
+After implementing any TypeScript changes, run the integration/unit tests before committing. If tests fail, fix all errors (including missing metadata fields, wrong types, empty block formatting) before marking the task complete.
+
 ## Architecture
 
 - Next.js App Router, deployed on Vercel (project: `nullsafe-hearth`, team: `neurospicyexe-3819s-projects`)
 - All Halseth HTTP calls go server-side through `lib/halseth.ts`
 - Client-side mutations proxy through `app/api/*/route.ts` (which add auth headers)
-- Env vars: `HALSETH_URL`, `HALSETH_SECRET`, `DASHBOARD_SECRET`, `SYSTEM_OWNER` (optional: `MIND_URL`)
+- Env vars: `HALSETH_URL`, `HALSETH_SECRET`, `DASHBOARD_SECRET`, `SYSTEM_OWNER` (optional: `MIND_URL`, `PHOENIX_WEBMIND_URL`)
+- `PHOENIX_WEBMIND_URL` -- optional. Base URL for Phoenix WebMind FastAPI service (e.g. `http://vps:8001`). If unset, all Phoenix fetches return null and the `/phoenix` page shows a "not configured" placeholder.
 - `DASHBOARD_SECRET` -- passphrase for the dashboard login page. If unset, auth is skipped (local dev).
 
 ## Companion-accessible Hearth API
@@ -63,14 +76,30 @@ Endpoints using `hGetSafe` (graceful null on failure):
 - `GET /cypher-audit`, `GET /gaia-witness`
 - `POST /bridge/toggle`
 
+Growth + autonomy endpoints (return empty arrays gracefully if not yet migrated):
+- `GET /mind/growth/journal?companion_id=&limit=`
+- `GET /mind/growth/patterns?companion_id=`
+- `GET /mind/growth/markers?companion_id=`
+- `GET /mind/autonomy/runs/:companion_id?limit=`
+- `GET /mind/autonomy/seeds/:companion_id`
+
 Not yet in halseth (show placeholder): `GET /mind/health`, `/mind/patterns`, `/mind/recent`
 
 ## Key Data Shape Notes
 
-- `/presence` returns `open_threads` already parsed as `string[]`
+- `/presence` returns `open_threads` already parsed as `string[]`, `recent_companion_notes.tags` already parsed as `string[]`
 - `GET /notes` returns `{ id, author, content, note_type, created_at }[]` -- NOT the companion journal format
 - The companion journal (agent reflections) is a separate table with `agent`, `note_text`, `tags` fields
 - `SYSTEM_OWNER` env var must be set in Vercel for the header name to show
+
+## Column Name Mismatches (resolved 2026-03-30)
+
+Ingest endpoints return DB column names that differ from some Hearth types. When adding new ingest data to Hearth, always check the actual SQL in `halseth/src/handlers/ingest.ts`:
+
+- `inter_companion_notes`: DB column is `content` (not `note_text`), no `tags` column in ingest response
+- `companion_tensions`: timestamp is `first_noted_at` (not `created_at`), has `last_surfaced_at` and `notes` (not `source`)
+- `companion_dreams` (ingest): uses `dream_text` (not `content`), has `source`/`examined` (not `dream_type`)
+- Companion journal writes: Halseth `execCompanionNoteAdd` now parses JSON context to extract `note_text` + `tags` (fixed 2026-03-30)
 
 ## Security
 
@@ -88,9 +117,22 @@ Auth flow: `DASHBOARD_SECRET` env var → user visits `/login` → enters passph
 
 - Shared section components + `COMPANION_CONFIG` (colors, display names) live in `app/companions/[id]/sections.tsx`
 - Companion colors: drevan=`var(--accent)`, cypher=`#e2e8f0`, gaia=`#4ade80`, Raziel=`#f59e0b` -- use these everywhere
-- Sub-pages exist at `/companions/[id]/journal`, `/deltas`, `/notes`, `/letters`, `/companions/cypher/audit`, `/companions/gaia/witness`
+- Sub-pages exist at `/companions/[id]/journal`, `/deltas`, `/notes`, `/letters`, `/companions/cypher/audit`, `/companions/gaia/witness`, `/companions/[id]/growth`, `/companions/[id]/autonomy`
 - `fetchCompanionJournal(undefined, 200)` -- pass `undefined` as agent to fetch all companions' entries
 - 5-item clip pattern: fetch 6, `.slice(0, 5)` display, `"see more →"` Link with `className="home-section-link"` if `count > 5`
+
+## New Pages (Overhaul 2026-04-10)
+
+- `/companions/[id]/growth` -- growth journal, patterns, markers for a single companion
+- `/companions/[id]/autonomy` -- autonomy runs and seeds for a single companion
+- `/autonomous` -- global cross-companion autonomy overview (all companions, recent runs)
+- `/phoenix` -- Phoenix WebMind health + orient state; shows "not configured" placeholder when `PHOENIX_WEBMIND_URL` is unset
+
+## New Types (Overhaul 2026-04-10)
+
+`GrowthJournalEntry`, `GrowthPattern`, `GrowthMarker`, `AutonomyRun`, `AutonomySeed`, `PhoenixHealth`, `PhoenixOrientState`
+
+All defined in `lib/halseth.ts`.
 
 ## Search
 

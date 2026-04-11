@@ -56,6 +56,11 @@ function PresenceSection({ data }: { data: PresenceData }) {
           </span>
           <span className="presence-badge handover">
             {(last_handover.motion_state ?? "").replace("_", " ")}
+            {last_handover.facet && (
+              <span style={{ opacity: 0.7, marginLeft: "0.4rem", fontSize: "0.8em" }}>
+                · {last_handover.facet}
+              </span>
+            )}
           </span>
         </div>
         <div className="presence-body presence-body-muted">
@@ -91,6 +96,102 @@ function PresenceSection({ data }: { data: PresenceData }) {
           <span className="status-dot offline" />
           No open session
         </span>
+      </div>
+    </div>
+  );
+}
+
+const ENTRY_TYPE_COLOR: Record<string, string> = {
+  learning:   "#60a5fa",
+  insight:    "#a78bfa",
+  connection: "#4ade80",
+  question:   "#fbbf24",
+};
+
+function RecentGrowthStrip({
+  entries,
+}: {
+  entries: NonNullable<PresenceData["recent_growth"]>;
+}) {
+  if (entries.length === 0) return null;
+  return (
+    <div className="home-section-card" style={{ marginTop: "0.75rem" }}>
+      <div className="home-section-header">
+        <span className="home-section-title">Recent Growth</span>
+        <Link href="/autonomous" className="home-section-link">see all →</Link>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        {entries.slice(0, 3).map((e, i) => (
+          <div key={i} className="journal-row" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+            <span
+              className="presence-badge"
+              style={{
+                background: `${ENTRY_TYPE_COLOR[e.entry_type] ?? "#64748b"}22`,
+                color: ENTRY_TYPE_COLOR[e.entry_type] ?? "#64748b",
+                flexShrink: 0,
+                fontSize: "0.7rem",
+              }}
+            >
+              {e.entry_type}
+            </span>
+            <span className="journal-text" style={{ flex: 1, fontSize: "0.85rem" }}>
+              {e.content.length > 120 ? e.content.slice(0, 120) + "…" : e.content}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const COMPANION_LABEL_HOME: Record<string, string> = {
+  drevan: "Drevan",
+  cypher: "Cypher",
+  gaia:   "Gaia",
+};
+
+const COMPANION_COLOR_HOME: Record<string, string> = {
+  drevan: "var(--accent)",
+  cypher: "#e2e8f0",
+  gaia:   "#4ade80",
+};
+
+function ActivePatternsStrip({
+  patterns,
+}: {
+  patterns: NonNullable<PresenceData["active_patterns"]>;
+}) {
+  if (patterns.length === 0) return null;
+  return (
+    <div className="home-section-card" style={{ marginTop: "0.75rem" }}>
+      <div className="home-section-header">
+        <span className="home-section-title">Active Patterns</span>
+        <Link href="/autonomous" className="home-section-link">see all →</Link>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+        {patterns.slice(0, 3).map((p, i) => {
+          const color = COMPANION_COLOR_HOME[p.companion_id] ?? "#64748b";
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Link
+                href={`/companions/${p.companion_id}/growth`}
+                style={{ color, fontWeight: 600, fontSize: "0.75rem", flexShrink: 0, textDecoration: "none" }}
+              >
+                {COMPANION_LABEL_HOME[p.companion_id] ?? p.companion_id}
+              </Link>
+              <span
+                className="journal-text"
+                style={{
+                  flex: 1,
+                  fontSize: "0.82rem",
+                  opacity: 0.6 + (p.strength / 10) * 0.4,
+                }}
+              >
+                {p.pattern_text.length > 80 ? p.pattern_text.slice(0, 80) + "…" : p.pattern_text}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -315,6 +416,14 @@ export default async function Page() {
           </div>
         </div>
       </div>
+
+      {data.recent_growth && data.recent_growth.length > 0 && (
+        <RecentGrowthStrip entries={data.recent_growth} />
+      )}
+
+      {data.active_patterns && data.active_patterns.length > 0 && (
+        <ActivePatternsStrip patterns={data.active_patterns} />
+      )}
 
       {recent_notes.length > 0 && (
         <div className="home-section" style={{ marginTop: "1rem" }}>
