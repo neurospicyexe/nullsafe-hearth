@@ -72,6 +72,7 @@ export type PresenceData = {
     open_threads: string[];
     active_anchor: string | null;
     motion_state: "in_motion" | "at_rest" | "floating";
+    facet: string | null;
     created_at: string;
   } | null;
   tasks: Array<{
@@ -124,6 +125,17 @@ export type PresenceData = {
     display_name: string;
     role: string;
     avatar_url: string | null;
+  }>;
+  recent_growth?: Array<{
+    companion_id: string;
+    content: string;
+    entry_type: string;
+    created_at: string;
+  }>;
+  active_patterns?: Array<{
+    companion_id: string;
+    pattern_text: string;
+    strength: number;
   }>;
 };
 
@@ -261,6 +273,7 @@ export type HandoverPacket = {
   last_real_thing: string | null;
   open_threads: string | null; // JSON array string
   motion_state: "in_motion" | "at_rest" | "floating";
+  facet: string | null;
   returned: number | null;
   session_type: string | null;
   session_front_state: string | null;
@@ -837,4 +850,191 @@ export async function fetchBasinHistory(companionId?: string, limit = 10): Promi
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
   return (await hGetSafe<BasinHistory[]>(`/ingest/basin-history?${q}`)) ?? [];
+}
+
+// ── Growth (autonomous worker artifacts) ─────────────────────────────────────
+
+export type GrowthJournalEntry = {
+  id: string;
+  companion_id: string;
+  entry_type: "learning" | "insight" | "connection" | "question";
+  content: string;
+  source: "autonomous" | "conversation" | "reflection" | null;
+  tags_json: string; // JSON-encoded string[], parse with JSON.parse
+  created_at: string;
+};
+
+export type GrowthPattern = {
+  id: string;
+  companion_id: string;
+  pattern_text: string;
+  evidence_json: string; // JSON-encoded string[], parse with JSON.parse
+  strength: number; // 1–10
+  created_at: string;
+  updated_at: string;
+};
+
+export type GrowthMarker = {
+  id: string;
+  companion_id: string;
+  marker_type: "milestone" | "shift" | "realization";
+  description: string;
+  related_pattern_id: string | null;
+  created_at: string;
+};
+
+// ── Autonomy (autonomous worker execution) ────────────────────────────────────
+
+export type AutonomyRun = {
+  id: string;
+  companion_id: string;
+  run_type: "exploration" | "reflection" | "synthesis";
+  status: "pending" | "running" | "completed" | "failed";
+  started_at: string | null;
+  completed_at: string | null;
+  tokens_used: number;
+  artifacts_created: number;
+  error_message: string | null;
+  created_at: string;
+};
+
+export type AutonomySeed = {
+  id: string;
+  companion_id: string;
+  seed_type: "topic" | "question" | "reflection_prompt";
+  content: string;
+  priority: number;
+  used_at: string | null;
+  created_at: string;
+};
+
+export type AutonomyReflection = {
+  id: string;
+  run_id: string;
+  companion_id: string;
+  reflection_text: string;
+  new_seeds_json: string | null; // JSON-encoded string[], parse with JSON.parse
+  created_at: string;
+};
+
+// ── Phoenix WebMind ───────────────────────────────────────────────────────────
+
+export type PhoenixHealth = {
+  status: string;        // "ok"
+  service: string;       // "webmind"
+  version: string;
+  db_configured: boolean;
+};
+
+// Matches MindOrientResponse from Phoenix contracts.py
+export type PhoenixOrientState = {
+  agent_id: string;
+  top_threads: Array<{
+    thread_id: string;
+    title: string;
+    status: string;
+    lane: string | null;
+  }>;
+  recent_handoffs: Array<{
+    handoff_id: string;
+    title: string;
+    next_steps: string | null;
+    created_at: string;
+  }>;
+  recent_notes: Array<{
+    note_id: string;
+    note_text: string;
+    thread_key: string | null;
+    created_at: string;
+  }>;
+  generated_at: string;
+};
+
+// ── Phoenix helper ────────────────────────────────────────────────────────────
+
+async function phoenixGet<T>(path: string): Promise<T | null> {
+  const url = process.env.PHOENIX_WEBMIND_URL;
+  if (!url) return null;
+  try {
+    const res = await fetchWithTimeout(`${url}${path}`, {
+      cache: "no-store" as RequestCache,
+    });
+    if (!res.ok) return null;
+    return res.json() as Promise<T>;
+  } catch {
+    return null;
+  }
+}
+
+// ── Growth fetch functions ────────────────────────────────────────────────────
+
+export async function fetchGrowthJournal(
+  companionId: string,
+  limit = 20,
+): Promise<GrowthJournalEntry[]> {
+  const res = await hGetSafe<{ journal: GrowthJournalEntry[] }>(
+    `/mind/growth/journal/${companionId}?limit=${limit}`,
+  );
+  return res?.journal ?? [];
+}
+
+export async function fetchGrowthPatterns(
+  companionId: string,
+): Promise<GrowthPattern[]> {
+  const res = await hGetSafe<{ patterns: GrowthPattern[] }>(
+    `/mind/growth/patterns/${companionId}`,
+  );
+  return res?.patterns ?? [];
+}
+
+export async function fetchGrowthMarkers(
+  companionId: string,
+): Promise<GrowthMarker[]> {
+  const res = await hGetSafe<{ markers: GrowthMarker[] }>(
+    `/mind/growth/markers/${companionId}`,
+  );
+  return res?.markers ?? [];
+}
+
+// ── Autonomy fetch functions ──────────────────────────────────────────────────
+
+export async function fetchAutonomyRuns(
+  companionId: string,
+  limit = 20,
+): Promise<AutonomyRun[]> {
+  const res = await hGetSafe<{ runs: AutonomyRun[] }>(
+    `/mind/autonomy/runs/${companionId}?limit=${limit}`,
+  );
+  return res?.runs ?? [];
+}
+
+export async function fetchAutonomySeeds(
+  companionId: string,
+): Promise<AutonomySeed[]> {
+  const res = await hGetSafe<{ seeds: AutonomySeed[] }>(
+    `/mind/autonomy/seeds/${companionId}`,
+  );
+  return res?.seeds ?? [];
+}
+
+export async function fetchAutonomyReflections(
+  companionId: string,
+  limit = 10,
+): Promise<AutonomyReflection[]> {
+  const res = await hGetSafe<{ reflections: AutonomyReflection[] }>(
+    `/mind/autonomy/reflections/${companionId}?limit=${limit}`,
+  );
+  return res?.reflections ?? [];
+}
+
+// ── Phoenix fetch functions ───────────────────────────────────────────────────
+
+export async function fetchPhoenixHealth(): Promise<PhoenixHealth | null> {
+  return phoenixGet<PhoenixHealth>("/health");
+}
+
+export async function fetchPhoenixOrient(
+  agentId: "drevan" | "cypher" | "gaia",
+): Promise<PhoenixOrientState | null> {
+  return phoenixGet<PhoenixOrientState>(`/mind/orient/${agentId}`);
 }
