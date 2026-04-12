@@ -204,10 +204,22 @@ export default async function GrowthPage({ params }: { params: Promise<{ id: str
                       </div>
                     )}
 
-                    {/* Timestamp */}
-                    <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
-                      {fmtTime(entry.created_at)}
-                    </span>
+                    {/* Timestamp + run link */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                        {fmtTime(entry.created_at)}
+                      </span>
+                      {entry.run_id && (
+                        <Link
+                          href={`/companions/${id}/autonomy`}
+                          className="home-section-link"
+                          style={{ fontSize: "0.74rem" }}
+                          title={`From run ${entry.run_id}`}
+                        >
+                          → run {entry.run_id.slice(0, 8)}
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 );
               })}
