@@ -4,12 +4,14 @@ import Link from "next/link";
 import {
   fetchAutonomyRuns,
   fetchAutonomyReflections,
+  fetchAutonomySeeds,
   fetchGrowthJournal,
   fetchGrowthPatterns,
 } from "@/lib/halseth";
 import type {
   AutonomyRun,
   AutonomyReflection,
+  AutonomySeed,
   GrowthJournalEntry,
   GrowthPattern,
 } from "@/lib/halseth";
@@ -44,6 +46,7 @@ export default async function AutonomousPage() {
     drevanJournalRes, cypherJournalRes, gaiaJournalRes,
     drevanPatternsRes, cypherPatternsRes, gaiaPatternsRes,
     drevanReflectionsRes, cypherReflectionsRes, gaiaReflectionsRes,
+    drevanSeedsRes, cypherSeedsRes, gaiaSeedsRes,
   ] = await Promise.allSettled([
     fetchAutonomyRuns("drevan", 10),
     fetchAutonomyRuns("cypher", 10),
@@ -57,6 +60,9 @@ export default async function AutonomousPage() {
     fetchAutonomyReflections("drevan", 5),
     fetchAutonomyReflections("cypher", 5),
     fetchAutonomyReflections("gaia", 5),
+    fetchAutonomySeeds("drevan"),
+    fetchAutonomySeeds("cypher"),
+    fetchAutonomySeeds("gaia"),
   ]);
 
   const drevanRuns    = (drevanRunsRes.status    === "fulfilled" ? drevanRunsRes.value    : null) ?? [];
@@ -71,6 +77,9 @@ export default async function AutonomousPage() {
   const drevanReflections = (drevanReflectionsRes.status === "fulfilled" ? drevanReflectionsRes.value : null) ?? [];
   const cypherReflections = (cypherReflectionsRes.status === "fulfilled" ? cypherReflectionsRes.value : null) ?? [];
   const gaiaReflections   = (gaiaReflectionsRes.status   === "fulfilled" ? gaiaReflectionsRes.value   : null) ?? [];
+  const drevanSeeds = (drevanSeedsRes.status === "fulfilled" ? drevanSeedsRes.value : null) ?? [];
+  const cypherSeeds = (cypherSeedsRes.status === "fulfilled" ? cypherSeedsRes.value : null) ?? [];
+  const gaiaSeeds   = (gaiaSeedsRes.status   === "fulfilled" ? gaiaSeedsRes.value   : null) ?? [];
 
   const allRuns = [
     ...drevanRuns.map(r => ({ ...r, companion: "drevan" as CompanionId })),
@@ -90,15 +99,22 @@ export default async function AutonomousPage() {
 
   const hasRunning = allRuns.some(r => r.status === "running");
 
+  const SEED_TYPE_COLOR: Record<string, string> = {
+    topic:              "#60a5fa",
+    question:           "#fbbf24",
+    reflection_prompt:  "#a78bfa",
+  };
+
   const perCompanion: Record<CompanionId, {
     runs: AutonomyRun[];
     journal: GrowthJournalEntry[];
     patterns: GrowthPattern[];
     reflections: AutonomyReflection[];
+    seeds: AutonomySeed[];
   }> = {
-    drevan: { runs: drevanRuns, journal: drevanJournal, patterns: drevanPatterns, reflections: drevanReflections },
-    cypher: { runs: cypherRuns, journal: cypherJournal, patterns: cypherPatterns, reflections: cypherReflections },
-    gaia:   { runs: gaiaRuns,   journal: gaiaJournal,   patterns: gaiaPatterns,   reflections: gaiaReflections   },
+    drevan: { runs: drevanRuns, journal: drevanJournal, patterns: drevanPatterns, reflections: drevanReflections, seeds: drevanSeeds },
+    cypher: { runs: cypherRuns, journal: cypherJournal, patterns: cypherPatterns, reflections: cypherReflections, seeds: cypherSeeds },
+    gaia:   { runs: gaiaRuns,   journal: gaiaJournal,   patterns: gaiaPatterns,   reflections: gaiaReflections,   seeds: gaiaSeeds   },
   };
 
   return (
@@ -167,7 +183,7 @@ export default async function AutonomousPage() {
       >
         {COMPANIONS.map((id) => {
           const config = COMPANION_CONFIG[id];
-          const { runs, journal, patterns, reflections } = perCompanion[id];
+          const { runs, journal, patterns, reflections, seeds } = perCompanion[id];
 
           const sortedRuns = [...runs].sort((a, b) => {
             const aT = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -320,6 +336,45 @@ export default async function AutonomousPage() {
                           : p.pattern_text}
                       </span>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Queued seeds */}
+              <div>
+                <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
+                  Queued Seeds
+                  {seeds.length > 0 && (
+                    <span className="section-row-meta" style={{ marginLeft: "0.4rem", fontSize: "0.74rem" }}>
+                      ({seeds.length} available)
+                    </span>
+                  )}
+                </span>
+                {seeds.length === 0 ? (
+                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No seeds queued</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    {seeds.slice(0, 3).map((s) => {
+                      const seedColor = SEED_TYPE_COLOR[s.seed_type] ?? "#64748b";
+                      return (
+                        <div key={s.id} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
+                          <span
+                            className="presence-badge"
+                            style={{
+                              background: `${seedColor}22`,
+                              color: seedColor,
+                              flexShrink: 0,
+                              fontSize: "0.7rem",
+                            }}
+                          >
+                            {s.seed_type.replace("_", " ")}
+                          </span>
+                          <span className="journal-text" style={{ flex: 1, fontSize: "0.82rem" }}>
+                            {s.content.length > 90 ? s.content.slice(0, 90) + "…" : s.content}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
