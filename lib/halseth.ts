@@ -554,6 +554,11 @@ export type SessionEntry = {
   id: string;
   created_at: string;
   updated_at: string | null;
+  companion_id: string | null;
+  session_type: string | null;
+  spine: string | null;
+  last_real_thing: string | null;
+  motion_state: string | null;
   front_state: string | null;
   co_con: string | null;
   emotional_frequency: string | null;
