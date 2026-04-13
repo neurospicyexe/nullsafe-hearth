@@ -40,6 +40,27 @@ async function hGetSafe<T>(path: string, revalidate = 30): Promise<T | null> {
   }
 }
 
+async function hPost<T>(path: string, body: unknown): Promise<T | null> {
+  const url = process.env.HALSETH_URL;
+  const secret = process.env.HALSETH_SECRET;
+  if (!url || !secret) return null;
+  try {
+    const res = await fetchWithTimeout(`${url}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${secret}`,
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return res.json() as Promise<T>;
+  } catch {
+    return null;
+  }
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────
 
 export type PresenceData = {
@@ -762,12 +783,74 @@ export type WmDream = {
   dream_type: string | null;
   created_at: string;
   examined_at: string | null;
+  do_not_auto_examine: number;
 };
 
 export async function fetchMindDreams(agentId: string, limit = 5): Promise<WmDream[]> {
   const q = new URLSearchParams({ limit: String(limit) });
   const res = await hGetSafe<{ dreams: WmDream[] }>(`/mind/dreams/${encodeURIComponent(agentId)}?${q}`, 0);
   return res?.dreams ?? [];
+}
+
+export async function examineCompanionDream(
+  agentId: string,
+  dreamId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  try {
+    const r = await hPost<{ ok: boolean; reason?: string }>(
+      `/mind/dream/${encodeURIComponent(dreamId)}/examine`,
+      { companion_id: agentId },
+    );
+    return r ?? { ok: false, reason: "no_response" };
+  } catch {
+    return { ok: false, reason: "request_failed" };
+  }
+}
+
+export async function pinCompanionDream(
+  agentId: string,
+  dreamId: string,
+  pinned: boolean,
+): Promise<{ ok: boolean }> {
+  try {
+    const r = await hPost<{ ok: boolean }>(
+      `/mind/dream/${encodeURIComponent(dreamId)}/pin`,
+      { companion_id: agentId, do_not_auto_examine: pinned ? 1 : 0 },
+    );
+    return r ?? { ok: false };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export interface CompanionOrientForChat {
+  anchor_summary: string;
+  constraints_summary: string;
+  emotional_register: string | null;
+  drift_vector: string | null;
+  active_tensions: string[];
+  recent_notes_summary: string;
+}
+
+export async function fetchOrientForChat(agentId: string): Promise<CompanionOrientForChat | null> {
+  const raw = await hGetSafe<{
+    identity_anchor?: { anchor_summary?: string; constraints_summary?: string };
+    limbic_state?: { emotional_register?: string; drift_vector?: string };
+    active_tensions?: Array<{ tension_text: string }>;
+    recent_notes?: Array<{ content: string }>;
+  }>(`/mind/orient/${encodeURIComponent(agentId)}`, 0);
+  if (!raw) return null;
+  return {
+    anchor_summary: raw.identity_anchor?.anchor_summary ?? "",
+    constraints_summary: raw.identity_anchor?.constraints_summary ?? "",
+    emotional_register: raw.limbic_state?.emotional_register ?? null,
+    drift_vector: raw.limbic_state?.drift_vector ?? null,
+    active_tensions: (raw.active_tensions ?? []).map((t) => t.tension_text).slice(0, 3),
+    recent_notes_summary: (raw.recent_notes ?? [])
+      .slice(0, 5)
+      .map((n) => n.content)
+      .join("\n"),
+  };
 }
 
 export async function fetchCompanionDreams(companionId?: string, limit = 30): Promise<WmDream[]> {
