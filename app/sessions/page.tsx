@@ -2,16 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { fetchSessions } from "@/lib/halseth";
 import { COMPANION_CONFIG } from "@/app/companions/[id]/sections";
+import ClientTime from "@/components/ClientTime";
 
 const FALLBACK_COLOR = "#6b7280";
-
-function fmtTime(iso: string) {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
-}
 
 const MOTION_ICON: Record<string, string> = {
   in_motion: "→",
@@ -84,7 +77,7 @@ export default async function SessionsPage() {
                   </span>
                 )}
                 <span className="journal-time" style={{ marginLeft: "auto", flexShrink: 0 }}>
-                  {fmtTime(s.created_at)}
+                  <ClientTime iso={s.created_at} />
                 </span>
               </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Dream, DreamSeed, WmDream } from "@/lib/halseth";
+import ClientTime from "@/components/ClientTime";
 
 // Single source of truth — mirrors CSS vars in globals.css
 const COMPANION_COLORS: Record<string, string> = {
@@ -18,13 +19,6 @@ const DREAM_TYPE_DESC: Record<string, string> = {
   integrating: "integrating",
 };
 
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
-}
-
 function DreamEntry({ dream }: { dream: Dream }) {
   const color = COMPANION_COLORS[dream.companion_id] ?? "var(--accent)";
   return (
@@ -32,7 +26,7 @@ function DreamEntry({ dream }: { dream: Dream }) {
       <div className="note-header">
         <span className="note-author" style={{ color }}>{dream.companion_id}</span>
         <span className="note-type-badge">{DREAM_TYPE_DESC[dream.dream_type] ?? dream.dream_type}</span>
-        <span className="note-time">{fmtTime(dream.generated_at)}</span>
+        <span className="note-time"><ClientTime iso={dream.generated_at} /></span>
       </div>
       <div className="note-body">{dream.content}</div>
     </div>
@@ -47,7 +41,7 @@ function WmDreamEntry({ dream }: { dream: WmDream }) {
         <span className="note-author" style={{ color }}>{dream.companion_id}</span>
         {dream.examined_at && <span className="note-type-badge">examined</span>}
         {dream.dream_type && <span className="note-type-badge">{dream.dream_type}</span>}
-        <span className="note-time">{fmtTime(dream.created_at)}</span>
+        <span className="note-time"><ClientTime iso={dream.created_at} /></span>
       </div>
       <div className="note-body">{dream.dream_text}</div>
     </div>
@@ -67,12 +61,12 @@ function SeedEntry({ seed }: { seed: DreamSeed }) {
         </span>
         {claimed ? (
           <span className="dream-seed-status">
-            claimed by {seed.claimed_by} · {fmtTime(seed.claimed_at!)}
+            claimed by {seed.claimed_by} · <ClientTime iso={seed.claimed_at!} />
           </span>
         ) : (
           <span className="dream-seed-status pending">pending</span>
         )}
-        <span className="dream-seed-time">{fmtTime(seed.created_at)}</span>
+        <span className="dream-seed-time"><ClientTime iso={seed.created_at} /></span>
       </div>
       <div className="dream-seed-content">{seed.content}</div>
     </div>

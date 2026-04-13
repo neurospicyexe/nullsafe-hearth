@@ -1,12 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { fetchCompanionJournal, fetchHumanJournal } from "@/lib/halseth";
-
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
-}
+import ClientTime from "@/components/ClientTime";
 
 function agentDisplayName(agent: string): string {
   switch (agent) {
@@ -41,7 +36,7 @@ export default async function JournalPage() {
               {agentDisplayName(entry.agent)}
             </span>
             <span className="journal-text">{entry.note_text}</span>
-            <span className="journal-time">{fmtTime(entry.created_at)}</span>
+            <span className="journal-time"><ClientTime iso={entry.created_at} /></span>
           </div>
         ))}
         {companionEntries.length === 0 && (
@@ -74,7 +69,7 @@ export default async function JournalPage() {
                 </div>
               )}
             </div>
-            <span className="journal-time">{fmtTime(entry.created_at)}</span>
+            <span className="journal-time"><ClientTime iso={entry.created_at} /></span>
           </div>
         ))}
         {humanEntries.length === 0 && (

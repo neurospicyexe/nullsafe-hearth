@@ -1,15 +1,10 @@
 import { fetchPresence, fetchBiometrics, fetchNotes } from "@/lib/halseth";
+import ClientTime from "@/components/ClientTime";
 
 export const dynamic = 'force-dynamic';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
 }
 
 function sleepBar(hours: number | null) {
@@ -170,7 +165,7 @@ export default async function UserPage() {
                 <div className="note-header">
                   <span className="note-author">{n.author}</span>
                   <span className="note-type-badge">{n.note_type}</span>
-                  <span className="note-time">{fmtTime(n.created_at)}</span>
+                  <span className="note-time"><ClientTime iso={n.created_at} /></span>
                 </div>
                 <div className="note-body">{n.content}</div>
               </div>
