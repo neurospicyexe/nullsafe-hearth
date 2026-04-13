@@ -554,6 +554,11 @@ export type SessionEntry = {
   id: string;
   created_at: string;
   updated_at: string | null;
+  companion_id: string | null;
+  session_type: string | null;
+  spine: string | null;
+  last_real_thing: string | null;
+  motion_state: string | null;
   front_state: string | null;
   co_con: string | null;
   emotional_frequency: string | null;
@@ -861,6 +866,7 @@ export type GrowthJournalEntry = {
   content: string;
   source: "autonomous" | "conversation" | "reflection" | null;
   tags_json: string; // JSON-encoded string[], parse with JSON.parse
+  run_id: string | null;
   created_at: string;
 };
 
@@ -870,6 +876,7 @@ export type GrowthPattern = {
   pattern_text: string;
   evidence_json: string; // JSON-encoded string[], parse with JSON.parse
   strength: number; // 1–10
+  run_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -880,6 +887,7 @@ export type GrowthMarker = {
   marker_type: "milestone" | "shift" | "realization";
   description: string;
   related_pattern_id: string | null;
+  run_id: string | null;
   created_at: string;
 };
 
