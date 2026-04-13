@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 import { fetchSessions } from "@/lib/halseth";
 
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, {
     month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
