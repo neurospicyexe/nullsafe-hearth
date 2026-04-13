@@ -57,8 +57,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, sent: 0 });
     }
 
-    const results = await Promise.all(tasks);
-    const failed = results.filter((r) => !r.ok);
+    const settled = await Promise.allSettled(tasks);
+    const failed = settled.filter(
+      (s) => s.status === "rejected" || (s.status === "fulfilled" && !s.value.ok),
+    );
 
     if (failed.length > 0) {
       return NextResponse.json(
