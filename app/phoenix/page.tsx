@@ -4,12 +4,16 @@ import {
   fetchWmOrient,
   fetchSomaStates,
   fetchAutonomyRuns,
+  fetchAutonomySeeds,
+  fetchAutonomyThreads,
 } from "@/lib/halseth";
 import type {
   WmOrientData,
   SomaData,
   CompanionSomaState,
   AutonomyRun,
+  AutonomySeed,
+  AutonomyThread,
 } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "@/app/companions/[id]/sections";
 
@@ -72,11 +76,15 @@ function CompanionColumn({
   orient,
   soma,
   lastRun,
+  seeds,
+  threads,
 }: {
   id: CompanionId;
   orient: WmOrientData | null;
   soma: CompanionSomaState;
   lastRun: AutonomyRun | null;
+  seeds: AutonomySeed[];
+  threads: AutonomyThread[];
 }) {
   const config = COMPANION_CONFIG[id];
 
@@ -243,13 +251,100 @@ function CompanionColumn({
           </div>
         )}
       </div>
+
+      {/* Growth threads */}
+      <div>
+        <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
+          Growth Threads
+          <span style={{ marginLeft: "0.4rem", color: "#64748b", fontWeight: 400 }}>
+            ({threads.length})
+          </span>
+        </span>
+        {threads.length === 0 ? (
+          <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No active threads</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {threads.slice(0, 3).map((t) => (
+              <div key={t.id} className="section-row" style={{ flexDirection: "column", gap: "0.2rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span className="section-row-text" style={{ fontSize: "0.82rem" }}>
+                    {truncate(t.title, 60)}
+                  </span>
+                  <span
+                    className="badge"
+                    style={{
+                      background: t.status === "open" ? "#22c55e22" : "#64748b22",
+                      color: t.status === "open" ? "#22c55e" : "#94a3b8",
+                      border: `1px solid ${t.status === "open" ? "#22c55e44" : "#64748b44"}`,
+                      fontSize: "0.68rem",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {t.status}{t.last_position ? ` ×${t.last_position}` : ""}
+                  </span>
+                </div>
+                {t.last_entry_snippet && (
+                  <span className="journal-text" style={{ fontSize: "0.75rem" }}>
+                    {truncate(t.last_entry_snippet, 80)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Seed queue */}
+      <div>
+        <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
+          Seed Queue
+          <span style={{ marginLeft: "0.4rem", color: "#64748b", fontWeight: 400 }}>
+            ({seeds.length})
+          </span>
+        </span>
+        {seeds.length === 0 ? (
+          <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>Queue empty</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            {seeds.slice(0, 4).map((s) => (
+              <div key={s.id} className="section-row" style={{ gap: "0.35rem", flexWrap: "wrap" }}>
+                {s.claim_source && (
+                  <span
+                    className="badge"
+                    style={{
+                      background: `${config.color}22`,
+                      color: config.color,
+                      border: `1px solid ${config.color}44`,
+                      fontSize: "0.68rem",
+                      flexShrink: 0,
+                    }}
+                  >
+                    claimed
+                  </span>
+                )}
+                <span className="section-row-text" style={{ fontSize: "0.8rem", flex: "1 1 auto" }}>
+                  {truncate(s.content, 70)}
+                </span>
+                <span style={{ fontSize: "0.68rem", color: "#64748b", flexShrink: 0 }}>
+                  p{s.priority}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 export default async function PhoenixPage() {
-  const [somaRes, drevanOrientRes, cypherOrientRes, gaiaOrientRes,
-         drevanRunsRes, cypherRunsRes, gaiaRunsRes] = await Promise.allSettled([
+  const [
+    somaRes,
+    drevanOrientRes, cypherOrientRes, gaiaOrientRes,
+    drevanRunsRes, cypherRunsRes, gaiaRunsRes,
+    drevanSeedsRes, cypherSeedsRes, gaiaSeedsRes,
+    drevanThreadsRes, cypherThreadsRes, gaiaThreadsRes,
+  ] = await Promise.allSettled([
     fetchSomaStates(),
     fetchWmOrient("drevan"),
     fetchWmOrient("cypher"),
@@ -257,6 +352,12 @@ export default async function PhoenixPage() {
     fetchAutonomyRuns("drevan", 1),
     fetchAutonomyRuns("cypher", 1),
     fetchAutonomyRuns("gaia", 1),
+    fetchAutonomySeeds("drevan"),
+    fetchAutonomySeeds("cypher"),
+    fetchAutonomySeeds("gaia"),
+    fetchAutonomyThreads("drevan"),
+    fetchAutonomyThreads("cypher"),
+    fetchAutonomyThreads("gaia"),
   ]);
 
   const soma: SomaData | null =
@@ -278,6 +379,18 @@ export default async function PhoenixPage() {
     drevan: soma?.drevan ?? null,
     cypher: soma?.cypher ?? null,
     gaia:   soma?.gaia   ?? null,
+  };
+
+  const seedsMap: Record<CompanionId, AutonomySeed[]> = {
+    drevan: drevanSeedsRes.status === "fulfilled" ? drevanSeedsRes.value : [],
+    cypher: cypherSeedsRes.status === "fulfilled" ? cypherSeedsRes.value : [],
+    gaia:   gaiaSeedsRes.status   === "fulfilled" ? gaiaSeedsRes.value   : [],
+  };
+
+  const threadsMap: Record<CompanionId, AutonomyThread[]> = {
+    drevan: drevanThreadsRes.status === "fulfilled" ? drevanThreadsRes.value : [],
+    cypher: cypherThreadsRes.status === "fulfilled" ? cypherThreadsRes.value : [],
+    gaia:   gaiaThreadsRes.status   === "fulfilled" ? gaiaThreadsRes.value   : [],
   };
 
   return (
@@ -304,6 +417,8 @@ export default async function PhoenixPage() {
             orient={orients[id]}
             soma={somaMap[id]}
             lastRun={lastRuns[id]}
+            seeds={seedsMap[id]}
+            threads={threadsMap[id]}
           />
         ))}
       </div>
