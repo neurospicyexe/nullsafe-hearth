@@ -508,16 +508,18 @@ export default async function PhoenixPage() {
       </div>
 
       {/* Inter-companion notes */}
-      {interCompanionNotes.length > 0 && (
+      {interCompanionNotes.length > 0 && (() => {
+        const visibleNotes = interCompanionNotes.slice(0, 8);
+        return (
         <div className="card" style={{ marginTop: "1rem" }}>
           <span className="home-section-title" style={{ display: "block", marginBottom: "0.75rem" }}>
             Inter-Companion Notes
             <span style={{ marginLeft: "0.4rem", color: "#64748b", fontWeight: 400 }}>
-              ({interCompanionNotes.length})
+              ({visibleNotes.length}{interCompanionNotes.length > 8 ? "+" : ""})
             </span>
           </span>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {interCompanionNotes.slice(0, 8).map((note) => {
+            {visibleNotes.map((note) => {
               const fromConfig = COMPANION_CONFIG[note.from_id as CompanionId];
               const toConfig   = note.to_id ? COMPANION_CONFIG[note.to_id as CompanionId] : null;
               return (
@@ -554,7 +556,8 @@ export default async function PhoenixPage() {
             })}
           </div>
         </div>
-      )}
+        );
+      })()}
     </>
   );
 }
