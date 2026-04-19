@@ -630,6 +630,9 @@ export type CompanionSomaState = {
   surface_intensity: number | null;
   undercurrent_emotion: string | null;
   undercurrent_intensity: number | null;
+  heat: string | null;
+  reach: string | null;
+  weight: string | null;
   updated_at: string;
 } | null;
 
