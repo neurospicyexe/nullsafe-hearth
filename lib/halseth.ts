@@ -995,8 +995,19 @@ export type AutonomySeed = {
   seed_type: "topic" | "question" | "reflection_prompt";
   content: string;
   priority: number;
+  claim_source: string | null;
+  justification: string | null;
   used_at: string | null;
   created_at: string;
+};
+
+export type AutonomyThread = {
+  id: string;
+  title: string;
+  status: "open" | "paused" | "resolved";
+  last_position: number | null;
+  last_run_at: string | null;
+  last_entry_snippet: string | null;
 };
 
 export type AutonomyReflection = {
@@ -1106,6 +1117,15 @@ export async function fetchAutonomySeeds(
     `/mind/autonomy/seeds/${companionId}`,
   );
   return res?.seeds ?? [];
+}
+
+export async function fetchAutonomyThreads(
+  companionId: string,
+): Promise<AutonomyThread[]> {
+  const res = await hGetSafe<{ threads: AutonomyThread[] }>(
+    `/mind/autonomy/threads/${companionId}`,
+  );
+  return res?.threads ?? [];
 }
 
 export async function fetchAutonomyReflections(
