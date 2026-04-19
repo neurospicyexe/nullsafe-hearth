@@ -6,6 +6,8 @@ import {
   fetchAutonomyRuns,
   fetchAutonomySeeds,
   fetchAutonomyThreads,
+  fetchSynthesisSummaries,
+  fetchInterCompanionNotes,
 } from "@/lib/halseth";
 import type {
   WmOrientData,
@@ -14,6 +16,8 @@ import type {
   AutonomyRun,
   AutonomySeed,
   AutonomyThread,
+  SynthesisSummary,
+  InterCompanionNote,
 } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "@/app/companions/[id]/sections";
 
@@ -33,6 +37,12 @@ function SomaBlock({ soma }: { soma: CompanionSomaState }) {
     );
   }
 
+  const namedStates = [
+    soma.heat   ? { label: "heat",   value: soma.heat }   : null,
+    soma.reach  ? { label: "reach",  value: soma.reach }  : null,
+    soma.weight ? { label: "weight", value: soma.weight } : null,
+  ].filter(Boolean) as { label: string; value: string }[];
+
   const floats = [
     { label: soma.float_1_label, value: soma.soma_float_1 },
     { label: soma.float_2_label, value: soma.soma_float_2 },
@@ -41,22 +51,38 @@ function SomaBlock({ soma }: { soma: CompanionSomaState }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-      {floats.map((f) => (
-        <div
-          key={f.label}
-          style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem" }}
-        >
-          <span style={{ color: "#94a3b8" }}>{f.label}</span>
-          <span style={{ color: "#e2e8f0", fontVariantNumeric: "tabular-nums" }}>
-            {f.value != null ? f.value.toFixed(2) : "--"}
-          </span>
-        </div>
-      ))}
+      {namedStates.length > 0
+        ? namedStates.map((f) => (
+            <div
+              key={f.label}
+              style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem" }}
+            >
+              <span style={{ color: "#94a3b8" }}>{f.label}</span>
+              <span style={{ color: "#e2e8f0" }}>{f.value}</span>
+            </div>
+          ))
+        : floats.map((f) => (
+            <div
+              key={f.label}
+              style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem" }}
+            >
+              <span style={{ color: "#94a3b8" }}>{f.label}</span>
+              <span style={{ color: "#e2e8f0", fontVariantNumeric: "tabular-nums" }}>
+                {f.value != null ? f.value.toFixed(2) : "--"}
+              </span>
+            </div>
+          ))
+      }
+      {soma.current_mood && (
+        <span style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.1rem" }}>
+          {soma.current_mood}
+        </span>
+      )}
       {soma.compound_state && (
         <span
           className="badge"
           style={{
-            marginTop: "0.25rem",
+            marginTop: "0.1rem",
             alignSelf: "flex-start",
             background: "#6366f122",
             color: "#818cf8",
@@ -78,6 +104,7 @@ function CompanionColumn({
   lastRun,
   seeds,
   threads,
+  synthesisSummary,
 }: {
   id: CompanionId;
   orient: WmOrientData | null;
@@ -85,6 +112,7 @@ function CompanionColumn({
   lastRun: AutonomyRun | null;
   seeds: AutonomySeed[];
   threads: AutonomyThread[];
+  synthesisSummary: SynthesisSummary | null;
 }) {
   const config = COMPANION_CONFIG[id];
 
@@ -333,6 +361,46 @@ function CompanionColumn({
           </div>
         )}
       </div>
+
+      {/* Last Session Synthesis */}
+      <div>
+        <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
+          Last Session Synthesis
+        </span>
+        {!synthesisSummary ? (
+          <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No summaries yet</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+            {synthesisSummary.subject && (
+              <span style={{ fontSize: "0.82rem", color: "#e2e8f0", fontWeight: 500 }}>
+                {truncate(synthesisSummary.subject, 60)}
+              </span>
+            )}
+            {synthesisSummary.narrative && (
+              <span className="journal-text" style={{ fontSize: "0.78rem" }}>
+                {truncate(synthesisSummary.narrative, 120)}
+              </span>
+            )}
+            {synthesisSummary.emotional_register && (
+              <span
+                className="badge"
+                style={{
+                  alignSelf: "flex-start",
+                  background: "#6366f122",
+                  color: "#818cf8",
+                  border: "1px solid #6366f144",
+                  fontSize: "0.68rem",
+                }}
+              >
+                {synthesisSummary.emotional_register}
+              </span>
+            )}
+            <span className="section-row-meta" style={{ fontSize: "0.72rem" }}>
+              {fmtTime(synthesisSummary.created_at)}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -344,6 +412,8 @@ export default async function PhoenixPage() {
     drevanRunsRes, cypherRunsRes, gaiaRunsRes,
     drevanSeedsRes, cypherSeedsRes, gaiaSeedsRes,
     drevanThreadsRes, cypherThreadsRes, gaiaThreadsRes,
+    synthesisSummariesRes,
+    interCompanionNotesRes,
   ] = await Promise.allSettled([
     fetchSomaStates(),
     fetchWmOrient("drevan"),
@@ -358,6 +428,8 @@ export default async function PhoenixPage() {
     fetchAutonomyThreads("drevan"),
     fetchAutonomyThreads("cypher"),
     fetchAutonomyThreads("gaia"),
+    fetchSynthesisSummaries(20),
+    fetchInterCompanionNotes(12),
   ]);
 
   const soma: SomaData | null =
@@ -393,6 +465,17 @@ export default async function PhoenixPage() {
     gaia:   gaiaThreadsRes.status   === "fulfilled" ? gaiaThreadsRes.value   : [],
   };
 
+  const allSummaries: SynthesisSummary[] =
+    synthesisSummariesRes.status === "fulfilled" ? synthesisSummariesRes.value : [];
+  const synthesisByCompanion: Record<CompanionId, SynthesisSummary | null> = {
+    drevan: allSummaries.find(s => s.companion_id === "drevan") ?? null,
+    cypher: allSummaries.find(s => s.companion_id === "cypher") ?? null,
+    gaia:   allSummaries.find(s => s.companion_id === "gaia")   ?? null,
+  };
+
+  const interCompanionNotes: InterCompanionNote[] =
+    interCompanionNotesRes.status === "fulfilled" ? interCompanionNotesRes.value : [];
+
   return (
     <>
       <header className="page-header">
@@ -419,9 +502,59 @@ export default async function PhoenixPage() {
             lastRun={lastRuns[id]}
             seeds={seedsMap[id]}
             threads={threadsMap[id]}
+            synthesisSummary={synthesisByCompanion[id]}
           />
         ))}
       </div>
+
+      {/* Inter-companion notes */}
+      {interCompanionNotes.length > 0 && (
+        <div className="card" style={{ marginTop: "1rem" }}>
+          <span className="home-section-title" style={{ display: "block", marginBottom: "0.75rem" }}>
+            Inter-Companion Notes
+            <span style={{ marginLeft: "0.4rem", color: "#64748b", fontWeight: 400 }}>
+              ({interCompanionNotes.length})
+            </span>
+          </span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {interCompanionNotes.slice(0, 8).map((note) => {
+              const fromConfig = COMPANION_CONFIG[note.from_id as CompanionId];
+              const toConfig   = note.to_id ? COMPANION_CONFIG[note.to_id as CompanionId] : null;
+              return (
+                <div
+                  key={note.id}
+                  className="section-row"
+                  style={{ flexDirection: "column", gap: "0.2rem", alignItems: "flex-start" }}
+                >
+                  <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "0.75rem", color: fromConfig?.color ?? "#94a3b8", fontWeight: 600 }}>
+                      {fromConfig?.display ?? note.from_id}
+                    </span>
+                    <span style={{ fontSize: "0.72rem", color: "#64748b" }}>→</span>
+                    <span style={{ fontSize: "0.75rem", color: toConfig?.color ?? "#94a3b8" }}>
+                      {toConfig?.display ?? note.to_id ?? "all"}
+                    </span>
+                    {!note.read_at && (
+                      <span
+                        className="badge"
+                        style={{ background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b44", fontSize: "0.65rem" }}
+                      >
+                        unread
+                      </span>
+                    )}
+                    <span className="section-row-meta" style={{ fontSize: "0.70rem", marginLeft: "auto" }}>
+                      {fmtTime(note.created_at)}
+                    </span>
+                  </div>
+                  <span className="journal-text" style={{ fontSize: "0.80rem" }}>
+                    {truncate(note.content, 140)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </>
   );
 }
