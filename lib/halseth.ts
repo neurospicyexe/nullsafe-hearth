@@ -1152,3 +1152,43 @@ export async function fetchPhoenixOrient(
 ): Promise<PhoenixOrientState | null> {
   return phoenixGet<PhoenixOrientState>(`/mind/orient/${agentId}`);
 }
+
+// ── Worldview (companion conclusions) ────────────────────────────────────────
+
+export type ConclusionRow = {
+  id: string;
+  companion_id: string;
+  conclusion_text: string;
+  source_sessions: string | null;
+  superseded_by: string | null;
+  created_at: string;
+  edited_at: string | null;
+  confidence: number;
+  belief_type: string;
+  subject: string | null;
+  provenance: string | null;
+  contradiction_flagged: number;
+};
+
+// Uses cache: "no-store" directly — conclusions are live state, never revalidate
+export async function fetchConclusions(
+  agentId: string,
+): Promise<ConclusionRow[]> {
+  const url = process.env.HALSETH_URL;
+  const secret = process.env.HALSETH_SECRET;
+  if (!url || !secret) return [];
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(`${url}/companion-conclusions?agent_id=${agentId}`, {
+      headers: { Authorization: `Bearer ${secret}` },
+      cache: "no-store",
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timer));
+    if (!res.ok) return [];
+    const data = await res.json() as { conclusions?: ConclusionRow[] };
+    return data?.conclusions ?? [];
+  } catch {
+    return [];
+  }
+}

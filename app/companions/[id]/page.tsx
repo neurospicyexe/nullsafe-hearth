@@ -21,6 +21,7 @@ import {
   fetchDriftLog,
   fetchGrowthJournal,
   fetchAutonomyRuns,
+  fetchConclusions,
 } from "@/lib/halseth";
 import type {
   CypherAuditEntry,
@@ -127,7 +128,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes] = await Promise.allSettled([
     fetchCompanionJournal(id, 6),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
@@ -146,6 +147,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
     fetchDriftLog(id, 10),
     fetchGrowthJournal(id, 3),
     fetchAutonomyRuns(id, 3),
+    fetchConclusions(id),
   ]);
 
   const journalEntries  = journal.status        === "fulfilled" ? journal.value        : null;
@@ -167,6 +169,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const driftItems         = driftLog.status      === "fulfilled" ? (driftLog.value as DriftEntry[])           : [];
   const growthJournalItems = (growthJournal.status === "fulfilled" ? growthJournal.value : null) ?? [];
   const autonomyRunItems   = (autonomyRuns.status  === "fulfilled" ? autonomyRuns.value  : null) ?? [];
+  const conclusionItems    = (conclusionsRes.status === "fulfilled" ? conclusionsRes.value : null) ?? [];
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
@@ -419,6 +422,45 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
                 </div>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* Worldview Preview */}
+      {conclusionItems.filter((c) => !c.superseded_by).length > 0 && (
+        <section className="page-section">
+          <div className="section-header">
+            <h2 className="section-title section-title-flush">Worldview</h2>
+            <Link href={`/companions/${id}/worldview`} className="home-section-link">see more →</Link>
+          </div>
+          <div className="section-list">
+            {conclusionItems
+              .filter((c) => !c.superseded_by)
+              .slice(0, 3)
+              .map((c) => {
+                const flagged = c.contradiction_flagged === 1;
+                const btColor =
+                  c.belief_type === "self"          ? "#a855f7" :
+                  c.belief_type === "relational"    ? "#3b82f6" :
+                  c.belief_type === "observational" ? "#22c55e" :
+                  c.belief_type === "systemic"      ? "#f59e0b" : "#6b7280";
+                return (
+                  <div key={c.id} className="section-row">
+                    <span
+                      className="badge"
+                      style={{ background: `${btColor}22`, color: btColor, border: `1px solid ${btColor}44` }}
+                    >
+                      {c.belief_type}
+                    </span>
+                    <span className="section-row-text">
+                      {c.conclusion_text.length > 120 ? c.conclusion_text.slice(0, 120) + "…" : c.conclusion_text}
+                    </span>
+                    {flagged && (
+                      <span className="section-row-meta" style={{ color: "#eab308" }}>[?]</span>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         </section>
       )}
