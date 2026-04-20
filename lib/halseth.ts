@@ -585,6 +585,8 @@ export type SessionEntry = {
   emotional_frequency: string | null;
   active_anchor: string | null;
   facet: string | null;
+  hrv_range: "low" | "mid" | "high" | null;
+  depth: number | null;
   notes: string | null;
 };
 
@@ -1171,6 +1173,41 @@ export type ConclusionRow = {
 };
 
 // Uses cache: "no-store" directly — conclusions are live state, never revalidate
+export type SbSearchLog = {
+  agent_id: string;
+  entries: Array<{ query: string; hit_count: number; source: string; created_at: string }>;
+  total: number;
+  hits: number;
+  hit_rate: number | null;
+  last_query: string | null;
+};
+
+export async function fetchSbSearchLog(agentId: string): Promise<SbSearchLog | null> {
+  return hGetSafe<SbSearchLog>(`/mind/sb-search-log/${agentId}`, 0);
+}
+
+export type OrientDebug = {
+  assembled_at: string;
+  session_id: string;
+  front_state: string;
+  wm: {
+    recent_notes: number;
+    open_thread_count: number;
+    active_tensions: number;
+    active_conclusions: number;
+    incoming_companion_notes: number;
+    latest_handoff_summary: string | null;
+  } | null;
+  sb_rag: { query: string; hit_count: number };
+  sb_narrative: "loaded" | "none";
+  growth: { journal_entries: number; patterns: number; last_reflection: number; available_seeds: number };
+};
+
+export async function fetchOrientDebug(agentId: string): Promise<OrientDebug | null> {
+  return hGetSafe<{ agent_id: string; debug: OrientDebug | null }>(`/mind/orient-debug/${agentId}`, 0)
+    .then(r => r?.debug ?? null);
+}
+
 export async function fetchConclusions(
   agentId: string,
 ): Promise<ConclusionRow[]> {

@@ -9,6 +9,7 @@ const SearchOverlay = dynamic(() => import("./SearchOverlay"), { ssr: false });
 
 const NAV = [
   { href: "/",          label: "Home",      sym: "◈" },
+  { href: "/today",     label: "Today",     sym: "◑" },
   { href: "/halseth",   label: "Halseth",   sym: "⌂" },
   { href: "/us",        label: "Us",        sym: "♥" },
   { href: "/sessions",  label: "Sessions",  sym: "⊙" },
@@ -17,8 +18,11 @@ const NAV = [
   { href: "/feelings",  label: "Feelings",  sym: "◎" },
   { href: "/tasks",     label: "Tasks",     sym: "☑" },
   { href: "/checkin",   label: "Check-in",  sym: "↑" },
+  { href: "/memory",    label: "Memory",    sym: "◫" },
+  { href: "/orient",    label: "Orient",    sym: "⊕" },
   { href: "/shared",    label: "Shared",    sym: "≡" },
   { href: "/soma",      label: "Soma",      sym: "◉" },
+  { href: "/wellness",  label: "Wellness",  sym: "♡" },
   { href: "/autonomous", label: "Autonomous", sym: "⟳" },
   { href: "/phoenix",   label: "Phoenix",   sym: "⌬" },
 ];
