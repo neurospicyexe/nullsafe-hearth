@@ -29,9 +29,9 @@ export async function GET(req: Request) {
       headers: AUTH(),
       cache: "no-store",
     });
-    if (!res.ok) return NextResponse.json([]);
+    if (!res.ok) return NextResponse.json({ error: `Halseth returned ${res.status}` }, { status: 502 });
     return NextResponse.json(await res.json());
   } catch {
-    return NextResponse.json([]);
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
   }
 }

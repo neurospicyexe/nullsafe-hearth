@@ -7,27 +7,45 @@ const authHeader = (): Record<string, string> => {
 };
 
 export async function GET() {
-  const res = await fetch(`${base()}/dream-seeds`, {
-    headers: authHeader(),
-    next: { revalidate: 0 },
-  });
-  if (!res.ok) return NextResponse.json([], { status: 200 });
-  return NextResponse.json(await res.json());
+  try {
+    const res = await fetch(`${base()}/dream-seeds`, {
+      headers: authHeader(),
+      next: { revalidate: 0 },
+    });
+    if (!res.ok) return NextResponse.json({ error: `Halseth returned ${res.status}` }, { status: 502 });
+    return NextResponse.json(await res.json());
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const raw = await req.json();
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const VALID_COMPANIONS = new Set(["drevan", "cypher", "gaia"]);
   const body = {
-    content:       typeof raw.content       === "string" ? raw.content : undefined,
-    for_companion: typeof raw.for_companion === "string" && VALID_COMPANIONS.has(raw.for_companion)
-                     ? raw.for_companion : undefined,
+    content:       typeof (raw as Record<string, unknown>).content       === "string" ? (raw as Record<string, unknown>).content : undefined,
+    for_companion: typeof (raw as Record<string, unknown>).for_companion === "string" && VALID_COMPANIONS.has((raw as Record<string, unknown>).for_companion as string)
+                     ? (raw as Record<string, unknown>).for_companion : undefined,
   };
-  const res = await fetch(`${base()}/dream-seeds`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+
+  try {
+    const res = await fetch(`${base()}/dream-seeds`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeader() },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      return NextResponse.json({ error: text || `Halseth returned ${res.status}` }, { status: res.status });
+    }
+    return NextResponse.json(await res.json());
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }
