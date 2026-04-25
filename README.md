@@ -9,9 +9,13 @@ A personal dashboard for the Nullsafe companion system. Shows what's happening w
 
 ---
 
+**Not sure where to start?** See [INSTALL.md](./INSTALL.md) for a beginner-friendly guide covering both local dev and Vercel deployment.
+
+---
+
 ## What you need before starting
 
-- [Halseth](https://github.com/your-username/halseth) deployed and running (Hearth is its frontend)
+- [Halseth](https://github.com/neurospicyexe/halseth) deployed and running (Hearth is its frontend)
 - A free [Vercel account](https://vercel.com/signup)
 - A [GitHub account](https://github.com) (Vercel deploys from GitHub automatically)
 
@@ -62,7 +66,7 @@ See [GUIDE.md](./GUIDE.md) for a full plain-English guide to every page and feat
 ## Local development
 
 ```bash
-git clone https://github.com/your-username/hearth
+git clone https://github.com/neurospicyexe/hearth
 cd hearth
 npm install
 
@@ -84,6 +88,6 @@ Hearth is the visual layer. It reads from:
 
 | Project | What it does |
 |---------|-------------|
-| [Halseth](https://github.com/your-username/halseth) | The data backend — all the real data lives here |
-| [nullsafe-plural-v2](https://github.com/your-username/nullsafe-plural-v2) | Fronting/plurality tracking via SimplyPlural |
-| [nullsafe-second-brain](https://github.com/your-username/nullsafe-second-brain) | Writes to Obsidian vault, generates pattern summaries |
+| [Halseth](https://github.com/neurospicyexe/halseth) | The data backend — all the real data lives here |
+| [nullsafe-plural-v2](https://github.com/neurospicyexe/nullsafe-plural-v2) | Fronting/plurality tracking via SimplyPlural |
+| [nullsafe-second-brain](https://github.com/neurospicyexe/nullsafe-second-brain) | Writes to Obsidian vault, generates pattern summaries |
