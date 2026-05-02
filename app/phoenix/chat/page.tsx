@@ -45,6 +45,10 @@ export default function PhoenixChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastSpeakerCount, setLastSpeakerCount] = useState<number | null>(null);
   const [logState, setLogState] = useState<{ status: "idle" | "writing" | "ok" | "error"; detail?: string }>({ status: "idle" });
+  // Stable id for the current triad session. Re-generated on mode switch into triad.
+  // Sent as halseth thread_key so the 10-min write-gate in addNote() de-duplicates
+  // accidental double-clicks of Close & log into a single note.
+  const [triadSessionId, setTriadSessionId] = useState<string>(() => crypto.randomUUID());
   const [isPending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -124,6 +128,9 @@ export default function PhoenixChatPage() {
     setError(null);
     setLastSpeakerCount(null);
     setLogState({ status: "idle" });
+    // Fresh session id when entering a new mode -- prevents the next triad log
+    // from being treated as a continuation of the prior one.
+    setTriadSessionId(crypto.randomUUID());
   };
 
   const switchCompanion = (next: CompanionId) => {
@@ -141,7 +148,7 @@ export default function PhoenixChatPage() {
       const res = await fetch("/api/phoenix/chat/triad-log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify({ messages, session_id: triadSessionId }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean; note_id?: string | null; error?: string; truncated?: boolean;

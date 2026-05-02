@@ -113,7 +113,19 @@ function formatTriadSessionLog(messages: LogMessage[], generatedAt: string): str
       kept.unshift(t);
       used += cost;
     }
-    body = `${headerPart}${kept.join("\n\n")}`;
+    // Safeguard: if a single turn exceeds the entire budget (rare but possible
+    // for very long DeepSeek emissions), kept[] is empty and we'd write only the
+    // header. Hard-truncate the most recent turn to fit so the note carries
+    // actual content rather than silently emitting a header-only row.
+    if (kept.length === 0 && turns.length > 0) {
+      const lastTurn = turns[turns.length - 1];
+      const turnTruncMarker = "\n[…this turn truncated to fit storage cap…]";
+      const allowedTurnLen = Math.max(0, room - turnTruncMarker.length);
+      const truncated = lastTurn.slice(0, allowedTurnLen) + turnTruncMarker;
+      body = `${headerPart}${truncated}`;
+    } else {
+      body = `${headerPart}${kept.join("\n\n")}`;
+    }
   }
   return body;
 }
@@ -125,7 +137,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Halseth not configured" }, { status: 503 });
   }
 
-  let body: { messages?: unknown };
+  let body: { messages?: unknown; session_id?: unknown };
   try {
     body = await request.json() as typeof body;
   } catch {
@@ -139,6 +151,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!raw.every(isLogMessage)) {
     return NextResponse.json({ error: "messages[] contains an entry with an unrecognized shape" }, { status: 400 });
   }
+
+  // session_id is optional but strongly recommended -- without it, a slow halseth
+  // response that aborts client-side will produce duplicate notes on retry. With
+  // it, halseth's wm_continuity_notes 10-minute write-gate (notes.ts addNote())
+  // returns the existing note and the second write is a no-op.
+  // Note re prompt injection: user-controlled message content flows verbatim into
+  // the triad system prompt (route.ts) and into this log content. Blast radius is
+  // bounded -- single-tenant system, no tool-calling, content lands in a private
+  // halseth note. Risk accepted; no sanitization applied.
+  const sessionId = typeof body.session_id === "string" && body.session_id.length > 0
+    ? body.session_id
+    : null;
 
   const messages = raw as LogMessage[];
   const hasTriadResponse = messages.some((m) => m.role === "assistant" && m.mode === "triad");
@@ -162,6 +186,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       salience: "normal",
       actor: "agent",
       source: "hearth_triad_chat",
+      ...(sessionId ? { thread_key: `triad_session:${sessionId}` } : {}),
     }),
     cache: "no-store",
     signal: AbortSignal.timeout(15_000),
