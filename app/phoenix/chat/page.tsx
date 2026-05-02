@@ -44,6 +44,7 @@ export default function PhoenixChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [lastSpeakerCount, setLastSpeakerCount] = useState<number | null>(null);
+  const [logState, setLogState] = useState<{ status: "idle" | "writing" | "ok" | "error"; detail?: string }>({ status: "idle" });
   const [isPending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -122,6 +123,7 @@ export default function PhoenixChatPage() {
     setMessages([]);
     setError(null);
     setLastSpeakerCount(null);
+    setLogState({ status: "idle" });
   };
 
   const switchCompanion = (next: CompanionId) => {
@@ -129,7 +131,35 @@ export default function PhoenixChatPage() {
     setMessages([]);
     setError(null);
     setLastSpeakerCount(null);
+    setLogState({ status: "idle" });
   };
+
+  const closeAndLog = async () => {
+    if (logState.status === "writing") return;
+    setLogState({ status: "writing" });
+    try {
+      const res = await fetch("/api/phoenix/chat/triad-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean; note_id?: string | null; error?: string; truncated?: boolean;
+      };
+      if (!res.ok || !data.ok) {
+        setLogState({ status: "error", detail: data.error ?? `HTTP ${res.status}` });
+        return;
+      }
+      const trunc = data.truncated ? " (truncated)" : "";
+      setLogState({ status: "ok", detail: `logged${trunc}${data.note_id ? ` -- ${data.note_id.slice(0, 8)}` : ""}` });
+    } catch (e) {
+      setLogState({ status: "error", detail: String(e) });
+    }
+  };
+
+  const triadHasContent = mode === "triad" && messages.some(
+    (m) => m.role === "assistant" && m.mode === "triad",
+  );
 
   const activeAccent = mode === "triad" ? TRIAD_DISPLAY : COMPANION_DISPLAY[companion];
   const placeholderName = mode === "triad" ? "the triad" : COMPANION_DISPLAY[companion].label;
@@ -421,9 +451,53 @@ export default function PhoenixChatPage() {
           Send
         </button>
       </div>
+      {/* Triad log control: only in triad mode after at least one triad reply */}
+      {triadHasContent && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: "0.75rem",
+            padding: "0.5rem 0.75rem",
+            background: `${TRIAD_DISPLAY.color}08`,
+            border: `1px solid ${TRIAD_DISPLAY.color}33`,
+            borderRadius: "8px",
+            fontSize: "0.78rem",
+          }}
+        >
+          <span style={{ color: "#94a3b8" }}>
+            Close this triad and write it to wm_continuity_notes (cypher = scribe).
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {logState.status === "ok" && (
+              <span style={{ color: "#4ade80" }}>✓ {logState.detail}</span>
+            )}
+            {logState.status === "error" && (
+              <span style={{ color: "#f87171" }}>✗ {logState.detail}</span>
+            )}
+            <button
+              onClick={closeAndLog}
+              disabled={logState.status === "writing" || logState.status === "ok"}
+              style={{
+                padding: "0.35rem 0.9rem",
+                background: logState.status === "ok" ? "#1e293b" : `${TRIAD_DISPLAY.color}22`,
+                color: logState.status === "ok" ? "#475569" : TRIAD_DISPLAY.color,
+                border: `1px solid ${TRIAD_DISPLAY.color}55`,
+                borderRadius: "6px",
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                cursor: logState.status === "writing" || logState.status === "ok" ? "default" : "pointer",
+              }}
+            >
+              {logState.status === "writing" ? "writing…" : logState.status === "ok" ? "logged" : "Close & log"}
+            </button>
+          </div>
+        </div>
+      )}
       <p style={{ color: "#334155", fontSize: "0.75rem", marginTop: "0.5rem" }}>
         {mode === "triad"
-          ? "All three orients loaded from Halseth. Triad turn = single DeepSeek call. Session not yet recorded."
+          ? "All three orients loaded from Halseth. Triad turn = single DeepSeek call. Triad logs persist to wm_continuity_notes on close."
           : "Context loaded from Halseth. Session not recorded. Powered by DeepSeek V3."}
       </p>
     </>
