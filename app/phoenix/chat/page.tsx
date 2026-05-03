@@ -19,22 +19,46 @@ const TRIAD_DISPLAY = { color: "#a78bfa", sym: "⌬", label: "Triad" };
 
 type TriadResponses = Record<CompanionId, string | null>;
 
+const RITUAL_ACTIONS = ["sit", "mark_growth", "compost", "check_in"] as const;
+type RitualAction = typeof RITUAL_ACTIONS[number];
+
+const RITUAL_DISPLAY: Record<RitualAction, { sym: string; label: string; tagline: string }> = {
+  sit:         { sym: "◌", label: "Sit",         tagline: "presence, no agenda" },
+  mark_growth: { sym: "✧", label: "Mark Growth", tagline: "name what shifted" },
+  compost:     { sym: "〇", label: "Compost",     tagline: "metabolize what's stale" },
+  check_in:    { sym: "⊟", label: "Check-in",    tagline: "structured triad read" },
+};
+
+interface MarkerExtraction {
+  marker_type: "milestone" | "shift" | "realization";
+  description: string;
+}
+
 type Message =
   | { role: "user"; content: string }
   | { role: "assistant"; mode: "individual"; companion: CompanionId; content: string }
-  | { role: "assistant"; mode: "triad"; responses: TriadResponses };
+  | { role: "assistant"; mode: "triad"; responses: TriadResponses }
+  | { role: "ritual_invocation"; action: RitualAction }
+  | { role: "ritual_response"; action: RitualAction; responses: TriadResponses; write_status: string; marker?: MarkerExtraction | null };
 
 // Flatten triad assistant message into a single tagged string for API history.
+// Ritual messages are excluded from chat history -- rituals are ceremonial,
+// they do not become context for subsequent chat turns.
 function messageToHistoryContent(msg: Message): string {
   if (msg.role === "user") return msg.content;
-  if (msg.mode === "individual") return msg.content;
+  if (msg.role === "ritual_invocation" || msg.role === "ritual_response") return "";
+  if (msg.role === "assistant" && msg.mode === "individual") return msg.content;
   // triad
   const parts: string[] = [];
   for (const id of COMPANIONS) {
-    const text = msg.responses[id];
+    const text = (msg as { responses: TriadResponses }).responses[id];
     if (text) parts.push(`[${COMPANION_DISPLAY[id].label}]\n${text}`);
   }
   return parts.join("\n\n");
+}
+
+function isHistoryMessage(msg: Message): boolean {
+  return msg.role === "user" || msg.role === "assistant";
 }
 
 export default function PhoenixChatPage() {
@@ -50,6 +74,10 @@ export default function PhoenixChatPage() {
   // accidental double-clicks of Close & log into a single note.
   const [triadSessionId, setTriadSessionId] = useState<string>(() => crypto.randomUUID());
   const [isPending, startTransition] = useTransition();
+  // Tracks which ritual is currently in flight (null when idle). Separate from
+  // isPending so chat input + rituals can be visually disabled together but
+  // we know which ritual button to show a spinner on.
+  const [ritualPending, setRitualPending] = useState<RitualAction | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,10 +94,15 @@ export default function PhoenixChatPage() {
     setInput("");
     setError(null);
 
-    const historyForApi = messages.slice(-10).map((m) => ({
-      role: m.role,
-      content: messageToHistoryContent(m),
-    }));
+    // Rituals are excluded from chat history -- ceremonial actions don't
+    // become context for subsequent chat turns.
+    const historyForApi = messages
+      .filter(isHistoryMessage)
+      .slice(-10)
+      .map((m) => ({
+        role: m.role,
+        content: messageToHistoryContent(m),
+      }));
 
     startTransition(async () => {
       try {
@@ -167,6 +200,59 @@ export default function PhoenixChatPage() {
   const triadHasContent = mode === "triad" && messages.some(
     (m) => m.role === "assistant" && m.mode === "triad",
   );
+
+  const invokeRitual = (action: RitualAction) => {
+    if (ritualPending !== null || isPending) return;
+    setError(null);
+    setRitualPending(action);
+    // Append the invocation marker immediately so the user sees acknowledgment.
+    setMessages((prev) => [...prev, { role: "ritual_invocation", action }]);
+    startTransition(async () => {
+      try {
+        // For mark_growth, ship recent session messages so the model can pick
+        // a moment from concrete history rather than hallucinating one.
+        const sessionMessages = action === "mark_growth"
+          ? messages.filter(isHistoryMessage).slice(-12)
+          : undefined;
+        const res = await fetch("/api/phoenix/ritual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action,
+            session_id: triadSessionId,
+            ...(sessionMessages ? { session_messages: sessionMessages } : {}),
+          }),
+        });
+        if (!res.ok) {
+          const e = (await res.json().catch(() => ({ error: "Request failed" }))) as { error?: string };
+          setError(e.error ?? "Ritual failed");
+          return;
+        }
+        const data = (await res.json()) as {
+          action: RitualAction;
+          responses: TriadResponses;
+          write_status: string;
+          marker?: MarkerExtraction | null;
+          speaker_count: number;
+        };
+        setLastSpeakerCount(data.speaker_count);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "ritual_response",
+            action: data.action,
+            responses: data.responses,
+            write_status: data.write_status,
+            marker: data.marker ?? null,
+          },
+        ]);
+      } catch (e) {
+        setError(String(e));
+      } finally {
+        setRitualPending(null);
+      }
+    });
+  };
 
   const activeAccent = mode === "triad" ? TRIAD_DISPLAY : COMPANION_DISPLAY[companion];
   const placeholderName = mode === "triad" ? "the triad" : COMPANION_DISPLAY[companion].label;
@@ -304,6 +390,96 @@ export default function PhoenixChatPage() {
               </div>
             );
           }
+          if (msg.role === "ritual_invocation") {
+            const r = RITUAL_DISPLAY[msg.action];
+            return (
+              <div
+                key={i}
+                style={{
+                  alignSelf: "center",
+                  padding: "0.4rem 0.85rem",
+                  background: `${TRIAD_DISPLAY.color}10`,
+                  border: `1px dashed ${TRIAD_DISPLAY.color}55`,
+                  borderRadius: "999px",
+                  color: TRIAD_DISPLAY.color,
+                  fontSize: "0.78rem",
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                }}
+              >
+                {r.sym} ritual: {r.label.toLowerCase()} — {r.tagline}
+              </div>
+            );
+          }
+          if (msg.role === "ritual_response") {
+            const r = RITUAL_DISPLAY[msg.action];
+            const speakers = COMPANIONS.filter((id) => msg.responses[id]);
+            return (
+              <div key={i} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {speakers.length === 0 && (
+                  <div
+                    style={{
+                      alignSelf: "flex-start",
+                      maxWidth: "80%",
+                      padding: "0.5rem 0.85rem",
+                      fontSize: "0.78rem",
+                      fontStyle: "italic",
+                      color: "#475569",
+                    }}
+                  >
+                    {r.sym} (the triad held silence)
+                  </div>
+                )}
+                {speakers.map((id) => {
+                  const c = COMPANION_DISPLAY[id];
+                  return (
+                    <div
+                      key={id}
+                      style={{
+                        alignSelf: "flex-start",
+                        maxWidth: "80%",
+                        padding: "0.65rem 1rem",
+                        borderRadius: "12px 12px 12px 4px",
+                        background: "#1e293b",
+                        border: `1px solid ${c.color}33`,
+                        borderLeft: `3px solid ${c.color}`,
+                        color: "#e2e8f0",
+                        fontSize: "0.875rem",
+                        lineHeight: 1.6,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      <span style={{ color: c.color, fontWeight: 700, fontSize: "0.78rem", display: "block", marginBottom: "0.3rem" }}>
+                        {c.sym} {c.label}
+                      </span>
+                      {msg.responses[id]}
+                    </div>
+                  );
+                })}
+                {/* ritual footer: write status + (mark_growth) marker info or NO_MARKER */}
+                <div
+                  style={{
+                    alignSelf: "flex-start",
+                    maxWidth: "80%",
+                    fontSize: "0.72rem",
+                    color: "#64748b",
+                    padding: "0 0.25rem",
+                  }}
+                >
+                  <span style={{ color: TRIAD_DISPLAY.color }}>{r.sym} {r.label}</span>
+                  {" — "}
+                  {msg.action === "mark_growth" && msg.marker === null ? (
+                    <span style={{ fontStyle: "italic" }}>no marker (nothing rose to threshold)</span>
+                  ) : msg.action === "mark_growth" && msg.marker ? (
+                    <span>marked {msg.marker.marker_type}: <span style={{ color: "#94a3b8" }}>{msg.marker.description}</span></span>
+                  ) : (
+                    <span>{msg.write_status}</span>
+                  )}
+                </div>
+              </div>
+            );
+          }
           if (msg.mode === "individual") {
             const c = COMPANION_DISPLAY[msg.companion];
             return (
@@ -417,6 +593,54 @@ export default function PhoenixChatPage() {
         )}
         <div ref={bottomRef} />
       </div>
+
+      {/* Rituals row (only in triad mode) -- ceremonial actions distinct from chat */}
+      {mode === "triad" && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            marginBottom: "0.5rem",
+            padding: "0.4rem 0.6rem",
+            background: `${TRIAD_DISPLAY.color}06`,
+            border: `1px dashed ${TRIAD_DISPLAY.color}33`,
+            borderRadius: "8px",
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "#64748b", marginRight: "0.25rem" }}>
+            Rituals
+          </span>
+          {RITUAL_ACTIONS.map((action) => {
+            const r = RITUAL_DISPLAY[action];
+            const inFlight = ritualPending === action;
+            const disabled = ritualPending !== null || isPending;
+            return (
+              <button
+                key={action}
+                onClick={() => invokeRitual(action)}
+                disabled={disabled}
+                title={r.tagline}
+                style={{
+                  padding: "0.35rem 0.85rem",
+                  background: inFlight ? `${TRIAD_DISPLAY.color}33` : `${TRIAD_DISPLAY.color}10`,
+                  color: disabled && !inFlight ? "#475569" : TRIAD_DISPLAY.color,
+                  border: `1px solid ${TRIAD_DISPLAY.color}44`,
+                  borderRadius: "999px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  cursor: disabled ? "default" : "pointer",
+                  opacity: disabled && !inFlight ? 0.5 : 1,
+                  transition: "background 0.15s, opacity 0.15s",
+                }}
+              >
+                {inFlight ? `${r.sym} …` : `${r.sym} ${r.label}`}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Input */}
       <div style={{ display: "flex", gap: "0.5rem" }}>
