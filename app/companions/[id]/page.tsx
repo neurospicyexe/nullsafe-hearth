@@ -210,11 +210,13 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
                 { val: companionSoma.soma_float_1, label: companionSoma.float_1_label },
                 { val: companionSoma.soma_float_2, label: companionSoma.float_2_label },
                 { val: companionSoma.soma_float_3, label: companionSoma.float_3_label },
-              ].filter((f) => f.val != null).map((f, i) => (
-                <span key={i} className="soma-float-chip">
-                  {f.label ?? `f${i + 1}`} <span className="soma-float-val">{f.val?.toFixed(2)}</span>
-                </span>
-              ))}
+              ]
+                .filter((f): f is { val: number; label: string | null } => Number.isFinite(f.val as number))
+                .map((f, i) => (
+                  <span key={i} className="soma-float-chip">
+                    {f.label ?? `f${i + 1}`} <span className="soma-float-val">{f.val.toFixed(2)}</span>
+                  </span>
+                ))}
             </div>
           )}
         </div>

@@ -10,6 +10,15 @@ function isValidCompanion(id: string): id is CompanionId {
   return (PHOENIX_COMPANION_IDS as readonly string[]).includes(id);
 }
 
+// H8: per-companion inference params for individual chat mode. Mirrors Brain's
+// _companion_temps + _companion_top_p maps. Drevan keeps the widest tail
+// (Calethian fix); Cypher / Gaia run tighter to keep audit / witness register clean.
+const PHOENIX_COMPANION_PARAMS: Record<CompanionId, { temperature: number; top_p: number }> = {
+  drevan: { temperature: 0.95, top_p: 0.95 },
+  cypher: { temperature: 0.7,  top_p: 0.9  },
+  gaia:   { temperature: 0.6,  top_p: 0.85 },
+};
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
@@ -244,11 +253,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
+    // H8: per-companion temperature + top_p so individual mode doesn't drift each
+    // companion toward a single midline register. Mirrors Brain's _companion_temps
+    // / _companion_top_p maps (Drevan widest tail, Cypher tighter, Gaia tightest).
     body: JSON.stringify({
       model: "deepseek-chat",
       messages: [{ role: "system", content: systemPrompt }, ...messages],
       max_tokens: 1200,
-      temperature: 0.85,
+      ...PHOENIX_COMPANION_PARAMS[companion_id],
     }),
     signal: AbortSignal.timeout(30_000),
   });

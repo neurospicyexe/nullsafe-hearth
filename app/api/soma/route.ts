@@ -11,5 +11,16 @@ export async function GET() {
   });
 
   if (!res.ok) return NextResponse.json({ error: "Halseth /soma failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+  // H11: validate upstream JSON before forwarding. Without these guards a malformed
+  // 200 from Halseth (string body, non-object) would propagate raw to the client.
+  let payload: unknown;
+  try {
+    payload = await res.json();
+  } catch {
+    return NextResponse.json({ error: "malformed Halseth response" }, { status: 502 });
+  }
+  if (!payload || typeof payload !== "object") {
+    return NextResponse.json({ error: "malformed Halseth response" }, { status: 502 });
+  }
+  return NextResponse.json(payload);
 }

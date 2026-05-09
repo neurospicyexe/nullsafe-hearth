@@ -1,4 +1,4 @@
-import { fetchPresence, fetchBiometrics, fetchNotes } from "@/lib/halseth";
+import { fetchPresence, fetchBiometrics, fetchNotes, MAX_SESSION_DEPTH } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
 
 export const dynamic = 'force-dynamic';
@@ -69,7 +69,7 @@ export default async function UserPage() {
               {session.depth !== null && (
                 <div className="state-cell">
                   <div className="state-cell-label">Depth</div>
-                  <div className="state-cell-value">{session.depth} / 3</div>
+                  <div className="state-cell-value">{session.depth} / {MAX_SESSION_DEPTH}</div>
                 </div>
               )}
             </>

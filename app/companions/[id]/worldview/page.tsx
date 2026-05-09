@@ -115,7 +115,7 @@ export default async function WorldviewPage({ params }: { params: Promise<{ id: 
                         className="badge"
                         style={{ background: `${cc}22`, color: cc, border: `1px solid ${cc}44` }}
                       >
-                        {c.confidence.toFixed(2)}
+                        {Number.isFinite(c.confidence) ? c.confidence.toFixed(2) : "--"}
                       </span>
 
                       {/* Subject tag */}
