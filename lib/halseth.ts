@@ -11,27 +11,30 @@ function authHeader(): Record<string, string> {
   return s ? { Authorization: `Bearer ${s}` } : {};
 }
 
-function fetchWithTimeout(url: string, options: RequestInit & { next?: { revalidate: number } }, ms = 10000): Promise<Response> {
+function fetchWithTimeout(url: string, options: RequestInit, ms = 10000): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
-async function hGet<T>(path: string, revalidate = 30): Promise<T> {
+// H1: cache: 'no-store'. Halseth state is live (sessions, SOMA, growth);
+// any revalidate window leaks stale companion mind-shape into the dashboard.
+// Banned pattern from prod incident; CLAUDE.md mandates force-dynamic + no-store.
+async function hGet<T>(path: string): Promise<T> {
   const res = await fetchWithTimeout(`${base()}${path}`, {
     headers: authHeader(),
-    next: { revalidate },
+    cache: 'no-store',
   });
   if (!res.ok) throw new Error(`Halseth ${path} → ${res.status}`);
   return res.json() as Promise<T>;
 }
 
 // Returns null on any error — for endpoints not yet deployed on Halseth
-async function hGetSafe<T>(path: string, revalidate = 30): Promise<T | null> {
+async function hGetSafe<T>(path: string): Promise<T | null> {
   try {
     const res = await fetchWithTimeout(`${base()}${path}`, {
       headers: authHeader(),
-      next: { revalidate },
+      cache: 'no-store',
     });
     if (!res.ok) return null;
     return res.json() as Promise<T>;
@@ -386,7 +389,7 @@ export type ListItem = {
 // ── Fetch functions — existing endpoints ──────────────────────────────────────
 
 export async function fetchPresence(): Promise<PresenceData> {
-  return hGet<PresenceData>("/presence", 0);
+  return hGet<PresenceData>("/presence");
 }
 
 export async function fetchBiometrics(limit = 14): Promise<BiometricSnapshot[]> {
@@ -410,7 +413,7 @@ export async function fetchCompanionDeltas(
 }
 
 export async function fetchBridge(): Promise<BridgeData | null> {
-  return hGetSafe<BridgeData>("/bridge/shared", 30);
+  return hGetSafe<BridgeData>("/bridge/shared");
 }
 
 // ── Fetch functions — endpoints awaiting Halseth deployment ──────────────────
@@ -646,7 +649,7 @@ export type SomaData = {
 };
 
 export async function fetchSomaStates(): Promise<SomaData | null> {
-  return hGetSafe<SomaData>("/soma", 0);
+  return hGetSafe<SomaData>("/soma");
 }
 
 export async function fetchHumanBlocks(
@@ -698,7 +701,7 @@ export type WmOrientData = {
 };
 
 export async function fetchWmOrient(agentId: string): Promise<WmOrientData | null> {
-  return hGetSafe<WmOrientData>(`/mind/orient/${encodeURIComponent(agentId)}`, 0);
+  return hGetSafe<WmOrientData>(`/mind/orient/${encodeURIComponent(agentId)}`);
 }
 
 // ── Synthesis Summaries ───────────────────────────────────────────────────────
@@ -742,7 +745,7 @@ export type OpenLoop = {
 
 export async function fetchLoops(agentId: string, includeClosed = false): Promise<OpenLoop[]> {
   const q = includeClosed ? "?include_closed=true" : "";
-  const res = await hGetSafe<{ loops: OpenLoop[] }>(`/mind/loops/${agentId}${q}`, 0);
+  const res = await hGetSafe<{ loops: OpenLoop[] }>(`/mind/loops/${agentId}${q}`);
   return res?.loops ?? [];
 }
 
@@ -758,7 +761,7 @@ export type SittingNote = {
 };
 
 export async function fetchSittingNotes(agentId: string): Promise<SittingNote[]> {
-  const res = await hGetSafe<{ notes: SittingNote[] }>(`/mind/sitting/${agentId}`, 0);
+  const res = await hGetSafe<{ notes: SittingNote[] }>(`/mind/sitting/${agentId}`);
   return res?.notes ?? [];
 }
 
@@ -775,7 +778,7 @@ export type RelationalState = {
 };
 
 export async function fetchRelationalHistory(agentId: string, limit = 30): Promise<RelationalState[]> {
-  const res = await hGetSafe<{ states: RelationalState[] }>(`/mind/relational/${agentId}?limit=${limit}`, 0);
+  const res = await hGetSafe<{ states: RelationalState[] }>(`/mind/relational/${agentId}?limit=${limit}`);
   return res?.states ?? [];
 }
 
@@ -793,7 +796,7 @@ export type WmDream = {
 
 export async function fetchMindDreams(agentId: string, limit = 5): Promise<WmDream[]> {
   const q = new URLSearchParams({ limit: String(limit) });
-  const res = await hGetSafe<{ dreams: WmDream[] }>(`/mind/dreams/${encodeURIComponent(agentId)}?${q}`, 0);
+  const res = await hGetSafe<{ dreams: WmDream[] }>(`/mind/dreams/${encodeURIComponent(agentId)}?${q}`);
   return res?.dreams ?? [];
 }
 
@@ -843,7 +846,7 @@ export async function fetchOrientForChat(agentId: string): Promise<CompanionOrie
     limbic_state?: { emotional_register?: string; drift_vector?: string };
     active_tensions?: Array<{ tension_text: string }>;
     recent_notes?: Array<{ content: string }>;
-  }>(`/mind/orient/${encodeURIComponent(agentId)}`, 0);
+  }>(`/mind/orient/${encodeURIComponent(agentId)}`);
   if (!raw) return null;
   return {
     anchor_summary: raw.identity_anchor?.anchor_summary ?? "",
@@ -1183,7 +1186,7 @@ export type SbSearchLog = {
 };
 
 export async function fetchSbSearchLog(agentId: string): Promise<SbSearchLog | null> {
-  return hGetSafe<SbSearchLog>(`/mind/sb-search-log/${agentId}`, 0);
+  return hGetSafe<SbSearchLog>(`/mind/sb-search-log/${agentId}`);
 }
 
 export type OrientDebug = {
@@ -1204,7 +1207,7 @@ export type OrientDebug = {
 };
 
 export async function fetchOrientDebug(agentId: string): Promise<OrientDebug | null> {
-  return hGetSafe<{ agent_id: string; debug: OrientDebug | null }>(`/mind/orient-debug/${agentId}`, 0)
+  return hGetSafe<{ agent_id: string; debug: OrientDebug | null }>(`/mind/orient-debug/${agentId}`)
     .then(r => r?.debug ?? null);
 }
 
