@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { fetchPresence, fetchSynthesisSummaries, fetchMindDreams, type PresenceData, type SynthesisSummary, type WmDream } from "@/lib/halseth";
+import { fetchPresence, fetchSynthesisSummaries, fetchMindDreams, MAX_SESSION_DEPTH, type PresenceData, type SynthesisSummary, type WmDream } from "@/lib/halseth";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
 import LiveFeedImage from "@/components/LiveFeedImage";
 
@@ -37,7 +37,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
             <><span className="presence-detail-sep">·</span><span>HRV {session.hrv_range}</span></>
           )}
           {session.depth !== null && session.depth !== undefined && (
-            <><span className="presence-detail-sep">·</span><span>depth {session.depth}/3</span></>
+            <><span className="presence-detail-sep">·</span><span>depth {session.depth}/{MAX_SESSION_DEPTH}</span></>
           )}
           <span className="presence-detail-sep ml-auto">since</span>
           <span><ClientTime iso={session.created_at} /></span>

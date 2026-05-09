@@ -26,7 +26,7 @@ function avg(...vals: (number | null)[]): number {
 }
 
 function fmt(v: number | null): string {
-  if (v === null) return "--";
+  if (v === null || !Number.isFinite(v)) return "--";
   return (v * 100).toFixed(0);
 }
 
@@ -225,7 +225,10 @@ export default function SomaClient({
               <div key={b.id} className="soma-extra-row">
                 <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[b.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[b.companion_id] ?? "var(--border-subtle)" }}>{b.companion_id}</span>
                 <span className="soma-extra-badge" style={{ color: DRIFT_TYPE_COLOR[b.drift_type] ?? "var(--text-muted)", borderColor: DRIFT_TYPE_COLOR[b.drift_type] ?? "var(--border-subtle)" }}>{b.drift_type}</span>
-                <span className="soma-extra-text" style={{ flex: 1 }}>score {(b.drift_score * 100).toFixed(0)}{b.worst_basin ? ` · ${b.worst_basin}` : ""}</span>
+                <span className="soma-extra-text" style={{ flex: 1 }}>
+                  score {Number.isFinite(b.drift_score) ? (b.drift_score * 100).toFixed(0) : "--"}
+                  {b.worst_basin ? ` · ${b.worst_basin}` : ""}
+                </span>
                 {b.notes && <span className="soma-extra-sub">{b.notes}</span>}
                 <span className="soma-extra-time">{relativeTime(b.recorded_at)}</span>
               </div>

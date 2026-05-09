@@ -68,7 +68,7 @@ function SomaBlock({ soma }: { soma: CompanionSomaState }) {
             >
               <span style={{ color: "#94a3b8" }}>{f.label}</span>
               <span style={{ color: "#e2e8f0", fontVariantNumeric: "tabular-nums" }}>
-                {f.value != null ? f.value.toFixed(2) : "--"}
+                {Number.isFinite(f.value as number) ? (f.value as number).toFixed(2) : "--"}
               </span>
             </div>
           ))

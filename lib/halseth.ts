@@ -1,3 +1,9 @@
+// ── Constants ─────────────────────────────────────────────────────────────
+
+// H10: lifted from hardcoded `/3` literals in app/page.tsx, app/user/page.tsx,
+// app/wellness/page.tsx. Mirrors Brain Config.MAX_SWARM_DEPTH; keep in sync.
+export const MAX_SESSION_DEPTH = 3;
+
 // ── Base ──────────────────────────────────────────────────────────────────
 
 function base() {
@@ -880,7 +886,13 @@ export type CompanionTension = {
 export async function fetchTensions(companionId?: string, limit = 20): Promise<CompanionTension[]> {
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
-  return (await hGetSafe<CompanionTension[]>(`/ingest/tensions?${q}`)) ?? [];
+  // H9: defensive envelope unwrap. Halseth GET endpoints typically return
+  // `{ key: [...] }` envelopes; if upstream wraps tensions in `{ tensions: [...] }`
+  // a bare cast triggers `.map is not a function`. Accept both shapes.
+  const raw = await hGetSafe<CompanionTension[] | { tensions?: CompanionTension[] }>(`/ingest/tensions?${q}`);
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  return raw.tensions ?? [];
 }
 
 export type SomaticSnapshot = {
