@@ -9,10 +9,11 @@ async function fetchMind(): Promise<MindData | null> {
   if (!base) return null;
   const h: Record<string, string> = secret ? { Authorization: `Bearer ${secret}` } : {};
   try {
+    // H2: Halseth fetches must be cache: 'no-store' (banned revalidate pattern).
     const [healthRes, patternsRes, journalsRes] = await Promise.all([
-      fetch(`${base}/mind/health`,           { headers: h, next: { revalidate: 60 } }),
-      fetch(`${base}/mind/patterns?days=7`,  { headers: h, next: { revalidate: 60 } }),
-      fetch(`${base}/mind/recent?hours=168`, { headers: h, next: { revalidate: 60 } }),
+      fetch(`${base}/mind/health`,           { headers: h, cache: 'no-store' }),
+      fetch(`${base}/mind/patterns?days=7`,  { headers: h, cache: 'no-store' }),
+      fetch(`${base}/mind/recent?hours=168`, { headers: h, cache: 'no-store' }),
     ]);
     const health          = healthRes.ok   ? await healthRes.json()   : { entities: 0, observations: 0, relations: 0, journals: 0, salience: {} };
     const patterns        = patternsRes.ok ? await patternsRes.json() : null;
@@ -30,7 +31,7 @@ async function fetchCompanionNotes(): Promise<CompanionNote[]> {
   try {
     const res = await fetch(`${base}/companion-notes`, {
       headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-      next: { revalidate: 30 },
+      cache: 'no-store',
     });
     if (!res.ok) return [];
     return res.json();

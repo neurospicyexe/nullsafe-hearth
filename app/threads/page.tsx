@@ -10,7 +10,7 @@ async function fetchDeltas(): Promise<Delta[]> {
   try {
     const res = await fetch(`${base}/deltas?limit=10`, {
       headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-      next: { revalidate: 30 },
+      cache: 'no-store',
     });
     if (!res.ok) return [];
     return res.json();
@@ -26,7 +26,7 @@ async function fetchWounds(): Promise<Wound[]> {
   try {
     const res = await fetch(`${base}/wounds`, {
       headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
     if (!res.ok) return [];
     return res.json();
@@ -42,7 +42,7 @@ async function fetchGaiaNotes(): Promise<CompanionNote[]> {
   try {
     const res = await fetch(`${base}/companion-notes?agent=gaia`, {
       headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-      next: { revalidate: 30 },
+      cache: 'no-store',
     });
     if (!res.ok) return [];
     return res.json();

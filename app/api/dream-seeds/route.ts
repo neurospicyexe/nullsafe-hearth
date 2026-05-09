@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const res = await fetch(`${base()}/dream-seeds`, {
       headers: authHeader(),
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
     if (!res.ok) return NextResponse.json({ error: `Halseth returned ${res.status}` }, { status: 502 });
     return NextResponse.json(await res.json());
