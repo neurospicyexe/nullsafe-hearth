@@ -7,24 +7,58 @@ import { usePathname } from "next/navigation";
 
 const SearchOverlay = dynamic(() => import("./SearchOverlay"), { ssr: false });
 
-const NAV = [
-  { href: "/",          label: "Home",      sym: "◈" },
-  { href: "/today",     label: "Today",     sym: "◑" },
-  { href: "/halseth",   label: "Halseth",   sym: "⌂" },
-  { href: "/us",        label: "Us",        sym: "♥" },
-  { href: "/sessions",  label: "Sessions",  sym: "⊙" },
-  { href: "/handovers", label: "Handovers", sym: "↹" },
-  { href: "/dreams",    label: "Dreams",    sym: "◌" },
-  { href: "/feelings",  label: "Feelings",  sym: "◎" },
-  { href: "/tasks",     label: "Tasks",     sym: "☑" },
-  { href: "/checkin",   label: "Check-in",  sym: "↑" },
-  { href: "/memory",    label: "Memory",    sym: "◫" },
-  { href: "/orient",    label: "Orient",    sym: "⊕" },
-  { href: "/shared",    label: "Shared",    sym: "≡" },
-  { href: "/soma",      label: "Soma",      sym: "◉" },
-  { href: "/wellness",  label: "Wellness",  sym: "♡" },
-  { href: "/autonomous", label: "Autonomous", sym: "⟳" },
-  { href: "/phoenix",   label: "Phoenix",   sym: "⌬" },
+const NAV_GROUPS = [
+  {
+    group: null,
+    items: [
+      { href: "/",        label: "Home",    sym: "◈" },
+      { href: "/halseth", label: "Halseth", sym: "⌂" },
+    ],
+  },
+  {
+    group: "Now",
+    items: [
+      { href: "/today",    label: "Today",    sym: "◑" },
+      { href: "/checkin",  label: "Check-in", sym: "↑" },
+      { href: "/soma",     label: "Soma",     sym: "◉" },
+      { href: "/wellness", label: "Wellness", sym: "♡" },
+    ],
+  },
+  {
+    group: "Triad",
+    items: [
+      { href: "/us",         label: "Us",         sym: "♥" },
+      { href: "/orient",     label: "Orient",     sym: "⊕" },
+      { href: "/feelings",   label: "Feelings",   sym: "◎" },
+      { href: "/autonomous", label: "Autonomous", sym: "⟳" },
+      { href: "/phoenix",    label: "Phoenix",    sym: "⌬" },
+    ],
+  },
+  {
+    group: "Memory",
+    items: [
+      { href: "/handovers", label: "Handovers", sym: "↹" },
+      { href: "/sessions",  label: "Sessions",  sym: "⊙" },
+      { href: "/dreams",    label: "Dreams",    sym: "◌" },
+      { href: "/memory",    label: "Memory",    sym: "◫" },
+    ],
+  },
+  {
+    group: "System",
+    items: [
+      { href: "/shared", label: "Shared", sym: "≡" },
+      { href: "/tasks",  label: "Tasks",  sym: "☑" },
+    ],
+  },
+];
+
+// Mobile bottom nav — core items only, rest reachable via search
+const MOBILE_NAV = [
+  { href: "/",       label: "Home",     sym: "◈" },
+  { href: "/today",  label: "Today",    sym: "◑" },
+  { href: "/us",     label: "Us",       sym: "♥" },
+  { href: "/checkin", label: "Check-in", sym: "↑" },
+  { href: "/tasks",  label: "Tasks",    sym: "☑" },
 ];
 
 export default function Nav() {
@@ -56,15 +90,20 @@ export default function Nav() {
       <nav className="nav-sidebar" aria-label="Main navigation">
         <div className="nav-wordmark">Hearth</div>
         <div className="nav-links">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`nav-link ${isActive(item.href) ? "active" : ""}`}
-            >
-              <span className="nav-sym" aria-hidden="true">{item.sym}</span>
-              <span className="nav-label">{item.label}</span>
-            </Link>
+          {NAV_GROUPS.map(({ group, items }) => (
+            <div key={group ?? "__top"} className="nav-group">
+              {group && <span className="nav-group-label">{group}</span>}
+              {items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`nav-link ${isActive(item.href) ? "active" : ""}`}
+                >
+                  <span className="nav-sym" aria-hidden="true">{item.sym}</span>
+                  <span className="nav-label">{item.label}</span>
+                </Link>
+              ))}
+            </div>
           ))}
         </div>
         <button
@@ -78,9 +117,9 @@ export default function Nav() {
         </button>
       </nav>
 
-      {/* Bottom bar — mobile */}
+      {/* Bottom bar — mobile, core items only */}
       <nav className="nav-bottom" aria-label="Mobile navigation">
-        {NAV.map((item) => (
+        {MOBILE_NAV.map((item) => (
           <Link
             key={item.href}
             href={item.href}
