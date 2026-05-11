@@ -1447,6 +1447,16 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .companion-header-tagline { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 0; }
 .letter-section-wrap { display: flex; flex-direction: column; gap: 0.75rem; }
 
+/* ── Companion tab strip ─────────────────────────────────────────────────── */
+.companion-tab-strip { display: flex; flex-direction: column; gap: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; padding-bottom: 0.75rem; }
+.companion-tab-identity { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; }
+.companion-tab-sym { font-size: 1.1rem; line-height: 1; }
+.companion-tab-name { font-size: 0.88rem; font-weight: 600; letter-spacing: 0.02em; }
+.companion-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.companion-tab { padding: 0.3rem 0.75rem; border-radius: var(--radius); border: 1px solid transparent; font-size: 0.78rem; color: var(--muted); text-decoration: none; transition: color 0.15s, border-color 0.15s, background 0.15s; }
+.companion-tab:hover { color: var(--fg); background: var(--surface-2); }
+.companion-tab.active { color: var(--fg); border-color: var(--border-strong); background: var(--surface-2); }
+
 /* ── Audit / Witness entries (sections.tsx) ──────────────────────────────── */
 .entry-meta-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
 .entry-content { font-size: 0.88rem; color: var(--fg); line-height: 1.5; }
