@@ -971,6 +971,8 @@ export type GrowthJournalEntry = {
   tags_json: string; // JSON-encoded string[], parse with JSON.parse
   run_id: string | null;
   created_at: string;
+  review_status?: "pending" | "accepted" | "declined";
+  reviewed_at?: string | null;
 };
 
 export type GrowthPattern = {

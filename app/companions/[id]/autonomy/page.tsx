@@ -8,9 +8,9 @@ import {
 } from "@/lib/halseth";
 import type {
   AutonomyRun,
-  AutonomySeed,
 } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
+import SeedsClient from "./SeedsClient";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
@@ -164,105 +164,13 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
       {/* ── Section 2: Seeds ── */}
       <section className="page-section">
         <h2 className="section-title">Seeds</h2>
-
-        {noSeeds ? (
-          <p className="empty">No seeds seeded yet</p>
-        ) : (
-          <>
-            {/* Available seeds */}
-            <h3 style={{ fontSize: "0.85rem", color: "#94a3b8", fontWeight: 500, margin: "0 0 0.5rem" }}>
-              Available
-            </h3>
-            {availableSeeds.length === 0 ? (
-              <p className="empty" style={{ marginBottom: "1rem" }}>No seeds available</p>
-            ) : (
-              <div className="section-list" style={{ marginBottom: "1rem" }}>
-                {availableSeeds.map((seed) => {
-                  const seedTypeBadgeColor =
-                    seed.seed_type === "topic"              ? "#3b82f6" :
-                    seed.seed_type === "question"           ? "#f59e0b" :
-                    seed.seed_type === "reflection_prompt"  ? "#a855f7" : "#6b7280";
-
-                  return (
-                    <div
-                      key={seed.id}
-                      className="section-row"
-                      style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.35rem" }}
-                    >
-                      <span
-                        className="badge"
-                        style={{
-                          background: `${seedTypeBadgeColor}22`,
-                          color: seedTypeBadgeColor,
-                          border: `1px solid ${seedTypeBadgeColor}44`,
-                        }}
-                      >
-                        {seed.seed_type}
-                      </span>
-                      <p className="section-row-text" style={{ margin: 0 }}>
-                        {seed.content}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Used seeds — disclosure */}
-            {usedSeeds.length > 0 && (
-              <details style={{ marginTop: "0.5rem" }}>
-                <summary
-                  style={{
-                    cursor: "pointer",
-                    fontSize: "0.85rem",
-                    color: "#94a3b8",
-                    fontWeight: 500,
-                    userSelect: "none",
-                    listStyle: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                  }}
-                >
-                  {usedSeeds.length} used {usedSeeds.length === 1 ? "seed" : "seeds"}
-                </summary>
-                <div className="section-list" style={{ marginTop: "0.75rem" }}>
-                  {usedSeeds.map((seed) => {
-                    const seedTypeBadgeColor =
-                      seed.seed_type === "topic"              ? "#3b82f6" :
-                      seed.seed_type === "question"           ? "#f59e0b" :
-                      seed.seed_type === "reflection_prompt"  ? "#a855f7" : "#6b7280";
-
-                    return (
-                      <div
-                        key={seed.id}
-                        className="section-row"
-                        style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.35rem" }}
-                      >
-                        <span
-                          className="badge"
-                          style={{
-                            background: `${seedTypeBadgeColor}22`,
-                            color: seedTypeBadgeColor,
-                            border: `1px solid ${seedTypeBadgeColor}44`,
-                          }}
-                        >
-                          {seed.seed_type}
-                        </span>
-                        <p className="section-row-text" style={{ margin: 0 }}>
-                          {seed.content}
-                        </p>
-                        <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
-                          used {fmtTime(seed.used_at!)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </details>
-            )}
-          </>
-        )}
+        <SeedsClient
+          companionId={id}
+          companionColor={config.color}
+          availableSeeds={availableSeeds}
+          usedSeeds={usedSeeds}
+          noSeeds={noSeeds}
+        />
       </section>
     </div>
   );
