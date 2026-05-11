@@ -23,12 +23,19 @@ export default async function MemoryPage() {
 
   if (notes.status === "fulfilled") {
     for (const n of notes.value) {
+      // tags comes from D1 as raw JSON text, not a parsed array
+      let parsedTags: string[] | undefined;
+      if (Array.isArray(n.tags)) {
+        parsedTags = n.tags;
+      } else if (typeof n.tags === "string" && n.tags) {
+        try { parsedTags = JSON.parse(n.tags); } catch { /* ignore */ }
+      }
       entries.push({
         id:         n.id,
         type:       "companion_note",
         companion:  n.agent,
         content:    n.note_text,
-        tags:       n.tags ?? undefined,
+        tags:       Array.isArray(parsedTags) ? parsedTags : undefined,
         created_at: n.created_at,
       });
     }

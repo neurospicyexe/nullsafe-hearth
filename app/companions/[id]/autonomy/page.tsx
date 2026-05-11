@@ -95,7 +95,12 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
                 <div
                   key={run.id}
                   className="section-row"
-                  style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.4rem" }}
+                  style={{
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: "0.4rem",
+                    borderLeft: `3px solid ${statusColor}`,
+                  }}
                 >
                   {/* Type + status row */}
                   <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
