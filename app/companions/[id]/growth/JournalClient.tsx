@@ -79,7 +79,16 @@ export default function JournalClient({ entries, companionId, companionColor, ha
             <div
               key={entry.id}
               className="section-row"
-              style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.4rem" }}
+              style={{
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: "0.4rem",
+                borderLeft: `3px solid ${
+                  status === "accepted" ? "#22c55e" :
+                  status === "declined" ? "#ef444455" :
+                  `${companionColor}44`
+                }`,
+              }}
             >
               {/* Badges row */}
               <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>

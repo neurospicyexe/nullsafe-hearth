@@ -144,7 +144,7 @@ export default function MemoryBrowserClient({ entries }: { entries: MemoryEntry[
                     >
                       {TYPE_LABEL[e.type] ?? e.type}
                     </span>
-                    {e.tags && e.tags.length > 0 && (
+                    {Array.isArray(e.tags) && e.tags.length > 0 && (
                       <span className="note-item-tags">{e.tags.join(" · ")}</span>
                     )}
                     <span className="note-time">
