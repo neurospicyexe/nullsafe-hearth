@@ -47,6 +47,12 @@ const GROUP_LABELS: Record<keyof SearchResponse, string> = {
 
 const GROUP_ORDER: (keyof SearchResponse)[] = ["tasks", "notes", "wounds", "journal", "feelings", "dreams", "handovers"];
 
+const AGENT_COLORS: Record<string, string> = {
+  drevan: "var(--drevan)",
+  cypher: "var(--cypher)",
+  gaia:   "var(--gaia)",
+};
+
 function formatDate(dateStr: string): string {
   if (!dateStr) return "";
   return new Date(dateStr).toLocaleDateString(undefined, {
@@ -54,6 +60,23 @@ function formatDate(dateStr: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+type Preview = { before: string; match: string; after: string } | { plain: string };
+
+function getPreview(text: string, q: string): Preview {
+  const trimmed = q.trim();
+  const clip = (s: string, n: number) => s.length > n ? s.slice(0, n) + "…" : s;
+  if (!trimmed) return { plain: clip(text, 120) };
+  const idx = text.toLowerCase().indexOf(trimmed.toLowerCase());
+  if (idx === -1) return { plain: clip(text, 120) };
+  const start = Math.max(0, idx - 40);
+  const end = Math.min(text.length, idx + trimmed.length + 70);
+  return {
+    before: (start > 0 ? "…" : "") + text.slice(start, idx),
+    match: text.slice(idx, idx + trimmed.length),
+    after: text.slice(idx + trimmed.length, end) + (end < text.length ? "…" : ""),
+  };
 }
 
 interface SearchOverlayProps {
@@ -186,19 +209,35 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
             return (
               <div key={key} className="search-result-group">
                 <div className="search-result-group-label">{GROUP_LABELS[key]}</div>
-                {group.map((result) => (
-                  <div
-                    key={result.id}
-                    className="search-result-row"
-                    onClick={() => {
-                      router.push(result.url);
-                      onClose();
-                    }}
-                  >
-                    <span className="search-result-text">{result.text}</span>
-                    <span className="search-result-meta">{formatDate(result.created_at)}</span>
-                  </div>
-                ))}
+                {group.map((result) => {
+                  const preview = getPreview(result.text, q);
+                  const agentColor = result.agent ? AGENT_COLORS[result.agent] : null;
+                  return (
+                    <div
+                      key={result.id}
+                      className="search-result-row"
+                      onClick={() => {
+                        router.push(result.url);
+                        onClose();
+                      }}
+                    >
+                      <span className="search-result-text">
+                        {"plain" in preview
+                          ? preview.plain
+                          : <>{preview.before}<mark className="search-result-highlight">{preview.match}</mark>{preview.after}</>
+                        }
+                      </span>
+                      <span className="search-result-meta-row">
+                        {agentColor && result.agent && (
+                          <span className="search-result-agent" style={{ color: agentColor }}>
+                            {result.agent}
+                          </span>
+                        )}
+                        <span className="search-result-meta">{formatDate(result.created_at)}</span>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
