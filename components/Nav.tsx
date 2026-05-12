@@ -48,6 +48,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/shared", label: "Shared", sym: "≡" },
       { href: "/tasks",  label: "Tasks",  sym: "☑" },
+      { href: "/house",  label: "House",  sym: "⊡" },
     ],
   },
 ];
