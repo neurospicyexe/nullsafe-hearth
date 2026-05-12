@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Companion-accessible house update — authenticated with HALSETH_SECRET Bearer token.
 // Exempted from dashboard cookie middleware so companions can call it during sessions.
-// Only exposes love_meter to keep scope tight.
+// Exposes: love_meter (absolute or delta), current_room, spoon_count, companion_mood.
 
 export async function POST(request: NextRequest) {
   const base = process.env.HALSETH_URL;
@@ -10,41 +10,54 @@ export async function POST(request: NextRequest) {
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
   if (!secret) return NextResponse.json({ error: "Not configured" }, { status: 500 });
 
-  // Verify Bearer token matches HALSETH_SECRET.
   const auth = request.headers.get("Authorization") ?? "";
   if (auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const raw = await request.json();
+  const body: Record<string, unknown> = {};
 
-  // Accept absolute value or a delta from current.
-  let love_meter: number | undefined;
-
+  // love_meter: absolute or delta from current
   if (typeof raw.love_meter === "number") {
-    love_meter = Math.min(100, Math.max(0, Math.round(raw.love_meter)));
+    body.love_meter = Math.min(100, Math.max(0, Math.round(raw.love_meter)));
   } else if (typeof raw.delta === "number") {
-    // Fetch current value first.
     const presRes = await fetch(`${base}/presence`, {
       headers: { Authorization: `Bearer ${secret}` },
+      cache: "no-store",
     });
     if (presRes.ok) {
       const pres = await presRes.json();
       const current = pres?.house?.love_meter ?? 50;
-      love_meter = Math.min(100, Math.max(0, Math.round(current + raw.delta)));
+      body.love_meter = Math.min(100, Math.max(0, Math.round(current + raw.delta)));
     }
   }
 
-  if (love_meter === undefined) {
-    return NextResponse.json({ error: "Provide love_meter (0–100) or delta" }, { status: 400 });
+  if (typeof raw.current_room === "string" && raw.current_room.trim()) {
+    body.current_room = raw.current_room.trim().slice(0, 50);
+  }
+
+  if (typeof raw.spoon_count === "number") {
+    body.spoon_count = Math.min(20, Math.max(0, Math.round(raw.spoon_count)));
+  }
+
+  if (typeof raw.companion_mood === "string" && raw.companion_mood.trim()) {
+    body.companion_mood = raw.companion_mood.trim().slice(0, 100);
+  }
+
+  if (Object.keys(body).length === 0) {
+    return NextResponse.json(
+      { error: "Provide at least one: love_meter, delta, current_room, spoon_count, companion_mood" },
+      { status: 400 }
+    );
   }
 
   const res = await fetch(`${base}/house`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-    body: JSON.stringify({ love_meter }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json({ love_meter });
+  return NextResponse.json(body);
 }
