@@ -1225,6 +1225,28 @@ export async function fetchOrientDebug(agentId: string): Promise<OrientDebug | n
     .then(r => r?.debug ?? null);
 }
 
+// ── Metronome Actions ─────────────────────────────────────────────────────────
+
+export type MetronomeAction = {
+  id: string;
+  companion_id: string;
+  name: string;
+  action_type: string;
+  target: string | null;
+  prompt: string | null;
+  quiet_hours_allowed: number;
+  status: "on" | "off";
+  created_at: string;
+  updated_at: string;
+};
+
+export async function fetchMetronomeActions(companionId: string): Promise<MetronomeAction[]> {
+  const res = await hGetSafe<{ actions: MetronomeAction[] }>(
+    `/mind/metronome/actions/${encodeURIComponent(companionId)}`,
+  );
+  return res?.actions ?? [];
+}
+
 export async function fetchConclusions(
   agentId: string,
 ): Promise<ConclusionRow[]> {
