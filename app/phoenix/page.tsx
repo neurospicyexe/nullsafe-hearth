@@ -8,6 +8,7 @@ import {
   fetchAutonomyThreads,
   fetchSynthesisSummaries,
   fetchInterCompanionNotes,
+  fetchMetronomeActions,
 } from "@/lib/halseth";
 import type {
   WmOrientData,
@@ -18,7 +19,9 @@ import type {
   AutonomyThread,
   SynthesisSummary,
   InterCompanionNote,
+  MetronomeAction,
 } from "@/lib/halseth";
+import { MetronomeSection } from "./MetronomeSection";
 import { COMPANION_CONFIG, fmtTime } from "@/app/companions/[id]/sections";
 
 const COMPANIONS = ["drevan", "cypher", "gaia"] as const;
@@ -414,6 +417,7 @@ export default async function PhoenixPage() {
     drevanThreadsRes, cypherThreadsRes, gaiaThreadsRes,
     synthesisSummariesRes,
     interCompanionNotesRes,
+    drevanActionsRes, cypherActionsRes, gaiaActionsRes,
   ] = await Promise.allSettled([
     fetchSomaStates(),
     fetchWmOrient("drevan"),
@@ -430,6 +434,9 @@ export default async function PhoenixPage() {
     fetchAutonomyThreads("gaia"),
     fetchSynthesisSummaries(20),
     fetchInterCompanionNotes(12),
+    fetchMetronomeActions("drevan"),
+    fetchMetronomeActions("cypher"),
+    fetchMetronomeActions("gaia"),
   ]);
 
   const soma: SomaData | null =
@@ -476,6 +483,12 @@ export default async function PhoenixPage() {
   const interCompanionNotes: InterCompanionNote[] =
     interCompanionNotesRes.status === "fulfilled" ? interCompanionNotesRes.value : [];
 
+  const actionsMap: Record<"drevan" | "cypher" | "gaia", MetronomeAction[]> = {
+    drevan: drevanActionsRes.status === "fulfilled" ? drevanActionsRes.value : [],
+    cypher: cypherActionsRes.status === "fulfilled" ? cypherActionsRes.value : [],
+    gaia:   gaiaActionsRes.status   === "fulfilled" ? gaiaActionsRes.value   : [],
+  };
+
   return (
     <>
       <header className="page-header">
@@ -506,6 +519,8 @@ export default async function PhoenixPage() {
           />
         ))}
       </div>
+
+      <MetronomeSection actionsMap={actionsMap} />
 
       {/* Inter-companion notes */}
       {interCompanionNotes.length > 0 && (() => {
