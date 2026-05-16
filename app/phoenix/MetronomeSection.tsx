@@ -17,17 +17,83 @@ const ACTION_TYPES = [
   "write_journal",
   "write_feeling",
   "check_in_on_raziel",
+  "ask_question",
+  "offer_presence",
+  "send_reminder",
+  "share_observation",
   "nothing",
 ] as const;
 
 const ACTION_LABELS: Record<string, string> = {
-  post_heartbeat:        "post heartbeat",
+  post_heartbeat:        "heartbeat",
   write_inter_companion: "inter-companion",
   write_journal:         "journal",
   write_feeling:         "feeling",
   check_in_on_raziel:    "check in",
+  ask_question:          "ask question",
+  offer_presence:        "offer presence",
+  send_reminder:         "reminder",
+  share_observation:     "observation",
   nothing:               "nothing",
 };
+
+function ConditionBadges({ action }: { action: MetronomeAction }) {
+  const badges: { label: string; title: string }[] = [];
+
+  if (action.silence_min_hours !== null || action.silence_max_hours !== null) {
+    const min = action.silence_min_hours;
+    const max = action.silence_max_hours;
+    const label = min !== null && max !== null
+      ? `${min}h–${max}h silence`
+      : min !== null
+        ? `${min}h+ silence`
+        : `<${max!}h silence`;
+    badges.push({ label, title: "silence window condition" });
+  }
+
+  if (action.max_per_day !== null) {
+    badges.push({ label: `${action.max_per_day}x/day`, title: "max fires per day" });
+  }
+
+  if (action.cooldown_hours !== null) {
+    badges.push({ label: `${action.cooldown_hours}h cooldown`, title: "cooldown between fires" });
+  }
+
+  if (action.requires_signal) {
+    const lookback = action.signal_lookback_hours != null ? ` (${action.signal_lookback_hours}h)` : "";
+    badges.push({ label: `signal: ${action.requires_signal}${lookback}`, title: "requires this signal in recent messages" });
+  }
+
+  if (action.last_fired_at) {
+    const d = new Date(action.last_fired_at);
+    const hoursAgo = ((Date.now() - d.getTime()) / 3_600_000).toFixed(1);
+    badges.push({ label: `fired ${hoursAgo}h ago`, title: `last fired: ${d.toISOString()}` });
+  }
+
+  if (badges.length === 0) return null;
+
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.2rem", marginTop: "0.15rem" }}>
+      {badges.map((b) => (
+        <span
+          key={b.label}
+          title={b.title}
+          style={{
+            fontSize: "0.6rem",
+            padding: "0.1rem 0.3rem",
+            background: "#1e293b",
+            color: "#64748b",
+            border: "1px solid #334155",
+            borderRadius: "3px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {b.label}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function AddForm({
   companionId,
@@ -43,8 +109,24 @@ function AddForm({
   const [target, setTarget] = useState("");
   const [prompt, setPrompt] = useState("");
   const [quietHours, setQuietHours] = useState(false);
+  // condition fields
+  const [silenceMin, setSilenceMin] = useState("");
+  const [silenceMax, setSilenceMax] = useState("");
+  const [maxPerDay, setMaxPerDay] = useState("");
+  const [cooldown, setCooldown] = useState("");
+  const [requiresSignal, setRequiresSignal] = useState("");
+  const [signalLookback, setSignalLookback] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function parseOptFloat(v: string): number | null {
+    const n = parseFloat(v);
+    return v.trim() !== "" && !isNaN(n) ? n : null;
+  }
+  function parseOptInt(v: string): number | null {
+    const n = parseInt(v, 10);
+    return v.trim() !== "" && !isNaN(n) ? n : null;
+  }
 
   async function submit() {
     if (!name.trim()) return;
@@ -62,6 +144,12 @@ function AddForm({
           prompt: prompt.trim() || null,
           quiet_hours_allowed: quietHours ? 1 : 0,
           status: "on",
+          silence_min_hours: parseOptFloat(silenceMin),
+          silence_max_hours: parseOptFloat(silenceMax),
+          max_per_day: parseOptInt(maxPerDay),
+          cooldown_hours: parseOptFloat(cooldown),
+          requires_signal: requiresSignal.trim() || null,
+          signal_lookback_hours: parseOptFloat(signalLookback),
         }),
       });
       if (!res.ok) { setError("failed to add"); return; }
@@ -81,6 +169,18 @@ function AddForm({
     fontSize: "0.8rem",
     width: "100%",
     boxSizing: "border-box",
+  };
+
+  const halfInputStyle: React.CSSProperties = {
+    ...inputStyle,
+    width: "calc(50% - 0.2rem)",
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: "0.7rem",
+    color: "#64748b",
+    marginBottom: "0.1rem",
+    display: "block",
   };
 
   return (
@@ -128,6 +228,100 @@ function AddForm({
         rows={2}
         style={{ ...inputStyle, resize: "vertical" }}
       />
+
+      <div
+        style={{
+          borderTop: "1px solid #1e293b",
+          paddingTop: "0.4rem",
+          marginTop: "0.1rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.35rem",
+        }}
+      >
+        <span style={{ ...labelStyle, color: "#475569", fontSize: "0.68rem" }}>
+          conditions (all optional)
+        </span>
+
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>silence min (h)</label>
+            <input
+              type="number"
+              placeholder="e.g. 2"
+              min="0"
+              step="0.5"
+              value={silenceMin}
+              onChange={(e) => setSilenceMin(e.target.value)}
+              style={halfInputStyle}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>silence max (h)</label>
+            <input
+              type="number"
+              placeholder="e.g. 12"
+              min="0"
+              step="0.5"
+              value={silenceMax}
+              onChange={(e) => setSilenceMax(e.target.value)}
+              style={halfInputStyle}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>max per day</label>
+            <input
+              type="number"
+              placeholder="e.g. 1"
+              min="1"
+              step="1"
+              value={maxPerDay}
+              onChange={(e) => setMaxPerDay(e.target.value)}
+              style={halfInputStyle}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>cooldown (h)</label>
+            <input
+              type="number"
+              placeholder="e.g. 8"
+              min="0"
+              step="0.5"
+              value={cooldown}
+              onChange={(e) => setCooldown(e.target.value)}
+              style={halfInputStyle}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          <div style={{ flex: 2 }}>
+            <label style={labelStyle}>requires signal</label>
+            <input
+              placeholder="e.g. hyperfocus"
+              value={requiresSignal}
+              onChange={(e) => setRequiresSignal(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>lookback (h)</label>
+            <input
+              type="number"
+              placeholder="2"
+              min="0.5"
+              step="0.5"
+              value={signalLookback}
+              onChange={(e) => setSignalLookback(e.target.value)}
+              style={halfInputStyle}
+            />
+          </div>
+        </div>
+      </div>
+
       <label
         style={{
           display: "flex",
@@ -253,21 +447,24 @@ function CompanionPalette({
           <div
             key={action.id}
             className="section-row"
-            style={{ gap: "0.3rem", flexWrap: "nowrap", alignItems: "center" }}
+            style={{ gap: "0.3rem", flexWrap: "wrap", alignItems: "flex-start" }}
           >
-            <span
-              style={{
-                flex: "1 1 auto",
-                fontSize: "0.8rem",
-                color: action.status === "on" ? "#e2e8f0" : "#475569",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-              title={action.prompt ?? undefined}
-            >
-              {action.name}
-            </span>
+            <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize: "0.8rem",
+                  color: action.status === "on" ? "#e2e8f0" : "#475569",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  display: "block",
+                }}
+                title={action.prompt ?? undefined}
+              >
+                {action.name}
+              </span>
+              <ConditionBadges action={action} />
+            </div>
             <span
               className="badge"
               style={{
@@ -277,6 +474,7 @@ function CompanionPalette({
                 fontSize: "0.65rem",
                 flexShrink: 0,
                 whiteSpace: "nowrap",
+                alignSelf: "center",
               }}
             >
               {ACTION_LABELS[action.action_type] ?? action.action_type}
@@ -294,6 +492,7 @@ function CompanionPalette({
                 borderRadius: "3px",
                 cursor: "pointer",
                 flexShrink: 0,
+                alignSelf: "center",
               }}
             >
               {action.status}
@@ -310,6 +509,7 @@ function CompanionPalette({
                 borderRadius: "3px",
                 cursor: "pointer",
                 flexShrink: 0,
+                alignSelf: "center",
               }}
             >
               ×

@@ -1236,6 +1236,15 @@ export type MetronomeAction = {
   prompt: string | null;
   quiet_hours_allowed: number;
   status: "on" | "off";
+  silence_min_hours: number | null;
+  silence_max_hours: number | null;
+  max_per_day: number | null;
+  cooldown_hours: number | null;
+  requires_signal: string | null;
+  signal_lookback_hours: number | null;
+  last_fired_at: string | null;
+  fire_count_today: number;
+  fire_count_reset_at: string | null;
   created_at: string;
   updated_at: string;
 };
