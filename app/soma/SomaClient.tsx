@@ -176,13 +176,15 @@ export default function SomaClient({
   snapshots?: SomaticSnapshot[];
 }) {
   const [data, setData] = useState<SomaData | null>(initialData);
+  const [pollError, setPollError] = useState(false);
 
   useEffect(() => {
     const poll = setInterval(async () => {
       try {
         const res = await fetch("/api/soma");
-        if (res.ok) setData(await res.json());
-      } catch { /* silent */ }
+        if (res.ok) { setData(await res.json()); setPollError(false); }
+        else setPollError(true);
+      } catch { setPollError(true); }
     }, 30_000);
     return () => clearInterval(poll);
   }, []);
@@ -198,6 +200,9 @@ export default function SomaClient({
         ))}
       </div>
 
+      {pollError && (
+        <p className="soma-fetched" style={{ color: "var(--muted)" }}>connection lost — showing last known state</p>
+      )}
       {data?.fetched_at && (
         <p className="soma-fetched">fetched {relativeTime(data.fetched_at)}</p>
       )}
