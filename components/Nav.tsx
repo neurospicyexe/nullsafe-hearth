@@ -28,6 +28,7 @@ const NAV_GROUPS = [
     group: "Triad",
     items: [
       { href: "/us",         label: "Us",         sym: "♥" },
+      { href: "/home",       label: "The Home",   sym: "⌂" },
       { href: "/orient",     label: "Orient",     sym: "⊕" },
       { href: "/feelings",   label: "Feelings",   sym: "◎" },
       { href: "/autonomous", label: "Autonomous", sym: "⟳" },
