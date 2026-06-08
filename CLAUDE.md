@@ -82,6 +82,7 @@ Growth + autonomy endpoints (return empty arrays gracefully if not yet migrated)
 - `GET /mind/growth/markers?companion_id=`
 - `GET /mind/autonomy/runs/:companion_id?limit=`
 - `GET /mind/autonomy/seeds/:companion_id`
+- `GET /companion-growth/basin-history/:companion_id?limit=` -- per-companion basin readings (used directly in `app/home/page.tsx` via raw fetch, NOT via hGetSafe)
 
 Not yet in halseth (show placeholder): `GET /mind/health`, `/mind/patterns`, `/mind/recent`
 
