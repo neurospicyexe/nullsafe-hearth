@@ -26,15 +26,21 @@ export default function JournalClient({ entries, companionId, companionColor, ha
   const router = useRouter();
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const [localStatus, setLocalStatus] = useState<Record<string, "pending" | "accepted" | "declined">>({});
+  const [actionError, setActionError] = useState<string | null>(null);
 
   async function handleAction(id: string, action: "accept" | "decline") {
     setBusy((p) => ({ ...p, [id]: true }));
+    setActionError(null);
     try {
       const res = await fetch(`/api/mind/growth/journal/${id}/${action}`, { method: "PATCH" });
       if (res.ok) {
         setLocalStatus((p) => ({ ...p, [id]: action === "accept" ? "accepted" : "declined" }));
         router.refresh();
+      } else {
+        setActionError("Action failed — try again");
       }
+    } catch {
+      setActionError("Network error");
     } finally {
       setBusy((p) => ({ ...p, [id]: false }));
     }
@@ -46,6 +52,9 @@ export default function JournalClient({ entries, companionId, companionColor, ha
 
   return (
     <>
+      {actionError && (
+        <p style={{ margin: "0 0 0.5rem", fontSize: "0.78rem", color: "#ef4444" }}>{actionError}</p>
+      )}
       <div className="section-list">
         {entries.map((entry) => {
           const typeBadgeColor =

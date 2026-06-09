@@ -180,6 +180,8 @@ function AddForm({
       if (!res.ok) { setError("failed to add"); return; }
       const data = await res.json() as MetronomeAction;
       onAdded(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
     } finally {
       setSaving(false);
     }

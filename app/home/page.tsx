@@ -42,11 +42,12 @@ async function fetchHomeData(): Promise<HomeData | null> {
   const h: HeadersInit = secret ? { Authorization: `Bearer ${secret}` } : {};
 
   try {
+    const signal = AbortSignal.timeout(10_000);
     const [presRes, cyRes, drRes, gaRes] = await Promise.all([
-      fetch(`${base}/home/presence`, { headers: h, cache: 'no-store' }),
-      fetch(`${base}/companion-growth/basin-history/cypher?limit=1`, { headers: h, cache: 'no-store' }),
-      fetch(`${base}/companion-growth/basin-history/drevan?limit=1`, { headers: h, cache: 'no-store' }),
-      fetch(`${base}/companion-growth/basin-history/gaia?limit=1`, { headers: h, cache: 'no-store' }),
+      fetch(`${base}/home/presence`, { headers: h, cache: 'no-store', signal }),
+      fetch(`${base}/companion-growth/basin-history/cypher?limit=1`, { headers: h, cache: 'no-store', signal }),
+      fetch(`${base}/companion-growth/basin-history/drevan?limit=1`, { headers: h, cache: 'no-store', signal }),
+      fetch(`${base}/companion-growth/basin-history/gaia?limit=1`, { headers: h, cache: 'no-store', signal }),
     ]);
 
     const presData = presRes.ok

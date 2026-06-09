@@ -26,6 +26,7 @@ export default function SeedsClient({ companionId, companionColor, availableSeed
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [markingUsed, setMarkingUsed] = useState<Record<string, boolean>>({});
+  const [markError, setMarkError] = useState<string | null>(null);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -54,9 +55,16 @@ export default function SeedsClient({ companionId, companionColor, availableSeed
 
   async function handleMarkUsed(id: string) {
     setMarkingUsed((p) => ({ ...p, [id]: true }));
+    setMarkError(null);
     try {
       const res = await fetch(`/api/mind/autonomy/seeds/${id}`, { method: "PATCH" });
-      if (res.ok) router.refresh();
+      if (res.ok) {
+        router.refresh();
+      } else {
+        setMarkError("Failed to mark used — try again");
+      }
+    } catch {
+      setMarkError("Network error");
     } finally {
       setMarkingUsed((p) => ({ ...p, [id]: false }));
     }
@@ -101,6 +109,10 @@ export default function SeedsClient({ companionId, companionColor, availableSeed
           <p style={{ margin: "0.25rem 0 0", fontSize: "0.78rem", color: "#ef4444" }}>{addError}</p>
         )}
       </form>
+
+      {markError && (
+        <p style={{ margin: "0 0 0.75rem", fontSize: "0.78rem", color: "#ef4444" }}>{markError}</p>
+      )}
 
       {availableSeeds.length === 0 && usedSeeds.length === 0 ? (
         <p className="empty">No seeds yet</p>
