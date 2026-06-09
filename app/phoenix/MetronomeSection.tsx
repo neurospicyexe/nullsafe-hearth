@@ -11,6 +11,8 @@ const COMPANION_DISPLAY: Record<CompanionId, { sym: string; label: string; color
   gaia:   { sym: "◉", label: "Gaia",   color: "#4ade80" },
 };
 
+const COMPANION_IDS = Object.keys(COMPANION_DISPLAY) as CompanionId[];
+
 const ACTION_TYPES = [
   "post_heartbeat",
   "write_inter_companion",
@@ -35,6 +37,29 @@ const ACTION_LABELS: Record<string, string> = {
   send_reminder:         "reminder",
   share_observation:     "observation",
   nothing:               "nothing",
+};
+
+const inputStyle: React.CSSProperties = {
+  background: "#1e293b",
+  border: "1px solid #334155",
+  borderRadius: "4px",
+  padding: "0.25rem 0.5rem",
+  color: "#e2e8f0",
+  fontSize: "0.8rem",
+  width: "100%",
+  boxSizing: "border-box",
+};
+
+const halfInputStyle: React.CSSProperties = {
+  ...inputStyle,
+  width: "calc(50% - 0.2rem)",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: "0.7rem",
+  color: "#64748b",
+  marginBottom: "0.1rem",
+  display: "block",
 };
 
 function ConditionBadges({ action }: { action: MetronomeAction }) {
@@ -159,29 +184,6 @@ function AddForm({
       setSaving(false);
     }
   }
-
-  const inputStyle: React.CSSProperties = {
-    background: "#1e293b",
-    border: "1px solid #334155",
-    borderRadius: "4px",
-    padding: "0.25rem 0.5rem",
-    color: "#e2e8f0",
-    fontSize: "0.8rem",
-    width: "100%",
-    boxSizing: "border-box",
-  };
-
-  const halfInputStyle: React.CSSProperties = {
-    ...inputStyle,
-    width: "calc(50% - 0.2rem)",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: "0.7rem",
-    color: "#64748b",
-    marginBottom: "0.1rem",
-    display: "block",
-  };
 
   return (
     <div
@@ -576,7 +578,7 @@ export function MetronomeSection({
           gap: "1.25rem",
         }}
       >
-        {(["drevan", "cypher", "gaia"] as const).map((id) => (
+        {COMPANION_IDS.map((id) => (
           <CompanionPalette
             key={id}
             id={id}

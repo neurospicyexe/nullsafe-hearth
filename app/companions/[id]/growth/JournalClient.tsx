@@ -3,22 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { GrowthJournalEntry } from "@/lib/halseth";
+import { fmtTime } from "../sections";
 
-function fmtTime(s: string) {
-  return new Date(s).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+function colorBadge(color: string): React.CSSProperties {
+  return { background: `${color}22`, color, border: `1px solid ${color}44` };
 }
 
 function ReviewBadge({ status }: { status?: "pending" | "accepted" | "declined" }) {
   if (!status || status === "pending") return null;
   const color = status === "accepted" ? "#22c55e" : "#ef4444";
-  return (
-    <span
-      className="badge"
-      style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
-    >
-      {status}
-    </span>
-  );
+  return <span className="badge" style={colorBadge(color)}>{status}</span>;
 }
 
 interface Props {
@@ -92,25 +86,11 @@ export default function JournalClient({ entries, companionId, companionColor, ha
             >
               {/* Badges row */}
               <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
-                <span
-                  className="badge"
-                  style={{
-                    background: `${typeBadgeColor}22`,
-                    color: typeBadgeColor,
-                    border: `1px solid ${typeBadgeColor}44`,
-                  }}
-                >
+                <span className="badge" style={colorBadge(typeBadgeColor)}>
                   {entry.entry_type}
                 </span>
                 {entry.source && sourceBadgeColor && (
-                  <span
-                    className="badge"
-                    style={{
-                      background: `${sourceBadgeColor}22`,
-                      color: sourceBadgeColor,
-                      border: `1px solid ${sourceBadgeColor}44`,
-                    }}
-                  >
+                  <span className="badge" style={colorBadge(sourceBadgeColor)}>
                     {entry.source}
                   </span>
                 )}

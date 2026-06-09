@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AutonomySeed } from "@/lib/halseth";
-
-function fmtTime(s: string) {
-  return new Date(s).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
+import { fmtTime } from "../sections";
 
 const SEED_TYPES = ["topic", "question", "reflection_prompt"] as const;
 type SeedType = typeof SEED_TYPES[number];
@@ -20,10 +17,9 @@ interface Props {
   companionColor: string;
   availableSeeds: AutonomySeed[];
   usedSeeds: AutonomySeed[];
-  noSeeds: boolean;
 }
 
-export default function SeedsClient({ companionId, companionColor, availableSeeds, usedSeeds, noSeeds }: Props) {
+export default function SeedsClient({ companionId, companionColor, availableSeeds, usedSeeds }: Props) {
   const router = useRouter();
   const [content, setContent] = useState("");
   const [seedType, setSeedType] = useState<SeedType>("topic");
@@ -106,7 +102,7 @@ export default function SeedsClient({ companionId, companionColor, availableSeed
         )}
       </form>
 
-      {noSeeds && availableSeeds.length === 0 ? (
+      {availableSeeds.length === 0 && usedSeeds.length === 0 ? (
         <p className="empty">No seeds yet</p>
       ) : (
         <>

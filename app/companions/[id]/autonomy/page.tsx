@@ -48,8 +48,6 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
       return bTime - aTime;
     });
 
-  const noSeeds = allSeeds.length === 0;
-
   return (
     <div data-companion={id}>
       {/* Back link */}
@@ -174,7 +172,6 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
           companionColor={config.color}
           availableSeeds={availableSeeds}
           usedSeeds={usedSeeds}
-          noSeeds={noSeeds}
         />
       </section>
     </div>

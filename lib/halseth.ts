@@ -50,16 +50,10 @@ async function hGetSafe<T>(path: string): Promise<T | null> {
 }
 
 async function hPost<T>(path: string, body: unknown): Promise<T | null> {
-  const url = process.env.HALSETH_URL;
-  const secret = process.env.HALSETH_SECRET;
-  if (!url || !secret) return null;
   try {
-    const res = await fetchWithTimeout(`${url}${path}`, {
+    const res = await fetchWithTimeout(`${base()}${path}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${secret}`,
-      },
+      headers: { "Content-Type": "application/json", ...authHeader() },
       body: JSON.stringify(body),
       cache: "no-store",
     });
@@ -1256,24 +1250,9 @@ export async function fetchMetronomeActions(companionId: string): Promise<Metron
   return res?.actions ?? [];
 }
 
-export async function fetchConclusions(
-  agentId: string,
-): Promise<ConclusionRow[]> {
-  const url = process.env.HALSETH_URL;
-  const secret = process.env.HALSETH_SECRET;
-  if (!url || !secret) return [];
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(`${url}/companion-conclusions?agent_id=${agentId}`, {
-      headers: { Authorization: `Bearer ${secret}` },
-      cache: "no-store",
-      signal: controller.signal,
-    }).finally(() => clearTimeout(timer));
-    if (!res.ok) return [];
-    const data = await res.json() as { conclusions?: ConclusionRow[] };
-    return data?.conclusions ?? [];
-  } catch {
-    return [];
-  }
+export async function fetchConclusions(agentId: string): Promise<ConclusionRow[]> {
+  const res = await hGetSafe<{ conclusions?: ConclusionRow[] }>(
+    `/companion-conclusions?agent_id=${encodeURIComponent(agentId)}`,
+  );
+  return res?.conclusions ?? [];
 }
