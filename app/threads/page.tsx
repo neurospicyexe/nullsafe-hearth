@@ -160,6 +160,8 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
             >
               <div className="companion-note-text">{n.note_text}</div>
               <div className="companion-note-meta">
+                {/* tags exists on companion_notes but not on inter_companion_notes;
+                    if the data source ever switches, remove this block entirely */}
                 {n.tags?.map((tag) => (
                   <span key={tag} className="companion-note-tag">{tag}</span>
                 ))}

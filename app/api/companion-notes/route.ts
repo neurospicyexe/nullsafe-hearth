@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     ? `${base}/companion-notes?agent=${encodeURIComponent(agent)}`
     : `${base}/companion-notes`;
 
-  const res = await fetch(url, { headers: authHeaders() });
+  const res = await fetch(url, { headers: authHeaders(), cache: "no-store" });
   if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
   return NextResponse.json(await res.json());
 }

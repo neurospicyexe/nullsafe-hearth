@@ -19,6 +19,7 @@ export async function POST(
       ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
     },
     body: JSON.stringify(body),
+    cache: "no-store",
   });
 
   if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
