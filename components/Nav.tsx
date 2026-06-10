@@ -31,6 +31,7 @@ const NAV_GROUPS = [
       { href: "/home",       label: "The Home",   sym: "⌂" },
       { href: "/orient",     label: "Orient",     sym: "⊕" },
       { href: "/feelings",   label: "Feelings",   sym: "◎" },
+      { href: "/basins",     label: "Basins",     sym: "≋" },
       { href: "/autonomous", label: "Autonomous", sym: "⟳" },
       { href: "/phoenix",    label: "Phoenix",    sym: "⌬" },
     ],
