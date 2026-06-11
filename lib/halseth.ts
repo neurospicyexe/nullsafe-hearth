@@ -954,6 +954,27 @@ export async function fetchBasinHistory(companionId?: string, limit = 10): Promi
   return (await hGetSafe<BasinHistory[]>(`/ingest/basin-history?${q}`)) ?? [];
 }
 
+// ── Unified Guardian (0073) ──────────────────────────────────────────────────
+
+export type GuardianFlag = {
+  id: string;
+  companion_id: string | null; // null = system-wide
+  flag_type: "voice_drift" | "starved_organ" | "loop_stuck" | "burnout" | "basin_pressure" | "ratification_backlog";
+  severity: "notice" | "warning" | "red";
+  summary: string;
+  evidence_json: string | null;
+  status: "open" | "surfaced" | "acknowledged" | "resolved";
+  created_at: string;
+  surfaced_at: string | null;
+  resolved_at: string | null;
+};
+
+export async function fetchGuardianFlags(status = "live", limit = 50): Promise<GuardianFlag[]> {
+  // Response is a { flags: [...] } envelope -- unwrap, never assume bare array
+  const r = await hGetSafe<{ flags: GuardianFlag[] }>(`/mind/guardian/flags?status=${status}&limit=${limit}`);
+  return r?.flags ?? [];
+}
+
 // ── Growth (autonomous worker artifacts) ─────────────────────────────────────
 
 export type GrowthJournalEntry = {
