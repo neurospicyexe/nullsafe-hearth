@@ -1256,3 +1256,66 @@ export async function fetchConclusions(agentId: string): Promise<ConclusionRow[]
   );
   return res?.conclusions ?? [];
 }
+
+// ── The Club (migration 0072) ────────────────────────────────────────────────
+
+export type ClubRound = {
+  id: string;
+  status: "gathering" | "voting" | "active" | "closed";
+  winning_recommendation_id: string | null;
+  opened_at: string;
+  activated_at: string | null;
+  closed_at: string | null;
+};
+
+export type ClubRecommendation = {
+  id: string;
+  round_id: string;
+  media_kind: string;
+  title: string;
+  creator: string | null;
+  url: string | null;
+  source_ref: string | null;
+  recommended_by: string;
+  pitch: string | null;
+  created_at: string;
+};
+
+export type ClubVote = {
+  round_id: string;
+  recommendation_id: string;
+  voter: string;
+  reason: string | null;
+  created_at: string;
+};
+
+export type ClubDiscussion = {
+  id: string;
+  round_id: string;
+  companion_id: string;
+  reflection: string;
+  created_at: string;
+};
+
+export type ClubCurrent = {
+  round: ClubRound | null;
+  recommendations: ClubRecommendation[];
+  votes: ClubVote[];
+  discussions: ClubDiscussion[];
+};
+
+export type ClubRoundDetail = ClubRound & {
+  winner_title: string | null;
+  recommendations: ClubRecommendation[];
+  votes: ClubVote[];
+  discussions: ClubDiscussion[];
+};
+
+export async function fetchClubCurrent(): Promise<ClubCurrent | null> {
+  return await hGetSafe<ClubCurrent>("/mind/club/current");
+}
+
+export async function fetchClubRounds(limit = 10): Promise<ClubRoundDetail[]> {
+  const res = await hGetSafe<{ rounds?: ClubRoundDetail[] }>(`/mind/club/rounds?limit=${limit}`);
+  return res?.rounds ?? [];
+}
