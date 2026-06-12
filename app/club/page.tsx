@@ -1,5 +1,6 @@
 import { fetchClubCurrent, fetchClubRounds } from "@/lib/halseth";
 import type { ClubRecommendation, ClubRoundDetail, ClubVote } from "@/lib/halseth";
+import VoteButton from "./VoteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +30,19 @@ function memberSpan(name: string) {
   return <span style={{ color: MEMBER_COLOR[name] ?? "inherit" }}>{name}</span>;
 }
 
-function Candidates({ recs, votes, winnerId }: {
-  recs: ClubRecommendation[]; votes: ClubVote[]; winnerId: string | null;
+function Candidates({ recs, votes, winnerId, votable = false }: {
+  recs: ClubRecommendation[]; votes: ClubVote[]; winnerId: string | null; votable?: boolean;
 }) {
   if (recs.length === 0) return <p className="empty">No recommendations yet.</p>;
+  // One vote per voter per round (re-vote replaces) -- show where Raziel's vote sits.
+  const razielVoteRecId = votes.find(v => v.voter === "raziel")?.recommendation_id ?? null;
   return (
     <div className="handover-feed">
       {recs.map((rec) => {
         const recVotes = votes.filter(v => v.recommendation_id === rec.id);
         const isWinner = rec.id === winnerId;
+        // No-self-vote applies to Raziel too -- hide the button on Raziel's own pick.
+        const showVote = votable && rec.recommended_by !== "raziel";
         return (
           <div key={rec.id} className="handover-entry" style={isWinner ? { borderLeft: "2px solid #f59e0b" } : undefined}>
             <p className="handover-spine">
@@ -45,6 +50,11 @@ function Candidates({ recs, votes, winnerId }: {
               {rec.url ? <a href={rec.url} target="_blank" rel="noopener noreferrer">{rec.title}</a> : rec.title}
               {rec.creator ? ` — ${rec.creator}` : ""}
               <span className="thread-tag" style={{ marginLeft: "0.5rem" }}>{rec.media_kind}</span>
+              {showVote && (
+                <span style={{ marginLeft: "0.5rem" }}>
+                  <VoteButton recommendationId={rec.id} alreadyVoted={razielVoteRecId === rec.id} />
+                </span>
+              )}
             </p>
             <p className="handover-last-real">
               {memberSpan(rec.recommended_by)}{rec.pitch ? <>: “{rec.pitch}”</> : null}
@@ -66,6 +76,7 @@ function Candidates({ recs, votes, winnerId }: {
 }
 
 function RoundCard({ round, heading }: { round: ClubRoundDetail; heading?: string }) {
+  const votable = round.status === "gathering" || round.status === "voting";
   return (
     <section style={{ marginBottom: "2rem" }}>
       {heading && <h2 className="page-title" style={{ fontSize: "1.1rem" }}>{heading}</h2>}
@@ -73,7 +84,7 @@ function RoundCard({ round, heading }: { round: ClubRoundDetail; heading?: strin
         {PHASE_LABEL[round.status] ?? round.status} · opened {formatTime(round.opened_at)}
         {round.closed_at ? ` · closed ${formatTime(round.closed_at)}` : ""}
       </p>
-      <Candidates recs={round.recommendations} votes={round.votes} winnerId={round.winning_recommendation_id} />
+      <Candidates recs={round.recommendations} votes={round.votes} winnerId={round.winning_recommendation_id} votable={votable} />
       {round.discussions.length > 0 && (
         <div style={{ marginTop: "1rem" }}>
           {round.discussions.map((d) => (
