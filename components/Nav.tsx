@@ -34,6 +34,8 @@ const NAV_GROUPS = [
       { href: "/basins",     label: "Basins",     sym: "≋" },
       { href: "/club",       label: "Club",       sym: "♫" },
       { href: "/gallery",    label: "Gallery",    sym: "▦" },
+      { href: "/creatures",  label: "Creatures",  sym: "✦" },
+      { href: "/collection", label: "Collection", sym: "❖" },
       { href: "/autonomous", label: "Autonomous", sym: "⟳" },
       { href: "/guardian",   label: "Guardian",   sym: "⛨" },
       { href: "/phoenix",    label: "Phoenix",    sym: "⌬" },

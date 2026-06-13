@@ -1361,3 +1361,79 @@ export async function fetchToolImages(companionId: string, limit = 40): Promise<
   );
   return (res?.calls ?? []).filter(c => c.status === "success" && c.result_ref);
 }
+
+// ── Creatures (0078, take 10): corvid + Raziel's animals as named presences ──
+export type Creature = {
+  id: string;
+  name: string;
+  species: string | null;
+  kind: string;            // companion_pet | real_animal
+  owner: string;
+  bio: string | null;
+  state_json: string | null;
+  trust: number;
+  last_interaction_at: string | null;
+  created_at: string;
+};
+
+export type CreatureInteraction = {
+  id: string;
+  actor: string;
+  action: string;
+  note: string | null;
+  created_at: string;
+};
+
+export async function fetchCreatures(): Promise<Creature[]> {
+  const res = await hGetSafe<{ creatures?: Creature[] }>("/mind/creatures");
+  return res?.creatures ?? [];
+}
+
+export async function fetchCreature(
+  id: string,
+): Promise<{ creature: Creature; interactions: CreatureInteraction[] } | null> {
+  return await hGetSafe<{ creature: Creature; interactions: CreatureInteraction[] }>(
+    `/mind/creatures/${encodeURIComponent(id)}`,
+  );
+}
+
+/** Mood label off a creature's state_json (best-effort; null if absent/malformed). */
+export function creatureMood(c: Creature): string | null {
+  if (!c.state_json) return null;
+  try {
+    return (JSON.parse(c.state_json) as { mood?: string }).mood ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Collection / sparkle (0079, take 13): emotional archaeology over what's gathered ──
+export type CollectionForageItem = {
+  id: string;
+  title: string;
+  domain: string;
+  summary: string;
+  source_url: string | null;
+  consumed_at: string | null;
+  gathered_at: string;
+  sparkle: number;
+};
+
+export type CollectionListenItem = {
+  id: string;
+  title: string;
+  artist: string | null;
+  media_type: string;
+  created_at: string;
+  sparkle: number;
+};
+
+export async function fetchCollection(
+  companionId: string,
+  limit = 30,
+): Promise<{ forage: CollectionForageItem[]; listens: CollectionListenItem[] }> {
+  const res = await hGetSafe<{ forage?: CollectionForageItem[]; listens?: CollectionListenItem[] }>(
+    `/mind/collection/${encodeURIComponent(companionId)}?limit=${limit}`,
+  );
+  return { forage: res?.forage ?? [], listens: res?.listens ?? [] };
+}
