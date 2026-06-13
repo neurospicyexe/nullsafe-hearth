@@ -1340,3 +1340,24 @@ export async function fetchClubRounds(limit = 10): Promise<ClubRoundDetail[]> {
   const res = await hGetSafe<{ rounds?: ClubRoundDetail[] }>(`/mind/club/rounds?limit=${limit}`);
   return res?.rounds ?? [];
 }
+
+// ── Companion tools (0077, take 14): generated-image gallery + tool-call log ──
+export type ToolCall = {
+  id: string;
+  companion_id: string;
+  tool: string;            // web_search | generate_image
+  args_summary: string;
+  status: string;          // success | error | denied
+  provider: string | null;
+  result_ref: string | null;
+  result_summary: string | null;
+  created_at: string;
+};
+
+/** Generated images for one companion (audit rows where tool=generate_image, status=success). */
+export async function fetchToolImages(companionId: string, limit = 40): Promise<ToolCall[]> {
+  const res = await hGetSafe<{ calls?: ToolCall[] }>(
+    `/mind/tools/calls/${companionId}?tool=generate_image&limit=${limit}`,
+  );
+  return (res?.calls ?? []).filter(c => c.status === "success" && c.result_ref);
+}
