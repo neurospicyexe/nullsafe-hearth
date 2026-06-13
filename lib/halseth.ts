@@ -1437,3 +1437,27 @@ export async function fetchCollection(
   );
   return { forage: res?.forage ?? [], listens: res?.listens ?? [] };
 }
+
+// ── Council (0080, take 8): convene a hard question, blind cross-rank, Gaia synthesis ──
+export type CouncilRound = {
+  id: string;
+  question: string;
+  asked_by: string;
+  status: string;                       // open | answered | closed
+  winning_companion_id: string | null;
+  synthesis: string | null;
+  created_at: string;
+  closed_at?: string | null;
+};
+
+export type CouncilAnswer = { companion_id: string; answer: string; created_at: string };
+
+export async function fetchCouncilCurrent(): Promise<{ round: CouncilRound | null; answers: CouncilAnswer[] }> {
+  const res = await hGetSafe<{ round: CouncilRound | null; answers?: CouncilAnswer[] }>("/mind/council/current");
+  return { round: res?.round ?? null, answers: res?.answers ?? [] };
+}
+
+export async function fetchCouncilRounds(limit = 10): Promise<CouncilRound[]> {
+  const res = await hGetSafe<{ rounds?: CouncilRound[] }>(`/mind/council/rounds?limit=${limit}`);
+  return res?.rounds ?? [];
+}
