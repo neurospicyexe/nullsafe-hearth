@@ -1461,3 +1461,58 @@ export async function fetchCouncilRounds(limit = 10): Promise<CouncilRound[]> {
   const res = await hGetSafe<{ rounds?: CouncilRound[] }>(`/mind/council/rounds?limit=${limit}`);
   return res?.rounds ?? [];
 }
+
+// ── Memory graph (take 5): the constellation of what-prehends-what across growth rows ──
+export type GraphNode = { id: string; label: string; companion_id: string };
+export type GraphEdge = { from: string; to: string };
+
+type RawGrowthRow = {
+  id: string;
+  entry_type?: string;
+  content?: string;
+  pattern_text?: string;
+  prehended_ids?: string | string[] | null;
+};
+
+function parsePrehended(raw: string | string[] | null | undefined): string[] {
+  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === "string");
+  if (typeof raw !== "string" || !raw.trim()) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Build the prehension graph from each companion's growth journal + patterns. Nodes are
+ * growth rows; an edge runs from a row to each row it PREHENDED (prehended_ids). Edges to
+ * rows outside the loaded window are dropped so the graph stays well-formed. Read-only.
+ */
+export async function fetchMemoryGraph(limit = 60): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] }> {
+  const companions = ["cypher", "drevan", "gaia"] as const;
+  const nodes: GraphNode[] = [];
+  const nodeIds = new Set<string>();
+  const rawEdges: GraphEdge[] = [];
+
+  for (const c of companions) {
+    const [j, p] = await Promise.all([
+      hGetSafe<{ journal?: RawGrowthRow[] }>(`/mind/growth/journal/${c}?limit=${limit}`),
+      hGetSafe<{ patterns?: RawGrowthRow[] }>(`/mind/growth/patterns/${c}?limit=${limit}`),
+    ]);
+    const rows = [...(j?.journal ?? []), ...(p?.patterns ?? [])];
+    for (const r of rows) {
+      if (!r.id || nodeIds.has(r.id)) continue;
+      nodeIds.add(r.id);
+      const label = (r.content ?? r.pattern_text ?? r.entry_type ?? "·").slice(0, 80);
+      nodes.push({ id: r.id, label, companion_id: c });
+      for (const target of parsePrehended(r.prehended_ids)) {
+        rawEdges.push({ from: r.id, to: target });
+      }
+    }
+  }
+  // Keep only edges whose endpoints are both present (drop dangling references).
+  const edges = rawEdges.filter(e => nodeIds.has(e.from) && nodeIds.has(e.to));
+  return { nodes, edges };
+}
