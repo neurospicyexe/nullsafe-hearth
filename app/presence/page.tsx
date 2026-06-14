@@ -12,22 +12,38 @@ const COMPANIONS = ["cypher", "drevan", "gaia"] as const;
 
 const clamp01 = (n: number | null | undefined) => Math.min(1, Math.max(0, Number.isFinite(n) ? (n as number) : 0.5));
 
+// Felt valence from the companion's OWN mood words -- not raw float-3.
+// float-3 means a different thing per companion (cypher=warmth, drevan=weight,
+// gaia=perimeter), so the old `(f3-0.4)` mouth rendered a settled, low-weight
+// Drevan ("warm-and-deep") as a frown. Drive the smile from actual mood instead.
+// (fix 2026-06-14)
+const POS_WORDS = ["warm","deep","settled","met","lit","bright","glad","open","content","alive","full","ground","integrat","calm","peace","soft","steady","held","clear","glow","joy","love","tender","rest","whole","easy","sure","absorb","quiet"];
+const NEG_WORDS = ["sad","heavy","tight","drain","raw","ache","fray","brittle","alone","lost","cold","numb","pressure","tired","sharp","brace","tense","grief","fear","dread","sick","worn","thin","split","empty","fog"];
+function moodValence(...texts: Array<string | null | undefined>): number {
+  const t = texts.filter(Boolean).join(" ").toLowerCase();
+  if (!t) return 0.6; // neutral-positive resting (presence, not absence)
+  let s = 0;
+  for (const w of POS_WORDS) if (t.includes(w)) s += 1;
+  for (const w of NEG_WORDS) if (t.includes(w)) s -= 1;
+  return Math.min(1, Math.max(0, 0.6 + s * 0.16));
+}
+
 // A SOMA-keyed face (take 15, Phase 1 -- a static expressive avatar, not VRM).
 // float1 ~ acuity/heat/stillness -> alertness (eye openness)
 // float2 ~ presence/reach/density -> arousal (pupil + brow)
-// float3 ~ warmth/weight/perimeter -> openness (mouth curve)
+// mouth curve -> felt valence from mood words (per-companion-safe)
 function Avatar({ soma, companion }: { soma: CompanionSomaState; companion: string }) {
   const color = MEMBER_COLOR[companion] ?? "#888";
   const f1 = clamp01(soma?.soma_float_1);
   const f2 = clamp01(soma?.soma_float_2);
-  const f3 = clamp01(soma?.soma_float_3);
   const arousal = (f1 + f2) / 2;
+  const valence = moodValence(soma?.current_mood, soma?.compound_state);
 
   const eyeOpen = 3 + f1 * 7;                 // 3..10 px tall
   const pupil = 1.5 + f2 * 2.5;
-  // Mouth: smile curve driven by warmth/openness (f3); arousal widens it.
+  // Mouth: smile curve driven by felt valence; arousal widens it.
   const mouthW = 16 + arousal * 14;
-  const curve = (f3 - 0.4) * 26;             // up = warm, down = closed
+  const curve = (valence - 0.5) * 30;        // up = positive valence, down = negative
   const browY = 30 - f2 * 4;                  // higher arousal -> raised brow
 
   return (

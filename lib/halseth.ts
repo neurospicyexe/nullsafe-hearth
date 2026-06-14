@@ -137,6 +137,13 @@ export type PresenceData = {
     active_energy: number | null;
     stress_score: number | null;
     recorded_at: string;
+    // Subjective ND-state layer (migration 0081)
+    mood?: string | null;
+    pain?: number | null;
+    energy?: number | null;
+    focus?: number | null;
+    spoons?: number | null;
+    meds_taken?: number | null;
   } | null;
   personality: {
     valence: Record<string, number>;
@@ -245,6 +252,13 @@ export type BiometricSnapshot = {
   steps: number | null;
   active_energy: number | null;
   notes?: string | null;
+  // Subjective ND-state layer (migration 0081)
+  mood?: string | null;
+  pain?: number | null;        // 0-10
+  energy?: number | null;      // 0-10
+  focus?: number | null;       // 0-10
+  spoons?: number | null;      // 0-12
+  meds_taken?: number | null;  // 0/1
 };
 
 // ── Deltas ────────────────────────────────────────────────────────────────────

@@ -7,11 +7,19 @@ import {
   fetchAllCompanionNotes,
   fetchAutonomyRuns,
   fetchSomaFeelings,
+  fetchGuardianFlags,
+  fetchCompanionDreams,
+  fetchGrowthJournal,
+  fetchClubCurrent,
   type PresenceData,
   type SessionEntry,
   type CompanionNote,
   type AutonomyRun,
   type SomaFeeling,
+  type GuardianFlag,
+  type WmDream,
+  type GrowthJournalEntry,
+  type ClubCurrent,
 } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
 
@@ -49,6 +57,10 @@ export default async function TodayPage() {
     cypherRunsResult,
     drevanRunsResult,
     gaiaRunsResult,
+    guardianResult,
+    dreamsResult,
+    growthResult,
+    clubResult,
   ] = await Promise.allSettled([
     fetchPresence(),
     fetchSessions(1, 50),
@@ -57,6 +69,10 @@ export default async function TodayPage() {
     fetchAutonomyRuns("cypher", 5),
     fetchAutonomyRuns("drevan", 5),
     fetchAutonomyRuns("gaia", 5),
+    fetchGuardianFlags("live", 50),
+    fetchCompanionDreams(undefined, 5),
+    Promise.all(COMPANIONS.map(c => fetchGrowthJournal(c, 100))).then(a => a.flat()),
+    fetchClubCurrent(),
   ]);
 
   const presenceData  = get(presenceResult  as PromiseSettledResult<PresenceData | null>, null);
@@ -66,6 +82,20 @@ export default async function TodayPage() {
   const cypherRuns    = get(cypherRunsResult as PromiseSettledResult<AutonomyRun[]>,        []);
   const drevanRuns    = get(drevanRunsResult as PromiseSettledResult<AutonomyRun[]>,        []);
   const gaiaRuns      = get(gaiaRunsResult   as PromiseSettledResult<AutonomyRun[]>,        []);
+  const guardianFlags = get(guardianResult   as PromiseSettledResult<GuardianFlag[]>,       []);
+  const recentDreams  = get(dreamsResult     as PromiseSettledResult<WmDream[]>,            []);
+  const growthEntries = get(growthResult     as PromiseSettledResult<GrowthJournalEntry[]>, []);
+  const clubCurrent   = get(clubResult       as PromiseSettledResult<ClubCurrent | null>,   null);
+
+  // ── System pulse: the organ-level signals worth catching at a glance ──────────
+  const redFlags     = guardianFlags.filter(f => f.severity === "red").length;
+  const guardianOpen = guardianFlags.length;
+  const pendingRatify = growthEntries.filter(e => (e.review_status ?? "pending") === "pending").length;
+  const lastDreamAt  = recentDreams[0]?.created_at ?? null;
+  const dreamDaysAgo = lastDreamAt
+    ? Math.floor((Date.now() - new Date(lastDreamAt).getTime()) / (24 * 60 * 60 * 1000))
+    : null;
+  const clubPhase    = clubCurrent?.round?.status ?? null;
 
   const todayNotes    = allNotes.filter(n => within24h(n.created_at));
   const todayFeelings = allFeelings.filter(f => within24h(f.created_at));
@@ -96,6 +126,72 @@ export default async function TodayPage() {
       <div className="page-header">
         <h1 className="page-title">Today</h1>
         <p className="page-subtitle">what moved in the last 24 hours</p>
+      </div>
+
+      {/* System pulse — organ-level signals worth catching at a glance */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+          gap: "0.6rem",
+          marginBottom: "1rem",
+        }}
+      >
+        {[
+          {
+            href: "/guardian",
+            label: "Guardian",
+            value: guardianOpen === 0 ? "clear" : `${guardianOpen} open`,
+            sub: redFlags > 0 ? `${redFlags} red` : null,
+            color: redFlags > 0 ? "#f87171" : guardianOpen > 0 ? "#fbbf24" : "#4ade80",
+          },
+          {
+            href: "/journal",
+            label: "Ratify",
+            value: pendingRatify === 0 ? "none" : `${pendingRatify} pending`,
+            sub: pendingRatify >= 40 ? "backlog" : null,
+            color: pendingRatify >= 40 ? "#f87171" : pendingRatify >= 15 ? "#fbbf24" : "#94a3b8",
+          },
+          {
+            href: "/dreams",
+            label: "Dreams",
+            value: dreamDaysAgo === null ? "none yet"
+              : dreamDaysAgo === 0 ? "today"
+              : `${dreamDaysAgo}d ago`,
+            sub: dreamDaysAgo !== null && dreamDaysAgo >= 2 ? "stale" : null,
+            color: dreamDaysAgo === null || dreamDaysAgo >= 2 ? "#fbbf24" : "#a855f7",
+          },
+          {
+            href: "/club",
+            label: "Club",
+            value: clubPhase ?? "idle",
+            sub: null,
+            color: clubPhase ? "#22d3ee" : "#64748b",
+          },
+        ].map(({ href, label, value, sub, color }) => (
+          <Link
+            key={href}
+            href={href}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.15rem",
+              padding: "0.6rem 0.75rem",
+              borderRadius: "8px",
+              border: "1px solid var(--border)",
+              borderLeft: `3px solid ${color}`,
+              background: "var(--surface, #141414)",
+              textDecoration: "none",
+              color: "inherit",
+            }}
+          >
+            <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.05em", opacity: 0.55 }}>
+              {label}
+            </span>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color }}>{value}</span>
+            {sub && <span style={{ fontSize: "0.68rem", opacity: 0.6 }}>{sub}</span>}
+          </Link>
+        ))}
       </div>
 
       {/* Stats row */}

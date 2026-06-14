@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
   // Allowlist: only forward known BiometricSnapshot fields
   const num = (v: unknown) => (typeof v === "number" ? v : null);
   const str = (v: unknown) => (typeof v === "string" ? v : null);
+  const bool = (v: unknown) => (typeof v === "boolean" ? v : v === 1 ? true : v === 0 ? false : null);
   const body = {
     recorded_at:   typeof r["recorded_at"] === "string" ? r["recorded_at"] : new Date().toISOString(),
     source:        str(r["source"]),
@@ -42,6 +43,13 @@ export async function POST(req: NextRequest) {
     steps:         num(r["steps"]),
     active_energy: num(r["active_energy"]),
     notes:         str(r["notes"]),
+    // Subjective ND-state layer (migration 0081)
+    mood:          str(r["mood"]),
+    pain:          num(r["pain"]),
+    energy:        num(r["energy"]),
+    focus:         num(r["focus"]),
+    spoons:        num(r["spoons"]),
+    meds_taken:    bool(r["meds_taken"]),
   };
 
   const upstream = await fetch(`${base}/biometrics`, {
