@@ -6,6 +6,8 @@
 // thresholds (BASIN_READINGS_v1 anti-delulu doctrine). Pressure is an unconfirmed
 // signal, growth is caleth-confirmed intentional movement, stable is the baseline.
 
+import { useState, type CSSProperties } from "react";
+import { useRouter } from "next/navigation";
 import type { BasinHistory } from "@/lib/halseth";
 
 // Canonical Hearth companion colors (see hearth/CLAUDE.md) -- use these everywhere.
@@ -87,6 +89,49 @@ function TrajectorySvg({ rows }: { rows: BasinHistory[] }) {
   );
 }
 
+// One open pressure reading + the confirm (growth) / dismiss (noise) controls.
+// Confirm re-baselines the identity anchor; dismiss clears the warning without re-baselining.
+function PressureRow({ r }: { r: BasinHistory }) {
+  const router = useRouter();
+  const [state, setState] = useState<"open" | "busy" | "confirm" | "dismiss" | "error">("open");
+
+  async function act(action: "confirm" | "dismiss") {
+    setState("busy");
+    try {
+      const res = await fetch("/api/basins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: r.id, action }),
+      });
+      if (!res.ok) { setState("error"); return; }
+      setState(action);
+      router.refresh();
+    } catch { setState("error"); }
+  }
+
+  const score = Number.isFinite(r.drift_score) ? (r.drift_score * 100).toFixed(0) : "--";
+  return (
+    <li style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.35rem 0", fontSize: "0.8rem", flexWrap: "wrap" }}>
+      <span style={{ color: DRIFT_TYPE_COLOR["pressure"] }}>●</span>
+      <span>{r.worst_basin ?? "drift"} · {score}{r.notes ? ` · ${r.notes.slice(0, 80)}` : ""} · {relativeTime(r.recorded_at)}</span>
+      {state === "confirm" && <span style={{ color: DRIFT_TYPE_COLOR["growth"] }}>confirmed as growth ✓</span>}
+      {state === "dismiss" && <span style={{ color: "var(--text-muted, #888)" }}>dismissed as noise</span>}
+      {state === "error" && <span style={{ color: "#f87171" }}>failed — try again</span>}
+      {(state === "open" || state === "error") && (
+        <span style={{ display: "inline-flex", gap: "0.4rem", marginLeft: "auto" }}>
+          <button onClick={() => act("confirm")} style={btnStyle(DRIFT_TYPE_COLOR["growth"])}>confirm (growth)</button>
+          <button onClick={() => act("dismiss")} style={btnStyle("var(--text-muted, #888)")}>dismiss (noise)</button>
+        </span>
+      )}
+      {state === "busy" && <span style={{ marginLeft: "auto", color: "var(--text-muted, #888)" }}>…</span>}
+    </li>
+  );
+}
+
+function btnStyle(color: string): CSSProperties {
+  return { background: "transparent", color, border: `1px solid ${color}`, borderRadius: 6, padding: "0.1rem 0.5rem", fontSize: "0.72rem", cursor: "pointer" };
+}
+
 export default function BasinsClient({ byCompanion }: { byCompanion: Record<string, BasinHistory[]> }) {
   const companions = Object.keys(byCompanion);
   return (
@@ -102,7 +147,9 @@ export default function BasinsClient({ byCompanion }: { byCompanion: Record<stri
       {companions.map((id) => {
         const rows = byCompanion[id] ?? [];
         const latest = rows[0] ?? null;
-        const pressureOpen = rows.filter((r) => r.drift_type === "pressure" && !r.caleth_confirmed).length;
+        // Open = pressure not yet confirmed-as-growth and not yet dismissed-as-noise (B2).
+        const openPressure = rows.filter((r) => r.drift_type === "pressure" && !r.caleth_confirmed && !r.dismissed_at);
+        const pressureOpen = openPressure.length;
         return (
           <section key={id} style={{ marginBottom: "2rem", border: "1px solid var(--border-subtle, #2a2a2a)", borderRadius: 10, padding: "1rem" }}>
             <header style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
@@ -126,6 +173,16 @@ export default function BasinsClient({ byCompanion }: { byCompanion: Record<stri
             <div style={{ color: COMPANION_COLORS[id] ?? "currentColor" }}>
               <TrajectorySvg rows={rows} />
             </div>
+            {openPressure.length > 0 && (
+              <div style={{ marginTop: "0.75rem", borderTop: "1px solid var(--border-subtle, #2a2a2a)", paddingTop: "0.5rem" }}>
+                <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #888)", marginBottom: "0.25rem" }}>
+                  open pressure readings — confirm what&apos;s real growth (re-baselines), dismiss what&apos;s noise:
+                </div>
+                <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                  {openPressure.map((r) => <PressureRow key={r.id} r={r} />)}
+                </ul>
+              </div>
+            )}
           </section>
         );
       })}

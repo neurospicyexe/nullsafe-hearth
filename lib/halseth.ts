@@ -957,6 +957,7 @@ export type BasinHistory = {
   drift_score: number;
   drift_type: string;
   caleth_confirmed: number;
+  dismissed_at?: string | null;
   worst_basin: string | null;
   notes: string | null;
   recorded_at: string;
