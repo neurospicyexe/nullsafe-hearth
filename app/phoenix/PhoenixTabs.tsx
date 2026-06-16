@@ -7,8 +7,9 @@ const TABS = [
   { href: "/phoenix", label: "Overview", exact: true },
   { href: "/phoenix/dreams", label: "Dreams", exact: false },
   { href: "/phoenix/chat", label: "Chat", exact: false },
-  // Future: { href: "/phoenix/runs", label: "Runs", exact: false },
-  // Future: { href: "/phoenix/seeds", label: "Seeds", exact: false },
+  // Runs/Seeds tabs intentionally omitted: autonomy runs/seeds are surfaced at /autonomous
+  // and /companions/[id]/autonomy. The old Phoenix WebMind surface they'd have shown is archived
+  // (see Nullsafe Phoenix/PHOENIX-RECKONING.md).
 ] as const;
 
 export default function PhoenixTabs() {

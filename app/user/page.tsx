@@ -130,13 +130,19 @@ export default async function UserPage() {
         {bio.length === 0 ? (
           <p className="empty">No biometric data yet.</p>
         ) : (
-          <>
+          <div className="biometric-scroll">
             <div className="biometric-header">
               <span>Date</span>
               <span>Sleep</span>
               <span>HR</span>
               <span>HRV</span>
               <span>Steps</span>
+              <span>Mood</span>
+              <span>Energy</span>
+              <span>Focus</span>
+              <span>Pain</span>
+              <span>Spoons</span>
+              <span>Meds</span>
             </div>
             <div className="biometric-history">
               {bio.map((b) => (
@@ -146,10 +152,16 @@ export default async function UserPage() {
                   <span className="val">{b.resting_hr !== null ? `${b.resting_hr}` : "—"}</span>
                   <span className="val">{b.hrv_resting !== null ? `${b.hrv_resting}` : "—"}</span>
                   <span className="val">{b.steps !== null ? b.steps.toLocaleString() : "—"}</span>
+                  <span className="val val-text">{b.mood ?? "—"}</span>
+                  <span className="val">{b.energy != null ? b.energy : "—"}</span>
+                  <span className="val">{b.focus != null ? b.focus : "—"}</span>
+                  <span className="val">{b.pain != null ? b.pain : "—"}</span>
+                  <span className="val">{b.spoons != null ? b.spoons : "—"}</span>
+                  <span className="val">{b.meds_taken != null ? (b.meds_taken ? "✓" : "✗") : "—"}</span>
                 </div>
               ))}
             </div>
-          </>
+          </div>
         )}
       </section>
 
