@@ -14,6 +14,7 @@ export async function PATCH(
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
@@ -34,7 +35,7 @@ export async function DELETE(
     const companionId = new URL(req.url).searchParams.get("companion_id") ?? "";
     const res = await fetch(
       `${url}/mind/metronome/actions/${encodeURIComponent(id)}?companion_id=${encodeURIComponent(companionId)}`,
-      { method: "DELETE", headers: { Authorization: `Bearer ${secret}` } },
+      { method: "DELETE", headers: { Authorization: `Bearer ${secret}` }, signal: AbortSignal.timeout(10_000) },
     );
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

@@ -19,14 +19,19 @@ export async function POST(request: NextRequest) {
   if (typeof r["entry"] === "string") body["entry"] = r["entry"];
   if (Array.isArray(r["tags"])) body["tags"] = (r["tags"] as unknown[]).filter((t) => typeof t === "string");
 
-  const res = await fetch(`${base}/mind/journal`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  try {
+    const res = await fetch(`${base}/mind/journal`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

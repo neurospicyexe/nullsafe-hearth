@@ -19,14 +19,19 @@ export async function POST(request: NextRequest) {
   if (typeof r["category"] === "string") body["category"] = r["category"];
   if (typeof r["enabled"] === "boolean") body["enabled"] = r["enabled"];
 
-  const res = await fetch(`${base}/bridge/toggle`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  try {
+    const res = await fetch(`${base}/bridge/toggle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

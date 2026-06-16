@@ -15,6 +15,7 @@ async function fetchBiometrics(): Promise<BiometricSnapshot | null> {
     const res = await fetch(`${base}/biometrics`, {
       headers: secret ? { Authorization: `Bearer ${secret}` } : {},
       cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -32,6 +33,7 @@ async function fetchTodayRoutines(): Promise<Array<{ routine_name: string }>> {
     const res = await fetch(`${base}/routines`, {
       headers: secret ? { Authorization: `Bearer ${secret}` } : {},
       cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return [];
     return res.json();

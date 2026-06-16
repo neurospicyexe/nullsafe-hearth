@@ -12,16 +12,21 @@ export async function POST(
   const raw = await request.json();
   const body = { companion_id: typeof raw.companion_id === "string" ? raw.companion_id : undefined };
 
-  const res = await fetch(`${base}/mind/note/${id}/metabolize`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
+  try {
+    const res = await fetch(`${base}/mind/note/${id}/metabolize`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
 
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    return NextResponse.json(await res.json());
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

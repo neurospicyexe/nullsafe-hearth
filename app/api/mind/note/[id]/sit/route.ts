@@ -15,16 +15,21 @@ export async function POST(
     sit_text: typeof raw.sit_text === "string" ? raw.sit_text : undefined,
   };
 
-  const res = await fetch(`${base}/mind/note/${id}/sit`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
+  try {
+    const res = await fetch(`${base}/mind/note/${id}/sit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
 
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json(), { status: 201 });
+    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    return NextResponse.json(await res.json(), { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

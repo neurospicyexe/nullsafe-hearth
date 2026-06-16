@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers,
           body: JSON.stringify({ spoon_count }),
+          signal: AbortSignal.timeout(10_000),
         }),
       );
     }
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
             content: note,
             note_type: "uplink",
           }),
+          signal: AbortSignal.timeout(10_000),
         }),
       );
     }

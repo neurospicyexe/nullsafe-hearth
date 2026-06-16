@@ -51,21 +51,28 @@ function DreamCard({
   onPinToggled: (id: string, pinned: boolean) => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  // A failed examine/pin used to silently no-op -- the button re-enabled with no signal,
+  // leaving Raziel unsure if it worked. Surface the failure inline. (2026-06-16 sweep.)
+  const [error, setError] = useState<string | null>(null);
   const isPinned = dream.do_not_auto_examine === 1;
   const isExamined = !!dream.examined_at;
   const config = COMPANION_DISPLAY[companionId];
 
   const handleExamine = () => {
+    setError(null);
     startTransition(async () => {
       const ok = await examineAction(companionId, dream.id);
       if (ok) onExamined(dream.id);
+      else setError("Examine failed -- try again.");
     });
   };
 
   const handlePin = () => {
+    setError(null);
     startTransition(async () => {
       const ok = await pinAction(companionId, dream.id, !isPinned);
       if (ok) onPinToggled(dream.id, !isPinned);
+      else setError("Pin failed -- try again.");
     });
   };
 
@@ -180,6 +187,11 @@ function DreamCard({
           )}
         </div>
       </div>
+      {error && (
+        <p style={{ margin: "0.5rem 0 0", fontSize: "0.78rem", color: "#f87171" }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

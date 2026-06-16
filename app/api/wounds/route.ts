@@ -5,10 +5,15 @@ export async function GET() {
   const secret = process.env.HALSETH_SECRET;
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
-  const res = await fetch(`${base}/wounds`, {
-    headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-    cache: "no-store",
-  });
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  try {
+    const res = await fetch(`${base}/wounds`, {
+      headers: secret ? { Authorization: `Bearer ${secret}` } : {},
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

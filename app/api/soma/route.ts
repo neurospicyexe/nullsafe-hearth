@@ -5,10 +5,16 @@ export async function GET() {
   const secret = process.env.HALSETH_SECRET;
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
-  const res = await fetch(`${base}/soma`, {
-    headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${base}/soma`, {
+      headers: secret ? { Authorization: `Bearer ${secret}` } : {},
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 
   if (!res.ok) return NextResponse.json({ error: "Halseth /soma failed" }, { status: res.status });
   // H11: validate upstream JSON before forwarding. Without these guards a malformed

@@ -17,9 +17,13 @@ export async function GET(request: NextRequest) {
     ? `${base}/companion-notes?agent=${encodeURIComponent(agent)}`
     : `${base}/companion-notes`;
 
-  const res = await fetch(url, { headers: authHeaders(), cache: "no-store" });
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+  try {
+    const res = await fetch(url, { headers: authHeaders(), cache: "no-store", signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    return NextResponse.json(await res.json());
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -32,11 +36,16 @@ export async function POST(request: NextRequest) {
     note_text: typeof raw.note_text === "string" ? raw.note_text : undefined,
     tags:      Array.isArray(raw.tags)            ? raw.tags      : undefined,
   };
-  const res = await fetch(`${base}/companion-notes`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+  try {
+    const res = await fetch(`${base}/companion-notes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    return NextResponse.json(await res.json());
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

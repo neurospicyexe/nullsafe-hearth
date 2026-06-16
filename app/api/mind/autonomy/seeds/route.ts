@@ -18,16 +18,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "companion_id and content required" }, { status: 400 });
   }
 
-  const res = await fetch(`${base}/mind/autonomy/seeds`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
-    },
-    body: JSON.stringify({ companion_id, content, seed_type }),
-    cache: "no-store",
-  });
+  try {
+    const res = await fetch(`${base}/mind/autonomy/seeds`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
+      body: JSON.stringify({ companion_id, content, seed_type }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
 
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    return NextResponse.json(await res.json());
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

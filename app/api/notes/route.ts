@@ -28,15 +28,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const res = await fetch(`${base}/notes`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
-    },
-    body: JSON.stringify({ author, content, note_type }),
-  });
+  try {
+    const res = await fetch(`${base}/notes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
+      body: JSON.stringify({ author, content, note_type }),
+      signal: AbortSignal.timeout(10_000),
+    });
 
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    return NextResponse.json(await res.json());
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

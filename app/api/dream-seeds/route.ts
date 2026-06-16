@@ -11,6 +11,7 @@ export async function GET() {
     const res = await fetch(`${base()}/dream-seeds`, {
       headers: authHeader(),
       cache: 'no-store',
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return NextResponse.json({ error: `Halseth returned ${res.status}` }, { status: 502 });
     return NextResponse.json(await res.json());
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeader() },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
       const text = await res.text();

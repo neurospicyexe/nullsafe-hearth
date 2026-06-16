@@ -16,14 +16,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "recommendation_id required" }, { status: 400 });
   }
 
-  const res = await fetch(`${base}/mind/club/vote`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
-    },
-    body: JSON.stringify({ recommendation_id, voter: "raziel", reason }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${base}/mind/club/vote`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
+      body: JSON.stringify({ recommendation_id, voter: "raziel", reason }),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {

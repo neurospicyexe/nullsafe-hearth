@@ -22,14 +22,19 @@ export async function POST(request: NextRequest) {
   if (typeof raw.love_meter === "number") {
     body.love_meter = Math.min(100, Math.max(0, Math.round(raw.love_meter)));
   } else if (typeof raw.delta === "number") {
-    const presRes = await fetch(`${base}/presence`, {
-      headers: { Authorization: `Bearer ${secret}` },
-      cache: "no-store",
-    });
-    if (presRes.ok) {
-      const pres = await presRes.json();
-      const current = pres?.house?.love_meter ?? 50;
-      body.love_meter = Math.min(100, Math.max(0, Math.round(current + raw.delta)));
+    try {
+      const presRes = await fetch(`${base}/presence`, {
+        headers: { Authorization: `Bearer ${secret}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (presRes.ok) {
+        const pres = await presRes.json();
+        const current = pres?.house?.love_meter ?? 50;
+        body.love_meter = Math.min(100, Math.max(0, Math.round(current + raw.delta)));
+      }
+    } catch {
+      return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
     }
   }
 
@@ -52,12 +57,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const res = await fetch(`${base}/house`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-    body: JSON.stringify(body),
-  });
+  try {
+    const res = await fetch(`${base}/house`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    });
 
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(body);
+    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    return NextResponse.json(body);
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

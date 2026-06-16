@@ -11,7 +11,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const base = process.env.HALSETH_URL;
   if (!base) return new NextResponse("HALSETH_URL not set", { status: 500 });
 
-  const res = await fetch(`${base}/mind/tools/image/${id}`, { cache: "no-store" });
+  let res: Response;
+  try {
+    res = await fetch(`${base}/mind/tools/image/${id}`, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
+  } catch {
+    return new NextResponse("Upstream unreachable", { status: 502 });
+  }
   if (!res.ok || !res.body) return new NextResponse("Not found", { status: 404 });
 
   return new NextResponse(res.body, {

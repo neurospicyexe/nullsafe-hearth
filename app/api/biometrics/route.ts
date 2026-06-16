@@ -5,12 +5,17 @@ export async function GET() {
   const secret = process.env.HALSETH_SECRET;
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
-  const res = await fetch(`${base}/biometrics`, {
-    headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-    cache: "no-store",
-  });
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  try {
+    const res = await fetch(`${base}/biometrics`, {
+      headers: secret ? { Authorization: `Bearer ${secret}` } : {},
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -52,15 +57,20 @@ export async function POST(req: NextRequest) {
     meds_taken:    bool(r["meds_taken"]),
   };
 
-  const upstream = await fetch(`${base}/biometrics`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${secret}`,
-    },
-    body: JSON.stringify(body),
-  });
+  try {
+    const upstream = await fetch(`${base}/biometrics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${secret}`,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    });
 
-  const data = await upstream.json();
-  return NextResponse.json(data, { status: upstream.status });
+    const data = await upstream.json();
+    return NextResponse.json(data, { status: upstream.status });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

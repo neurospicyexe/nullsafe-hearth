@@ -27,11 +27,16 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const res = await fetch(`${base}/tasks/${id}`, {
-    method: "PATCH",
-    headers: authHeaders(true),
-    body: JSON.stringify({ status: raw.status }),
-  });
-  if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
-  return NextResponse.json(await res.json());
+  try {
+    const res = await fetch(`${base}/tasks/${id}`, {
+      method: "PATCH",
+      headers: authHeaders(true),
+      body: JSON.stringify({ status: raw.status }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    return NextResponse.json(await res.json());
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 }

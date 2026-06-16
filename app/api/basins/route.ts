@@ -15,10 +15,16 @@ export async function POST(request: NextRequest) {
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
   if (!action) return NextResponse.json({ error: "action must be confirm or dismiss" }, { status: 400 });
 
-  const res = await fetch(`${base}/companion-growth/basin-history/${encodeURIComponent(id)}/${action}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...(secret ? { Authorization: `Bearer ${secret}` } : {}) },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${base}/companion-growth/basin-history/${encodeURIComponent(id)}/${action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(secret ? { Authorization: `Bearer ${secret}` } : {}) },
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
+  }
 
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {

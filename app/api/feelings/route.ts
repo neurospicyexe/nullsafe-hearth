@@ -28,6 +28,7 @@ export async function GET(req: Request) {
     const res = await fetch(`${BASE()}${path}`, {
       headers: AUTH(),
       cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return NextResponse.json({ error: `Halseth returned ${res.status}` }, { status: 502 });
     return NextResponse.json(await res.json());
