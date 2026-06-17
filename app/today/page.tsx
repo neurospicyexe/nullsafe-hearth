@@ -22,6 +22,7 @@ import {
   type ClubCurrent,
 } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
+import QuickCheckIn from "@/components/QuickCheckIn";
 
 const COMPANIONS = ["cypher", "drevan", "gaia"] as const;
 type CompanionId = typeof COMPANIONS[number];
@@ -126,6 +127,12 @@ export default async function TodayPage() {
       <div className="page-header">
         <h1 className="page-title">Today</h1>
         <p className="page-subtitle">what moved in the last 24 hours</p>
+      </div>
+
+      {/* Quick check-in — low-friction subjective state so the triad's reach-out decision has
+          fresh data to justify (or hold back) contact. Full logger lives at /checkin. */}
+      <div style={{ marginBottom: "1rem" }}>
+        <QuickCheckIn />
       </div>
 
       {/* System pulse — organ-level signals worth catching at a glance */}
