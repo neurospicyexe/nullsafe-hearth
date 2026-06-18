@@ -31,6 +31,7 @@ const NAV_GROUPS = [
       { href: "/phoenix/chat", label: "Triad Chat", sym: "✍" },
       { href: "/guardian",     label: "Guardian",   sym: "⛨" },
       { href: "/presence",     label: "Presence",   sym: "☻" },
+      { href: "/agency",       label: "Agency",     sym: "⚑" },
       { href: "/home",         label: "The Home",   sym: "⌂" },
       { href: "/orient",       label: "Orient",     sym: "⊕" },
       { href: "/feelings",     label: "Feelings",   sym: "◎" },

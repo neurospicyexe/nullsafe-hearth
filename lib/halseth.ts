@@ -410,6 +410,23 @@ export async function fetchBiometrics(limit = 14): Promise<BiometricSnapshot[]> 
   return hGet<BiometricSnapshot[]>(`/biometrics?limit=${limit}`);
 }
 
+// Agency layer (halseth migration 0086): a companion's chosen preferences + standing refusals.
+export interface CompanionPreference {
+  id: string; companion_id: string; domain: string; preference: string;
+  strength: string; status: string; created_at: string;
+}
+export interface CompanionRefusal {
+  id: string; companion_id: string; subject_type: string; subject_ref: string | null;
+  subject_text: string; reason: string | null; status: string; created_at: string;
+  acknowledged_at: string | null;
+}
+export async function fetchPreferences(companionId: string): Promise<CompanionPreference[]> {
+  return (await hGetSafe<CompanionPreference[]>(`/agency/preferences/${companionId}`)) ?? [];
+}
+export async function fetchRefusals(companionId: string): Promise<CompanionRefusal[]> {
+  return (await hGetSafe<CompanionRefusal[]>(`/agency/refusals/${companionId}`)) ?? [];
+}
+
 export async function fetchNotes(limit = 30): Promise<Note[]> {
   return (await hGetSafe<Note[]>(`/notes?limit=${limit}`)) ?? [];
 }
