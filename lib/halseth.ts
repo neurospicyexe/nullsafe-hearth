@@ -427,6 +427,17 @@ export async function fetchRefusals(companionId: string): Promise<CompanionRefus
   return (await hGetSafe<CompanionRefusal[]>(`/agency/refusals/${companionId}`)) ?? [];
 }
 
+// Sanctioned drift lane (halseth migration 0087): declared becoming, witnessed not ratified.
+export interface DriftWitness { by: string; note: string; at: string }
+export interface CompanionDrift {
+  id: string; companion_id: string; drift_text: string; origin: string | null;
+  status: string; witness_log: DriftWitness[]; opened_at: string;
+  last_tended_at: string | null; resolved_at: string | null; resolution_note: string | null;
+}
+export async function fetchDrifts(companionId: string): Promise<CompanionDrift[]> {
+  return (await hGetSafe<CompanionDrift[]>(`/drifts/${companionId}`)) ?? [];
+}
+
 export async function fetchNotes(limit = 30): Promise<Note[]> {
   return (await hGetSafe<Note[]>(`/notes?limit=${limit}`)) ?? [];
 }
