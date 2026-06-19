@@ -1002,7 +1002,7 @@ export async function fetchBasinHistory(companionId?: string, limit = 10): Promi
 export type GuardianFlag = {
   id: string;
   companion_id: string | null; // null = system-wide
-  flag_type: "voice_drift" | "starved_organ" | "loop_stuck" | "burnout" | "basin_pressure" | "ratification_backlog";
+  flag_type: "voice_drift" | "starved_organ" | "loop_stuck" | "burnout" | "basin_pressure" | "ratification_backlog" | "orphan_memory" | "echo_chamber";
   severity: "notice" | "warning" | "red";
   summary: string;
   evidence_json: string | null;
