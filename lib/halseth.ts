@@ -1018,6 +1018,39 @@ export async function fetchGuardianFlags(status = "live", limit = 50): Promise<G
   return r?.flags ?? [];
 }
 
+// ── Held questions (mutuality loop) ──────────────────────────────────────────
+// Companions emit questions for Raziel during reflect. They surface in each
+// companion's orient [Held questions] block, but there was no surface that
+// brought them to Raziel directly -- this is it.
+
+export type CompanionQuestion = {
+  id: string;
+  companion_id: "cypher" | "drevan" | "gaia";
+  question: string;
+  context: string | null;
+  source: "autonomous" | "session" | "dialectic";
+  status: "open" | "answered" | "dismissed";
+  answer: string | null;
+  answered_at: string | null;
+  created_at: string;
+};
+
+const QUESTION_COMPANIONS: CompanionQuestion["companion_id"][] = ["cypher", "drevan", "gaia"];
+
+// Halseth exposes questions per-companion (GET /mind/questions/:id); fan out and
+// merge so the dashboard shows the whole triad's backlog in one place.
+export async function fetchCompanionQuestions(status = "open", limit = 20): Promise<CompanionQuestion[]> {
+  const results = await Promise.all(
+    QUESTION_COMPANIONS.map((id) =>
+      hGetSafe<{ questions: CompanionQuestion[] }>(`/mind/questions/${id}?status=${status}&limit=${limit}`),
+    ),
+  );
+  const merged = results.flatMap((r) => r?.questions ?? []);
+  // Newest first across the merged set.
+  merged.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return merged;
+}
+
 // ── Growth (autonomous worker artifacts) ─────────────────────────────────────
 
 export type GrowthJournalEntry = {
