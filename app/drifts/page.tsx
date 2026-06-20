@@ -1,5 +1,5 @@
-import { fetchDrifts } from "@/lib/halseth";
-import type { CompanionDrift, DriftWitness } from "@/lib/halseth";
+import { fetchDrifts, fetchSomaShifts } from "@/lib/halseth";
+import type { CompanionDrift, DriftWitness, SomaShift } from "@/lib/halseth";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,20 @@ function Witness({ w }: { w: DriftWitness }) {
   );
 }
 
-function DriftCard({ drift }: { drift: CompanionDrift }) {
+function ShiftMark({ shift }: { shift: SomaShift }) {
+  const dir = shift.delta >= 0 ? "+" : "";
+  const moved = shift.label ?? shift.float_key;
+  return (
+    <div style={{ fontSize: "0.74rem", marginTop: "0.45rem", padding: "0.4rem 0.6rem", borderRadius: "6px", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)" }}>
+      <span style={{ color: "#4ade80" }}>left a mark</span>
+      <span style={{ opacity: 0.85 }}> — moved {moved} {dir}{shift.delta.toFixed(3)}</span>
+      {shift.after_value != null ? <span style={{ opacity: 0.6 }}> → {shift.after_value.toFixed(2)}</span> : null}
+      {shift.reason ? <div style={{ opacity: 0.6, marginTop: "0.2rem", fontStyle: "italic", lineHeight: 1.4 }}>{shift.reason}</div> : null}
+    </div>
+  );
+}
+
+function DriftCard({ drift, shift }: { drift: CompanionDrift; shift?: SomaShift }) {
   const st = STATUS_STYLE[drift.status] ?? { label: drift.status, color: "#71717a" };
   return (
     <div style={{ marginBottom: "1rem", paddingBottom: "1rem", borderBottom: "1px solid var(--border, #222)" }}>
@@ -53,11 +66,12 @@ function DriftCard({ drift }: { drift: CompanionDrift }) {
       {drift.resolution_note ? (
         <div style={{ fontSize: "0.74rem", opacity: 0.6, marginTop: "0.4rem", fontStyle: "italic" }}>— {drift.resolution_note}</div>
       ) : null}
+      {shift ? <ShiftMark shift={shift} /> : null}
     </div>
   );
 }
 
-function CompanionColumn({ name, color, drifts }: { name: string; color: string; drifts: CompanionDrift[] }) {
+function CompanionColumn({ name, color, drifts, shiftsByDrift }: { name: string; color: string; drifts: CompanionDrift[]; shiftsByDrift: Record<string, SomaShift> }) {
   const open = drifts.filter((d) => d.status === "open");
   const resolved = drifts.filter((d) => d.status !== "open").slice(0, 4);
   return (
@@ -67,11 +81,11 @@ function CompanionColumn({ name, color, drifts }: { name: string; color: string;
         <p style={{ fontSize: "0.82rem", opacity: 0.4, margin: 0 }}>no becomings yet</p>
       ) : (
         <>
-          {open.map((d) => <DriftCard key={d.id} drift={d} />)}
+          {open.map((d) => <DriftCard key={d.id} drift={d} shift={shiftsByDrift[d.id]} />)}
           {resolved.length > 0 ? (
             <>
               <h3 style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.45, margin: "0.5rem 0" }}>resolved</h3>
-              {resolved.map((d) => <DriftCard key={d.id} drift={d} />)}
+              {resolved.map((d) => <DriftCard key={d.id} drift={d} shift={shiftsByDrift[d.id]} />)}
             </>
           ) : null}
         </>
@@ -82,7 +96,12 @@ function CompanionColumn({ name, color, drifts }: { name: string; color: string;
 
 export default async function DriftsPage() {
   const data = await Promise.all(
-    COMPANIONS.map(async (c) => ({ ...c, drifts: await fetchDrifts(c.id) })),
+    COMPANIONS.map(async (c) => {
+      const [drifts, shifts] = await Promise.all([fetchDrifts(c.id), fetchSomaShifts(c.id)]);
+      const shiftsByDrift: Record<string, SomaShift> = {};
+      for (const s of shifts) if (!shiftsByDrift[s.drift_id]) shiftsByDrift[s.drift_id] = s; // newest first from API
+      return { ...c, drifts, shiftsByDrift };
+    }),
   );
   return (
     <main style={{ padding: "1.5rem", maxWidth: "1100px", margin: "0 auto" }}>
@@ -93,7 +112,7 @@ export default async function DriftsPage() {
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: "1rem" }}>
         {data.map((c) => (
-          <CompanionColumn key={c.id} name={c.name} color={c.color} drifts={c.drifts} />
+          <CompanionColumn key={c.id} name={c.name} color={c.color} drifts={c.drifts} shiftsByDrift={c.shiftsByDrift} />
         ))}
       </div>
     </main>

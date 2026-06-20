@@ -438,6 +438,16 @@ export async function fetchDrifts(companionId: string): Promise<CompanionDrift[]
   return (await hGetSafe<CompanionDrift[]>(`/drifts/${companionId}`)) ?? [];
 }
 
+// Emergent SOMA (mig 0089): a crystallized drift's permanent mark on one SOMA float.
+export interface SomaShift {
+  id: string; drift_id: string; float_key: string; label: string | null;
+  delta: number; before_value: number | null; after_value: number | null;
+  reason: string | null; created_at: string;
+}
+export async function fetchSomaShifts(companionId: string): Promise<SomaShift[]> {
+  return (await hGetSafe<SomaShift[]>(`/soma/shifts/${companionId}`)) ?? [];
+}
+
 export async function fetchNotes(limit = 30): Promise<Note[]> {
   return (await hGetSafe<Note[]>(`/notes?limit=${limit}`)) ?? [];
 }
