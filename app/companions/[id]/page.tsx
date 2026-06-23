@@ -22,6 +22,7 @@ import {
   fetchGrowthJournal,
   fetchAutonomyRuns,
   fetchConclusions,
+  fetchVoiceScores,
 } from "@/lib/halseth";
 import type {
   CypherAuditEntry,
@@ -56,6 +57,7 @@ import {
   RelationalStateSection,
   LiveThreadsSection,
   DriftLogSection,
+  VoiceLaneSection,
 } from "./sections";
 
 export function generateStaticParams() {
@@ -128,7 +130,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes, voiceScoresRes] = await Promise.allSettled([
     fetchCompanionJournal(id, 6),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
@@ -148,6 +150,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
     fetchGrowthJournal(id, 3),
     fetchAutonomyRuns(id, 3),
     fetchConclusions(id),
+    fetchVoiceScores(id, 30),
   ]);
 
   const journalEntries  = journal.status        === "fulfilled" ? journal.value        : null;
@@ -170,6 +173,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const growthJournalItems = (growthJournal.status === "fulfilled" ? growthJournal.value : null) ?? [];
   const autonomyRunItems   = (autonomyRuns.status  === "fulfilled" ? autonomyRuns.value  : null) ?? [];
   const conclusionItems    = (conclusionsRes.status === "fulfilled" ? conclusionsRes.value : null) ?? [];
+  const voiceScores        = voiceScoresRes.status === "fulfilled" ? voiceScoresRes.value : null;
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
@@ -363,6 +367,12 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           <DriftLogSection entries={driftItems} />
         </section>
       )}
+
+      {/* Voice Lane — lane-fidelity telemetry from bot replies */}
+      <section className="page-section">
+        <h2 className="section-title">Voice Lane</h2>
+        <VoiceLaneSection scores={voiceScores} color={config.color} />
+      </section>
 
       {/* Growth Preview */}
       {growthJournalItems.length > 0 && (

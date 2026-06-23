@@ -448,6 +448,33 @@ export async function fetchSomaShifts(companionId: string): Promise<SomaShift[]>
   return (await hGetSafe<SomaShift[]>(`/soma/shifts/${companionId}`)) ?? [];
 }
 
+// Voice-lane telemetry (mig 0070). Bots score every reply against the companion's
+// lane doctrine post-send; self_catch_rate = how often the companion (vs Raziel)
+// notices drift first. Renderer was deferred 06-10b -- data collected, nothing read it.
+// anti_hits / contamination_hits arrive as JSON strings (toJsonOrNull at write); parse
+// at the render edge, matching the GuardianFlag.evidence_json convention.
+export interface VoiceScoreRow {
+  score: number;
+  anti_hits: string | null;
+  contamination_hits: string | null;
+  caught_by: string | null;
+  created_at: string;
+}
+export interface VoiceScores {
+  n: number;
+  avg: number | null;
+  self_catch_rate: number | null;
+  self_catches: number;
+  human_catches: number;
+  recent: VoiceScoreRow[];
+}
+export async function fetchVoiceScores(companionId: string, days = 30): Promise<VoiceScores | null> {
+  const r = await hGetSafe<{ scores: VoiceScores }>(
+    `/mind/voice-scores/${encodeURIComponent(companionId)}?days=${days}`,
+  );
+  return r?.scores ?? null;
+}
+
 export async function fetchNotes(limit = 30): Promise<Note[]> {
   return (await hGetSafe<Note[]>(`/notes?limit=${limit}`)) ?? [];
 }
@@ -1358,8 +1385,11 @@ export async function fetchMetronomeActions(companionId: string): Promise<Metron
 }
 
 export async function fetchConclusions(agentId: string): Promise<ConclusionRow[]> {
+  // Worker registers GET /companion-conclusions/:agent_id (path param). The old
+  // ?agent_id= query form matched no route -> 404 -> permanently empty conclusions
+  // blocks on the worldview + companion-detail pages. (liveness review 2026-06-22)
   const res = await hGetSafe<{ conclusions?: ConclusionRow[] }>(
-    `/companion-conclusions?agent_id=${encodeURIComponent(agentId)}`,
+    `/companion-conclusions/${encodeURIComponent(agentId)}`,
   );
   return res?.conclusions ?? [];
 }

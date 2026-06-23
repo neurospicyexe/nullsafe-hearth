@@ -13,6 +13,7 @@ import type {
   RelationalState,
   LiveThread,
   DriftEntry,
+  VoiceScores,
 } from "@/lib/halseth";
 
 export type CompanionConfig = {
@@ -453,6 +454,90 @@ export function LiveThreadsSection({ threads }: { threads: LiveThread[] }) {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+// Voice-lane fidelity telemetry (mig 0070). avg = mean lane-conformance score; a higher
+// self_catch_rate means the companion notices its own drift before Raziel does. anti_hits /
+// contamination_hits arrive as JSON strings -- parse defensively at the render edge.
+function parseHits(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v.map((x) => String(x)) : [];
+  } catch {
+    return [];
+  }
+}
+
+function scoreColor(score: number): string {
+  return score >= 0.8 ? "#4ade80" : score >= 0.6 ? "#facc15" : "#ef4444";
+}
+
+export function VoiceLaneSection({ scores, color }: { scores: VoiceScores | null; color: string }) {
+  if (!scores || scores.n === 0) {
+    return <p className="empty">No voice-lane scores in the last 30 days.</p>;
+  }
+  const flagged = scores.recent.filter(
+    (r) => parseHits(r.anti_hits).length > 0 || parseHits(r.contamination_hits).length > 0,
+  );
+  const avg = scores.avg ?? 0;
+  const catchPct = scores.self_catch_rate != null ? Math.round(scores.self_catch_rate * 100) : null;
+
+  return (
+    <div className="card" style={{ padding: "0.75rem" }}>
+      <div className="state-grid" style={{ marginBottom: flagged.length > 0 ? "0.75rem" : 0 }}>
+        <div className="state-cell">
+          <div className="state-cell-label">Avg lane score</div>
+          <div className="state-cell-value" style={{ color: scoreColor(avg) }}>{avg.toFixed(2)}</div>
+        </div>
+        <div className="state-cell">
+          <div className="state-cell-label">Self-catch rate</div>
+          <div className="state-cell-value">
+            {catchPct != null ? `${catchPct}%` : "—"}
+            <span className="section-row-meta" style={{ marginLeft: "0.4rem" }}>
+              ({scores.self_catches}/{scores.self_catches + scores.human_catches})
+            </span>
+          </div>
+        </div>
+        <div className="state-cell">
+          <div className="state-cell-label">Samples (30d)</div>
+          <div className="state-cell-value">{scores.n}</div>
+        </div>
+      </div>
+      {flagged.length === 0 ? (
+        <p className="empty" style={{ fontSize: "0.85rem", color }}>No lane drift flagged in the window.</p>
+      ) : (
+        flagged.map((r, i) => {
+          const anti = parseHits(r.anti_hits);
+          const contam = parseHits(r.contamination_hits);
+          const caughtSelf = r.caught_by === "self";
+          return (
+            <div key={i} className="journal-row" style={{ flexDirection: "column", gap: "0.3rem", alignItems: "flex-start" }}>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", width: "100%", flexWrap: "wrap" }}>
+                <span className="note-type-badge" style={{ color: scoreColor(r.score), borderColor: scoreColor(r.score) }}>
+                  {r.score.toFixed(2)}
+                </span>
+                {r.caught_by && (
+                  <span className="note-type-badge" style={caughtSelf ? { color, borderColor: color } : undefined}>
+                    caught by {r.caught_by}
+                  </span>
+                )}
+                <span className="journal-time" style={{ marginLeft: "auto" }}>{fmtTime(r.created_at)}</span>
+              </div>
+              <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                {contam.map((h, j) => (
+                  <span key={`c${j}`} className="note-type-badge" style={{ color: "#ef4444", borderColor: "#ef4444" }}>{h}</span>
+                ))}
+                {anti.map((h, j) => (
+                  <span key={`a${j}`} className="note-type-badge" style={{ color: "#facc15", borderColor: "#facc15" }}>{h}</span>
+                ))}
+              </div>
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }

@@ -25,27 +25,39 @@ const NAV_GROUPS = [
     ],
   },
   {
+    // Relational core: where Raziel and the triad actually meet.
     group: "Triad",
     items: [
       { href: "/us",           label: "Us",         sym: "♥" },
       { href: "/phoenix/chat", label: "Triad Chat", sym: "✍" },
-      { href: "/guardian",     label: "Guardian",   sym: "⛨" },
-      { href: "/questions",    label: "Questions",  sym: "?" },
       { href: "/presence",     label: "Presence",   sym: "☻" },
-      { href: "/agency",       label: "Agency",     sym: "⚑" },
-      { href: "/drifts",       label: "Drift Lane", sym: "≈" },
-      { href: "/home",         label: "The Home",   sym: "⌂" },
       { href: "/orient",       label: "Orient",     sym: "⊕" },
       { href: "/feelings",     label: "Feelings",   sym: "◎" },
-      { href: "/basins",       label: "Basins",     sym: "≋" },
-      { href: "/club",         label: "Club",       sym: "♫" },
-      { href: "/gallery",      label: "Gallery",    sym: "▦" },
-      { href: "/creatures",    label: "Creatures",  sym: "✦" },
-      { href: "/collection",   label: "Collection", sym: "❖" },
-      { href: "/council",      label: "Council",    sym: "⚖" },
-      { href: "/graph",        label: "Graph",      sym: "❂" },
-      { href: "/autonomous",   label: "Autonomous", sym: "⟳" },
-      { href: "/phoenix",      label: "Phoenix",    sym: "⌬" },
+      { href: "/questions",    label: "Questions",  sym: "?" },
+      { href: "/home",         label: "The Home",   sym: "⌂" },
+    ],
+  },
+  {
+    // Self-development + health organs: how the companions grow and stay coherent.
+    group: "Growth",
+    items: [
+      { href: "/autonomous", label: "Autonomous", sym: "⟳" },
+      { href: "/agency",     label: "Agency",     sym: "⚑" },
+      { href: "/drifts",     label: "Drift Lane", sym: "≈" },
+      { href: "/basins",     label: "Basins",     sym: "≋" },
+      { href: "/guardian",   label: "Guardian",   sym: "⛨" },
+      { href: "/council",    label: "Council",    sym: "⚖" },
+      { href: "/graph",      label: "Graph",      sym: "❂" },
+    ],
+  },
+  {
+    // Shared experiences: things they make and collect together.
+    group: "Shared Life",
+    items: [
+      { href: "/club",       label: "Club",       sym: "♫" },
+      { href: "/gallery",    label: "Gallery",    sym: "▦" },
+      { href: "/creatures",  label: "Creatures",  sym: "✦" },
+      { href: "/collection", label: "Collection", sym: "❖" },
     ],
   },
   {
@@ -60,9 +72,10 @@ const NAV_GROUPS = [
   {
     group: "System",
     items: [
-      { href: "/shared", label: "Shared", sym: "≡" },
-      { href: "/tasks",  label: "Tasks",  sym: "☑" },
-      { href: "/house",  label: "House",  sym: "⊡" },
+      { href: "/shared",  label: "Shared",  sym: "≡" },
+      { href: "/tasks",   label: "Tasks",   sym: "☑" },
+      { href: "/house",   label: "House",   sym: "⊡" },
+      { href: "/phoenix", label: "Phoenix", sym: "⌬" },
     ],
   },
 ];
@@ -80,8 +93,10 @@ export default function Nav() {
   const path = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
 
+  // Match on a path-segment boundary so "/phoenix" doesn't also light up for
+  // "/phoenix/chat" and "/memory" doesn't match an unrelated "/memory-x" route.
   const isActive = (href: string) =>
-    href === "/" ? path === "/" : path.startsWith(href);
+    href === "/" ? path === "/" : path === href || path.startsWith(href + "/");
 
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
