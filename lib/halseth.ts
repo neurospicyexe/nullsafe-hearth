@@ -1262,9 +1262,11 @@ export async function fetchAutonomyRuns(
 
 export async function fetchAutonomySeeds(
   companionId: string,
+  includeUsed = false,
 ): Promise<AutonomySeed[]> {
+  // includeUsed surfaces consumed seeds too (manage surface: see-what-ran + re-enable).
   const res = await hGetSafe<{ seeds: AutonomySeed[] }>(
-    `/mind/autonomy/seeds/${companionId}`,
+    `/mind/autonomy/seeds/${companionId}${includeUsed ? "?include_used=1" : ""}`,
   );
   return res?.seeds ?? [];
 }

@@ -1812,3 +1812,73 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 }
 .seed-input:focus { border-color: var(--border-strong); }
 .seed-input::placeholder { color: var(--muted); }
+
+/* ── Manage control surface (/manage) ───────────────────────────────────────── */
+.manage-pill {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.manage-tabs { display: flex; gap: 0.4rem; border-bottom: 1px solid var(--border); }
+.manage-tab {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.manage-tab:hover { color: var(--fg); }
+.manage-tab.active { background: var(--surface-raised); border-color: var(--border-strong); border-bottom-color: var(--surface-raised); }
+.manage-msg { margin-top: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem; }
+.manage-msg.ok  { background: hsla(140, 60%, 45%, 0.12); color: #4ade80; border: 1px solid hsla(140, 60%, 45%, 0.3); }
+.manage-msg.err { background: hsla(0, 70%, 55%, 0.12); color: #f87171; border: 1px solid hsla(0, 70%, 55%, 0.3); }
+.manage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  margin: 0.5rem 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-base);
+}
+.manage-input {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.manage-input:focus { border-color: var(--border-strong); }
+.manage-input::placeholder { color: var(--muted); }
+.manage-check { display: flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; }
+.manage-btn {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.manage-btn:hover:not(:disabled) { color: var(--fg); border-color: var(--border-strong); }
+.manage-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.manage-btn.primary { color: var(--accent); border-color: hsla(var(--accent-hue), 60%, 50%, 0.4); }
+.manage-btn.danger:hover:not(:disabled) { color: #f87171; border-color: hsla(0, 70%, 55%, 0.5); }
