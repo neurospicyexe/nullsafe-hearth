@@ -1490,6 +1490,10 @@ export type Creature = {
   trust: number;
   last_interaction_at: string | null;
   created_at: string;
+  avatar_url: string | null;
+  // Added by Sol feature (task 7): disposition from creature state + restlessness float (0-1)
+  disposition: string;
+  restlessness: number;
 };
 
 export type CreatureInteraction = {
