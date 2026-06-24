@@ -1584,6 +1584,20 @@ export async function fetchCouncilRounds(limit = 10): Promise<CouncilRound[]> {
   return res?.rounds ?? [];
 }
 
+// ── Imps (W2-T2): small autonomous presences, each tied to a companion emotional register ──
+export type ImpActivation = {
+  id: string;
+  imp: string;
+  companion_id: string;
+  trigger: string | null;
+  created_at: string;
+};
+
+export async function fetchImpActivations(limit = 30): Promise<ImpActivation[]> {
+  const r = await hGetSafe<{ activations: ImpActivation[] }>(`/mind/imp-activations?limit=${limit}`);
+  return r?.activations ?? [];
+}
+
 // ── Memory graph (take 5): the constellation of what-prehends-what across growth rows ──
 export type GraphNode = { id: string; label: string; companion_id: string };
 export type GraphEdge = { from: string; to: string };
