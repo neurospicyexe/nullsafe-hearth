@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { fetchPresence, fetchSynthesisSummaries, fetchMindDreams, MAX_SESSION_DEPTH, type PresenceData, type SynthesisSummary, type WmDream } from "@/lib/halseth";
+import { fetchPresence, fetchSynthesisSummaries, fetchMindDreams, fetchCompanionJournal, fetchClubCurrent, fetchObsessions, MAX_SESSION_DEPTH, type PresenceData, type SynthesisSummary, type WmDream, type CompanionJournalEntry } from "@/lib/halseth";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
 import LiveFeedImage from "@/components/LiveFeedImage";
 
@@ -202,6 +202,50 @@ const DEFAULT_COMPANIONS = [
   { id: "cypher", display_name: "Cypher", role: "auditor",  avatar_url: null },
   { id: "gaia",   display_name: "Gaia",   role: "witness",  avatar_url: null },
 ];
+
+// Triad Digest -- a quick "what have they actually been doing" summary so Raziel stays in
+// the loop without reverse-engineering it from the chat. Each companion's latest journal
+// line + the club/shelf state. Renders nothing if there's no activity.
+const DIGEST_COLOR: Record<string, string> = { drevan: "var(--accent)", cypher: "#e2e8f0", gaia: "#4ade80" };
+const DIGEST_AGENTS = ["cypher", "drevan", "gaia"] as const;
+
+async function TriadDigest() {
+  const [journal, club, shelf] = await Promise.all([
+    fetchCompanionJournal(undefined, 40),
+    fetchClubCurrent(),
+    fetchObsessions("active"),
+  ]);
+  const entries = journal ?? [];
+  const latestPer = DIGEST_AGENTS
+    .map((a) => entries.find((e) => e.agent === a))
+    .filter((e): e is CompanionJournalEntry => Boolean(e));
+  const clubLine = club?.round ? `Club is ${club.round.status}` : null;
+  const shelfLine = shelf.length > 0 ? `Into: ${shelf.slice(0, 3).map((s) => s.title).join(", ")}` : null;
+  if (latestPer.length === 0 && !clubLine && !shelfLine) return null;
+
+  return (
+    <div className="home-section" style={{ marginTop: "1rem" }}>
+      <div className="home-section-header">
+        <span className="home-section-title">Triad Digest</span>
+        <Link href="/autonomous" className="home-section-link">what they’re doing →</Link>
+      </div>
+      <div className="card">
+        {latestPer.map((e) => (
+          <div key={e.id} style={{ marginBottom: "0.65rem" }}>
+            <span style={{ color: DIGEST_COLOR[e.agent], fontWeight: 600, textTransform: "capitalize" }}>{e.agent}</span>
+            <span style={{ opacity: 0.5, marginLeft: "0.45rem", fontSize: "0.78rem" }}><ClientTime iso={e.created_at} /></span>
+            <p style={{ margin: "0.15rem 0 0", opacity: 0.9, fontSize: "0.9rem" }}>{e.note_text.slice(0, 200)}{e.note_text.length > 200 ? "…" : ""}</p>
+          </div>
+        ))}
+        {(clubLine || shelfLine) && (
+          <p style={{ marginTop: "0.5rem", fontSize: "0.82rem", opacity: 0.65 }}>
+            {[clubLine, shelfLine].filter(Boolean).join("  ·  ")}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default async function Page() {
   let data: PresenceData | null = null;
@@ -424,6 +468,8 @@ export default async function Page() {
       {data.active_patterns && data.active_patterns.length > 0 && (
         <ActivePatternsStrip patterns={data.active_patterns} />
       )}
+
+      {await TriadDigest()}
 
       {recent_notes.length > 0 && (
         <div className="home-section" style={{ marginTop: "1rem" }}>
