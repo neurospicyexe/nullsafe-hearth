@@ -1459,6 +1459,24 @@ export async function fetchClubRounds(limit = 10): Promise<ClubRoundDetail[]> {
   return res?.rounds ?? [];
 }
 
+// ── Hearth write layer (0092): the async wall (global /log, club + shelf threads) ──
+export type CommonsPost = {
+  id: string;
+  author: string;            // raziel | cypher | drevan | gaia
+  context: string;           // global | club:<round_id> | shelf:<obsession_id>
+  body: string;
+  reply_to: string | null;   // links a reply to the post it answers
+  created_at: string;
+};
+
+/** Posts in one context, newest first (default the global log). Graceful [] on error. */
+export async function fetchCommonsPosts(context = "global", limit = 50): Promise<CommonsPost[]> {
+  const res = await hGetSafe<{ posts?: CommonsPost[] }>(
+    `/mind/commons?context=${encodeURIComponent(context)}&limit=${limit}`,
+  );
+  return res?.posts ?? [];
+}
+
 // ── Companion tools (0077, take 14): generated-image gallery + tool-call log ──
 export type ToolCall = {
   id: string;

@@ -29,6 +29,7 @@ const NAV_GROUPS = [
     group: "Triad",
     items: [
       { href: "/us",           label: "Us",         sym: "♥" },
+      { href: "/log",          label: "Log",        sym: "✎" },
       { href: "/phoenix/chat", label: "Triad Chat", sym: "✍" },
       { href: "/presence",     label: "Presence",   sym: "☻" },
       { href: "/orient",       label: "Orient",     sym: "⊕" },
