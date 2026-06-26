@@ -1400,10 +1400,11 @@ export async function fetchConclusions(agentId: string): Promise<ConclusionRow[]
 
 export type ClubRound = {
   id: string;
-  status: "gathering" | "voting" | "active" | "closed";
+  status: "gathering" | "voting" | "active" | "discussing" | "closed";
   winning_recommendation_id: string | null;
   opened_at: string;
   activated_at: string | null;
+  discussing_at: string | null;
   closed_at: string | null;
 };
 
@@ -1475,6 +1476,22 @@ export async function fetchCommonsPosts(context = "global", limit = 50): Promise
     `/mind/commons?context=${encodeURIComponent(context)}&limit=${limit}`,
   );
   return res?.posts ?? [];
+}
+
+// ── Obsession shelf (0094): "what Raziel's into"; triad reacts via commons (shelf:<id>) ──
+export type Obsession = {
+  id: string;
+  title: string;
+  kind: string;
+  note: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function fetchObsessions(status = "active"): Promise<Obsession[]> {
+  const res = await hGetSafe<{ items?: Obsession[] }>(`/mind/shelf?status=${encodeURIComponent(status)}`);
+  return res?.items ?? [];
 }
 
 // ── Companion tools (0077, take 14): generated-image gallery + tool-call log ──

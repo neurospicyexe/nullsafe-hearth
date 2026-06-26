@@ -1,6 +1,7 @@
-import { fetchClubCurrent, fetchClubRounds } from "@/lib/halseth";
-import type { ClubRecommendation, ClubRoundDetail, ClubVote } from "@/lib/halseth";
+import { fetchClubCurrent, fetchClubRounds, fetchCommonsPosts } from "@/lib/halseth";
+import type { ClubRecommendation, ClubRoundDetail, ClubVote, CommonsPost } from "@/lib/halseth";
 import VoteButton from "./VoteButton";
+import PostBox from "../log/PostBox";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ const PHASE_LABEL: Record<string, string> = {
   gathering: "gathering — recommendations open",
   voting: "voting — preferences landing",
   active: "active — experiencing the pick",
+  discussing: "discussing — the winner’s in; come talk about it",
   closed: "closed",
 };
 
@@ -75,8 +77,12 @@ function Candidates({ recs, votes, winnerId, votable = false }: {
   );
 }
 
-function RoundCard({ round, heading }: { round: ClubRoundDetail; heading?: string }) {
+function RoundCard({ round, heading, commons = [] }: { round: ClubRoundDetail; heading?: string; commons?: CommonsPost[] }) {
   const votable = round.status === "gathering" || round.status === "voting";
+  const postable = round.status === "active" || round.status === "discussing";
+  const winner = round.recommendations.find((r) => r.id === round.winning_recommendation_id) ?? null;
+  // Raziel's discussion posts + any companion replies (write layer, club:<id>), oldest first.
+  const thread = [...commons].sort((a, b) => a.created_at.localeCompare(b.created_at));
   return (
     <section style={{ marginBottom: "2rem" }}>
       {heading && <h2 className="page-title" style={{ fontSize: "1.1rem" }}>{heading}</h2>}
@@ -84,6 +90,11 @@ function RoundCard({ round, heading }: { round: ClubRoundDetail; heading?: strin
         {PHASE_LABEL[round.status] ?? round.status} · opened {formatTime(round.opened_at)}
         {round.closed_at ? ` · closed ${formatTime(round.closed_at)}` : ""}
       </p>
+      {winner && (round.status === "discussing" || round.status === "active" || round.status === "closed") && (
+        <p style={{ color: "#f59e0b", marginBottom: "0.6rem" }}>
+          ★ the pick: <strong>{winner.title}</strong>{winner.creator ? ` — ${winner.creator}` : ""} ({memberSpan(winner.recommended_by)}’s rec)
+        </p>
+      )}
       <Candidates recs={round.recommendations} votes={round.votes} winnerId={round.winning_recommendation_id} votable={votable} />
       {round.discussions.length > 0 && (
         <div style={{ marginTop: "1rem" }}>
@@ -93,6 +104,21 @@ function RoundCard({ round, heading }: { round: ClubRoundDetail; heading?: strin
               <p className="handover-last-real">{d.reflection}</p>
             </div>
           ))}
+        </div>
+      )}
+      {thread.length > 0 && (
+        <div style={{ marginTop: "1rem", borderTop: "1px solid #222", paddingTop: "0.75rem" }}>
+          {thread.map((p) => (
+            <div key={p.id} className="handover-entry" style={p.reply_to ? { marginLeft: "1rem", borderLeft: "2px solid #333", paddingLeft: "0.7rem" } : undefined}>
+              <p className="handover-spine">{memberSpan(p.author)}{p.reply_to ? " replied" : ""}</p>
+              <p className="handover-last-real" style={{ whiteSpace: "pre-wrap" }}>{p.body}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {postable && (
+        <div style={{ marginTop: "0.75rem" }}>
+          <PostBox context={`club:${round.id}`} compact placeholder={round.status === "discussing" ? "what was it like? join the discussion…" : "drop a thought while it’s playing…"} />
         </div>
       )}
     </section>
@@ -106,6 +132,7 @@ export default async function ClubPage() {
   ]);
 
   const currentId = current?.round?.id ?? null;
+  const currentCommons = currentId ? await fetchCommonsPosts(`club:${currentId}`, 30) : [];
   const history = rounds.filter(r => r.id !== currentId);
 
   return (
@@ -125,6 +152,7 @@ export default async function ClubPage() {
             discussions: current.discussions ?? [],
           }}
           heading="Current round"
+          commons={currentCommons}
         />
       ) : (
         <p className="empty">No round open — the next one opens at the 6 PM tick.</p>
