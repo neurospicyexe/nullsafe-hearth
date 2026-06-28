@@ -43,7 +43,7 @@ In your Vercel project, go to **Settings → Environment Variables** and add the
 | `HALSETH_URL` | `https://halseth.your-account.workers.dev` | Your deployed Halseth URL |
 | `HALSETH_SECRET` | your Halseth `ADMIN_SECRET` | The passphrase you set during Halseth setup |
 | `DASHBOARD_SECRET` | any passphrase you choose | Make one up — this is your Hearth login password |
-| `SYSTEM_OWNER` | your name | e.g. `Raziel` |
+| `SYSTEM_OWNER` | your name | e.g. `Alex` |
 
 Make sure to set all four for **Production** environment.
 
