@@ -1,11 +1,11 @@
 import { fetchClubCurrent, fetchClubRounds, fetchCommonsPosts } from "@/lib/halseth";
 import type { ClubRecommendation, ClubRoundDetail, ClubVote, CommonsPost } from "@/lib/halseth";
 import VoteButton from "./VoteButton";
+import RecommendForm from "./RecommendForm";
 import PostBox from "../log/PostBox";
 
 export const dynamic = "force-dynamic";
 
-// Companion colors per repo convention (companions/[id]/sections.tsx).
 const MEMBER_COLOR: Record<string, string> = {
   drevan: "var(--accent)",
   cypher: "#e2e8f0",
@@ -17,8 +17,32 @@ const PHASE_LABEL: Record<string, string> = {
   gathering: "gathering — recommendations open",
   voting: "voting — preferences landing",
   active: "active — experiencing the pick",
-  discussing: "discussing — the winner’s in; come talk about it",
+  discussing: "discussing — the winner's in; come talk about it",
   closed: "closed",
+};
+
+// Human-readable phase guides — what's happening and what Raziel can do.
+const PHASE_GUIDE: Record<string, { what: string; raziel: string }> = {
+  gathering: {
+    what: "Companions recommend picks over ~2 days. Round advances to voting automatically.",
+    raziel: "Add your own pick below, or wait to vote once gathering closes.",
+  },
+  voting: {
+    what: "One vote per member. No voting for your own pick. Majority wins; tie goes to earliest rec.",
+    raziel: "Cast your vote using the button next to each pick.",
+  },
+  active: {
+    what: "The pick is chosen. ~4 days to sit with it. Companions discuss in-voice at the daily tick.",
+    raziel: "Drop a thought below while you're experiencing it.",
+  },
+  discussing: {
+    what: "Discussion phase. Round closes once the companion tick runs.",
+    raziel: "Share your reflection below.",
+  },
+  closed: {
+    what: "This round is closed.",
+    raziel: "",
+  },
 };
 
 function formatTime(iso: string | null) {
@@ -32,34 +56,90 @@ function memberSpan(name: string) {
   return <span style={{ color: MEMBER_COLOR[name] ?? "inherit" }}>{name}</span>;
 }
 
-function Candidates({ recs, votes, winnerId, votable = false }: {
-  recs: ClubRecommendation[]; votes: ClubVote[]; winnerId: string | null; votable?: boolean;
+function PhaseGuide({ status }: { status: string }) {
+  const g = PHASE_GUIDE[status];
+  if (!g) return null;
+  return (
+    <div style={{
+      background: "#0c0c0c", border: "1px solid #1e1e1e", borderRadius: "5px",
+      padding: "0.55rem 0.8rem", marginBottom: "0.9rem", fontSize: "0.81rem",
+      display: "flex", flexDirection: "column", gap: "0.2rem",
+    }}>
+      <span style={{ color: "#64748b" }}>{g.what}</span>
+      {g.raziel && <span style={{ color: "#475569" }}>↳ {g.raziel}</span>}
+    </div>
+  );
+}
+
+function WinnerBanner({ round }: { round: ClubRoundDetail }) {
+  if (round.status !== "active" && round.status !== "discussing" && round.status !== "closed") return null;
+  const winner = round.recommendations.find(r => r.id === round.winning_recommendation_id);
+  if (winner) {
+    return (
+      <p style={{ color: "#f59e0b", marginBottom: "0.75rem" }}>
+        ★ the pick:{" "}
+        {winner.url
+          ? <a href={winner.url} target="_blank" rel="noopener noreferrer" style={{ color: "#f59e0b" }}><strong>{winner.title}</strong></a>
+          : <strong>{winner.title}</strong>}
+        {winner.creator ? ` — ${winner.creator}` : ""}{" "}
+        <span style={{ color: "#78716c", fontSize: "0.82rem" }}>({memberSpan(winner.recommended_by)}&apos;s rec)</span>
+      </p>
+    );
+  }
+  if (round.winner_title) {
+    return (
+      <p style={{ color: "#f59e0b", marginBottom: "0.75rem" }}>
+        ★ the pick: <strong>{round.winner_title}</strong>
+      </p>
+    );
+  }
+  if (round.winning_recommendation_id) {
+    return <p style={{ color: "#78716c", fontSize: "0.82rem", marginBottom: "0.75rem" }}>★ a pick was chosen (recommendation data not loaded)</p>;
+  }
+  return null;
+}
+
+function Candidates({ recs, votes, winnerId, votable, status }: {
+  recs: ClubRecommendation[];
+  votes: ClubVote[];
+  winnerId: string | null;
+  votable: boolean;
+  status: string;
 }) {
-  if (recs.length === 0) return <p className="empty">No recommendations yet.</p>;
-  // One vote per voter per round (re-vote replaces) -- show where Raziel's vote sits.
-  const razielVoteRecId = votes.find(v => v.voter === "raziel")?.recommendation_id ?? null;
+  if (recs.length === 0) {
+    const past = status === "active" || status === "discussing" || status === "closed";
+    return (
+      <p className="empty">
+        {past
+          ? "No picks were recorded this round — companions recommend via Discord during gathering."
+          : "No recommendations yet."}
+      </p>
+    );
+  }
+  const razielVoteId = votes.find(v => v.voter === "raziel")?.recommendation_id ?? null;
   return (
     <div className="handover-feed">
       {recs.map((rec) => {
         const recVotes = votes.filter(v => v.recommendation_id === rec.id);
         const isWinner = rec.id === winnerId;
-        // No-self-vote applies to Raziel too -- hide the button on Raziel's own pick.
         const showVote = votable && rec.recommended_by !== "raziel";
         return (
           <div key={rec.id} className="handover-entry" style={isWinner ? { borderLeft: "2px solid #f59e0b" } : undefined}>
             <p className="handover-spine">
               {isWinner ? "★ " : ""}
-              {rec.url ? <a href={rec.url} target="_blank" rel="noopener noreferrer">{rec.title}</a> : rec.title}
+              {rec.url
+                ? <a href={rec.url} target="_blank" rel="noopener noreferrer">{rec.title}</a>
+                : rec.title}
               {rec.creator ? ` — ${rec.creator}` : ""}
               <span className="thread-tag" style={{ marginLeft: "0.5rem" }}>{rec.media_kind}</span>
               {showVote && (
                 <span style={{ marginLeft: "0.5rem" }}>
-                  <VoteButton recommendationId={rec.id} alreadyVoted={razielVoteRecId === rec.id} />
+                  <VoteButton recommendationId={rec.id} alreadyVoted={razielVoteId === rec.id} />
                 </span>
               )}
             </p>
             <p className="handover-last-real">
-              {memberSpan(rec.recommended_by)}{rec.pitch ? <>: “{rec.pitch}”</> : null}
+              {memberSpan(rec.recommended_by)}{rec.pitch ? <>: &ldquo;{rec.pitch}&rdquo;</> : null}
             </p>
             {recVotes.length > 0 && (
               <div className="handover-threads">
@@ -77,50 +157,87 @@ function Candidates({ recs, votes, winnerId, votable = false }: {
   );
 }
 
-function RoundCard({ round, heading, commons = [] }: { round: ClubRoundDetail; heading?: string; commons?: CommonsPost[] }) {
+function DiscussionThread({ discussions, commons, roundId, postable, status }: {
+  discussions: ClubRoundDetail["discussions"];
+  commons: CommonsPost[];
+  roundId: string;
+  postable: boolean;
+  status: string;
+}) {
+  const thread = [...commons].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const hasSomething = discussions.length > 0 || thread.length > 0 || postable;
+  if (!hasSomething) return null;
+  return (
+    <div style={{ marginTop: "1.1rem", borderTop: "1px solid #1a1a1a", paddingTop: "0.85rem" }}>
+      <p style={{ fontSize: "0.78rem", color: "#4a5568", marginBottom: "0.6rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>discussion</p>
+      {discussions.map((d) => (
+        <div key={d.id} className="handover-entry">
+          <p className="handover-spine">{memberSpan(d.companion_id)}</p>
+          <p className="handover-last-real">{d.reflection}</p>
+        </div>
+      ))}
+      {thread.map((p) => (
+        <div
+          key={p.id}
+          className="handover-entry"
+          style={p.reply_to ? { marginLeft: "1rem", borderLeft: "2px solid #222", paddingLeft: "0.7rem" } : undefined}
+        >
+          <p className="handover-spine">{memberSpan(p.author)}{p.reply_to ? " replied" : ""}</p>
+          <p className="handover-last-real" style={{ whiteSpace: "pre-wrap" }}>{p.body}</p>
+        </div>
+      ))}
+      {postable && (
+        <div style={{ marginTop: "0.6rem" }}>
+          <PostBox
+            context={`club:${roundId}`}
+            compact
+            placeholder={status === "discussing" ? "what was it like? join the discussion…" : "drop a thought while it's playing…"}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RoundCard({ round, heading, commons = [] }: {
+  round: ClubRoundDetail;
+  heading?: string;
+  commons?: CommonsPost[];
+}) {
   const votable = round.status === "gathering" || round.status === "voting";
   const postable = round.status === "active" || round.status === "discussing";
-  const winner = round.recommendations.find((r) => r.id === round.winning_recommendation_id) ?? null;
-  // Raziel's discussion posts + any companion replies (write layer, club:<id>), oldest first.
-  const thread = [...commons].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const canRecommend = round.status === "gathering";
+
   return (
-    <section style={{ marginBottom: "2rem" }}>
-      {heading && <h2 className="page-title" style={{ fontSize: "1.1rem" }}>{heading}</h2>}
+    <section style={{ marginBottom: "2.25rem" }}>
+      {heading && <h2 className="page-title" style={{ fontSize: "1.05rem" }}>{heading}</h2>}
       <p className="page-subtitle">
-        {PHASE_LABEL[round.status] ?? round.status} · opened {formatTime(round.opened_at)}
+        {PHASE_LABEL[round.status] ?? round.status}
+        {" · opened "}{formatTime(round.opened_at)}
         {round.closed_at ? ` · closed ${formatTime(round.closed_at)}` : ""}
       </p>
-      {winner && (round.status === "discussing" || round.status === "active" || round.status === "closed") && (
-        <p style={{ color: "#f59e0b", marginBottom: "0.6rem" }}>
-          ★ the pick: <strong>{winner.title}</strong>{winner.creator ? ` — ${winner.creator}` : ""} ({memberSpan(winner.recommended_by)}’s rec)
-        </p>
-      )}
-      <Candidates recs={round.recommendations} votes={round.votes} winnerId={round.winning_recommendation_id} votable={votable} />
-      {round.discussions.length > 0 && (
-        <div style={{ marginTop: "1rem" }}>
-          {round.discussions.map((d) => (
-            <div key={d.id} className="handover-entry">
-              <p className="handover-spine">{memberSpan(d.companion_id)}</p>
-              <p className="handover-last-real">{d.reflection}</p>
-            </div>
-          ))}
+      <PhaseGuide status={round.status} />
+      <WinnerBanner round={round} />
+      <Candidates
+        recs={round.recommendations}
+        votes={round.votes}
+        winnerId={round.winning_recommendation_id}
+        votable={votable}
+        status={round.status}
+      />
+      {canRecommend && (
+        <div style={{ marginTop: "0.85rem", paddingTop: "0.75rem", borderTop: "1px solid #1a1a1a" }}>
+          <p style={{ fontSize: "0.8rem", color: "#4a5568", marginBottom: "0.45rem" }}>add your pick</p>
+          <RecommendForm />
         </div>
       )}
-      {thread.length > 0 && (
-        <div style={{ marginTop: "1rem", borderTop: "1px solid #222", paddingTop: "0.75rem" }}>
-          {thread.map((p) => (
-            <div key={p.id} className="handover-entry" style={p.reply_to ? { marginLeft: "1rem", borderLeft: "2px solid #333", paddingLeft: "0.7rem" } : undefined}>
-              <p className="handover-spine">{memberSpan(p.author)}{p.reply_to ? " replied" : ""}</p>
-              <p className="handover-last-real" style={{ whiteSpace: "pre-wrap" }}>{p.body}</p>
-            </div>
-          ))}
-        </div>
-      )}
-      {postable && (
-        <div style={{ marginTop: "0.75rem" }}>
-          <PostBox context={`club:${round.id}`} compact placeholder={round.status === "discussing" ? "what was it like? join the discussion…" : "drop a thought while it’s playing…"} />
-        </div>
-      )}
+      <DiscussionThread
+        discussions={round.discussions}
+        commons={commons}
+        roundId={round.id}
+        postable={postable}
+        status={round.status}
+      />
     </section>
   );
 }
@@ -132,14 +249,19 @@ export default async function ClubPage() {
   ]);
 
   const currentId = current?.round?.id ?? null;
-  const currentCommons = currentId ? await fetchCommonsPosts(`club:${currentId}`, 30) : [];
   const history = rounds.filter(r => r.id !== currentId);
+
+  // Fetch discussion commons in parallel -- cap history at 3 to stay lean
+  const [currentCommons, ...historyCommons] = await Promise.all([
+    currentId ? fetchCommonsPosts(`club:${currentId}`, 30) : Promise.resolve([]),
+    ...history.slice(0, 3).map(r => fetchCommonsPosts(`club:${r.id}`, 20)),
+  ]);
 
   return (
     <>
       <div className="page-header">
         <h1 className="page-title">The Club</h1>
-        <p className="page-subtitle">recommend · vote · experience · discuss — the triad’s shared shelf</p>
+        <p className="page-subtitle">recommend · vote · experience · discuss — the triad&apos;s shared shelf</p>
       </div>
 
       {current?.round ? (
@@ -161,9 +283,11 @@ export default async function ClubPage() {
       {history.length > 0 && (
         <>
           <div className="page-header" style={{ marginTop: "1rem" }}>
-            <h2 className="page-title" style={{ fontSize: "1.1rem" }}>Past rounds</h2>
+            <h2 className="page-title" style={{ fontSize: "1.05rem" }}>Past rounds</h2>
           </div>
-          {history.map((r) => <RoundCard key={r.id} round={r} />)}
+          {history.map((r, idx) => (
+            <RoundCard key={r.id} round={r} commons={historyCommons[idx] ?? []} />
+          ))}
         </>
       )}
     </>
