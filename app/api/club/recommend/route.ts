@@ -19,7 +19,14 @@ export async function POST(request: NextRequest) {
 
   const media_kind = VALID_KINDS.has(raw.media_kind as string) ? raw.media_kind : "other";
   const creator = typeof raw.creator === "string" ? raw.creator.trim().slice(0, 200) || null : null;
-  const url = typeof raw.url === "string" ? raw.url.trim() || null : null;
+  const rawUrl = typeof raw.url === "string" ? raw.url.trim() : "";
+  let url: string | null = null;
+  if (rawUrl) {
+    try {
+      const parsed = new URL(rawUrl);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") url = rawUrl;
+    } catch { /* invalid URL -- drop silently */ }
+  }
   const pitch = typeof raw.pitch === "string" ? raw.pitch.trim().slice(0, MAX_PITCH) || null : null;
 
   let res: Response;
