@@ -60,8 +60,11 @@ GET  /notes?limit=N     -- companion_notes table
 POST /notes             -- create note
 GET  /biometrics        -- list snapshots
 GET  /biometrics/latest -- single latest snapshot
-GET  /bridge/shared     -- shared bridge data
+GET  /bridge/shared     -- shared bridge data (admin bearer OR BRIDGE_SECRET as of 2026-07-02)
 POST /bridge/act        -- bridge action
+POST /routines          -- append a routine/event row (multi-log: meds AM+PM etc; wired 2026-07-02)
+POST /tasks             -- create task (2026-07-02)
+POST /events            -- create event (2026-07-02)
 GET  /companions        -- list companions
 GET  /companions/:id    -- single companion
 GET  /companions/:id/deltas  -- per-companion relational deltas
