@@ -23,3 +23,5 @@ docs/deploy*.md
 OPS-*.md
 DEPLOY_NOTES*.md
 *.tsbuildinfo
+
+.vercel

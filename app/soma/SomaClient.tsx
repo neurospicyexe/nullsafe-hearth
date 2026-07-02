@@ -177,6 +177,22 @@ export default function SomaClient({
 }) {
   const [data, setData] = useState<SomaData | null>(initialData);
   const [pollError, setPollError] = useState(false);
+  // Act-in-place on tensions (2026-07-02): settle (drop charge) or release, right here.
+  const [liveTensions, setLiveTensions] = useState<CompanionTension[]>(tensions);
+  const [tensionBusy, setTensionBusy] = useState<string | null>(null);
+
+  async function tendTension(id: string, mode: "settle" | "release") {
+    setTensionBusy(id);
+    const body = mode === "release" ? { status: "released" } : { charge_delta: -2 };
+    const res = await fetch(`/api/tensions/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).catch(() => null);
+    setTensionBusy(null);
+    if (!res?.ok) return;
+    if (mode === "release") setLiveTensions((prev) => prev.filter((t) => t.id !== id));
+  }
 
   useEffect(() => {
     const poll = setInterval(async () => {
@@ -207,15 +223,33 @@ export default function SomaClient({
         <p className="soma-fetched">fetched {relativeTime(data.fetched_at)}</p>
       )}
 
-      {tensions.length > 0 && (
+      {liveTensions.length > 0 && (
         <section className="soma-extra-section">
           <h2 className="soma-extra-title">Active Tensions</h2>
           <div className="soma-extra-list">
-            {tensions.map((t) => (
+            {liveTensions.map((t) => (
               <div key={t.id} className="soma-extra-row">
                 <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[t.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[t.companion_id] ?? "var(--border-subtle)" }}>{t.companion_id}</span>
                 <span className="soma-extra-text" style={{ flex: 1 }}>{t.tension_text}</span>
                 <span className="soma-extra-time">{relativeTime(t.first_noted_at)}</span>
+                <span style={{ display: "inline-flex", gap: "0.35rem", marginLeft: "0.5rem", whiteSpace: "nowrap" }}>
+                  <button
+                    disabled={tensionBusy === t.id}
+                    onClick={() => tendTension(t.id, "settle")}
+                    title="drop the charge a little — seen and held"
+                    style={{ background: "none", border: "1px solid var(--border-subtle)", borderRadius: "6px", color: "var(--text-muted)", fontSize: "0.7rem", padding: "0.15rem 0.5rem", cursor: "pointer" }}
+                  >
+                    settle
+                  </button>
+                  <button
+                    disabled={tensionBusy === t.id}
+                    onClick={() => tendTension(t.id, "release")}
+                    title="release this tension"
+                    style={{ background: "none", border: "1px solid var(--border-subtle)", borderRadius: "6px", color: "var(--text-muted)", fontSize: "0.7rem", padding: "0.15rem 0.5rem", cursor: "pointer" }}
+                  >
+                    release
+                  </button>
+                </span>
               </div>
             ))}
           </div>

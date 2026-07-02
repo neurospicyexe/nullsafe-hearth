@@ -1,5 +1,6 @@
 import { fetchCouncilCurrent, fetchCouncilRounds } from "@/lib/halseth";
 import type { CouncilRound, CouncilAnswer } from "@/lib/halseth";
+import ConveneForm from "./ConveneForm";
 
 export const dynamic = "force-dynamic";
 
@@ -60,9 +61,11 @@ export default async function CouncilPage() {
         <h1 className="page-title">Council</h1>
         <p className="page-subtitle">
           a hard question, answered by each of the triad, ranked blind (no one knows whose answer is
-          whose), then synthesized by Gaia as chairman. convene with <code>cy: council &lt;question&gt;</code>.
+          whose), then synthesized by Gaia as chairman.
         </p>
       </div>
+
+      {!liveOpen && <ConveneForm />}
 
       {liveOpen && (
         <section style={{ border: "1px solid var(--accent)", borderRadius: "10px", padding: "1rem", marginBottom: "1.5rem" }}>

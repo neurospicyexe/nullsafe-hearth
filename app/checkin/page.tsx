@@ -1,31 +1,33 @@
 import Link from "next/link";
 import BiometricCard from "@/components/BiometricCard";
-import BiometricForm from "@/components/BiometricForm";
-import UplinkForm from "@/components/UplinkForm";
+import StateLogger from "@/components/StateLogger";
 import { type BiometricSnapshot } from "@/lib/halseth";
-import { RoutineStatusClient } from "./client";
 
 export const dynamic = 'force-dynamic';
 
-async function fetchBiometrics(): Promise<BiometricSnapshot | null> {
+function isToday(iso: string): boolean {
+  return new Date(iso).toDateString() === new Date().toDateString();
+}
+
+async function fetchBiometrics(): Promise<BiometricSnapshot[]> {
   const base = process.env.HALSETH_URL;
   const secret = process.env.HALSETH_SECRET;
-  if (!base) return null;
+  if (!base) return [];
   try {
-    const res = await fetch(`${base}/biometrics`, {
+    const res = await fetch(`${base}/biometrics?limit=20`, {
       headers: secret ? { Authorization: `Bearer ${secret}` } : {},
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const data = await res.json();
-    return Array.isArray(data) ? (data[0] ?? null) : data;
+    return Array.isArray(data) ? data : [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-async function fetchTodayRoutines(): Promise<Array<{ routine_name: string }>> {
+async function fetchTodayRoutines(): Promise<Array<{ routine_name: string; logged_at: string; notes: string | null }>> {
   const base = process.env.HALSETH_URL;
   const secret = process.env.HALSETH_SECRET;
   if (!base) return [];
@@ -36,7 +38,9 @@ async function fetchTodayRoutines(): Promise<Array<{ routine_name: string }>> {
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return [];
-    return res.json();
+    const data = await res.json();
+    // Worker returns today's rows oldest-first; the logger shows newest-first.
+    return Array.isArray(data) ? data.slice().reverse() : [];
   } catch {
     return [];
   }
@@ -48,32 +52,26 @@ export default async function CheckinPage() {
     fetchTodayRoutines(),
   ]);
 
+  const latest = biometrics[0] ?? null;
+  const todaySnapshots = biometrics.filter((b) => isToday(b.recorded_at));
+
   return (
     <>
       <div className="page-header" style={{ marginBottom: "3rem" }}>
         <h1 className="page-title">Check-in</h1>
-        <p className="page-subtitle">daily state — meds, pain, mood, spoons, routines</p>
+        <p className="page-subtitle">one place — events (meds, water…) and state, logged as many times as the day needs</p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", maxWidth: "640px" }}>
-        <RoutineStatusClient initialRoutines={routines} />
+        <StateLogger todayRoutines={routines} todaySnapshots={todaySnapshots} />
 
-        <div>
-          <h2 className="section-title">Uplink</h2>
-          <UplinkForm />
-          <div style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--muted)", display: "flex", justifyContent: "flex-end" }}>
-            <Link href="/user" style={{ color: "var(--accent)", textDecoration: "none" }}>
-              biometric history →
-            </Link>
-          </div>
+        <div style={{ fontSize: "0.85rem", color: "var(--muted)", display: "flex", justifyContent: "flex-end" }}>
+          <Link href="/user" style={{ color: "var(--accent)", textDecoration: "none" }}>
+            biometric history →
+          </Link>
         </div>
 
-        <div>
-          <h2 className="section-title">Biometrics</h2>
-          <BiometricForm />
-        </div>
-
-        {biometrics && <BiometricCard biometrics={biometrics} />}
+        {latest && <BiometricCard biometrics={latest} />}
       </div>
     </>
   );

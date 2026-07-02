@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   const r = raw as Record<string, unknown>;
 
   // Allowlist: only forward known BiometricSnapshot fields
-  const num = (v: unknown) => (typeof v === "number" ? v : null);
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
   const str = (v: unknown) => (typeof v === "string" ? v : null);
   const bool = (v: unknown) => (typeof v === "boolean" ? v : v === 1 ? true : v === 0 ? false : null);
   const body = {
@@ -69,6 +69,20 @@ export async function POST(req: NextRequest) {
     });
 
     const data = await upstream.json();
+
+    // Keep the dashboard header live: a logged spoon count also updates house
+    // state. Best-effort — the snapshot is the record of truth, house is a mirror.
+    // Clamped 0-12 to match the worker's snapshot-side clamp (house POST doesn't validate).
+    if (upstream.ok && typeof body.spoons === "number") {
+      const spoonCount = Math.min(12, Math.max(0, Math.round(body.spoons)));
+      await fetch(`${base}/house`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+        body: JSON.stringify({ spoon_count: spoonCount }),
+        signal: AbortSignal.timeout(10_000),
+      }).catch(() => {});
+    }
+
     return NextResponse.json(data, { status: upstream.status });
   } catch {
     return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });

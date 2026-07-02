@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { fetchGuardianFlags } from "@/lib/halseth";
 import type { GuardianFlag } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
+import FlagActions from "./FlagActions";
 
 const SEVERITY_COLOR: Record<GuardianFlag["severity"], string> = {
   red:     "#ef4444",
@@ -70,10 +71,11 @@ export default async function GuardianPage() {
               </div>
               <span
                 className="section-row-meta"
-                style={{ color: STATUS_COLOR[f.status], fontSize: "0.78rem", whiteSpace: "nowrap" }}
+                style={{ color: STATUS_COLOR[f.status], fontSize: "0.78rem", whiteSpace: "nowrap", marginRight: "0.6rem" }}
               >
                 {f.status}
               </span>
+              <FlagActions id={f.id} status={f.status} />
             </div>
           ))}
         </div>
@@ -93,8 +95,8 @@ export default async function GuardianPage() {
       )}
 
       <p className="section-row-meta" style={{ fontSize: "0.78rem" }}>
-        The Guardian is an instrument, not a judge. Cards resolve themselves when the condition clears;
-        acknowledge or resolve by hand via Librarian (&quot;guardian ack&quot;).
+        The Guardian is an instrument, not a judge. Cards resolve themselves when the condition clears,
+        or acknowledge/resolve them right here.
       </p>
     </main>
   );

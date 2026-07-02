@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Task, CalendarEvent, ListItem } from "@/lib/halseth";
+import { AddTaskForm, AddEventForm } from "./CreateForms";
 
 function Check() {
   return (
@@ -358,8 +359,18 @@ export default function TasksClient({
         </button>
       </div>
       <div className="tp-content">
-        {tab === "tasks" && <TaskSection tasks={tasks} />}
-        {tab === "events" && <EventSection events={events} />}
+        {tab === "tasks" && (
+          <>
+            <AddTaskForm />
+            <TaskSection tasks={tasks} />
+          </>
+        )}
+        {tab === "events" && (
+          <>
+            <AddEventForm />
+            <EventSection events={events} />
+          </>
+        )}
         {tab === "lists" && <ListSection listItems={listItems} />}
       </div>
     </div>

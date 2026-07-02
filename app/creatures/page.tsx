@@ -1,6 +1,7 @@
 import { fetchCreatures, fetchCreature, creatureMood } from "@/lib/halseth";
 import type { Creature, CreatureInteraction } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
+import TendButtons from "./TendButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,9 @@ function CreatureCard({ creature, interactions }: { creature: Creature; interact
       <TrustBar trust={creature.trust} />
       <RestlessnessBar restlessness={creature.restlessness ?? 0} />
 
+      {/* Tend in place — feed/play/talk/give as raziel */}
+      <TendButtons creatureId={creature.id} />
+
       {/* Activity log */}
       <div style={{ marginTop: "0.75rem" }}>
         <div className="section-row-meta" style={{ fontSize: "0.73rem", marginBottom: "0.35rem" }}>
@@ -147,7 +151,7 @@ export default async function CreaturesPage() {
         <h1 className="page-title">Creatures</h1>
         <p className="page-subtitle">
           presences who live in the system — the corvid + Raziel&apos;s animals. trust builds slowly through
-          interaction (<code>cy: pet &lt;name&gt; feed</code>) and cools when untended.
+          interaction and cools when untended. tend them right here.
         </p>
       </div>
 
