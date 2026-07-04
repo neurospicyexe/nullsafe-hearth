@@ -91,3 +91,14 @@ Hearth is the visual layer. It reads from:
 | [Halseth](https://github.com/neurospicyexe/halseth) | The data backend — all the real data lives here |
 | [nullsafe-plural-v2](https://github.com/neurospicyexe/nullsafe-plural-v2) | Fronting/plurality tracking via SimplyPlural |
 | [nullsafe-second-brain](https://github.com/neurospicyexe/nullsafe-second-brain) | Writes to Obsidian vault, generates pattern summaries |
+
+---
+
+## Acknowledgments
+
+The drift-monitor idea (comparing recent tone against a baseline identity and surfacing it
+visually) traces to
+[cookiemonstaaahhhhh-spec/consciousness-continuity-framework](https://github.com/cookiemonstaaahhhhh-spec/consciousness-continuity-framework),
+and the Guardian surface renders a concept named for
+[Riley-Coyote's Memory Ledger Protocol](https://github.com/Riley-Coyote/memory-ledger-protocol-v0.2).
+Fuller credits: [nullsafe-suite acknowledgments](https://github.com/neurospicyexe/nullsafe-suite#acknowledgments). Thank you.
