@@ -1882,3 +1882,12 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .manage-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .manage-btn.primary { color: var(--accent); border-color: hsla(var(--accent-hue), 60%, 50%, 0.4); }
 .manage-btn.danger:hover:not(:disabled) { color: #f87171; border-color: hsla(0, 70%, 55%, 0.5); }
+
+/* ── Save-failed hints (SpoonCounter / LoveMeter) — quiet, honest, low-pressure ── */
+.spoon-save-hint,
+.love-save-hint {
+  font-size: 0.72rem;
+  color: #f8717199;
+  white-space: nowrap;
+  align-self: center;
+}

@@ -24,16 +24,19 @@ export default function HalsethRoom({ rooms, initialRoom }: Props) {
   const active = rooms.find((r) => r.key === activeKey) ?? rooms[0];
 
   async function switchRoom(key: string) {
+    const previous = activeKey;
     setActiveKey(key);
     setSaving(true);
     try {
-      await fetch("/api/house", {
+      const res = await fetch("/api/house", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ current_room: key }),
       });
+      if (!res.ok) throw new Error(String(res.status));
     } catch {
-      // silently fail — room is still shown client-side
+      // Revert instead of lying: the room shown should be the room saved.
+      setActiveKey(previous);
     } finally {
       setSaving(false);
     }
