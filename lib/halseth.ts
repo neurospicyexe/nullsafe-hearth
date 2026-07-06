@@ -232,7 +232,7 @@ export type MindJournalEntry = {
 };
 
 export type MindData = {
-  health: MindHealth;
+  health: MindHealth | null;
   patterns: { themes: string[]; temporal: string } | null;
   recent_journals: MindJournalEntry[];
 };
@@ -529,8 +529,25 @@ export async function fetchWounds(): Promise<LivingWound[] | null> {
   return hGetSafe<LivingWound[]>("/wounds");
 }
 
+const LOCAL_TZ = "America/Chicago";
+
+/** YYYY-MM-DD calendar day of a timestamp in the household timezone. */
+export function localDay(d: Date | string): string {
+  return new Date(d).toLocaleDateString("en-CA", { timeZone: LOCAL_TZ });
+}
+
 export async function fetchRoutinesToday(): Promise<Routine[] | null> {
-  return hGetSafe<Routine[]>("/routines?today=true");
+  // Halseth filters by UTC DATE(logged_at), but the household day (America/Chicago)
+  // spans two UTC dates after 19:00 local. Fetch both candidate UTC dates and
+  // filter to the local calendar day so evening taps don't vanish from "today".
+  const today = localDay(new Date());
+  const utcToday = new Date().toISOString().slice(0, 10);
+  const dates = [...new Set([today, utcToday])];
+  const batches = await Promise.all(dates.map((d) => hGetSafe<Routine[]>(`/routines?date=${d}`)));
+  if (batches.every((b) => b === null)) return null;
+  const rows = batches.flatMap((b) => b ?? []).filter((r) => localDay(r.logged_at) === today);
+  rows.sort((a, b) => a.logged_at.localeCompare(b.logged_at));
+  return rows;
 }
 
 export async function fetchAllDeltas(
@@ -867,7 +884,7 @@ export type WmDream = {
   id: string;
   companion_id: string;
   dream_text: string;
-  dream_type: string | null;
+  source: "autonomous" | "session";
   created_at: string;
   examined_at: string | null;
   do_not_auto_examine: number;

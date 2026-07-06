@@ -503,8 +503,8 @@ export default async function Page() {
                   <div key={d.id} className="note-item">
                     <div className="note-item-header">
                       <span className="note-item-author">{d.companion_id}</span>
-                      {d.dream_type && (
-                        <span className="note-item-author" style={{ opacity: 0.5 }}>{d.dream_type.replace("_", " ")}</span>
+                      {d.source && (
+                        <span className="note-item-author" style={{ opacity: 0.5 }}>{d.source}</span>
                       )}
                       <span className="note-item-time"><ClientTime iso={d.created_at} /></span>
                     </div>

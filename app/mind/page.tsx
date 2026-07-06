@@ -15,7 +15,9 @@ async function fetchMind(): Promise<MindData | null> {
       fetch(`${base}/mind/patterns?days=7`,  { headers: h, cache: 'no-store' }),
       fetch(`${base}/mind/recent?hours=168`, { headers: h, cache: 'no-store' }),
     ]);
-    const health          = healthRes.ok   ? await healthRes.json()   : { entities: 0, observations: 0, relations: 0, journals: 0, salience: {} };
+    // /mind/health doesn't exist in halseth yet -- hide the panel rather than
+    // rendering a permanent fake-zeros health card.
+    const health          = healthRes.ok   ? await healthRes.json()   : null;
     const patterns        = patternsRes.ok ? await patternsRes.json() : null;
     const recent_journals = journalsRes.ok ? await journalsRes.json() : [];
     return { health, patterns, recent_journals };
@@ -48,7 +50,7 @@ function formatTime(iso: string) {
 
 // ── Mind Health Panel ─────────────────────────────────────────────────────────
 
-function MindHealthPanel({ health }: { health: MindData["health"] }) {
+function MindHealthPanel({ health }: { health: NonNullable<MindData["health"]> }) {
   const stats = [
     { label: "entities",     value: health.entities },
     { label: "observations", value: health.observations },

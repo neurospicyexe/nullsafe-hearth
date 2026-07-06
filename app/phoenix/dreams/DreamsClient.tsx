@@ -104,9 +104,9 @@ function DreamCard({
               alignItems: "center",
             }}
           >
-            {dream.dream_type && (
+            {dream.source && (
               <span className="badge" style={{ fontSize: "0.72rem", background: "#1e293b" }}>
-                {dream.dream_type}
+                {dream.source}
               </span>
             )}
             {isPinned && (

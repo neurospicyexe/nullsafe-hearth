@@ -40,7 +40,7 @@ function WmDreamEntry({ dream }: { dream: WmDream }) {
       <div className="note-header">
         <span className="note-author" style={{ color }}>{dream.companion_id}</span>
         {dream.examined_at && <span className="note-type-badge">examined</span>}
-        {dream.dream_type && <span className="note-type-badge">{dream.dream_type}</span>}
+        {dream.source && <span className="note-type-badge">{dream.source}</span>}
         <span className="note-time"><ClientTime iso={dream.created_at} /></span>
       </div>
       <div className="note-body">{dream.dream_text}</div>

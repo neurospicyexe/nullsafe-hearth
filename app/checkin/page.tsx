@@ -1,12 +1,12 @@
 import Link from "next/link";
 import BiometricCard from "@/components/BiometricCard";
 import StateLogger from "@/components/StateLogger";
-import { type BiometricSnapshot } from "@/lib/halseth";
+import { fetchRoutinesToday, localDay, type BiometricSnapshot } from "@/lib/halseth";
 
 export const dynamic = 'force-dynamic';
 
 function isToday(iso: string): boolean {
-  return new Date(iso).toDateString() === new Date().toDateString();
+  return localDay(iso) === localDay(new Date());
 }
 
 async function fetchBiometrics(): Promise<BiometricSnapshot[]> {
@@ -28,22 +28,9 @@ async function fetchBiometrics(): Promise<BiometricSnapshot[]> {
 }
 
 async function fetchTodayRoutines(): Promise<Array<{ routine_name: string; logged_at: string; notes: string | null }>> {
-  const base = process.env.HALSETH_URL;
-  const secret = process.env.HALSETH_SECRET;
-  if (!base) return [];
-  try {
-    const res = await fetch(`${base}/routines`, {
-      headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-      cache: "no-store",
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    // Worker returns today's rows oldest-first; the logger shows newest-first.
-    return Array.isArray(data) ? data.slice().reverse() : [];
-  } catch {
-    return [];
-  }
+  // Worker returns today's rows oldest-first; the logger shows newest-first.
+  const rows = (await fetchRoutinesToday()) ?? [];
+  return rows.slice().reverse();
 }
 
 export default async function CheckinPage() {
