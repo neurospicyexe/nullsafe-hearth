@@ -16,7 +16,11 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https:",
+              // blob: is epub.js -- it unzips the book in-browser and serves every
+              // internal image (and sometimes the chapter iframe itself) as a blob URL.
+              // Without it the reader renders text but every illustration is blocked.
+              "img-src 'self' data: blob: https:",
+              "frame-src 'self' blob:",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://vercel.live wss://ws-us3.pusher.com",
               "frame-ancestors 'none'",
