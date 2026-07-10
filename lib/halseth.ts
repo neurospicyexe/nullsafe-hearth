@@ -1613,6 +1613,10 @@ export type Creature = {
   // Added by Sol feature (task 7): disposition from creature state + restlessness float (0-1)
   disposition: string;
   restlessness: number;
+  // Inner life (0100): lazy-derived drives, dominant state, trust tier
+  drives?: { hunger: number; boredom: number; missing: number; energy: number };
+  state?: string;   // sleepy | hungry | missing | bored | content
+  tier?: string;    // abandoned | wary | cautious | warming | bonded | devoted
 };
 
 export type CreatureInteraction = {
@@ -1623,17 +1627,44 @@ export type CreatureInteraction = {
   created_at: string;
 };
 
+// Inner life (0100)
+export type CreatureMilestone = {
+  milestone_id: string;
+  fired_at: string;
+  witnessed_by: string | null;
+  text: string | null;
+};
+
+export type NestItem = {
+  id: string;
+  content: string;
+  source: string;            // gift | overheard:house
+  given_by: string | null;
+  sparkle: number;
+  treasured: number;         // 0 | 1
+  gifted_to: string | null;
+  gifted_at: string | null;
+  created_at: string;
+};
+
+export type CreatureFamiliarity = { actor: string; tendings: number; last_at: string };
+
 export async function fetchCreatures(): Promise<Creature[]> {
   const res = await hGetSafe<{ creatures?: Creature[] }>("/mind/creatures");
   return res?.creatures ?? [];
 }
 
-export async function fetchCreature(
-  id: string,
-): Promise<{ creature: Creature; interactions: CreatureInteraction[] } | null> {
-  return await hGetSafe<{ creature: Creature; interactions: CreatureInteraction[] }>(
-    `/mind/creatures/${encodeURIComponent(id)}`,
-  );
+export type CreatureDetail = {
+  creature: Creature;
+  interactions: CreatureInteraction[];
+  milestones?: CreatureMilestone[];
+  next_milestone?: { id: string; threshold: number } | null;
+  nest?: NestItem[];
+  familiarity?: CreatureFamiliarity[];
+};
+
+export async function fetchCreature(id: string): Promise<CreatureDetail | null> {
+  return await hGetSafe<CreatureDetail>(`/mind/creatures/${encodeURIComponent(id)}`);
 }
 
 /** Mood label off a creature's state_json (best-effort; null if absent/malformed). */
