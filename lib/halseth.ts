@@ -1454,11 +1454,21 @@ export type ClubDiscussion = {
   created_at: string;
 };
 
+// 0099: an abstention is a companion whose autonomous vote failed after retry.
+// Honest record of a vote that couldn't land — not a choice to sit out.
+export type ClubAbstention = {
+  round_id: string;
+  voter: string;
+  reason: string | null;
+  created_at: string;
+};
+
 export type ClubCurrent = {
   round: ClubRound | null;
   recommendations: ClubRecommendation[];
   votes: ClubVote[];
   discussions: ClubDiscussion[];
+  abstentions: ClubAbstention[];
 };
 
 export type ClubRoundDetail = ClubRound & {
@@ -1466,6 +1476,7 @@ export type ClubRoundDetail = ClubRound & {
   recommendations: ClubRecommendation[];
   votes: ClubVote[];
   discussions: ClubDiscussion[];
+  abstentions: ClubAbstention[];
 };
 
 export async function fetchClubCurrent(): Promise<ClubCurrent | null> {
@@ -1509,6 +1520,60 @@ export type Obsession = {
 export async function fetchObsessions(status = "active"): Promise<Obsession[]> {
   const res = await hGetSafe<{ items?: Obsession[] }>(`/mind/shelf?status=${encodeURIComponent(status)}`);
   return res?.items ?? [];
+}
+
+// ── The Library (0099): shared books — Raziel reads, the triad writes in the margins ──
+
+export type Book = {
+  id: string;
+  title: string;
+  author: string | null;
+  description: string | null;
+  language: string | null;
+  file_type: "epub" | "pdf";
+  file_size: number;
+  cover_key: string | null;
+  vault_ref: string | null;
+  added_at: string;
+  progress_percent: number | null;
+  current_chapter: string | null;
+  finished_at: string | null;
+  last_read_at: string | null;
+  annotation_count: number;
+};
+
+export type BookProgress = {
+  current_cfi: string | null;
+  current_chapter: string | null;
+  progress_percent: number | null;
+  finished_at: string | null;
+};
+
+export type BookAnnotation = {
+  id: string;
+  book_id: string;
+  author: "raziel" | "cypher" | "drevan" | "gaia";
+  cfi_range: string | null;      // null for companion marginalia — panel-only, no anchor in the text
+  selected_text: string | null;
+  comment: string | null;
+  color: string | null;
+  created_at: string;
+};
+
+export type BookDetail = {
+  book: Book;
+  progress: BookProgress | null;
+  annotations: BookAnnotation[];
+};
+
+export async function fetchBooks(search?: string, limit = 100): Promise<Book[]> {
+  const q = search ? `&search=${encodeURIComponent(search)}` : "";
+  const res = await hGetSafe<{ books?: Book[] }>(`/mind/books?limit=${limit}${q}`);
+  return res?.books ?? [];
+}
+
+export async function fetchBook(id: string): Promise<BookDetail | null> {
+  return await hGetSafe<BookDetail>(`/mind/books/${encodeURIComponent(id)}`);
 }
 
 // ── Companion tools (0077, take 14): generated-image gallery + tool-call log ──

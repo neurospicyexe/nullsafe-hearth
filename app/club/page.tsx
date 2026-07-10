@@ -14,8 +14,8 @@ const MEMBER_COLOR: Record<string, string> = {
 };
 
 const PHASE_LABEL: Record<string, string> = {
-  gathering: "gathering — recommendations open",
-  voting: "voting — preferences landing",
+  gathering: "gathering — recommendations landing, votes open",
+  voting: "voting — tally in progress",
   active: "active — experiencing the pick",
   discussing: "discussing — the winner's in; come talk about it",
   closed: "closed",
@@ -24,12 +24,12 @@ const PHASE_LABEL: Record<string, string> = {
 // Human-readable phase guides — what's happening and what Raziel can do.
 const PHASE_GUIDE: Record<string, { what: string; raziel: string }> = {
   gathering: {
-    what: "Companions recommend picks over ~2 days. Round advances to voting automatically.",
-    raziel: "Add your own pick below, or wait to vote once gathering closes.",
+    what: "Companions recommend picks over ~2 days, and votes are open as picks land. One vote per member; no voting for your own pick.",
+    raziel: "Add your own pick below, or vote early — the buttons next to each pick work now.",
   },
   voting: {
-    what: "One vote per member. No voting for your own pick. Majority wins; tie goes to earliest rec.",
-    raziel: "Cast your vote using the button next to each pick.",
+    what: "The tally is in progress — this phase usually passes in a blink. Majority wins; tie goes to earliest rec.",
+    raziel: "If you haven't voted yet, the buttons still work — but don't blink.",
   },
   active: {
     what: "The pick is chosen. ~4 days to sit with it. Companions discuss in-voice at the daily tick.",
@@ -225,6 +225,18 @@ function RoundCard({ round, heading, commons = [] }: {
         votable={votable}
         status={round.status}
       />
+      {(round.abstentions ?? []).length > 0 && (
+        <p style={{ fontSize: "0.78rem", color: "#4a5568", marginTop: "0.5rem" }}>
+          abstained:{" "}
+          {(round.abstentions ?? []).map((a, i) => (
+            <span key={a.voter}>
+              {i > 0 ? " · " : ""}
+              {memberSpan(a.voter)}
+              {a.reason ? <span style={{ color: "#3f4a5c" }}> ({a.reason})</span> : null}
+            </span>
+          ))}
+        </p>
+      )}
       {canRecommend && (
         <div style={{ marginTop: "0.85rem", paddingTop: "0.75rem", borderTop: "1px solid #1a1a1a" }}>
           <p style={{ fontSize: "0.8rem", color: "#4a5568", marginBottom: "0.45rem" }}>add your pick</p>
@@ -272,6 +284,7 @@ export default async function ClubPage() {
             recommendations: current.recommendations,
             votes: current.votes,
             discussions: current.discussions ?? [],
+            abstentions: current.abstentions ?? [],
           }}
           heading="Current round"
           commons={currentCommons}

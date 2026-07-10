@@ -57,6 +57,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/club",       label: "Club",       sym: "♫" },
       { href: "/shelf",      label: "Shelf",      sym: "❦" },
+      { href: "/library",    label: "Library",    sym: "❧" },
       { href: "/gallery",    label: "Gallery",    sym: "▦" },
       { href: "/creatures",  label: "Creatures",  sym: "✦" },
       { href: "/collection", label: "Collection", sym: "❖" },
