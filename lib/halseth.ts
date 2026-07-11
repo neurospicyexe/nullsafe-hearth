@@ -1667,6 +1667,44 @@ export async function fetchCreature(id: string): Promise<CreatureDetail | null> 
   return await hGetSafe<CreatureDetail>(`/mind/creatures/${encodeURIComponent(id)}`);
 }
 
+// Fermentation layer (0101) -- floats that ferment between sessions + drifting baselines (growth).
+export type FermentFloat = {
+  label: string;
+  value: number | null;
+  baseline: number | null;
+  seed: number | null;
+};
+
+export type FermentDrive = {
+  drive_key: string;
+  level: number;
+  threshold: number;
+  fired: boolean;
+};
+
+export type FermentEvent = {
+  id: string;
+  kind: string;                 // stimulus | tick | baseline_drift
+  stimulus: string | null;
+  float_deltas: string | null;  // JSON string {f1,f2,f3}
+  drive_deltas: string | null;  // JSON string
+  detail: string | null;
+  created_at: string;
+};
+
+export type Fermentation = {
+  companion_id: string;
+  floats: FermentFloat[];
+  compound_state: string | null;
+  ferment_at: string | null;
+  drives: FermentDrive[];
+  recent_events: FermentEvent[];
+};
+
+export async function fetchFermentation(id: string): Promise<Fermentation | null> {
+  return await hGetSafe<Fermentation>(`/mind/ferment/${encodeURIComponent(id)}`);
+}
+
 /** Mood label off a creature's state_json (best-effort; null if absent/malformed). */
 export function creatureMood(c: Creature): string | null {
   if (!c.state_json) return null;

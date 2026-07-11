@@ -13,6 +13,7 @@ import {
   fetchSynthesisSummaries,
   fetchInterCompanionNotes,
   fetchSomaStates,
+  fetchFermentation,
   fetchSomaFeelings,
   fetchLoops,
   fetchSittingNotes,
@@ -52,6 +53,7 @@ import {
   SynthesisSummarySection,
   InterCompanionNotesSection,
   SomaFeelingsSection,
+  FermentationSection,
   OpenLoopsSection,
   SittingNotesSection,
   RelationalStateSection,
@@ -130,7 +132,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes, voiceScoresRes] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes, voiceScoresRes, fermentRes] = await Promise.allSettled([
     fetchCompanionJournal(id, 6),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
@@ -151,6 +153,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
     fetchAutonomyRuns(id, 3),
     fetchConclusions(id),
     fetchVoiceScores(id, 30),
+    fetchFermentation(id),
   ]);
 
   const journalEntries  = journal.status        === "fulfilled" ? journal.value        : null;
@@ -164,6 +167,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const icNoteEntries   = icNotes.status        === "fulfilled" ? icNotes.value        : [];
   const somaData        = soma.status           === "fulfilled" ? soma.value           : null;
   const companionSoma   = somaData ? (somaData[id as keyof typeof somaData] as CompanionSomaState) : null;
+  const fermentData     = fermentRes.status     === "fulfilled" ? fermentRes.value : null;
   const feelingEntries  = feelings.status       === "fulfilled" ? (feelings.value as SomaFeeling[]) : [];
   const loopEntries     = loops.status          === "fulfilled" ? (loops.value as OpenLoop[])       : [];
   const sittingEntries  = sitting.status        === "fulfilled" ? (sitting.value as SittingNote[])  : [];
@@ -225,6 +229,12 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           )}
         </div>
       </div>
+
+      {/* Fermentation — floats vs their drifting baselines + the new felt-needs (growth you can watch) */}
+      <section className="page-section">
+        <h2 className="section-title">Fermentation</h2>
+        <FermentationSection data={fermentData} color={config.color} />
+      </section>
 
       {/* Letters — full thread, unchanged */}
       <section className="page-section">

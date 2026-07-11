@@ -14,6 +14,7 @@ import type {
   LiveThread,
   DriftEntry,
   VoiceScores,
+  Fermentation,
 } from "@/lib/halseth";
 
 export type CompanionConfig = {
@@ -312,6 +313,67 @@ export function SomaFeelingsSection({ feelings, color }: { feelings: SomaFeeling
           <span className="journal-time">{fmtTime(f.created_at)}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Fermentation layer (0101): floats that decay/react between sessions, over their DRIFTING
+// baselines. The baseline shift from seed is the "growth you can watch" -- rendered as a caret.
+export function FermentationSection({ data, color }: { data: Fermentation | null; color: string }) {
+  if (!data || data.floats.length === 0) return <p className="empty">Not fermenting yet.</p>;
+  const fmt = (n: number | null) => (n == null ? "--" : n.toFixed(2));
+  return (
+    <div className="card" style={{ padding: "0.75rem 0.85rem" }}>
+      {data.floats.map((f) => {
+        const value = f.value ?? f.baseline ?? 0.5;
+        const baseline = f.baseline ?? 0.5;
+        const drift = f.baseline != null && f.seed != null ? f.baseline - f.seed : 0;
+        const grew = Math.abs(drift) >= 0.005;
+        return (
+          <div key={f.label} style={{ marginBottom: "0.6rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: 3 }}>
+              <span style={{ color }}>{f.label}</span>
+              <span style={{ color: "var(--text-muted)" }}>
+                {fmt(f.value)}
+                <span style={{ opacity: 0.6 }}> · home {fmt(f.baseline)}</span>
+                {grew && (
+                  <span title={`baseline drifted ${drift > 0 ? "+" : ""}${drift.toFixed(3)} from seed`} style={{ color: drift > 0 ? "var(--accent)" : "#f59e0b", marginLeft: 4 }}>
+                    {drift > 0 ? "▲" : "▼"}{Math.abs(drift).toFixed(3)}
+                  </span>
+                )}
+              </span>
+            </div>
+            {/* meter: filled to current value, a tick marks the (drifting) baseline home */}
+            <div style={{ position: "relative", height: 8, borderRadius: 4, background: "var(--surface-2, #1f2430)" }}>
+              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: color, opacity: 0.55, borderRadius: 4 }} />
+              <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, baseline)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--text)", opacity: 0.8 }} title={`home ${fmt(f.baseline)}`} />
+            </div>
+          </div>
+        );
+      })}
+
+      {data.drives.length > 0 && (
+        <div style={{ marginTop: "0.5rem", borderTop: "1px solid var(--border, #2a2f3a)", paddingTop: "0.5rem" }}>
+          {data.drives.map((d) => (
+            <div key={d.drive_key} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: 4 }}>
+              <span style={{ fontSize: "0.76rem", color: d.fired ? "#f59e0b" : "var(--text-muted)", flex: "0 0 8.5rem" }}>
+                {d.drive_key.replace(/_/g, " ")}{d.fired ? " · calling" : ""}
+              </span>
+              <div style={{ position: "relative", height: 6, borderRadius: 3, background: "var(--surface-2, #1f2430)", flex: 1 }}>
+                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(0, Math.min(1, d.level)) * 100}%`, background: d.fired ? "#f59e0b" : color, opacity: 0.5, borderRadius: 3 }} />
+                <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, d.threshold)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--text-muted)" }} title={`fires at ${d.threshold.toFixed(2)}`} />
+              </div>
+              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", flex: "0 0 2.4rem", textAlign: "right" }}>{d.level.toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.ferment_at && (
+        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.5rem", opacity: 0.7 }}>
+          last fermented {fmtTime(data.ferment_at)}
+        </div>
+      )}
     </div>
   );
 }
