@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { safeCompare } from "@/lib/timing-safe";
 
 // Companion-accessible house update — authenticated with HALSETH_SECRET Bearer token.
 // Exempted from dashboard cookie middleware so companions can call it during sessions.
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
   if (!secret) return NextResponse.json({ error: "Not configured" }, { status: 500 });
 
   const auth = request.headers.get("Authorization") ?? "";
-  if (auth !== `Bearer ${secret}`) {
+  if (!safeCompare(auth, `Bearer ${secret}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signSession } from "@/lib/session";
+import { safeCompare } from "@/lib/timing-safe";
 
 export async function POST(request: NextRequest) {
   const secret = process.env.DASHBOARD_SECRET;
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  if (!body.secret || body.secret !== secret) {
+  if (!body.secret || !safeCompare(body.secret, secret)) {
     return NextResponse.json({ error: "Incorrect passphrase" }, { status: 401 });
   }
 
