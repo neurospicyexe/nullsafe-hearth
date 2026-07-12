@@ -7,8 +7,13 @@ export async function middleware(request: NextRequest) {
   // Missing secret now denies (fail-closed, 2026-07-12) -- previously allowed all
   // requests through, which meant a single missing env var silently opened the
   // whole dashboard. Login itself already 500s without a secret configured
-  // (app/api/auth/route.ts), so this doesn't newly break anything reachable.
+  // (app/api/auth/route.ts), so this doesn't newly break anything reachable in
+  // production. Dev-only carve-out restores the pre-hardening local convenience
+  // (Next.js forces NODE_ENV=production on build/start; Vercel is always
+  // production) -- without it, a fresh local clone with no secret configured
+  // hits a dead end (redirect to /login, whose POST also 500s with no escape).
   if (!secret) {
+    if (process.env.NODE_ENV === "development") return NextResponse.next();
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);

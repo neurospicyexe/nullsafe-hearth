@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  if (!body.secret || !safeCompare(body.secret, secret)) {
+  if (typeof body.secret !== "string" || !safeCompare(body.secret, secret)) {
     return NextResponse.json({ error: "Incorrect passphrase" }, { status: 401 });
   }
 

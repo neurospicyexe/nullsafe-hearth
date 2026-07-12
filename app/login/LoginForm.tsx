@@ -9,7 +9,10 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const params = useSearchParams();
-  const from = params.get("from") ?? "/";
+  // Same-origin only -- a bare "/" prefix without a second leading slash, so
+  // "//evil.com" (browsers treat as protocol-relative) can't redirect off-site.
+  const rawFrom = params.get("from") ?? "/";
+  const from = rawFrom.startsWith("/") && !rawFrom.startsWith("//") ? rawFrom : "/";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
