@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { signSession } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
   const secret = process.env.DASHBOARD_SECRET;
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({ success: true });
 
-  response.cookies.set("hearth_session", secret, {
+  response.cookies.set("hearth_session", await signSession(secret), {
     httpOnly: true,
     secure: true,
     sameSite: "strict",
