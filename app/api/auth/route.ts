@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signSession } from "@/lib/session";
 import { safeCompare } from "@/lib/timing-safe";
-import { checkLoginRateLimit } from "@/lib/rate-limit";
+import { checkLoginRateLimit, getClientKey } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const secret = process.env.DASHBOARD_SECRET;
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Auth not configured" }, { status: 500 });
   }
 
-  const clientKey = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const clientKey = getClientKey(request.headers);
   if (!checkLoginRateLimit(clientKey)) {
     return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
   }

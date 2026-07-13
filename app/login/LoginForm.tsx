@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { sanitizeRedirectTarget } from "@/lib/safe-redirect";
 
 export default function LoginForm() {
   const [value, setValue] = useState("");
@@ -9,10 +10,7 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const params = useSearchParams();
-  // Same-origin only -- a bare "/" prefix without a second leading slash, so
-  // "//evil.com" (browsers treat as protocol-relative) can't redirect off-site.
-  const rawFrom = params.get("from") ?? "/";
-  const from = rawFrom.startsWith("/") && !rawFrom.startsWith("//") ? rawFrom : "/";
+  const from = sanitizeRedirectTarget(params.get("from"));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

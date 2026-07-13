@@ -30,3 +30,18 @@ export function checkLoginRateLimit(key: string): boolean {
 export function __resetForTests(): void {
   attempts = new Map();
 }
+
+/**
+ * Derives a rate-limit key from request headers. x-real-ip is set by Vercel's
+ * edge to the actual connecting IP and can't be spoofed by the client;
+ * x-forwarded-for's *first* entry is client-supplied (an attacker can prepend
+ * arbitrary values to dodge the limit), so the fallback uses the *last* entry,
+ * which is the one the nearest proxy appended.
+ */
+export function getClientKey(headers: { get(name: string): string | null }): string {
+  return (
+    headers.get("x-real-ip")?.trim() ||
+    headers.get("x-forwarded-for")?.split(",").pop()?.trim() ||
+    "unknown"
+  );
+}
