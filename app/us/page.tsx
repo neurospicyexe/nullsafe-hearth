@@ -35,6 +35,27 @@ function AuthorChip({ companionId }: { companionId: string | null | undefined })
   );
 }
 
+// Soft canon (2026-07-21): the five canon valence words get distinct colors;
+// anything else (typos, future words) falls through to the plain/neutral chip.
+// Colors mirror the existing .valence-badge palette (globals.css) for visual
+// consistency with /threads, just applied inline to match this page's idiom.
+const VALENCE_COLOR: Record<string, { bg: string; fg: string }> = {
+  toward:  { bg: "hsla(var(--accent-hue), 85%, 65%, 0.15)", fg: "var(--accent)" }, // warm/amber
+  tender:  { bg: "rgba(244,114,182,0.15)", fg: "#fcc2d7" }, // soft pink/rose
+  repair:  { bg: "rgba(34,197,94,0.15)",   fg: "#bbf7d0" }, // green
+  rupture: { bg: "rgba(239,68,68,0.15)",   fg: "#fca5a5" }, // red
+  neutral: { bg: "rgba(255,255,255,0.07)", fg: "#94a3b8" }, // gray
+};
+
+function ValenceChip({ value }: { value: string }) {
+  const canon = VALENCE_COLOR[value.trim().toLowerCase()];
+  return (
+    <span className="delta-valence" style={canon ? { background: canon.bg, color: canon.fg } : undefined}>
+      {value}
+    </span>
+  );
+}
+
 export default async function UsPage() {
   const [presence, wounds, journal, deltas, handovers, allCompNotes, interNotes] = await Promise.allSettled([
     fetchPresence(),
@@ -162,7 +183,7 @@ export default async function UsPage() {
                 <div key={d.id} className={`delta-entry ${v ?? ""}`}>
                   <div className="delta-text">{d.delta_text}</div>
                   <div className="delta-meta">
-                    {v && <span className={`delta-valence ${v}`}>{v}</span>}
+                    {v && <ValenceChip value={v} />}
                     {d.agent && <span>by {d.agent}</span>}
                     <span><ClientTime iso={d.created_at} /></span>
                   </div>

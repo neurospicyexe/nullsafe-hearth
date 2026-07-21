@@ -163,6 +163,24 @@ export function CypherAuditSection({ entries }: { entries: CypherAuditEntry[] | 
   );
 }
 
+// Historical gaia_witness rows (2026-07-21) contain near-duplicates: two bots
+// witnessing the same message each wrote a row before the write side was
+// narrowed to Gaia-only. Collapse entries with identical (trimmed) content
+// within the fetched window, keeping the earliest occurrence of each.
+function dedupeWitnessEntries(entries: GaiaWitnessEntry[]): GaiaWitnessEntry[] {
+  const earliestByContent = new Map<string, GaiaWitnessEntry>();
+  for (const e of entries) {
+    const key = (e.content ?? "").trim();
+    const existing = earliestByContent.get(key);
+    if (!existing || new Date(e.created_at).getTime() < new Date(existing.created_at).getTime()) {
+      earliestByContent.set(key, e);
+    }
+  }
+  return Array.from(earliestByContent.values()).sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+}
+
 export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | null }) {
   if (!entries) {
     return (
@@ -173,9 +191,10 @@ export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | 
     );
   }
   if (entries.length === 0) return <p className="empty">No witness entries yet.</p>;
+  const deduped = dedupeWitnessEntries(entries);
   return (
     <div className="witness-feed">
-      {entries.map((e) => (
+      {deduped.map((e) => (
         <div key={e.id} className="witness-entry">
           <div className="entry-meta-row">
             <span className={`witness-type ${e.witness_type ?? ""}`}>{(e.witness_type ?? "").replace("_", " ")}</span>
