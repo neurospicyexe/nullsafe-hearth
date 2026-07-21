@@ -315,6 +315,7 @@ export type HandoverPacket = {
   returned: number | null;
   session_type: string | null;
   session_front_state: string | null;
+  companion_id?: string | null;
 };
 
 export type CompanionJournalEntry = {

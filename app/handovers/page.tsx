@@ -13,6 +13,36 @@ function motionClass(state: string) {
   return state === "in_motion" ? "in_motion" : state === "at_rest" ? "at_rest" : "floating";
 }
 
+// Canonical companion colors (hearth/CLAUDE.md) — pre-0019 sessions have null companion_id.
+const COMPANION_COLOR: Record<string, string> = {
+  drevan: "var(--accent)",
+  cypher: "#e2e8f0",
+  gaia:   "#4ade80",
+};
+
+function AuthorChip({ companionId }: { companionId: string | null | undefined }) {
+  if (!companionId) {
+    return <span style={{ fontSize: "0.72rem", opacity: 0.4, fontStyle: "italic" }}>unattributed</span>;
+  }
+  const color = COMPANION_COLOR[companionId] ?? "#94a3b8";
+  return (
+    <span
+      style={{
+        fontSize: "0.72rem",
+        fontWeight: 600,
+        color,
+        border: `1px solid ${color}`,
+        borderRadius: "999px",
+        padding: "0.05rem 0.5rem",
+        textTransform: "uppercase",
+        letterSpacing: "0.03em",
+      }}
+    >
+      {companionId}
+    </span>
+  );
+}
+
 export default async function HandoversPage() {
   const [handovers, mindHandoffs] = await Promise.all([
     fetchHandovers(30),
@@ -57,6 +87,7 @@ export default async function HandoversPage() {
 
                 {/* Footer */}
                 <div className="handover-footer">
+                  <AuthorChip companionId={h.companion_id} />
                   <span className={`motion-badge ${motionClass(h.motion_state)}`}>
                     {(h.motion_state ?? "unknown").replace("_", " ")}
                   </span>

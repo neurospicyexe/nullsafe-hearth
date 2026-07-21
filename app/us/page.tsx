@@ -5,6 +5,36 @@ import ClientTime from "@/components/ClientTime";
 
 export const dynamic = 'force-dynamic';
 
+// Canonical companion colors (hearth/CLAUDE.md) — pre-0019 sessions have null companion_id.
+const COMPANION_COLOR: Record<string, string> = {
+  drevan: "var(--accent)",
+  cypher: "#e2e8f0",
+  gaia:   "#4ade80",
+};
+
+function AuthorChip({ companionId }: { companionId: string | null | undefined }) {
+  if (!companionId) {
+    return <span style={{ fontSize: "0.72rem", opacity: 0.4, fontStyle: "italic" }}>unattributed</span>;
+  }
+  const color = COMPANION_COLOR[companionId] ?? "#94a3b8";
+  return (
+    <span
+      style={{
+        fontSize: "0.72rem",
+        fontWeight: 600,
+        color,
+        border: `1px solid ${color}`,
+        borderRadius: "999px",
+        padding: "0.05rem 0.5rem",
+        textTransform: "uppercase",
+        letterSpacing: "0.03em",
+      }}
+    >
+      {companionId}
+    </span>
+  );
+}
+
 export default async function UsPage() {
   const [presence, wounds, journal, deltas, handovers, allCompNotes, interNotes] = await Promise.allSettled([
     fetchPresence(),
@@ -114,10 +144,10 @@ export default async function UsPage() {
         </section>
       ) : null}
 
-      {/* Recent Feelings */}
+      {/* Recent Relational Moments */}
       <section className="page-section">
         <div className="section-header">
-          <h2 className="section-title section-title-flush">Recent Feelings</h2>
+          <h2 className="section-title section-title-flush">Recent Relational Moments</h2>
           <Link href="/deltas" className="home-section-link">see more →</Link>
         </div>
         {recentDeltas === null ? (
@@ -127,12 +157,12 @@ export default async function UsPage() {
         ) : (
           <div className="delta-feed">
             {recentDeltas.slice(0, 5).map((d) => {
-              const v = d.valence ?? "neutral";
+              const v = d.valence;
               return (
-                <div key={d.id} className={`delta-entry ${v}`}>
+                <div key={d.id} className={`delta-entry ${v ?? ""}`}>
                   <div className="delta-text">{d.delta_text}</div>
                   <div className="delta-meta">
-                    <span className={`delta-valence ${v}`}>{v}</span>
+                    {v && <span className={`delta-valence ${v}`}>{v}</span>}
                     {d.agent && <span>by {d.agent}</span>}
                     <span><ClientTime iso={d.created_at} /></span>
                   </div>
@@ -217,6 +247,7 @@ export default async function UsPage() {
                     </div>
                   )}
                   <div className="handover-footer">
+                    <AuthorChip companionId={h.companion_id} />
                     <span className={`motion-badge ${h.motion_state ?? ""}`}>{(h.motion_state ?? "unknown").replace("_", " ")}</span>
                     {h.active_anchor && <span>anchor: {h.active_anchor}</span>}
                     <span className="ml-auto"><ClientTime iso={h.created_at} /></span>

@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 
-import { fetchSessions } from "@/lib/halseth";
+import { fetchSessions, fetchBiometrics } from "@/lib/halseth";
 import WellnessClient from "./WellnessClient";
 
 const STOP_WORDS = new Set([
@@ -11,11 +11,45 @@ const STOP_WORDS = new Set([
 export type HrvCounts     = { name: string; count: number; color: string }[];
 export type DepthCounts   = { name: string; count: number }[];
 export type FreqEntry     = { name: string; count: number };
+export type HrvBiometricSummary = {
+  counts: HrvCounts;
+  latestValue: number | null;
+  latestDate: string | null;
+} | null;
 
 export default async function WellnessPage() {
-  const sessions = await fetchSessions(60, 200);
+  const [sessions, biometrics] = await Promise.all([
+    fetchSessions(60, 200),
+    fetchBiometrics(60),
+  ]);
 
-  // ── HRV distribution ──────────────────────────────────────────────────────
+  // ── HRV distribution (real HRV lands in biometric_snapshots via Apple Health,
+  // NOT session fields — sessions.hrv_range has been dead since March) ────────
+  const hrvSnapshots = biometrics
+    .filter(b => b.hrv_resting !== null && b.hrv_resting !== undefined)
+    .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+
+  let hrvBiometrics: HrvBiometricSummary = null;
+  if (hrvSnapshots.length > 0) {
+    const bands = { low: 0, mid: 0, high: 0 };
+    hrvSnapshots.forEach(b => {
+      const v = b.hrv_resting as number;
+      if (v < 40) bands.low++;
+      else if (v <= 60) bands.mid++;
+      else bands.high++;
+    });
+    hrvBiometrics = {
+      counts: [
+        { name: "low",  count: bands.low,  color: "#f87171" },
+        { name: "mid",  count: bands.mid,  color: "#fbbf24" },
+        { name: "high", count: bands.high, color: "#4ade80" },
+      ],
+      latestValue: hrvSnapshots[0].hrv_resting,
+      latestDate: hrvSnapshots[0].recorded_at,
+    };
+  }
+
+  // Secondary line: sessions.hrv_range (dead since March, kept in case it flows again)
   const hrv = { low: 0, mid: 0, high: 0 };
   sessions.forEach(s => {
     if (s.hrv_range === "low")  hrv.low++;
@@ -74,6 +108,7 @@ export default async function WellnessPage() {
   return (
     <WellnessClient
       sessionCount={sessions.length}
+      hrvBiometrics={hrvBiometrics}
       hrvCounts={hrvCounts}
       depthCounts={depthCounts}
       frontStates={frontStates}
