@@ -32,12 +32,29 @@ export default function JournalClient({ entries, companionId, companionColor, ha
     setBusy((p) => ({ ...p, [id]: true }));
     setActionError(null);
     try {
-      const res = await fetch(`/api/mind/growth/journal/${id}/${action}`, { method: "PATCH" });
+      // companion_id is REQUIRED (2026-07-27). Halseth's acceptJournalEntry /
+      // declineJournalEntry run validateCompanion(body.companion_id) and 400 without it, and
+      // setReviewStatus scopes its UPDATE by companion_id as an ownership guard. This call
+      // sent no body at all, so every ratification from Hearth failed with "Action failed --
+      // try again". It had never worked: the queue was three levels deep with no count, so
+      // nobody reached the button, so nobody found it broken. `companionId` was already a
+      // prop on this component the whole time.
+      const res = await fetch(`/api/mind/growth/journal/${id}/${action}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companion_id: companionId }),
+      });
       if (res.ok) {
         setLocalStatus((p) => ({ ...p, [id]: action === "accept" ? "accepted" : "declined" }));
         router.refresh();
       } else {
-        setActionError("Action failed — try again");
+        // Surface WHY. A bare "try again" on a deterministic 400 sends Raziel in circles.
+        let detail = `${res.status}`;
+        try {
+          const j = await res.json() as { error?: string };
+          if (j?.error) detail = `${res.status} ${j.error}`;
+        } catch { /* non-JSON body -- status alone is still better than nothing */ }
+        setActionError(`Could not ${action} that entry (${detail})`);
       }
     } catch {
       setActionError("Network error");

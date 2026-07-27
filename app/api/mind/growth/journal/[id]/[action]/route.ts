@@ -32,7 +32,17 @@ export async function PATCH(
       signal: AbortSignal.timeout(10_000),
     });
 
-    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    if (!res.ok) {
+      // Forward Halseth's actual reason (2026-07-27). This used to flatten every failure to
+      // "Request failed", so a deterministic 400 ("invalid companion_id" -- the client was
+      // sending no body) looked identical to a transient outage and read as "try again".
+      let reason = "Request failed";
+      try {
+        const j = await res.json() as { error?: string };
+        if (j?.error) reason = j.error;
+      } catch { /* non-JSON error body -- keep the generic reason */ }
+      return NextResponse.json({ error: reason }, { status: res.status });
+    }
     return NextResponse.json(await res.json());
   } catch {
     return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });
