@@ -1238,6 +1238,29 @@ async function phoenixGet<T>(path: string): Promise<T | null> {
 
 // ── Growth fetch functions ────────────────────────────────────────────────────
 
+/** Per-companion count of growth entries awaiting Raziel's ratification. */
+export interface GrowthPendingCount {
+  total: number;
+  oldest_at: string | null;
+  per_companion: Array<{
+    companion_id: string;
+    pending: number;
+    oldest_at: string;
+    from_autonomous: number;
+    from_reflection: number;
+  }>;
+}
+
+/**
+ * The ratification queue's size. Added 2026-07-27: the accept/decline surface has existed
+ * at /companions/<id>/growth the whole time, but it sits three levels deep behind a tab
+ * strip and nothing showed a count -- so 55 entries sat unratified, the oldest 17 days,
+ * and Raziel could not find where to do it. A queue nothing surfaces is a queue nobody drains.
+ */
+export async function fetchGrowthPendingCount(): Promise<GrowthPendingCount | null> {
+  return hGetSafe<GrowthPendingCount>("/mind/growth/pending-count");
+}
+
 export async function fetchGrowthJournal(
   companionId: string,
   limit = 20,

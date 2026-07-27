@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { fetchPresence, fetchSynthesisSummaries, fetchMindDreams, fetchCompanionJournal, fetchClubCurrent, fetchObsessions, MAX_SESSION_DEPTH, type PresenceData, type SynthesisSummary, type WmDream, type CompanionJournalEntry } from "@/lib/halseth";
+import { fetchPresence, fetchSynthesisSummaries, fetchMindDreams, fetchCompanionJournal, fetchClubCurrent, fetchObsessions, fetchGrowthPendingCount, MAX_SESSION_DEPTH, type PresenceData, type SynthesisSummary, type WmDream, type CompanionJournalEntry } from "@/lib/halseth";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
 import LiveFeedImage from "@/components/LiveFeedImage";
 
@@ -202,6 +202,69 @@ const DEFAULT_COMPANIONS = [
   { id: "cypher", display_name: "Cypher", role: "auditor",  avatar_url: null },
   { id: "gaia",   display_name: "Gaia",   role: "witness",  avatar_url: null },
 ];
+
+// Ratification queue (2026-07-27). The accept/decline surface has existed the whole time at
+// /companions/<id>/growth with working buttons -- but three levels deep behind a tab strip,
+// with no count anywhere, so Raziel could not find it and 55 entries sat unratified with the
+// oldest 17 days old. Human-in-the-room is load-bearing here: unratified growth is neither
+// canon nor discarded, so the queue backing up stalls the whole growth loop.
+// Renders nothing when the queue is empty -- it is a nudge, never permanent furniture.
+const RATIFY_COLOR: Record<string, string> = { drevan: "var(--accent)", cypher: "#e2e8f0", gaia: "#4ade80" };
+
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null;
+  const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(:\d{2})?)/.exec(iso);
+  const t = Date.parse(m ? `${m[1]}T${m[2]}Z` : iso);
+  if (!Number.isFinite(t)) return null;
+  return Math.floor((Date.now() - t) / 86_400_000);
+}
+
+async function RatificationQueue() {
+  const q = await fetchGrowthPendingCount();
+  if (!q || q.total === 0) return null;
+  const waited = daysSince(q.oldest_at);
+
+  return (
+    <div className="home-section" style={{ marginTop: "1rem" }}>
+      <div className="home-section-header">
+        <span className="home-section-title">Waiting on you</span>
+        {waited !== null && waited >= 3 && (
+          <span style={{ fontSize: "0.72rem", opacity: 0.65 }}>
+            oldest {waited} day{waited === 1 ? "" : "s"} ago
+          </span>
+        )}
+      </div>
+      <div className="card">
+        <div style={{ fontSize: "0.82rem", opacity: 0.8, marginBottom: "0.6rem" }}>
+          {q.total} growth {q.total === 1 ? "entry" : "entries"} need you in the room — accept what is
+          theirs, decline genuine drift. Nothing moves into canon until you do.
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+          {q.per_companion
+            .filter((c) => c.pending > 0)
+            .sort((a, b) => b.pending - a.pending)
+            .map((c) => (
+              <Link
+                key={c.companion_id}
+                href={`/companions/${c.companion_id}/growth`}
+                className="card card-accent"
+                style={{
+                  textDecoration: "none",
+                  padding: "0.45rem 0.7rem",
+                  color: RATIFY_COLOR[c.companion_id] ?? "#94a3b8",
+                  fontWeight: 600,
+                  fontSize: "0.8rem",
+                  textTransform: "capitalize",
+                }}
+              >
+                {c.companion_id} <span style={{ opacity: 0.75 }}>({c.pending})</span>
+              </Link>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Triad Digest -- a quick "what have they actually been doing" summary so Raziel stays in
 // the loop without reverse-engineering it from the chat. Each companion's latest journal
@@ -469,6 +532,7 @@ export default async function Page() {
         <ActivePatternsStrip patterns={data.active_patterns} />
       )}
 
+      {await RatificationQueue()}
       {await TriadDigest()}
 
       {recent_notes.length > 0 && (
