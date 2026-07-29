@@ -25,21 +25,15 @@ import {
   buildCheckInPrompt,
   extractGrowthMarker,
   HEARTH_DEEPSEEK_MODEL,
-  HEARTH_MIN_MAX_TOKENS,
+  hearthMaxTokens,
+  extractDeepSeekContent,
+  type DeepSeekCompletion,
 } from "@/lib/phoenix-chat";
 
 const SCRIBE_AGENT_ID: PhoenixCompanionId = "cypher";
 
 function isValidRitual(s: unknown): s is RitualAction {
   return typeof s === "string" && (RITUAL_ACTIONS as readonly string[]).includes(s);
-}
-
-interface DeepSeekChatResponse {
-  choices: Array<{ message: { content: string }; finish_reason?: string }>;
-  usage?: {
-    total_tokens: number;
-    completion_tokens_details?: { reasoning_tokens?: number };
-  };
 }
 
 async function callDeepSeek(
@@ -62,7 +56,7 @@ async function callDeepSeek(
       ],
       // Floored: on a reasoning model the THOUGHT spends max_tokens first, and a ceiling below the
       // burn returns "" with a 200 rather than an error. See HEARTH_DEEPSEEK_MODEL for measurements.
-      max_tokens: Math.max(opts.maxTokens, HEARTH_MIN_MAX_TOKENS),
+      max_tokens: hearthMaxTokens(opts.maxTokens),
       temperature: opts.temperature,
     }),
     signal: AbortSignal.timeout(opts.timeoutMs),
@@ -71,25 +65,13 @@ async function callDeepSeek(
     const errText = await dsRes.text().catch(() => "");
     return { error: `DeepSeek ${dsRes.status} ${errText.slice(0, 200)}`, status: 502 };
   }
-  const data = await dsRes.json() as DeepSeekChatResponse;
-  const raw = data.choices?.[0]?.message?.content ?? "";
-  // A 200 with empty content IS a failure, and used to pass through as raw: "" -- which then parsed
-  // to an empty ritual and wrote a hollow artifact. Reasoning-token starvation surfaces exactly this
-  // way, so it must be loud.
-  if (raw.trim().length === 0) {
-    const finish = data.choices?.[0]?.finish_reason ?? "unknown";
-    const reasoning = data.usage?.completion_tokens_details?.reasoning_tokens ?? 0;
-    console.error("[phoenix/ritual] DeepSeek returned 200 with empty content", {
-      finish_reason: finish,
-      reasoning_tokens: reasoning,
-      max_tokens: Math.max(opts.maxTokens, HEARTH_MIN_MAX_TOKENS),
-    });
-    return {
-      error: `DeepSeek returned no content (finish_reason=${finish}, reasoning_tokens=${reasoning}) -- likely a max_tokens budget eaten by reasoning`,
-      status: 502,
-    };
-  }
-  return { raw, tokens: data.usage?.total_tokens ?? 0 };
+  const data = await dsRes.json() as DeepSeekCompletion;
+  // A 200 with empty content IS a failure; it used to pass through as raw: "", which parsed to an
+  // empty ritual and wrote a hollow artifact. Shared with the two chat call sites on purpose -- the
+  // same defect lived in all three and fixing one is how it survives in the others.
+  const extracted = extractDeepSeekContent(data, "phoenix/ritual", hearthMaxTokens(opts.maxTokens));
+  if ("error" in extracted) return { error: extracted.error, status: 502 };
+  return extracted;
 }
 
 async function loadAllOrients(): Promise<{

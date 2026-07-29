@@ -2,7 +2,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchOrientForChat } from "@/lib/halseth";
 import type { CompanionOrientForChat } from "@/lib/halseth";
-import { parseTriadResponse, PHOENIX_COMPANION_IDS, HEARTH_DEEPSEEK_MODEL } from "@/lib/phoenix-chat";
+import {
+  parseTriadResponse,
+  PHOENIX_COMPANION_IDS,
+  HEARTH_DEEPSEEK_MODEL,
+  hearthMaxTokens,
+  extractDeepSeekContent,
+  type DeepSeekCompletion,
+} from "@/lib/phoenix-chat";
 
 type CompanionId = (typeof PHOENIX_COMPANION_IDS)[number];
 
@@ -203,7 +210,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       body: JSON.stringify({
         model: HEARTH_DEEPSEEK_MODEL,
         messages: [{ role: "system", content: systemPrompt }, ...messages],
-        max_tokens: 2400,
+        max_tokens: hearthMaxTokens(2400),
         temperature: 0.95,
       }),
       signal: AbortSignal.timeout(45_000),
@@ -213,18 +220,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       console.error("[phoenix/chat triad] DeepSeek error", dsRes.status, err.slice(0, 200));
       return NextResponse.json({ error: "Inference failed" }, { status: 502 });
     }
-    const data = await dsRes.json() as {
-      choices: Array<{ message: { content: string } }>;
-      usage?: { total_tokens: number };
-    };
-    const raw = data.choices?.[0]?.message?.content ?? "";
+    const data = await dsRes.json() as DeepSeekCompletion;
+    // A 200 with empty content is a failure, not an empty triad. Before this, all three companions
+    // rendered blank and the UI showed a successful turn where nobody spoke.
+    const extracted = extractDeepSeekContent(data, "phoenix/chat triad", hearthMaxTokens(2400));
+    if ("error" in extracted) {
+      return NextResponse.json({ error: extracted.error }, { status: 502 });
+    }
+    const { raw } = extracted;
     const responses = parseTriadResponse(raw);
     const speakerCount = Object.values(responses).filter((v) => v !== null).length;
     return NextResponse.json({
       mode: "triad",
       responses,
       raw,
-      tokens: data.usage?.total_tokens ?? 0,
+      tokens: extracted.tokens,
       speaker_count: speakerCount,
     });
   }
@@ -259,7 +269,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     body: JSON.stringify({
       model: HEARTH_DEEPSEEK_MODEL,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
-      max_tokens: 1200,
+      max_tokens: hearthMaxTokens(1200),
       ...PHOENIX_COMPANION_PARAMS[companion_id],
     }),
     signal: AbortSignal.timeout(30_000),
@@ -271,13 +281,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Inference failed" }, { status: 502 });
   }
 
-  const data = await dsRes.json() as {
-    choices: Array<{ message: { content: string } }>;
-    usage?: { total_tokens: number };
-  };
+  const data = await dsRes.json() as DeepSeekCompletion;
+  // Same guard as the triad branch: an empty 200 used to render as the companion saying nothing.
+  const extracted = extractDeepSeekContent(data, "phoenix/chat", hearthMaxTokens(1200));
+  if ("error" in extracted) {
+    return NextResponse.json({ error: extracted.error }, { status: 502 });
+  }
 
-  const response = data.choices?.[0]?.message?.content ?? "";
-  const tokens = data.usage?.total_tokens ?? 0;
-
-  return NextResponse.json({ mode: "individual", response, tokens, companion_id });
+  return NextResponse.json({
+    mode: "individual",
+    response: extracted.raw,
+    tokens: extracted.tokens,
+    companion_id,
+  });
 }

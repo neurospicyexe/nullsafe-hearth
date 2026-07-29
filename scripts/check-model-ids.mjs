@@ -41,8 +41,15 @@ const BANNED = [
 const ALLOWED_ID = "deepseek-v4-flash";
 const ALLOWED_ID_HOME = join("lib", "phoenix-chat.ts");
 
-/** This file names every banned id in its own tables; scanning it would always fail. */
-const SELF = join("scripts", "check-model-ids.mjs");
+// Files exempt from the id checks, by exact path. Deliberately an allowlist of NAMED files rather
+// than a glob over `__tests__` -- a new test file that hardcodes a model id should still fail. Both
+// entries have to name the ids to do their job:
+//   - this scan declares them in its own tables
+//   - the guard test asserts the constant is NOT a delisted alias, which requires spelling them
+const EXEMPT = new Set([
+  join("scripts", "check-model-ids.mjs"),
+  join("lib", "__tests__", "phoenix-deepseek.test.ts"),
+]);
 
 function walk(dir, out = []) {
   let entries;
@@ -62,7 +69,7 @@ const failures = [];
 
 for (const file of files) {
   const rel = relative(ROOT, file).split("/").join(sep);
-  if (rel === SELF) continue;
+  if (EXEMPT.has(rel)) continue;
   const src = readFileSync(file, "utf8");
   const lines = src.split(/\r?\n/);
 
@@ -109,6 +116,15 @@ if (!homeSrc.includes(`"${ALLOWED_ID}"`)) {
     `Either the constant moved (update ALLOWED_ID_HOME) or the model changed (update ALLOWED_ID).\n`
   );
   process.exit(1);
+}
+// An exempt path that no longer exists is dead permission. Harmless today (it matches nothing) but
+// it rots the allowlist into noise, and the point of naming files instead of globbing is that the
+// list stays readable.
+for (const ex of EXEMPT) {
+  try { statSync(join(ROOT, ex)); } catch {
+    console.error(`\ncheck-model-ids: EXEMPT lists ${ex}, which does not exist. Remove it or fix the path.\n`);
+    process.exit(1);
+  }
 }
 if (files.length < 20) {
   console.error(`\ncheck-model-ids: vacuous scan -- only ${files.length} files walked. Check SCAN_DIRS/ROOT.\n`);

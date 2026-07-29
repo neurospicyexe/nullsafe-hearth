@@ -52,8 +52,58 @@ export type RitualAction = (typeof RITUAL_ACTIONS)[number];
 export const HEARTH_DEEPSEEK_MODEL = "deepseek-v4-flash";
 
 /** Floor for any Hearth max_tokens, so a reasoning burn can never eat the whole budget and
- *  return an empty 200. See HEARTH_DEEPSEEK_MODEL for the measurements behind the number. */
+ *  return an empty 200. See HEARTH_DEEPSEEK_MODEL for the measurements behind the number.
+ *  Apply it at EVERY call site via hearthMaxTokens() -- a floor that guards one of three paths is
+ *  a name that overpromises. */
 export const HEARTH_MIN_MAX_TOKENS = 600;
+
+export function hearthMaxTokens(requested: number): number {
+  return Math.max(requested, HEARTH_MIN_MAX_TOKENS);
+}
+
+/** Minimal shape of a DeepSeek chat completion, including the fields needed to explain an
+ *  empty reply. `reasoning_tokens` only appears on reasoning models. */
+export interface DeepSeekCompletion {
+  choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+  usage?: {
+    total_tokens?: number;
+    completion_tokens_details?: { reasoning_tokens?: number };
+  };
+}
+
+/**
+ * Pull the reply text out of a DeepSeek completion, treating a 200-with-empty-content as the
+ * FAILURE it is rather than as an empty string.
+ *
+ * Every Hearth inference path used `content ?? ""` and passed that straight on -- the chat paths
+ * rendered a blank companion reply, and the ritual path parsed it into an empty ritual and wrote a
+ * hollow artifact. Reasoning-token starvation surfaces exactly this way (a 200, no error, empty
+ * content), so it has to be loud. Shared rather than duplicated because the same defect existed in
+ * three places and got fixed in one first -- the sibling-writer pattern.
+ *
+ * `label` is only used for the log line, so the failing path is identifiable.
+ */
+export function extractDeepSeekContent(
+  data: DeepSeekCompletion,
+  label: string,
+  maxTokens: number,
+): { raw: string; tokens: number } | { error: string } {
+  const raw = data.choices?.[0]?.message?.content ?? "";
+  if (raw.trim().length === 0) {
+    const finish = data.choices?.[0]?.finish_reason ?? "unknown";
+    const reasoning = data.usage?.completion_tokens_details?.reasoning_tokens ?? 0;
+    console.error(`[${label}] DeepSeek returned 200 with empty content`, {
+      finish_reason: finish,
+      reasoning_tokens: reasoning,
+      max_tokens: maxTokens,
+    });
+    return {
+      error: `DeepSeek returned no content (finish_reason=${finish}, reasoning_tokens=${reasoning})`
+        + " -- likely a max_tokens budget eaten by reasoning",
+    };
+  }
+  return { raw, tokens: data.usage?.total_tokens ?? 0 };
+}
 
 // ─── Tagged-response parser ────────────────────────────────────────────────
 
