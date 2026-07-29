@@ -24,6 +24,8 @@ import {
   buildCompostPrompt,
   buildCheckInPrompt,
   extractGrowthMarker,
+  HEARTH_DEEPSEEK_MODEL,
+  HEARTH_MIN_MAX_TOKENS,
 } from "@/lib/phoenix-chat";
 
 const SCRIBE_AGENT_ID: PhoenixCompanionId = "cypher";
@@ -33,8 +35,11 @@ function isValidRitual(s: unknown): s is RitualAction {
 }
 
 interface DeepSeekChatResponse {
-  choices: Array<{ message: { content: string } }>;
-  usage?: { total_tokens: number };
+  choices: Array<{ message: { content: string }; finish_reason?: string }>;
+  usage?: {
+    total_tokens: number;
+    completion_tokens_details?: { reasoning_tokens?: number };
+  };
 }
 
 async function callDeepSeek(
@@ -50,12 +55,14 @@ async function callDeepSeek(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "deepseek-chat",
+      model: HEARTH_DEEPSEEK_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user",   content: userInvocation },
       ],
-      max_tokens: opts.maxTokens,
+      // Floored: on a reasoning model the THOUGHT spends max_tokens first, and a ceiling below the
+      // burn returns "" with a 200 rather than an error. See HEARTH_DEEPSEEK_MODEL for measurements.
+      max_tokens: Math.max(opts.maxTokens, HEARTH_MIN_MAX_TOKENS),
       temperature: opts.temperature,
     }),
     signal: AbortSignal.timeout(opts.timeoutMs),
@@ -65,10 +72,24 @@ async function callDeepSeek(
     return { error: `DeepSeek ${dsRes.status} ${errText.slice(0, 200)}`, status: 502 };
   }
   const data = await dsRes.json() as DeepSeekChatResponse;
-  return {
-    raw: data.choices?.[0]?.message?.content ?? "",
-    tokens: data.usage?.total_tokens ?? 0,
-  };
+  const raw = data.choices?.[0]?.message?.content ?? "";
+  // A 200 with empty content IS a failure, and used to pass through as raw: "" -- which then parsed
+  // to an empty ritual and wrote a hollow artifact. Reasoning-token starvation surfaces exactly this
+  // way, so it must be loud.
+  if (raw.trim().length === 0) {
+    const finish = data.choices?.[0]?.finish_reason ?? "unknown";
+    const reasoning = data.usage?.completion_tokens_details?.reasoning_tokens ?? 0;
+    console.error("[phoenix/ritual] DeepSeek returned 200 with empty content", {
+      finish_reason: finish,
+      reasoning_tokens: reasoning,
+      max_tokens: Math.max(opts.maxTokens, HEARTH_MIN_MAX_TOKENS),
+    });
+    return {
+      error: `DeepSeek returned no content (finish_reason=${finish}, reasoning_tokens=${reasoning}) -- likely a max_tokens budget eaten by reasoning`,
+      status: 502,
+    };
+  }
+  return { raw, tokens: data.usage?.total_tokens ?? 0 };
 }
 
 async function loadAllOrients(): Promise<{

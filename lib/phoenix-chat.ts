@@ -24,6 +24,37 @@ export const COMPANION_VOICE_SUMMARY: Record<PhoenixCompanionId, string> = {
 export const RITUAL_ACTIONS = ["sit", "mark_growth", "compost", "check_in"] as const;
 export type RitualAction = (typeof RITUAL_ACTIONS)[number];
 
+// ─── The one model id for every Hearth inference path ─────────────────────
+//
+// One authority (Phase 1: "one place to change each thing"). Both /api/phoenix/chat call sites
+// and every /api/phoenix/ritual action import this instead of hardcoding a string.
+//
+// Why this changed on 2026-07-29: all three sites sent the literal `deepseek-chat`, which is
+// DELISTED -- GET /v1/models returns exactly deepseek-v4-flash and deepseek-v4-pro. Phase 0 fixed
+// this in 7 places and added CI source scans to halseth and nullsafe-discord; Hearth was the third
+// repo and never got scanned, so the string survived here. (scripts/check-model-ids.mjs is now
+// that scan.)
+//
+// The subtle part, measured rather than assumed: `deepseek-chat` was NOT broken. It still routes,
+// and the response reports model=deepseek-v4-flash -- but with REASONING DISABLED (0 reasoning
+// tokens). Asking for `deepseek-v4-flash` by name ENABLES reasoning (measured 169-372 reasoning
+// tokens on real triad and sit prompts). So Hearth's companions were quietly running a
+// non-reasoning variant while the Discord bots ran the real thing: accidental substrate
+// divergence, which is the class this whole phase exists to kill (authored difference yes,
+// accidental difference no).
+//
+// The ceiling caveat that makes this worth a comment: on a reasoning model, max_tokens is spent by
+// the THOUGHT first, and a ceiling below the burn returns "" with a 200 -- never an error. Measured
+// headroom at the flip: mt=600 -> 169 reasoning, mt=1200 -> 84, mt=2400 -> 372. The lowest ceiling
+// in Hearth is the `sit` ritual at 600 and it has room. Do NOT lower any max_tokens here below ~600
+// without re-measuring, and if a new call site needs a tighter budget, raise the budget rather than
+// reaching back for the non-reasoning alias.
+export const HEARTH_DEEPSEEK_MODEL = "deepseek-v4-flash";
+
+/** Floor for any Hearth max_tokens, so a reasoning burn can never eat the whole budget and
+ *  return an empty 200. See HEARTH_DEEPSEEK_MODEL for the measurements behind the number. */
+export const HEARTH_MIN_MAX_TOKENS = 600;
+
 // ─── Tagged-response parser ────────────────────────────────────────────────
 
 // Parse a triad-tagged response into per-companion replies.

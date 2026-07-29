@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "vitest run",
+    "test": "node scripts/check-model-ids.mjs && vitest run",
     "type-check": "tsc --noEmit",
-    "check:cache": "node scripts/check-no-revalidate.mjs"
+    "check:cache": "node scripts/check-no-revalidate.mjs",
+    "check:models": "node scripts/check-model-ids.mjs"
   },
   "dependencies": {
     "epubjs": "^0.3.93",

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchOrientForChat } from "@/lib/halseth";
 import type { CompanionOrientForChat } from "@/lib/halseth";
-import { parseTriadResponse, PHOENIX_COMPANION_IDS } from "@/lib/phoenix-chat";
+import { parseTriadResponse, PHOENIX_COMPANION_IDS, HEARTH_DEEPSEEK_MODEL } from "@/lib/phoenix-chat";
 
 type CompanionId = (typeof PHOENIX_COMPANION_IDS)[number];
 
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: HEARTH_DEEPSEEK_MODEL,
         messages: [{ role: "system", content: systemPrompt }, ...messages],
         max_tokens: 2400,
         temperature: 0.95,
@@ -257,7 +257,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // companion toward a single midline register. Mirrors Brain's _companion_temps
     // / _companion_top_p maps (Drevan widest tail, Cypher tighter, Gaia tightest).
     body: JSON.stringify({
-      model: "deepseek-chat",
+      model: HEARTH_DEEPSEEK_MODEL,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
       max_tokens: 1200,
       ...PHOENIX_COMPANION_PARAMS[companion_id],
