@@ -105,6 +105,35 @@ export function extractDeepSeekContent(
   return { raw, tokens: data.usage?.total_tokens ?? 0 };
 }
 
+// ─── Thread titles for the compost ritual ─────────────────────────────────
+
+/** A continuity thread as orient / MindState actually returns it (mig 0027 wm_mind_threads).
+ *  There is no `description` column -- see threadTitles(). */
+export interface OrientThread {
+  title?: string | null;
+}
+
+export const COMPOST_THREAD_LIMIT = 6;
+
+/**
+ * Pull usable thread titles out of an orient/MindState thread list.
+ *
+ * Extracted as a pure function because the caller it replaced was a silent dead read: it looked
+ * for `active_threads ?? mind_threads`, and **neither key exists** on the orient payload (verified
+ * 2026-07-29 against prod -- the 33 top-level keys include `top_threads` and no variant of the
+ * other two). Both lookups returned undefined, `?? []` swallowed it, and the compost ritual has
+ * therefore ALWAYS been prompted with zero threads while looking like it had them. `wm_mind_threads`
+ * has `title` but no `description`, so the old `t.description` fallback could never fire either.
+ *
+ * A pure function means the field names are now pinned by a test instead of by a fetch nobody runs.
+ */
+export function threadTitles(threads: OrientThread[] | null | undefined): string[] {
+  return (threads ?? [])
+    .map((t) => (t.title ?? "").trim())
+    .filter((s) => s.length > 0)
+    .slice(0, COMPOST_THREAD_LIMIT);
+}
+
 // ─── Tagged-response parser ────────────────────────────────────────────────
 
 // Parse a triad-tagged response into per-companion replies.

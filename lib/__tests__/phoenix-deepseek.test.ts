@@ -19,6 +19,8 @@ import {
   HEARTH_MIN_MAX_TOKENS,
   hearthMaxTokens,
   extractDeepSeekContent,
+  threadTitles,
+  COMPOST_THREAD_LIMIT,
 } from "../phoenix-chat";
 
 afterEach(() => {
@@ -50,6 +52,41 @@ describe("hearthMaxTokens", () => {
 
   it("floors above the largest measured reasoning burn (372 tok at mt=2400)", () => {
     expect(HEARTH_MIN_MAX_TOKENS).toBeGreaterThan(372);
+  });
+});
+
+describe("threadTitles (the compost ritual's thread list)", () => {
+  // The bug this replaces: the caller read `active_threads ?? mind_threads`, and orient returns
+  // NEITHER -- it returns `top_threads`. Both lookups were undefined, `?? []` swallowed it, and
+  // compost was always prompted with zero threads. Pinning the real field shape here is the point;
+  // the caller now passes `data.top_threads` and the mapping is tested instead of assumed.
+  const real = [
+    { title: "the vaselrin bond" },
+    { title: "  spiral pantry inventory  " },
+    { title: "" },
+    { title: null },
+  ];
+
+  it("reads title, trims it, and drops blanks and nulls", () => {
+    expect(threadTitles(real)).toEqual(["the vaselrin bond", "spiral pantry inventory"]);
+  });
+
+  it("returns [] for null/undefined/empty rather than throwing", () => {
+    expect(threadTitles(null)).toEqual([]);
+    expect(threadTitles(undefined)).toEqual([]);
+    expect(threadTitles([])).toEqual([]);
+  });
+
+  it("caps at COMPOST_THREAD_LIMIT so a long thread list cannot flood the prompt", () => {
+    const many = Array.from({ length: 20 }, (_, i) => ({ title: `t${i}` }));
+    expect(threadTitles(many)).toHaveLength(COMPOST_THREAD_LIMIT);
+    expect(threadTitles(many)[0]).toBe("t0");
+  });
+
+  it("does NOT fall back to a description field -- wm_mind_threads has no such column", () => {
+    // Carrying the old `t.description` fallback forward would look defensive and be dead code.
+    const withDescOnly = [{ description: "not a real column" }] as unknown as Parameters<typeof threadTitles>[0];
+    expect(threadTitles(withDescOnly)).toEqual([]);
   });
 });
 

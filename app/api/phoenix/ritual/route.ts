@@ -27,7 +27,9 @@ import {
   HEARTH_DEEPSEEK_MODEL,
   hearthMaxTokens,
   extractDeepSeekContent,
+  threadTitles,
   type DeepSeekCompletion,
+  type OrientThread,
 } from "@/lib/phoenix-chat";
 
 const SCRIBE_AGENT_ID: PhoenixCompanionId = "cypher";
@@ -100,26 +102,29 @@ function getHalsethEnv(): HalsethEnv | null {
 }
 
 async function fetchOpenThreadsForCompanion(env: HalsethEnv, companionId: PhoenixCompanionId): Promise<string[]> {
-  // /mind/orient/:agent_id returns active_threads OR mind_threads in its payload.
-  // Hearth's fetchOrientForChat narrows the orient response; for compost we want
-  // the raw thread list which isn't on that narrow shape, so re-call orient here.
+  // The thread list orient returns is `top_threads`. This function used to read
+  // `active_threads ?? mind_threads` -- NEITHER of which exists on the payload (verified against
+  // prod 2026-07-29: 33 top-level keys, `top_threads` present, no variant of the other two). So
+  // both lookups were undefined, `?? []` swallowed it, and compost has always been prompted with
+  // an empty thread list while reading as though it had one. A dead read that cost nothing visible,
+  // which is exactly why it survived.
+  //
+  // fetchOrientForChat narrows orient to six string fields and drops threads, hence the re-fetch
+  // here rather than reusing it.
   try {
     const res = await fetch(`${env.url}/mind/orient/${encodeURIComponent(companionId)}`, {
       headers: { Authorization: `Bearer ${env.secret}` },
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return [];
-    const data = await res.json() as {
-      active_threads?: Array<{ title?: string; description?: string }>;
-      mind_threads?:   Array<{ title?: string; description?: string }>;
-    };
-    const threads = data.active_threads ?? data.mind_threads ?? [];
-    return threads
-      .map((t) => (t.title ?? t.description ?? "").trim())
-      .filter((s) => s.length > 0)
-      .slice(0, 6);
-  } catch {
+    if (!res.ok) {
+      console.error("[phoenix/ritual] orient fetch for threads failed", { companionId, status: res.status });
+      return [];
+    }
+    const data = await res.json() as { top_threads?: OrientThread[] };
+    return threadTitles(data.top_threads);
+  } catch (err) {
+    console.error("[phoenix/ritual] orient fetch for threads threw", { companionId, error: String(err) });
     return [];
   }
 }
