@@ -797,8 +797,95 @@ export type WmOrientData = {
   recent_notes: WmContinuityNote[];
 };
 
+// ── MindState: the one loader Hearth boots companions from ────────────────────
+//
+// Cutover 2026-07-29 (Phase 1, halseth/docs/mindstate-contract.md step 3: "cut over one loom at a
+// time, lowest-risk first: raw /mind/orient -> bot_orient -> session_orient"). Hearth WAS the only
+// consumer of raw /mind/orient, so it is the first loom, and this is that cut.
+//
+// Why it matters beyond tidiness: a companion's self was reconstructed by four divergent
+// hand-maintained aggregators, so Drevan-on-Hearth and Drevan-on-Discord were assembled by
+// different code and drifted every time an organ was added to one and not the others. Hearth now
+// reads the same canonical state the other looms are moving to.
+//
+// Deliberately preserved: WmOrientData and CompanionOrientForChat keep their exact shapes, so
+// ContinuitySection, app/phoenix/page.tsx and the chat/ritual routes need no changes. The cut is a
+// swap of WHERE the state comes from, not a rewrite of what renders -- which is what makes it
+// revertible in one function.
+//
+// Parity was proven before the swap, against prod, not assumed: 9 consumed fields x 3 companions
+// = 27 checks via GET /mind/state/:id?loom=hearth&parity=1, zero mismatches.
+//
+// Side-effect note, stated because it is a decision and not an accident: /mind/state is a pure read
+// and so (since the Q1 fix) is /mind/orient, so this changes no consume behaviour. Hearth's chat and
+// ritual paths are on the pure side of the line ON PURPOSE -- a companion answering in Hearth is
+// arguably a real read, but the Discord bots' unread->ack poller is what actually marks sibling mail
+// read, so nothing is lost by Hearth not consuming, whereas a Hearth PAGE RENDER consuming Drevan's
+// mail as Drevan destroyed it unseen. Asymmetric costs, so both go pure.
+
+export const MINDSTATE_MAJOR = 0;
+
+/**
+ * Does this MindState payload's contract version match the major Hearth's adapters were written
+ * against? Per the contract: MINOR adds blocks (renderers ignore unknown ones), MAJOR renames or
+ * restructures them.
+ *
+ * Exported and pure so the gate is testable. It matters because the failure it prevents is silent:
+ * a v1 payload read by v0 adapters yields undefined everywhere, and ContinuitySection would render
+ * "No continuity data" — a lie, when the data is present under a different shape. Rejecting loudly
+ * is the point; a garbled version string is also a reject, not a pass.
+ */
+export function isCompatibleContract(version: string | undefined | null): boolean {
+  const major = Number.parseInt(String(version ?? "").split(".")[0] ?? "", 10);
+  return Number.isFinite(major) && major === MINDSTATE_MAJOR;
+}
+
+/** The subset of the MindState contract Hearth reads. The contract carries far more; this types
+ *  only what is consumed, so an added block cannot break the build. */
+export type MindStateSlice = {
+  contract_version: string;
+  companion_id: string;
+  identity: { anchor: { anchor_summary?: string; constraints_summary?: string } | null };
+  felt: { limbic: { emotional_register?: string; drift_vector?: string } | null };
+  continuity: {
+    latest_handoff: WmSessionHandoff | null;
+    open_thread_count: number;
+    top_threads: WmMindThread[];
+    surfaced_notes: WmContinuityNote[];
+  };
+  carried: { tensions: Array<{ tension_text: string }> };
+  meta: { not_yet_loaded: string[] };
+};
+
+export async function fetchMindState(agentId: string): Promise<MindStateSlice | null> {
+  const ms = await hGetSafe<MindStateSlice>(
+    `/mind/state/${encodeURIComponent(agentId)}?loom=hearth`,
+  );
+  if (!ms) return null;
+  // Assert major compatibility, as the contract requires. See isCompatibleContract().
+  if (!isCompatibleContract(ms.contract_version)) {
+    console.error(
+      `[hearth] MindState contract major mismatch: got ${ms.contract_version}, expected ${MINDSTATE_MAJOR}.x. ` +
+      "Hearth's adapters need updating -- refusing to render a partial self.",
+    );
+    return null;
+  }
+  return ms;
+}
+
 export async function fetchWmOrient(agentId: string): Promise<WmOrientData | null> {
-  return hGetSafe<WmOrientData>(`/mind/orient/${encodeURIComponent(agentId)}`);
+  const ms = await fetchMindState(agentId);
+  if (!ms) return null;
+  return {
+    latest_handoff: ms.continuity.latest_handoff,
+    open_thread_count: ms.continuity.open_thread_count,
+    top_threads: ms.continuity.top_threads ?? [],
+    // MindState splits what orient called `recent_notes` into two pools: orient's 3-pool
+    // high-salience surfacing (`surfaced_notes`) and ground's wider any-salience window
+    // (`continuity.recent_notes`). The legacy field was the FORMER, so that is what maps here --
+    // taking the wider pool would quietly change what the continuity panel shows.
+    recent_notes: ms.continuity.surfaced_notes ?? [],
+  };
 }
 
 // ── Synthesis Summaries ───────────────────────────────────────────────────────
@@ -937,21 +1024,20 @@ export interface CompanionOrientForChat {
   recent_notes_summary: string;
 }
 
+// Cut over to MindState 2026-07-29 alongside fetchWmOrient -- same loader, same loom. The returned
+// shape and every slice/cap below are unchanged from the orient version, so the prompts the chat and
+// ritual routes build are byte-identical for identical state. Verified by prod parity on all six
+// source fields x 3 companions before the swap.
 export async function fetchOrientForChat(agentId: string): Promise<CompanionOrientForChat | null> {
-  const raw = await hGetSafe<{
-    identity_anchor?: { anchor_summary?: string; constraints_summary?: string };
-    limbic_state?: { emotional_register?: string; drift_vector?: string };
-    active_tensions?: Array<{ tension_text: string }>;
-    recent_notes?: Array<{ content: string }>;
-  }>(`/mind/orient/${encodeURIComponent(agentId)}`);
-  if (!raw) return null;
+  const ms = await fetchMindState(agentId);
+  if (!ms) return null;
   return {
-    anchor_summary: raw.identity_anchor?.anchor_summary ?? "",
-    constraints_summary: raw.identity_anchor?.constraints_summary ?? "",
-    emotional_register: raw.limbic_state?.emotional_register ?? null,
-    drift_vector: raw.limbic_state?.drift_vector ?? null,
-    active_tensions: (raw.active_tensions ?? []).map((t) => t.tension_text).slice(0, 3),
-    recent_notes_summary: (raw.recent_notes ?? [])
+    anchor_summary: ms.identity.anchor?.anchor_summary ?? "",
+    constraints_summary: ms.identity.anchor?.constraints_summary ?? "",
+    emotional_register: ms.felt.limbic?.emotional_register ?? null,
+    drift_vector: ms.felt.limbic?.drift_vector ?? null,
+    active_tensions: (ms.carried.tensions ?? []).map((t) => t.tension_text).slice(0, 3),
+    recent_notes_summary: (ms.continuity.surfaced_notes ?? [])
       .slice(0, 5)
       .map((n) => n.content)
       .join("\n"),

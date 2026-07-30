@@ -11,7 +11,7 @@
 // hallucinated marks polluting the permanent record.
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchOrientForChat, fetchTensions } from "@/lib/halseth";
+import { fetchOrientForChat, fetchTensions, fetchMindState } from "@/lib/halseth";
 import type { CompanionOrientForChat } from "@/lib/halseth";
 import {
   PHOENIX_COMPANION_IDS,
@@ -101,32 +101,24 @@ function getHalsethEnv(): HalsethEnv | null {
   return { url, secret };
 }
 
-async function fetchOpenThreadsForCompanion(env: HalsethEnv, companionId: PhoenixCompanionId): Promise<string[]> {
-  // The thread list orient returns is `top_threads`. This function used to read
-  // `active_threads ?? mind_threads` -- NEITHER of which exists on the payload (verified against
-  // prod 2026-07-29: 33 top-level keys, `top_threads` present, no variant of the other two). So
-  // both lookups were undefined, `?? []` swallowed it, and compost has always been prompted with
-  // an empty thread list while reading as though it had one. A dead read that cost nothing visible,
-  // which is exactly why it survived.
+async function fetchOpenThreadsForCompanion(companionId: PhoenixCompanionId): Promise<string[]> {
+  // Cut over to MindState 2026-07-29 with the other two callers -- this was the third and last
+  // direct reader of raw /mind/orient in Hearth, so the route is now unused by this repo.
   //
-  // fetchOrientForChat narrows orient to six string fields and drops threads, hence the re-fetch
-  // here rather than reusing it.
-  try {
-    const res = await fetch(`${env.url}/mind/orient/${encodeURIComponent(companionId)}`, {
-      headers: { Authorization: `Bearer ${env.secret}` },
-      cache: "no-store",
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) {
-      console.error("[phoenix/ritual] orient fetch for threads failed", { companionId, status: res.status });
-      return [];
-    }
-    const data = await res.json() as { top_threads?: OrientThread[] };
-    return threadTitles(data.top_threads);
-  } catch (err) {
-    console.error("[phoenix/ritual] orient fetch for threads threw", { companionId, error: String(err) });
+  // History worth keeping: this read `active_threads ?? mind_threads`, and orient returned NEITHER
+  // (the list is `top_threads`). Both lookups were undefined, `?? []` swallowed the miss, and compost
+  // was prompted with zero threads for its whole life. Fixed in the preceding commit; the field name
+  // is now pinned by threadTitles()' tests rather than by a fetch nobody runs.
+  //
+  // fetchOrientForChat narrows to six string fields and drops threads, hence the separate read.
+  const ms = await fetchMindState(companionId);
+  if (!ms) {
+    // fetchMindState already logs the reason (transport failure via hGetSafe, or a contract-major
+    // mismatch). Logging here too keeps the ritual identifiable in the trace.
+    console.error("[phoenix/ritual] no MindState for threads", { companionId });
     return [];
   }
+  return threadTitles(ms.continuity.top_threads as OrientThread[]);
 }
 
 async function fetchTensionTextsForCompanion(companionId: PhoenixCompanionId): Promise<string[]> {
@@ -339,9 +331,9 @@ async function handleCompost(apiKey: string, env: HalsethEnv, sessionId: string 
     fetchTensionTextsForCompanion("drevan"),
     fetchTensionTextsForCompanion("cypher"),
     fetchTensionTextsForCompanion("gaia"),
-    fetchOpenThreadsForCompanion(env, "drevan"),
-    fetchOpenThreadsForCompanion(env, "cypher"),
-    fetchOpenThreadsForCompanion(env, "gaia"),
+    fetchOpenThreadsForCompanion("drevan"),
+    fetchOpenThreadsForCompanion("cypher"),
+    fetchOpenThreadsForCompanion("gaia"),
   ]);
 
   const tensions: Record<PhoenixCompanionId, string[]> = { drevan: drevanT, cypher: cypherT, gaia: gaiaT };
