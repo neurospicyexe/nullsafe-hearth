@@ -1356,20 +1356,56 @@ export async function fetchGrowthPendingCount(): Promise<GrowthPendingCount | nu
  * agree; a count that disagrees with the surface it points at is worse than no count (2026-08-01,
  * src/lib/ratifiable.ts).
  *
- * Halseth caps `limit` at 100 and has no offset. That is survivable for the queue view because
- * ratifying drops rows OUT of the pending set -- 100 at a time converges. It is a real ceiling on
- * the unfiltered view.
+ * Halseth caps `limit` at 100 per request. As of 2026-08-12 it also accepts `offset` and returns
+ * `total`/`has_more`, so the cap is a PAGE size and no longer a ceiling on what is reachable. All
+ * three companions sat at exactly 100 returned rows before that, which is why the old full-list
+ * view could not honestly describe itself: `length >= limit` reads the same for "exactly 100
+ * exist" and "hundreds do".
  */
 export async function fetchGrowthJournal(
   companionId: string,
   limit = 20,
   opts: { pending?: boolean } = {},
 ): Promise<GrowthJournalEntry[]> {
-  const qs = `limit=${limit}${opts.pending ? "&pending=1" : ""}`;
-  const res = await hGetSafe<{ journal: GrowthJournalEntry[] }>(
-    `/mind/growth/journal/${companionId}?${qs}`,
-  );
-  return res?.journal ?? [];
+  return (await fetchGrowthJournalPage(companionId, limit, 0, opts)).entries;
+}
+
+export interface GrowthJournalPage {
+  entries: GrowthJournalEntry[];
+  /** Row count on this view's predicate. `null` when Halseth predates the paging response. */
+  total: number | null;
+  hasMore: boolean;
+  offset: number;
+}
+
+/**
+ * One page of the growth journal, with the count for the view it belongs to.
+ *
+ * Degrades on a Halseth that has not been redeployed yet: `total` stays null and `hasMore` falls
+ * back to the full-page inference. The page then says "at least N" instead of naming a number,
+ * which is the honest form of not knowing -- never a fabricated total.
+ */
+export async function fetchGrowthJournalPage(
+  companionId: string,
+  limit: number,
+  offset: number,
+  opts: { pending?: boolean } = {},
+): Promise<GrowthJournalPage> {
+  const qs = `limit=${limit}&offset=${offset}${opts.pending ? "&pending=1" : ""}`;
+  const res = await hGetSafe<{
+    journal: GrowthJournalEntry[];
+    total?: number;
+    has_more?: boolean;
+  }>(`/mind/growth/journal/${companionId}?${qs}`);
+
+  const entries = res?.journal ?? [];
+  const total = typeof res?.total === "number" ? res.total : null;
+  return {
+    entries,
+    total,
+    hasMore: typeof res?.has_more === "boolean" ? res.has_more : entries.length >= limit,
+    offset,
+  };
 }
 
 export async function fetchGrowthPatterns(

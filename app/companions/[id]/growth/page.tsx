@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   fetchGrowthJournal,
+  fetchGrowthJournalPage,
   fetchGrowthPatterns,
   fetchGrowthMarkers,
   fetchGrowthPendingCount,
@@ -19,10 +20,11 @@ export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
 }
 
-// The unfiltered list is capped by Halseth at 100 rows with no offset. The pending view does not
-// need paging (ratifying removes rows from the queue, so 100 at a time converges), but the "all"
-// view genuinely truncates -- say so rather than implying completeness.
-const FULL_LIMIT = 100;
+// Halseth caps a single request at 100 rows, so 100 is the PAGE size, not the ceiling: it accepts
+// ?offset and returns a total, and this page walks it. Before that the cap WAS the ceiling and all
+// three companions sat exactly at it, which is how "view the full list" showed a first page and
+// called it the list.
+const PAGE_SIZE = 100;
 
 type JournalView = "recent" | "pending" | "all";
 
@@ -31,27 +33,34 @@ export default async function GrowthPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; page?: string }>;
 }) {
   const { id: rawId } = await params;
   const id = rawId.toLowerCase();
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
-  const { view: rawView } = await searchParams;
+  const { view: rawView, page: rawPage } = await searchParams;
   const view: JournalView =
     rawView === "pending" ? "pending" : rawView === "all" ? "all" : "recent";
 
+  // 1-indexed in the URL because it is a thing Raziel reads and edits; 0-indexed offset below.
+  const parsedPage = parseInt(rawPage ?? "1", 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const offset = view === "recent" ? 0 : (page - 1) * PAGE_SIZE;
+
   const [journalRes, patternsRes, markersRes, pendingRes] = await Promise.allSettled([
     view === "recent"
-      ? fetchGrowthJournal(id, 21)
-      : fetchGrowthJournal(id, FULL_LIMIT, { pending: view === "pending" }),
+      // 21 for a 20-row clip: the 21st is the evidence that a "more" pointer is warranted.
+      ? fetchGrowthJournalPage(id, 21, 0)
+      : fetchGrowthJournalPage(id, PAGE_SIZE, offset, { pending: view === "pending" }),
     fetchGrowthPatterns(id),
     fetchGrowthMarkers(id),
     fetchGrowthPendingCount(),
   ]);
 
-  const allJournal  = (journalRes.status  === "fulfilled" ? journalRes.value  : null) ?? [];
+  const journalPage = journalRes.status === "fulfilled" ? journalRes.value : null;
+  const allJournal  = journalPage?.entries ?? [];
   const allPatterns = (patternsRes.status === "fulfilled" ? patternsRes.value : null) ?? [];
   const allMarkers  = (markersRes.status  === "fulfilled" ? markersRes.value  : null) ?? [];
   const pendingData = pendingRes.status  === "fulfilled" ? pendingRes.value  : null;
@@ -61,17 +70,21 @@ export default async function GrowthPage({
   const pendingCount =
     pendingData?.per_companion.find((c) => c.companion_id === id)?.pending ?? null;
 
-  // Oldest-first in the queue: a backlog drains from the bottom, and the bottom is exactly what a
-  // newest-first list with a cut-off could never reach. Newest-first everywhere else.
-  const journal = [...allJournal].sort((a, b) => {
-    const at = new Date(a.created_at).getTime();
-    const bt = new Date(b.created_at).getTime();
-    return view === "pending" ? at - bt : bt - at;
-  });
+  // Halseth already orders each view (queue ASC, everything else DESC) and does it across the WHOLE
+  // set, not just this page. Re-sorting here would only ever reorder the 100 rows in hand, which is
+  // what made a client-side sort look like it fixed the queue order while the server was still
+  // cutting the oldest rows off the end.
+  const entries = view === "recent" ? allJournal.slice(0, 20) : allJournal;
 
-  const entries = view === "recent" ? journal.slice(0, 20) : journal;
-  const truncatedAll = view === "all" && allJournal.length >= FULL_LIMIT;
-  const moreThanShown = view === "recent" && allJournal.length > 20;
+  const total = journalPage?.total ?? null;
+  const hasMorePages = journalPage?.hasMore ?? false;
+  const moreThanShown = view === "recent" && (allJournal.length > 20 || hasMorePages);
+
+  // Page N of M, only when Halseth gave a real total. Never computed from a page length.
+  const lastPage = total !== null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : null;
+  const shownFrom = entries.length > 0 ? offset + 1 : 0;
+  const shownTo = offset + entries.length;
+  const pageHref = (p: number) => `/companions/${id}/growth?view=${view}&page=${p}`;
 
   const patterns = [...allPatterns].sort((a, b) => b.strength - a.strength);
 
@@ -196,12 +209,40 @@ export default async function GrowthPage({
           )}
         </div>
 
-        {truncatedAll && (
-          <p className="section-row-meta" style={{ marginTop: "0.5rem", fontSize: "0.82rem" }}>
-            {/* "may exist": Halseth caps at 100 and returns no total, so a companion sitting on
-                exactly 100 entries is indistinguishable from one with 400. Do not assert either. */}
-            Showing at most {FULL_LIMIT}, newest first — older entries may exist beyond this cap.
-          </p>
+        {/* Pager. Only on the paged views -- "recent" is a deliberate 20-row clip with its own
+            pointer above, not page 1 of anything. */}
+        {view !== "recent" && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              flexWrap: "wrap",
+              marginTop: "0.75rem",
+              paddingTop: "0.75rem",
+              borderTop: "1px solid #ffffff12",
+            }}
+          >
+            {page > 1 ? (
+              <Link href={pageHref(page - 1)} className="home-section-link" style={{ fontSize: "0.85rem" }}>
+                ← newer
+              </Link>
+            ) : null}
+
+            <span className="section-row-meta" style={{ fontSize: "0.82rem" }}>
+              {total !== null
+                ? `${shownFrom}–${shownTo} of ${total}${lastPage && lastPage > 1 ? ` · page ${page} of ${lastPage}` : ""}`
+                : /* No total: this Halseth predates the paging response. Say what is known --
+                     "at least" -- rather than presenting a page length as a total. */
+                  `showing ${shownFrom}–${shownTo}${hasMorePages ? " (more follow)" : ""}`}
+            </span>
+
+            {hasMorePages ? (
+              <Link href={pageHref(page + 1)} className="home-section-link" style={{ fontSize: "0.85rem" }}>
+                older →
+              </Link>
+            ) : null}
+          </div>
         )}
       </section>
 
