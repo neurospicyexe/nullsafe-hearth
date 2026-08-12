@@ -19,10 +19,11 @@ interface Props {
   entries: GrowthJournalEntry[];
   companionId: string;
   companionColor: string;
-  hasMore: boolean;
+  /** Shown when there is nothing to list. In the queue view "nothing left to ratify" is a win, not a void. */
+  emptyText?: string;
 }
 
-export default function JournalClient({ entries, companionId, companionColor, hasMore }: Props) {
+export default function JournalClient({ entries, companionId, companionColor, emptyText }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const [localStatus, setLocalStatus] = useState<Record<string, "pending" | "accepted" | "declined">>({});
@@ -64,7 +65,7 @@ export default function JournalClient({ entries, companionId, companionColor, ha
   }
 
   if (entries.length === 0) {
-    return <p className="empty">No journal entries yet</p>;
+    return <p className="empty">{emptyText ?? "No journal entries yet"}</p>;
   }
 
   return (
@@ -179,12 +180,6 @@ export default function JournalClient({ entries, companionId, companionColor, ha
           );
         })}
       </div>
-
-      {hasMore && (
-        <p className="section-row-meta" style={{ marginTop: "0.75rem", fontSize: "0.82rem" }}>
-          More entries available — view the full list
-        </p>
-      )}
     </>
   );
 }

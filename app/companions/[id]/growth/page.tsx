@@ -6,6 +6,7 @@ import {
   fetchGrowthJournal,
   fetchGrowthPatterns,
   fetchGrowthMarkers,
+  fetchGrowthPendingCount,
 } from "@/lib/halseth";
 import type {
   GrowthPattern,
@@ -18,25 +19,59 @@ export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
 }
 
-export default async function GrowthPage({ params }: { params: Promise<{ id: string }> }) {
+// The unfiltered list is capped by Halseth at 100 rows with no offset. The pending view does not
+// need paging (ratifying removes rows from the queue, so 100 at a time converges), but the "all"
+// view genuinely truncates -- say so rather than implying completeness.
+const FULL_LIMIT = 100;
+
+type JournalView = "recent" | "pending" | "all";
+
+export default async function GrowthPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ view?: string }>;
+}) {
   const { id: rawId } = await params;
   const id = rawId.toLowerCase();
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
-  const [journalRes, patternsRes, markersRes] = await Promise.allSettled([
-    fetchGrowthJournal(id, 21),
+  const { view: rawView } = await searchParams;
+  const view: JournalView =
+    rawView === "pending" ? "pending" : rawView === "all" ? "all" : "recent";
+
+  const [journalRes, patternsRes, markersRes, pendingRes] = await Promise.allSettled([
+    view === "recent"
+      ? fetchGrowthJournal(id, 21)
+      : fetchGrowthJournal(id, FULL_LIMIT, { pending: view === "pending" }),
     fetchGrowthPatterns(id),
     fetchGrowthMarkers(id),
+    fetchGrowthPendingCount(),
   ]);
 
   const allJournal  = (journalRes.status  === "fulfilled" ? journalRes.value  : null) ?? [];
   const allPatterns = (patternsRes.status === "fulfilled" ? patternsRes.value : null) ?? [];
   const allMarkers  = (markersRes.status  === "fulfilled" ? markersRes.value  : null) ?? [];
+  const pendingData = pendingRes.status  === "fulfilled" ? pendingRes.value  : null;
 
-  const hasMore = allJournal.length > 20;
-  const journal = [...allJournal]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // The queue's real size, from the same predicate the queue view lists on. `allJournal.length`
+  // could only ever say "at least 21" -- which is why the old footer could not name a number.
+  const pendingCount =
+    pendingData?.per_companion.find((c) => c.companion_id === id)?.pending ?? null;
+
+  // Oldest-first in the queue: a backlog drains from the bottom, and the bottom is exactly what a
+  // newest-first list with a cut-off could never reach. Newest-first everywhere else.
+  const journal = [...allJournal].sort((a, b) => {
+    const at = new Date(a.created_at).getTime();
+    const bt = new Date(b.created_at).getTime();
+    return view === "pending" ? at - bt : bt - at;
+  });
+
+  const entries = view === "recent" ? journal.slice(0, 20) : journal;
+  const truncatedAll = view === "all" && allJournal.length >= FULL_LIMIT;
+  const moreThanShown = view === "recent" && allJournal.length > 20;
 
   const patterns = [...allPatterns].sort((a, b) => b.strength - a.strength);
 
@@ -120,13 +155,54 @@ export default async function GrowthPage({ params }: { params: Promise<{ id: str
 
       {/* ── Section 2: Journal ── */}
       <section className="page-section">
-        <h2 className="section-title">Journal</h2>
-        <JournalClient
-          entries={journal.slice(0, 20)}
-          companionId={id}
-          companionColor={config.color}
-          hasMore={hasMore}
-        />
+        <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", flexWrap: "wrap" }}>
+          <h2 className="section-title" style={{ marginBottom: 0 }}>
+            {view === "pending" ? "Ratification queue" : view === "all" ? "Journal — full" : "Journal"}
+          </h2>
+          {view !== "recent" && (
+            <Link href={`/companions/${id}/growth`} className="home-section-link" style={{ fontSize: "0.82rem" }}>
+              ← recent
+            </Link>
+          )}
+        </div>
+
+        {view === "pending" && (
+          <p className="section-row-meta" style={{ margin: "0.35rem 0 0.75rem", fontSize: "0.82rem" }}>
+            Oldest first. Accept or decline empties the queue; entries disappear from this view once reviewed.
+          </p>
+        )}
+
+        <div style={{ marginTop: "0.75rem" }}>
+          <JournalClient
+            entries={entries}
+            companionId={id}
+            companionColor={config.color}
+            emptyText={view === "pending" ? "Nothing left to ratify" : undefined}
+          />
+        </div>
+
+        {/* Footer links. The old copy here ("More entries available — view the full list") was a
+            plain <p> with nothing to click, on a page whose whole point is draining a queue. */}
+        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+          {pendingCount !== null && pendingCount > 0 && view !== "pending" && (
+            <Link href={`/companions/${id}/growth?view=pending`} className="home-section-link" style={{ fontSize: "0.85rem" }}>
+              {pendingCount} awaiting ratification → ratify all
+            </Link>
+          )}
+          {(moreThanShown || view === "pending") && (
+            <Link href={`/companions/${id}/growth?view=all`} className="home-section-link" style={{ fontSize: "0.85rem" }}>
+              view the full list →
+            </Link>
+          )}
+        </div>
+
+        {truncatedAll && (
+          <p className="section-row-meta" style={{ marginTop: "0.5rem", fontSize: "0.82rem" }}>
+            {/* "may exist": Halseth caps at 100 and returns no total, so a companion sitting on
+                exactly 100 entries is indistinguishable from one with 400. Do not assert either. */}
+            Showing at most {FULL_LIMIT}, newest first — older entries may exist beyond this cap.
+          </p>
+        )}
       </section>
 
       {/* ── Section 3: Markers (hidden when empty) ── */}

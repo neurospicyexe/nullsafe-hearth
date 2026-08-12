@@ -1347,12 +1347,27 @@ export async function fetchGrowthPendingCount(): Promise<GrowthPendingCount | nu
   return hGetSafe<GrowthPendingCount>("/mind/growth/pending-count");
 }
 
+/**
+ * Growth journal for one companion.
+ *
+ * `pending: true` asks Halseth for the ratification queue only (`?pending=1`), which selects on
+ * `RATIFIABLE_PENDING_SQL` -- source IN (autonomous, reflection) AND review_status = 'pending'.
+ * That predicate is the SAME one behind `/mind/growth/pending-count`, so the count and the list
+ * agree; a count that disagrees with the surface it points at is worse than no count (2026-08-01,
+ * src/lib/ratifiable.ts).
+ *
+ * Halseth caps `limit` at 100 and has no offset. That is survivable for the queue view because
+ * ratifying drops rows OUT of the pending set -- 100 at a time converges. It is a real ceiling on
+ * the unfiltered view.
+ */
 export async function fetchGrowthJournal(
   companionId: string,
   limit = 20,
+  opts: { pending?: boolean } = {},
 ): Promise<GrowthJournalEntry[]> {
+  const qs = `limit=${limit}${opts.pending ? "&pending=1" : ""}`;
   const res = await hGetSafe<{ journal: GrowthJournalEntry[] }>(
-    `/mind/growth/journal/${companionId}?limit=${limit}`,
+    `/mind/growth/journal/${companionId}?${qs}`,
   );
   return res?.journal ?? [];
 }

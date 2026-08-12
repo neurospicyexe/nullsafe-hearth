@@ -246,7 +246,9 @@ async function RatificationQueue() {
             .map((c) => (
               <Link
                 key={c.companion_id}
-                href={`/companions/${c.companion_id}/growth`}
+                // Straight into the queue view, not the newest-20 page: the backlog's oldest rows
+                // sit below that cut, which is how 29 entries stayed unreachable.
+                href={`/companions/${c.companion_id}/growth?view=pending`}
                 className="card card-accent"
                 style={{
                   textDecoration: "none",
