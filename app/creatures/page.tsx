@@ -89,7 +89,9 @@ function NestSection({ nest }: { nest: NestItem[] }) {
         the nest — {kept.length} kept{kept.filter(k => k.treasured === 1).length > 0 ? `, ${kept.filter(k => k.treasured === 1).length} treasured` : ""}
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-        {kept.slice(0, 12).map(item => (
+        {/* The count line above already says how many are kept; clipping to 12 under it made the
+            rest unreachable on the page that exists to show them. */}
+        {kept.map(item => (
           <span
             key={item.id}
             title={`${item.given_by ? `from ${item.given_by}` : item.source} — sparkle ${item.sparkle.toFixed(2)}`}
@@ -225,7 +227,7 @@ function CreatureCard({ detail }: { detail: { creature: Creature } & Partial<Cre
           <p className="section-row-meta" style={{ fontSize: "0.8rem" }}>none yet</p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {interactions.slice(0, 6).map(i => {
+            {interactions.map(i => {
               const { prefix, label, color } = activityLabel(i);
               return (
                 <li key={i.id} className="section-row" style={{ alignItems: "baseline", padding: "0.2rem 0" }}>

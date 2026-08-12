@@ -157,15 +157,17 @@ function Candidates({ recs, votes, winnerId, votable, status }: {
   );
 }
 
-function DiscussionThread({ discussions, commons, roundId, postable, status }: {
+function DiscussionThread({ discussions, commons, roundId, postable, status, commonsLoaded = true }: {
   discussions: ClubRoundDetail["discussions"];
   commons: CommonsPost[];
   roundId: string;
   postable: boolean;
   status: string;
+  /** False when this round is deep enough in history that its commons were not fetched. */
+  commonsLoaded?: boolean;
 }) {
   const thread = [...commons].sort((a, b) => a.created_at.localeCompare(b.created_at));
-  const hasSomething = discussions.length > 0 || thread.length > 0 || postable;
+  const hasSomething = discussions.length > 0 || thread.length > 0 || postable || !commonsLoaded;
   if (!hasSomething) return null;
   return (
     <div style={{ marginTop: "1.1rem", borderTop: "1px solid #1a1a1a", paddingTop: "0.85rem" }}>
@@ -186,6 +188,11 @@ function DiscussionThread({ discussions, commons, roundId, postable, status }: {
           <p className="handover-last-real" style={{ whiteSpace: "pre-wrap" }}>{p.body}</p>
         </div>
       ))}
+      {!commonsLoaded && (
+        <p className="section-row-meta" style={{ fontSize: "0.78rem", fontStyle: "italic" }}>
+          discussion not loaded for rounds this far back
+        </p>
+      )}
       {postable && (
         <div style={{ marginTop: "0.6rem" }}>
           <PostBox
@@ -199,10 +206,11 @@ function DiscussionThread({ discussions, commons, roundId, postable, status }: {
   );
 }
 
-function RoundCard({ round, heading, commons = [] }: {
+function RoundCard({ round, heading, commons = [], commonsLoaded = true }: {
   round: ClubRoundDetail;
   heading?: string;
   commons?: CommonsPost[];
+  commonsLoaded?: boolean;
 }) {
   const votable = round.status === "gathering" || round.status === "voting";
   const postable = round.status === "active" || round.status === "discussing";
@@ -249,6 +257,7 @@ function RoundCard({ round, heading, commons = [] }: {
         roundId={round.id}
         postable={postable}
         status={round.status}
+        commonsLoaded={commonsLoaded}
       />
     </section>
   );
@@ -263,10 +272,15 @@ export default async function ClubPage() {
   const currentId = current?.round?.id ?? null;
   const history = rounds.filter(r => r.id !== currentId);
 
-  // Fetch discussion commons in parallel -- cap history at 3 to stay lean
+  // Fetch discussion commons in parallel. The cap used to be 3 while `history.map` below rendered
+  // EVERY past round, so round 4 and older displayed an empty discussion thread -- indistinguishable
+  // from a round nobody talked in. A fetch bound that renders as absence is a lie about the data;
+  // either load it or say it is not loaded. 12 covers the real history depth, and anything past it
+  // is marked rather than shown as silent.
+  const COMMONS_DEPTH = 12;
   const [currentCommons, ...historyCommons] = await Promise.all([
     currentId ? fetchCommonsPosts(`club:${currentId}`, 30) : Promise.resolve([]),
-    ...history.slice(0, 3).map(r => fetchCommonsPosts(`club:${r.id}`, 20)),
+    ...history.slice(0, COMMONS_DEPTH).map(r => fetchCommonsPosts(`club:${r.id}`, 20)),
   ]);
 
   return (
@@ -299,7 +313,12 @@ export default async function ClubPage() {
             <h2 className="page-title" style={{ fontSize: "1.05rem" }}>Past rounds</h2>
           </div>
           {history.map((r, idx) => (
-            <RoundCard key={r.id} round={r} commons={historyCommons[idx] ?? []} />
+            <RoundCard
+              key={r.id}
+              round={r}
+              commons={historyCommons[idx] ?? []}
+              commonsLoaded={idx < COMMONS_DEPTH}
+            />
           ))}
         </>
       )}

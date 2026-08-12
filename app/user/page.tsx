@@ -165,14 +165,16 @@ export default async function UserPage() {
         )}
       </section>
 
-      {/* Notes / journal */}
+      {/* Notes / journal.
+          Renders all of them, not the first 20 of up to 50 fetched: this is Raziel's own notes
+          page and there was no second page to reach the rest from. */}
       <section>
         <h2 className="section-title">Your Notes</h2>
         {myNotes.length === 0 ? (
           <p className="empty">No notes from you yet.</p>
         ) : (
           <div className="full-notes-feed">
-            {myNotes.slice(0, 20).map((n) => (
+            {myNotes.map((n) => (
               <div key={n.id} className="full-note-entry">
                 <div className="note-header">
                   <span className="note-author">{n.author}</span>

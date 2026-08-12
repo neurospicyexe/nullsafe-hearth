@@ -349,6 +349,17 @@ export default async function AutonomousPage() {
                       ({seeds.length} available)
                     </span>
                   )}
+                  {/* The count was already honest; there was just nothing to click. Seeds are
+                      managed on the companion's own autonomy page. */}
+                  {seeds.length > 3 && (
+                    <Link
+                      href={`/companions/${id}/autonomy`}
+                      className="home-section-link"
+                      style={{ marginLeft: "0.5rem", fontSize: "0.74rem" }}
+                    >
+                      see all →
+                    </Link>
+                  )}
                 </span>
                 {seeds.length === 0 ? (
                   <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No seeds queued</p>

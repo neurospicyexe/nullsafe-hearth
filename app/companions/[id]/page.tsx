@@ -165,6 +165,11 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const orientData      = orient.status         === "fulfilled" ? orient.value         : null;
   const summaryEntries  = synthesis.status      === "fulfilled" ? synthesis.value      : [];
   const icNoteEntries   = icNotes.status        === "fulfilled" ? icNotes.value        : [];
+  // Same predicate InterCompanionNotesSection applies internally, hoisted so the clip and the
+  // "see all" count are both taken AFTER the filter rather than above it.
+  const icNotesForThisCompanion = icNoteEntries.filter(
+    (n) => n.from_id === id || n.to_id === id || n.to_id === null,
+  );
   const somaData        = soma.status           === "fulfilled" ? soma.value           : null;
   const companionSoma   = somaData ? (somaData[id as keyof typeof somaData] as CompanionSomaState) : null;
   const fermentData     = fermentRes.status     === "fulfilled" ? fermentRes.value : null;
@@ -320,10 +325,21 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         <SynthesisSummarySection entries={summaryEntries.slice(0, 5)} companionId={id} />
       </section>
 
-      {/* Inter-Companion Notes — clipped to 5 */}
+      {/* Inter-Companion Notes — clipped to 5.
+          The clip used to be `.slice(0, 5)` BEFORE InterCompanionNotesSection filtered the list
+          down to notes involving this companion, so five rows about the other two left this
+          section empty and the notes that did belong here unreachable. Filter first, clip second:
+          a limit applied above its own filter can only ever under-report. */}
       <section className="page-section">
-        <h2 className="section-title">Between Companions</h2>
-        <InterCompanionNotesSection notes={icNoteEntries.slice(0, 5)} companionId={id} />
+        <div className="section-header">
+          <h2 className="section-title section-title-flush">Between Companions</h2>
+          {icNotesForThisCompanion.length > 5 && (
+            <Link href={`/between?companion=${id}`} className="home-section-link">
+              see all {icNotesForThisCompanion.length}+ →
+            </Link>
+          )}
+        </div>
+        <InterCompanionNotesSection notes={icNotesForThisCompanion.slice(0, 5)} companionId={id} />
       </section>
 
       {/* SOMA Feelings — clipped to 6 */}

@@ -621,6 +621,7 @@ export default async function Page() {
         <div className="home-section" style={{ marginTop: "1rem" }}>
           <div className="home-section-header">
             <span className="home-section-title">Synthesis</span>
+            <Link href="/synthesis" className="home-section-link">see all →</Link>
           </div>
           <div className="card notes-card">
             {synthesisSummaries.slice(0, 5).map((s) => (

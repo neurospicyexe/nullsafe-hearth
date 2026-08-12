@@ -87,8 +87,11 @@ export default async function CompanionLoopsPage({ params }: { params: Promise<{
           <h2 className="section-title" style={{ marginTop: "2rem" }}>
             Closed ({closed.length})
           </h2>
+          {/* No clip. This IS the loops page -- the header already names the real count, and
+              hiding rows behind it left nothing to click to reach them. On a dedicated full-list
+              page the fetch limit is the only cap, and it is stated once rather than twice. */}
           <div className="card" style={{ padding: "0.5rem 0", opacity: 0.6 }}>
-            {closed.slice(0, 10).map((loop) => (
+            {closed.map((loop) => (
               <div key={loop.id} className="journal-row">
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="journal-text" style={{ textDecoration: "line-through" }}>

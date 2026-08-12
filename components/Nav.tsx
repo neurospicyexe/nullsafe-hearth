@@ -30,6 +30,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/us",           label: "Us",         sym: "♥" },
       { href: "/log",          label: "Log",        sym: "✎" },
+      { href: "/between",      label: "Between",    sym: "⇄" },
       { href: "/phoenix/chat", label: "Triad Chat", sym: "✍" },
       { href: "/presence",     label: "Presence",   sym: "☻" },
       { href: "/orient",       label: "Orient",     sym: "⊕" },
@@ -71,6 +72,7 @@ const NAV_GROUPS = [
       { href: "/sessions",  label: "Sessions",  sym: "⊙" },
       { href: "/dreams",    label: "Dreams",    sym: "◌" },
       { href: "/memory",    label: "Memory",    sym: "◫" },
+      { href: "/synthesis", label: "Synthesis", sym: "◈" },
     ],
   },
   {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { type MindData, type MindJournalEntry, type CompanionNote } from "@/lib/halseth";
 import { CompanionNotesFeedClient, CompanionNoteFormClient, JournalFormClient } from "./client";
 
@@ -107,7 +108,11 @@ function JournalFeed({ journals }: { journals: MindJournalEntry[] }) {
   if (journals.length === 0) return null;
   return (
     <div className="card">
-      <div className="card-title">Recent Journals</div>
+      <div className="home-section-header">
+        <span className="card-title">Recent Journals</span>
+        {/* Five of however many were fetched, with nowhere to go: the full feed is /journal. */}
+        <Link href="/journal" className="home-section-link">see all →</Link>
+      </div>
       <div className="delta-feed">
         {journals.slice(0, 5).map((j) => (
           <div key={j.id} className="delta-entry neutral">
