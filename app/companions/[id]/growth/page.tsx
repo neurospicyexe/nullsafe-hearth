@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import {
   fetchGrowthJournal,
@@ -82,9 +82,23 @@ export default async function GrowthPage({
 
   // Page N of M, only when Halseth gave a real total. Never computed from a page length.
   const lastPage = total !== null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : null;
+  const pageHref = (p: number) => `/companions/${id}/growth?view=${view}&page=${p}`;
+
+  // A page number past the end reproduced the exact bug this page exists to fix: ?page=999 asked
+  // for offset 99800, got nothing back, and rendered "No journal entries yet" plus a count line
+  // reading "0-99800 of 186" -- an empty state standing in for a companion with 186 entries.
+  // The URL is hand-editable by design, so it has to survive being edited wrong.
+  if (view !== "recent" && lastPage !== null && page > lastPage) {
+    redirect(pageHref(lastPage));
+  }
+
+  // Without a total (a Halseth predating the paging response) there is nothing to clamp against, so
+  // an overshot page can only be named, not corrected. Say which it is rather than letting the
+  // generic empty state read as "this companion has no growth".
+  const overshot = view !== "recent" && page > 1 && entries.length === 0;
+
   const shownFrom = entries.length > 0 ? offset + 1 : 0;
   const shownTo = offset + entries.length;
-  const pageHref = (p: number) => `/companions/${id}/growth?view=${view}&page=${p}`;
 
   const patterns = [...allPatterns].sort((a, b) => b.strength - a.strength);
 
@@ -190,7 +204,13 @@ export default async function GrowthPage({
             entries={entries}
             companionId={id}
             companionColor={config.color}
-            emptyText={view === "pending" ? "Nothing left to ratify" : undefined}
+            emptyText={
+              overshot
+                ? `Page ${page} is past the end — use “← newer” to go back.`
+                : view === "pending"
+                  ? "Nothing left to ratify"
+                  : undefined
+            }
           />
         </div>
 
@@ -230,11 +250,15 @@ export default async function GrowthPage({
             ) : null}
 
             <span className="section-row-meta" style={{ fontSize: "0.82rem" }}>
-              {total !== null
-                ? `${shownFrom}–${shownTo} of ${total}${lastPage && lastPage > 1 ? ` · page ${page} of ${lastPage}` : ""}`
-                : /* No total: this Halseth predates the paging response. Say what is known --
-                     "at least" -- rather than presenting a page length as a total. */
-                  `showing ${shownFrom}–${shownTo}${hasMorePages ? " (more follow)" : ""}`}
+              {entries.length === 0
+                ? /* No rows: a range would read "0-99800", which is a range of nothing dressed up
+                     as a position in the data. */
+                  total !== null ? `0 of ${total}` : "nothing on this page"
+                : total !== null
+                  ? `${shownFrom}–${shownTo} of ${total}${lastPage && lastPage > 1 ? ` · page ${page} of ${lastPage}` : ""}`
+                  : /* No total: this Halseth predates the paging response. Say what is known
+                       rather than presenting a page length as a total. */
+                    `showing ${shownFrom}–${shownTo}${hasMorePages ? " (more follow)" : ""}`}
             </span>
 
             {hasMorePages ? (
