@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { SomaData, CompanionSomaState, CompanionTension, BasinHistory, SomaticSnapshot } from "@/lib/halseth";
 
@@ -211,14 +212,21 @@ export default function SomaClient({
       return;
     }
     // Settle: mirror the server's clamp (0-10) so the number shown is the number stored.
-    setLiveTensions((prev) =>
-      prev.map((t) =>
-        t.id === id
-          ? { ...t, charge: typeof t.charge === "number" ? Math.max(0, t.charge - SETTLE_STEP) : t.charge }
-          : t,
-      ),
-    );
-    setTensionMsg((prev) => ({ ...prev, [id]: "settled" }));
+    //
+    // And only claim it settled if the number actually MOVED. The server does
+    // `MAX(0.0, charge + delta)` and returns 200 either way, so at charge 0 a click is a no-op
+    // with a success status -- saying "settled" there would rebuild, one layer in, the exact
+    // defect this whole change removes: a control claiming an effect it did not have.
+    const before = liveTensions.find((t) => t.id === id)?.charge;
+    const after = typeof before === "number" ? Math.max(0, before - SETTLE_STEP) : before;
+    setLiveTensions((prev) => prev.map((t) => (t.id === id ? { ...t, charge: after } : t)));
+    setTensionMsg((prev) => ({
+      ...prev,
+      [id]:
+        typeof before === "number" && before === after
+          ? "already at 0"
+          : "settled",
+    }));
   }
 
   useEffect(() => {
@@ -255,9 +263,16 @@ export default function SomaClient({
           "none are simmering" from "this surface is broken". */}
       <section className="soma-extra-section">
           <h2 className="soma-extra-title">Active Tensions</h2>
+          {/* The link points at a surface that actually holds closed tensions. /companions/[id]
+              renders none at all, so naming it would be prose promising a reachable
+              rest-of-itself that isn't reachable -- the same defect one layer over. /memory
+              reads the unfiltered feed, so crystallized and released really are there. No
+              `?type=tension` either: /memory reads no search params, so a filter in the URL
+              would be a second promise the page does not keep (it has one in its own UI). */}
           {liveTensions.length === 0 && (
             <p className="soma-fetched" style={{ color: "var(--muted)" }}>
-              nothing simmering right now — closed ones live on each companion&apos;s page
+              nothing simmering right now — closed ones are in{" "}
+              <Link href="/memory" className="home-section-link">memory</Link>
             </p>
           )}
           <div className="soma-extra-list">
