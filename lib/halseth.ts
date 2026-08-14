@@ -428,6 +428,61 @@ export async function fetchRefusals(companionId: string): Promise<CompanionRefus
   return (await hGetSafe<CompanionRefusal[]>(`/agency/refusals/${companionId}`)) ?? [];
 }
 
+// ── System roster lookup (halseth migration 0117) ───────────────────────────────────────────
+//
+// `who is <name>` against Raziel's PluralKit roster, cached in Halseth's D1. Deliberately a
+// LOOKUP and not a list: the roster is 538 members, and no Hearth view should render all of them.
+//
+// The `status` union is the point of the feature and must not be flattened in the UI. "I looked and
+// this name is not in the roster" (`not_found`) and "I could not look" (`unavailable`) are opposite
+// answers -- a real system member was once called "drift" because nothing could tell them apart.
+// `ambiguous` means two members share the label; render BOTH, never pick one. `pronouns: null` means
+// not recorded OR not public and must never be rendered as a default.
+export interface RosterMember {
+  member_id: string;
+  name: string;
+  display_name: string | null;
+  pronouns: string | null;
+  description: string | null;
+  avatar_url: string | null;
+  proxy_tags: string | null;
+  message_count: number | null;
+  birthday: string | null;
+  system_id: string;
+  fetched_at: string;
+}
+export type RosterLookup =
+  | { status: "found"; query: string; member: RosterMember; roster_size: number; fetched_at: string; summary: string }
+  | { status: "ambiguous"; query: string; members: RosterMember[]; roster_size: number; fetched_at: string; summary: string }
+  | { status: "candidates"; query: string; candidates: RosterMember[]; total_matches: number; roster_size: number; fetched_at: string; summary: string }
+  | { status: "not_found"; query: string; roster_size: number; fetched_at: string; summary: string }
+  | { status: "unavailable"; query: string; reason: string; roster_size: number; summary: string };
+
+export interface RosterStats {
+  members: number;
+  with_pronouns: number;
+  without_pronouns: number;
+  with_description: number;
+  fetched_at: string | null;
+  age_hours: number | null;
+  system_id_configured: boolean;
+}
+
+/**
+ * Resolve one name. Returns null only when Halseth itself is unreachable -- which is distinct from
+ * the roster being unreachable (that comes back as a `status: "unavailable"` result). Two different
+ * failures, deliberately not merged.
+ */
+export async function fetchRosterWho(query: string): Promise<RosterLookup | null> {
+  const q = query.trim();
+  if (!q) return null;
+  return await hGetSafe<RosterLookup>(`/roster/who?q=${encodeURIComponent(q)}`);
+}
+
+export async function fetchRosterStats(): Promise<RosterStats | null> {
+  return await hGetSafe<RosterStats>("/roster/stats");
+}
+
 // Sanctioned drift lane (halseth migration 0087): declared becoming, witnessed not ratified.
 export interface DriftWitness { by: string; note: string; at: string }
 export interface CompanionDrift {
@@ -1058,6 +1113,16 @@ export type CompanionTension = {
   first_noted_at: string;
   last_surfaced_at: string | null;
   notes: string | null;
+  /**
+   * How loud the tension is, 0-10. Optional because `/ingest/tensions` only began returning it on
+   * 2026-08-14 and that change is not deployed yet -- treat `undefined` as "not reported", never
+   * as 0. `/companion-growth/tensions/:id` (SELECT *) has always returned it.
+   *
+   * This is the RAW stored value. Halseth migration 0119 adds lazy charge decay at read time,
+   * anchored on `COALESCE(settled_at, first_noted_at)`; while 0119 is undeployed the number here
+   * is undecayed, so a small mismatch against a companion-side reading is expected, not a bug.
+   */
+  charge?: number | null;
 };
 
 export async function fetchTensions(companionId?: string, limit = 20): Promise<CompanionTension[]> {
@@ -1070,6 +1135,31 @@ export async function fetchTensions(companionId?: string, limit = 20): Promise<C
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   return raw.tensions ?? [];
+}
+
+/**
+ * Tensions for ONE companion, filtered by status, WITH charge.
+ *
+ * Deliberately a different endpoint from `fetchTensions` above, because it answers a different
+ * question. `/ingest/tensions` is the second-brain sync feed: every status, so a change TO
+ * released is carried; that is right for the memory browser and wrong for a tending surface.
+ * Until 2026-08-14 it also silently IGNORED the `companion_id` it was handed and never returned
+ * `charge`, which is what made Raziel's settle button look dead -- it moved a number the page
+ * could not fetch, on a list that showed released rows as "Active Tensions" so a release came
+ * straight back on reload.
+ *
+ * `/companion-growth/tensions/:id` honors both filters and has always returned charge, and it is
+ * already deployed, so the fix needed no worker release.
+ */
+export async function fetchTensionsFor(
+  companionId: string,
+  status: "simmering" | "crystallized" | "released" = "simmering",
+): Promise<CompanionTension[]> {
+  const raw = await hGetSafe<{ tensions?: CompanionTension[] } | CompanionTension[]>(
+    `/companion-growth/tensions/${encodeURIComponent(companionId)}?status=${status}`,
+  );
+  if (!raw) return [];
+  return Array.isArray(raw) ? raw : raw.tensions ?? [];
 }
 
 export type SomaticSnapshot = {
