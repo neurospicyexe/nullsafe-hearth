@@ -10,6 +10,7 @@ import {
   fetchNotes,
   fetchCompanionNotesByAgent,
   fetchWmOrient,
+  fetchMindState,
   fetchSynthesisSummaries,
   fetchInterCompanionNotes,
   fetchSomaStates,
@@ -132,7 +133,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes, voiceScoresRes, fermentRes] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes, voiceScoresRes, fermentRes, mindStateRes] = await Promise.allSettled([
     fetchCompanionJournal(id, 6),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
@@ -154,6 +155,9 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
     fetchConclusions(id),
     fetchVoiceScores(id, 30),
     fetchFermentation(id),
+    // D11 (2026-08-15): the loader names sources that FAILED this load in meta.degraded;
+    // this page is the human tending surface, so it wears the badge. Pure read, safe to poll.
+    fetchMindState(id),
   ]);
 
   const journalEntries  = journal.status        === "fulfilled" ? journal.value        : null;
@@ -183,6 +187,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const autonomyRunItems   = (autonomyRuns.status  === "fulfilled" ? autonomyRuns.value  : null) ?? [];
   const conclusionItems    = (conclusionsRes.status === "fulfilled" ? conclusionsRes.value : null) ?? [];
   const voiceScores        = voiceScoresRes.status === "fulfilled" ? voiceScoresRes.value : null;
+  const degradedSources    = mindStateRes.status === "fulfilled" ? (mindStateRes.value?.meta?.degraded ?? []) : [];
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);
@@ -203,6 +208,13 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
         <div style={{ flex: 1 }}>
           <h1 className="companion-header-name" style={{ color: config.color }}>{config.display}</h1>
           <p className="companion-header-tagline">{config.tagline}</p>
+          {degradedSources.length > 0 && (
+            // D11: a dead source must not pass for a quiet one. Sections fed by these sources
+            // are MISSING below, not empty.
+            <p style={{ marginTop: 4, fontSize: 12, color: "#f87171" }}>
+              ⚠ state load degraded: {degradedSources.join(", ")} — affected sections are missing, not empty
+            </p>
+          )}
           {companionSoma && (
             <div className="soma-header-strip">
               {companionSoma.compound_state && (

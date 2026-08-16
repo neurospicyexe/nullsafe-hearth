@@ -909,7 +909,11 @@ export type MindStateSlice = {
     surfaced_notes: WmContinuityNote[];
   };
   carried: { tensions: Array<{ tension_text: string }> };
-  meta: { not_yet_loaded: string[] };
+  /** `degraded` (coherence review D11): sources that FAILED server-side during this load.
+   *  Distinct from not_yet_loaded ("this loader version doesn't fill that block") -- degraded
+   *  means it should have loaded and broke just now. Render it; a dead source must not pass
+   *  for a quiet one. */
+  meta: { not_yet_loaded: string[]; degraded?: string[] };
 };
 
 export async function fetchMindState(agentId: string): Promise<MindStateSlice | null> {

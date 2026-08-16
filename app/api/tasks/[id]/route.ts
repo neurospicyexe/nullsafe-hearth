@@ -28,10 +28,17 @@ export async function PATCH(
   }
 
   try {
+    // completed_by: this route is Raziel's surface -- Hearth has no other user -- so a task
+    // closed here was closed by him. Without it the companions get "someone closed this",
+    // which is the exact thing he asked to fix ("if I click done on the Hearth page it
+    // translates back to them"). Sent only on 'done'; the handler clears it on a reopen.
     const res = await fetch(`${base}/tasks/${id}`, {
       method: "PATCH",
       headers: authHeaders(true),
-      body: JSON.stringify({ status: raw.status }),
+      body: JSON.stringify({
+        status: raw.status,
+        ...(raw.status === "done" ? { completed_by: "raziel" } : {}),
+      }),
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
