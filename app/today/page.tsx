@@ -9,7 +9,7 @@ import {
   fetchSomaFeelings,
   fetchGuardianFlags,
   fetchCompanionDreams,
-  fetchGrowthJournal,
+  fetchGrowthPendingCount,
   fetchClubCurrent,
   type PresenceData,
   type SessionEntry,
@@ -18,7 +18,7 @@ import {
   type SomaFeeling,
   type GuardianFlag,
   type WmDream,
-  type GrowthJournalEntry,
+  type GrowthPendingCount,
   type ClubCurrent,
 } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
@@ -72,7 +72,12 @@ export default async function TodayPage() {
     fetchAutonomyRuns("gaia", 5),
     fetchGuardianFlags("live", 50),
     fetchCompanionDreams(undefined, 5),
-    Promise.all(COMPANIONS.map(c => fetchGrowthJournal(c, 100))).then(a => a.flat()),
+    // The RATIFIABLE count, not raw pending rows. This tile hand-rolled the filter once
+    // (review_status === 'pending' over the full journal) and read 92 when the actual queue
+    // was 4: unraised nightly reflections and drained Hermes self-notes are LOGS by design
+    // (2026-08-12 opt-in; drain-hermes-memory-queue.py) and sit pending forever on purpose.
+    // One predicate, one endpoint -- the same lesson as src/lib/ratifiable.ts (2026-08-18).
+    fetchGrowthPendingCount(),
     fetchClubCurrent(),
   ]);
 
@@ -85,13 +90,20 @@ export default async function TodayPage() {
   const gaiaRuns      = get(gaiaRunsResult   as PromiseSettledResult<AutonomyRun[]>,        []);
   const guardianFlags = get(guardianResult   as PromiseSettledResult<GuardianFlag[]>,       []);
   const recentDreams  = get(dreamsResult     as PromiseSettledResult<WmDream[]>,            []);
-  const growthEntries = get(growthResult     as PromiseSettledResult<GrowthJournalEntry[]>, []);
+  const growthPending = get(growthResult     as PromiseSettledResult<GrowthPendingCount | null>, null);
   const clubCurrent   = get(clubResult       as PromiseSettledResult<ClubCurrent | null>,   null);
 
   // ── System pulse: the organ-level signals worth catching at a glance ──────────
   const redFlags     = guardianFlags.filter(f => f.severity === "red").length;
   const guardianOpen = guardianFlags.length;
-  const pendingRatify = growthEntries.filter(e => (e.review_status ?? "pending") === "pending").length;
+  const pendingRatify = growthPending?.total ?? 0;
+  // Deep-link straight to the fullest queue: /journal (the old target) is the companion NOTES
+  // journal and has no ratify buttons -- a count that points somewhere you cannot act on it
+  // is the same defect as the count being wrong.
+  const busiestQueue = growthPending?.per_companion
+    ?.filter(c => c.pending > 0)
+    .sort((a, b) => b.pending - a.pending)[0]?.companion_id;
+  const ratifyHref = busiestQueue ? `/companions/${busiestQueue}/growth?view=pending` : "/journal";
   const lastDreamAt  = recentDreams[0]?.created_at ?? null;
   const dreamDaysAgo = lastDreamAt
     ? Math.floor((Date.now() - new Date(lastDreamAt).getTime()) / (24 * 60 * 60 * 1000))
@@ -153,7 +165,7 @@ export default async function TodayPage() {
             color: redFlags > 0 ? "#f87171" : guardianOpen > 0 ? "#fbbf24" : "#4ade80",
           },
           {
-            href: "/journal",
+            href: ratifyHref,
             label: "Ratify",
             value: pendingRatify === 0 ? "none" : `${pendingRatify} pending`,
             sub: pendingRatify >= 40 ? "backlog" : null,
