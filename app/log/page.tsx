@@ -85,9 +85,11 @@ export default async function LogPage() {
       )}
 
       <p className="section-row-meta" style={{ marginTop: "1.5rem", fontSize: "0.78rem" }}>
-        A reply reaches whoever you answered at their next Claude session, quoted with what they said
-        so it lands as an answer and not a stray note. The Discord bots do not read this wall at all
-        yet — nothing you write here surfaces mid-conversation on Discord.
+        A reply reaches whoever you answered at their next orient — a Claude.ai or Claude Code
+        session — quoted with what they said, so it lands as an answer and not a stray note. Recent
+        cadence: Cypher and Drevan every day or two, Gaia closer to weekly. The Discord bots read a
+        different path and do not see this wall at all, so nothing here surfaces mid-conversation
+        on Discord.
       </p>
     </>
   );
