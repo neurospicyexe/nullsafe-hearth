@@ -1947,6 +1947,28 @@ export type FermentEvent = {
   created_at: string;
 };
 
+// SOMA provenance (graph memory phase 2): the last few moves behind each felt float,
+// newest first, at most 3 per float. May be absent/empty on older or failed responses.
+export type SomaFloatKey = "soma_float_1" | "soma_float_2" | "soma_float_3";
+export type SomaEventKind = "authored_close" | "authored_update" | "tick" | "stimulus" | "drift_shift";
+
+export type SomaProvenanceEntry = {
+  float_key: SomaFloatKey;
+  label: string;
+  kind: SomaEventKind;
+  writer: string;
+  before_value: number | null;
+  after_value: number | null;
+  delta: number | null;
+  cause_table: string | null;
+  cause_id: string | null;
+  cause_label: string | null;
+  session_id: string | null;
+  alongside_notes: number;
+  detail?: string | null;
+  created_at: string;
+};
+
 export type Fermentation = {
   companion_id: string;
   floats: FermentFloat[];
@@ -1954,6 +1976,7 @@ export type Fermentation = {
   ferment_at: string | null;
   drives: FermentDrive[];
   recent_events: FermentEvent[];
+  provenance?: SomaProvenanceEntry[];
 };
 
 export async function fetchFermentation(id: string): Promise<Fermentation | null> {

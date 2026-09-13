@@ -15,6 +15,7 @@ import type {
   DriftEntry,
   VoiceScores,
   Fermentation,
+  SomaProvenanceEntry,
 } from "@/lib/halseth";
 
 export type CompanionConfig = {
@@ -336,11 +337,80 @@ export function SomaFeelingsSection({ feelings, color }: { feelings: SomaFeeling
   );
 }
 
+// SOMA provenance (graph memory phase 2): "why these numbers" -- compact per-float move
+// history, at most 3 lines per float, newest first. Empty/missing provenance renders nothing.
+function clipQuote(s: string | null, max = 60): string | null {
+  if (!s) return null;
+  return s.length > max ? `${s.slice(0, max).trimEnd()}…` : s;
+}
+
+function provenancePhrase(e: SomaProvenanceEntry): string {
+  switch (e.kind) {
+    case "authored_close":
+      return `set at close${e.alongside_notes > 0 ? ` · ${e.alongside_notes} note${e.alongside_notes === 1 ? "" : "s"} that session` : ""}`;
+    case "authored_update":
+      return "set";
+    case "tick":
+      return e.detail === "silence" ? "settled toward home (silence)" : "settled toward home";
+    case "stimulus":
+      return `stimulus: ${e.cause_label ?? "unknown"}`;
+    case "drift_shift":
+      return `drift: ${e.cause_label ?? "unknown"}`;
+    default:
+      return e.kind;
+  }
+}
+
+function ProvenanceLine({ entry }: { entry: SomaProvenanceEntry }) {
+  const fmtVal = (n: number | null) => (n == null ? "--" : n.toFixed(2));
+  const values = entry.before_value == null
+    ? fmtVal(entry.after_value)
+    : `${fmtVal(entry.before_value)} → ${fmtVal(entry.after_value)}`;
+  const quote = (entry.kind === "authored_close" || entry.kind === "authored_update")
+    ? clipQuote(entry.cause_label)
+    : null;
+  return (
+    <div
+      className="journal-time"
+      style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", fontSize: "0.72rem", opacity: 0.85 }}
+    >
+      <span>{values}</span>
+      <span>·</span>
+      <span>{provenancePhrase(entry)}</span>
+      <span>·</span>
+      {fmtTime(entry.created_at)}
+      {quote && (
+        <>
+          <span>·</span>
+          <span>&quot;{quote}&quot;</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+function FloatProvenance({ entries }: { entries: SomaProvenanceEntry[] }) {
+  if (entries.length === 0) return null;
+  return (
+    <div style={{ marginTop: "0.3rem", paddingLeft: "0.1rem" }}>
+      <div style={{ fontSize: "0.66rem", color: "var(--text-muted)", opacity: 0.6, marginBottom: 2 }}>
+        why
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
+        {entries.slice(0, 3).map((e) => (
+          <ProvenanceLine key={`${e.float_key}-${e.created_at}-${e.kind}`} entry={e} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Fermentation layer (0101): floats that decay/react between sessions, over their DRIFTING
 // baselines. The baseline shift from seed is the "growth you can watch" -- rendered as a caret.
 export function FermentationSection({ data, color }: { data: Fermentation | null; color: string }) {
   if (!data || data.floats.length === 0) return <p className="empty">Not fermenting yet.</p>;
   const fmt = (n: number | null) => (n == null ? "--" : n.toFixed(2));
+  const provenance = data.provenance ?? [];
   return (
     <div className="card" style={{ padding: "0.75rem 0.85rem" }}>
       {data.floats.map((f) => {
@@ -367,6 +437,7 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
               <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: color, opacity: 0.55, borderRadius: 4 }} />
               <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, baseline)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--text)", opacity: 0.8 }} title={`home ${fmt(f.baseline)}`} />
             </div>
+            <FloatProvenance entries={provenance.filter((p) => p.label === f.label)} />
           </div>
         );
       })}
