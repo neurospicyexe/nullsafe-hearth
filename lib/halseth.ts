@@ -64,6 +64,23 @@ async function hPost<T>(path: string, body: unknown): Promise<T | null> {
   }
 }
 
+// PATCH counterpart to hPost. Returns null on any transport/HTTP error so callers (server
+// actions) can surface a clean failure instead of throwing mid-mutation.
+async function hPatch<T>(path: string, body: unknown): Promise<T | null> {
+  try {
+    const res = await fetchWithTimeout(`${base()}${path}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeader() },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return res.json() as Promise<T>;
+  } catch {
+    return null;
+  }
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────
 
 export type PresenceData = {
@@ -2115,4 +2132,45 @@ export async function fetchMemoryGraph(limit = 60): Promise<{ nodes: GraphNode[]
   // Keep only edges whose endpoints are both present (drop dangling references).
   const edges = rawEdges.filter(e => nodeIds.has(e.from) && nodeIds.has(e.to));
   return { nodes, edges };
+}
+
+// ── Architect facts (/facts, 2026-09-14) ────────────────────────────────────
+// Durable facts about Raziel, machine-proposed or Raziel-authored, held in Halseth
+// `architect_facts`. `open` = never confirmed; `active` = live and rendered into every
+// companion's boot context; `retired` = superseded or withdrawn, kept for lineage.
+// See halseth/src/handlers/architect-facts.ts for the authoritative shape + verbs.
+
+export type ArchitectFact = {
+  id: string;
+  fact: string;
+  category: string;
+  status: "active" | "open" | "retired";
+  companion_id: string | null;
+  source: string | null;
+  weight: number;
+  created_at: string; // D1 "YYYY-MM-DD HH:MM:SS" UTC
+};
+
+export async function fetchArchitectFacts(): Promise<ArchitectFact[]> {
+  const res = await hGetSafe<{ count: number; facts: ArchitectFact[] }>("/identity/architect-facts");
+  return res?.facts ?? [];
+}
+
+export async function patchArchitectFactStatus(
+  id: string,
+  status: "active" | "retired",
+): Promise<{ ok: boolean; id: string; from: string; status: string } | null> {
+  return hPatch(`/identity/architect-facts/${encodeURIComponent(id)}`, { status });
+}
+
+export async function postArchitectFact(payload: {
+  fact: string;
+  category?: string;
+  status?: "active" | "open";
+  companion_id?: string | null;
+  source?: string;
+  weight?: number;
+  supersedes_id?: string;
+}): Promise<{ ok: boolean; id: string; supersedes_id: string | null; status: string; category: string } | null> {
+  return hPost("/identity/architect-facts", payload);
 }
