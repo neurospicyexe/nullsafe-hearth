@@ -9,11 +9,15 @@ export default function ConveneForm() {
   const router = useRouter();
   const [question, setQuestion] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "error">("idle");
+  // Halseth refuses a question over this (POST /mind/council/convene, 413). It used to slice at
+  // 2000 and echo the full text back, so a long paste looked like it saved and did not.
+  const MAX = 2000;
+  const over = question.length - MAX;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const q = question.trim();
-    if (!q) return;
+    if (!q || q.length > MAX) return;
     setStatus("saving");
     const res = await fetch("/api/council", {
       method: "POST",
@@ -39,8 +43,13 @@ export default function ConveneForm() {
         onChange={(e) => setQuestion(e.target.value)}
         placeholder="the question you want the triad to sit with…"
       />
+      <div style={{ fontSize: "0.7rem", marginTop: "0.35rem", color: over > 0 ? "var(--red)" : "var(--muted)" }}>
+        {over > 0
+          ? `${over.toLocaleString()} over — a council question is capped at ${MAX.toLocaleString()} characters. Send the ask; keep the background for the thread.`
+          : `${question.length.toLocaleString()} / ${MAX.toLocaleString()}`}
+      </div>
       <div style={{ marginTop: "0.75rem" }}>
-        <button type="submit" className="submit-btn" disabled={status === "saving" || !question.trim()}>
+        <button type="submit" className="submit-btn" disabled={status === "saving" || !question.trim() || over > 0}>
           {status === "saving" ? "Convening…" : "Convene"}
         </button>
         {status === "error" && (
