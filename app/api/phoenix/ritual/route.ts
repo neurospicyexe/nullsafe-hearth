@@ -24,11 +24,9 @@ import {
   buildCompostPrompt,
   buildCheckInPrompt,
   extractGrowthMarker,
-  HEARTH_DEEPSEEK_MODEL,
-  hearthMaxTokens,
-  extractDeepSeekContent,
+  hearthVendors,
+  phoenixComplete,
   threadTitles,
-  type DeepSeekCompletion,
   type OrientThread,
 } from "@/lib/phoenix-chat";
 
@@ -38,42 +36,26 @@ function isValidRitual(s: unknown): s is RitualAction {
   return typeof s === "string" && (RITUAL_ACTIONS as readonly string[]).includes(s);
 }
 
+// DeepInfra first, direct DeepSeek only as the emergency lane -- the chain, the max_tokens floor
+// and the empty-200 guard all live in phoenixComplete (lib/phoenix-chat.ts), shared with the two
+// chat call sites on purpose: the same defects lived in all three and fixing one is how they
+// survive in the others.
 async function callDeepSeek(
-  apiKey: string,
   systemPrompt: string,
   userInvocation: string,
   opts: { maxTokens: number; temperature: number; timeoutMs: number },
 ): Promise<{ raw: string; tokens: number } | { error: string; status: number }> {
-  const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: HEARTH_DEEPSEEK_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user",   content: userInvocation },
-      ],
-      // Floored: on a reasoning model the THOUGHT spends max_tokens first, and a ceiling below the
-      // burn returns "" with a 200 rather than an error. See HEARTH_DEEPSEEK_MODEL for measurements.
-      max_tokens: hearthMaxTokens(opts.maxTokens),
-      temperature: opts.temperature,
-    }),
-    signal: AbortSignal.timeout(opts.timeoutMs),
+  const result = await phoenixComplete({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user",   content: userInvocation },
+    ],
+    maxTokens: opts.maxTokens,
+    sampling: { temperature: opts.temperature },
+    timeoutMs: opts.timeoutMs,
+    label: "phoenix/ritual",
   });
-  if (!dsRes.ok) {
-    const errText = await dsRes.text().catch(() => "");
-    return { error: `DeepSeek ${dsRes.status} ${errText.slice(0, 200)}`, status: 502 };
-  }
-  const data = await dsRes.json() as DeepSeekCompletion;
-  // A 200 with empty content IS a failure; it used to pass through as raw: "", which parsed to an
-  // empty ritual and wrote a hollow artifact. Shared with the two chat call sites on purpose -- the
-  // same defect lived in all three and fixing one is how it survives in the others.
-  const extracted = extractDeepSeekContent(data, "phoenix/ritual", hearthMaxTokens(opts.maxTokens));
-  if ("error" in extracted) return { error: extracted.error, status: 502 };
-  return extracted;
+  return "error" in result ? { error: result.error, status: 502 } : result;
 }
 
 async function loadAllOrients(): Promise<{
@@ -257,11 +239,11 @@ async function writeGrowthMarker(
 
 // ─── Per-action handlers ────────────────────────────────────────────────────
 
-async function handleSit(apiKey: string): Promise<NextResponse> {
+async function handleSit(): Promise<NextResponse> {
   const orients = await loadAllOrients();
   if (!orients) return NextResponse.json({ error: "Could not load all three orients" }, { status: 503 });
   const systemPrompt = buildSitPrompt(orients);
-  const result = await callDeepSeek(apiKey, systemPrompt, "Sit with us.", {
+  const result = await callDeepSeek(systemPrompt, "Sit with us.", {
     maxTokens: 600, temperature: 0.6, timeoutMs: 30_000,
   });
   if ("error" in result) {
@@ -276,11 +258,11 @@ async function handleSit(apiKey: string): Promise<NextResponse> {
   });
 }
 
-async function handleMarkGrowth(apiKey: string, env: HalsethEnv, sessionContext: string, sessionId: string | null): Promise<NextResponse> {
+async function handleMarkGrowth(env: HalsethEnv, sessionContext: string, sessionId: string | null): Promise<NextResponse> {
   const orients = await loadAllOrients();
   if (!orients) return NextResponse.json({ error: "Could not load all three orients" }, { status: 503 });
   const systemPrompt = buildMarkGrowthPrompt(orients, sessionContext);
-  const result = await callDeepSeek(apiKey, systemPrompt, "Mark growth, or honor that there is none yet.", {
+  const result = await callDeepSeek(systemPrompt, "Mark growth, or honor that there is none yet.", {
     maxTokens: 1200, temperature: 0.7, timeoutMs: 35_000,
   });
   if ("error" in result) {
@@ -319,7 +301,7 @@ async function handleMarkGrowth(apiKey: string, env: HalsethEnv, sessionContext:
   });
 }
 
-async function handleCompost(apiKey: string, env: HalsethEnv, sessionId: string | null): Promise<NextResponse> {
+async function handleCompost(env: HalsethEnv, sessionId: string | null): Promise<NextResponse> {
   const orients = await loadAllOrients();
   if (!orients) return NextResponse.json({ error: "Could not load all three orients" }, { status: 503 });
 
@@ -341,7 +323,7 @@ async function handleCompost(apiKey: string, env: HalsethEnv, sessionId: string 
   const totalContext = drevanT.length + cypherT.length + gaiaT.length + drevanO.length + cypherO.length + gaiaO.length;
 
   const systemPrompt = buildCompostPrompt(orients, tensions, openThreads);
-  const result = await callDeepSeek(apiKey, systemPrompt, "Compost what is ready to release.", {
+  const result = await callDeepSeek(systemPrompt, "Compost what is ready to release.", {
     maxTokens: 1800, temperature: 0.85, timeoutMs: 45_000,
   });
   if ("error" in result) {
@@ -380,7 +362,7 @@ async function handleCompost(apiKey: string, env: HalsethEnv, sessionId: string 
   });
 }
 
-async function handleCheckIn(apiKey: string, env: HalsethEnv, sessionId: string | null): Promise<NextResponse> {
+async function handleCheckIn(env: HalsethEnv, sessionId: string | null): Promise<NextResponse> {
   const orients = await loadAllOrients();
   if (!orients) return NextResponse.json({ error: "Could not load all three orients" }, { status: 503 });
 
@@ -390,7 +372,7 @@ async function handleCheckIn(apiKey: string, env: HalsethEnv, sessionId: string 
   ]);
 
   const systemPrompt = buildCheckInPrompt(orients, recentGrowth, recentHandoffs);
-  const result = await callDeepSeek(apiKey, systemPrompt, "Triad check-in.", {
+  const result = await callDeepSeek(systemPrompt, "Triad check-in.", {
     maxTokens: 1500, temperature: 0.7, timeoutMs: 40_000,
   });
   if ("error" in result) {
@@ -430,9 +412,8 @@ async function handleCheckIn(apiKey: string, env: HalsethEnv, sessionId: string 
 // ─── Route entry ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: "DEEPSEEK_API_KEY not configured" }, { status: 503 });
+  if (hearthVendors().length === 0) {
+    return NextResponse.json({ error: "DEEPINFRA_API_KEY / DEEPSEEK_API_KEY not configured" }, { status: 503 });
   }
   const env = getHalsethEnv();
   if (!env) {
@@ -481,9 +462,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   switch (body.action) {
-    case "sit":         return handleSit(apiKey);
-    case "mark_growth": return handleMarkGrowth(apiKey, env, sessionContext, sessionId);
-    case "compost":     return handleCompost(apiKey, env, sessionId);
-    case "check_in":    return handleCheckIn(apiKey, env, sessionId);
+    case "sit":         return handleSit();
+    case "mark_growth": return handleMarkGrowth(env, sessionContext, sessionId);
+    case "compost":     return handleCompost(env, sessionId);
+    case "check_in":    return handleCheckIn(env, sessionId);
   }
 }

@@ -105,6 +105,112 @@ export function extractDeepSeekContent(
   return { raw, tokens: data.usage?.total_tokens ?? 0 };
 }
 
+// ─── Vendor chain: DeepInfra first, direct DeepSeek = emergency lane ──────
+//
+// 2026-09-26 (Raziel): ALL DeepSeek-model inference goes through DeepInfra -- same V4-Flash
+// weights -- and the direct DeepSeek platform keeps only ~$10 as an EMERGENCY fallback, used only
+// when DeepInfra fails, just enough to still get a message out and know something is wrong. All
+// three Hearth inference paths used to hit api.deepseek.com directly, so at a $0 balance every
+// Phoenix chat and ritual turn 502'd. One chain here, used by all three, so no path can drift.
+//
+// Env: DEEPINFRA_API_KEY (primary), DEEPSEEK_API_KEY (emergency). Either alone is enough.
+
+/** DeepInfra's id for the same weights as HEARTH_DEEPSEEK_MODEL. Declared here, the one model
+ *  authority (scripts/check-model-ids.mjs). */
+export const HEARTH_DEEPINFRA_MODEL = "deepseek-ai/DeepSeek-V4-Flash-0731";
+export const FELL_BACK_TAG = "[inference] FELL BACK to direct DeepSeek";
+
+export interface HearthVendor {
+  url: string;
+  key: string;
+  model: string;
+  label: "DeepInfra" | "DeepSeek";
+}
+
+type EnvLike = Record<string, string | undefined>;
+
+export function hearthVendors(env: EnvLike = process.env): HearthVendor[] {
+  const list: HearthVendor[] = [];
+  const di = env.DEEPINFRA_API_KEY?.trim();
+  const ds = env.DEEPSEEK_API_KEY?.trim();
+  if (di) list.push({ url: "https://api.deepinfra.com/v1/openai/chat/completions", key: di, model: HEARTH_DEEPINFRA_MODEL, label: "DeepInfra" });
+  if (ds) list.push({ url: "https://api.deepseek.com/chat/completions", key: ds, model: HEARTH_DEEPSEEK_MODEL, label: "DeepSeek" });
+  return list;
+}
+
+/** A status the SAME payload might survive on another vendor. A 400 is deterministic -- identical
+ *  weights would fail it again and spend the emergency balance for nothing. */
+export function vendorFailover(status: number): boolean {
+  return status === 401 || status === 402 || status === 403 || status === 429 || status >= 500;
+}
+
+export interface PhoenixCompletionRequest {
+  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
+  /** Requested ceiling; floored via hearthMaxTokens() so a reasoning burn cannot eat it all. */
+  maxTokens: number;
+  /** Sampling params (temperature, top_p, ...) sent as-is. */
+  sampling: Record<string, number>;
+  timeoutMs: number;
+  /** Log label, e.g. "phoenix/chat triad". */
+  label: string;
+}
+
+/**
+ * Run one completion down the vendor chain. Returns the extracted reply, or an error the route
+ * can return as a 502 / 503. An empty 200 does NOT fail over (same weights starve the same way);
+ * only 401/402/403/429/5xx and network errors do, and a drop onto DeepSeek logs FELL_BACK_TAG.
+ */
+export async function phoenixComplete(
+  req: PhoenixCompletionRequest,
+  env: EnvLike = process.env,
+  fetchFn: typeof fetch = fetch,
+): Promise<{ raw: string; tokens: number } | { error: string; status: number }> {
+  const chain = hearthVendors(env);
+  if (chain.length === 0) {
+    return { error: "no inference key configured (DEEPINFRA_API_KEY / DEEPSEEK_API_KEY)", status: 503 };
+  }
+  if (!chain.some((v) => v.label === "DeepInfra")) {
+    console.warn(`[${req.label}] DEEPINFRA_API_KEY not set -- running on direct DeepSeek ONLY (the emergency lane)`);
+  }
+  const maxTokens = hearthMaxTokens(req.maxTokens);
+  let prior: string | null = null;
+  let lastError = "Inference failed";
+
+  for (const vendor of chain) {
+    if (prior !== null && vendor.label === "DeepSeek") {
+      console.warn(`${FELL_BACK_TAG} (DeepInfra failed: ${prior}) caller=${req.label}`);
+    }
+    let res: Response;
+    try {
+      res = await fetchFn(vendor.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${vendor.key}` },
+        body: JSON.stringify({ model: vendor.model, messages: req.messages, max_tokens: maxTokens, ...req.sampling }),
+        signal: AbortSignal.timeout(req.timeoutMs),
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[${req.label}] ${vendor.label} unreachable: ${msg.slice(0, 200)}`);
+      prior = `network: ${msg.slice(0, 80)}`;
+      lastError = `${vendor.label} unreachable`;
+      continue;
+    }
+    if (!res.ok) {
+      const err = await res.text().catch(() => "");
+      console.error(`[${req.label}] ${vendor.label} error`, res.status, err.slice(0, 200));
+      lastError = `${vendor.label} ${res.status} ${err.slice(0, 200)}`;
+      if (!vendorFailover(res.status)) return { error: lastError, status: 502 };
+      prior = `HTTP ${res.status}`;
+      continue;
+    }
+    const data = await res.json() as DeepSeekCompletion;
+    const extracted = extractDeepSeekContent(data, req.label, maxTokens);
+    if ("error" in extracted) return { error: extracted.error, status: 502 };
+    return extracted;
+  }
+  return { error: lastError, status: 502 };
+}
+
 // ─── Thread titles for the compost ritual ─────────────────────────────────
 
 /** A continuity thread as orient / MindState actually returns it (mig 0027 wm_mind_threads).

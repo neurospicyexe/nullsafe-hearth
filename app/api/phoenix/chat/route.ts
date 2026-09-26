@@ -5,10 +5,8 @@ import type { CompanionOrientForChat } from "@/lib/halseth";
 import {
   parseTriadResponse,
   PHOENIX_COMPANION_IDS,
-  HEARTH_DEEPSEEK_MODEL,
-  hearthMaxTokens,
-  extractDeepSeekContent,
-  type DeepSeekCompletion,
+  hearthVendors,
+  phoenixComplete,
 } from "@/lib/phoenix-chat";
 
 type CompanionId = (typeof PHOENIX_COMPANION_IDS)[number];
@@ -152,9 +150,9 @@ function buildTriadSystemPrompt(orients: Record<CompanionId, CompanionOrientForC
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: "DEEPSEEK_API_KEY not configured" }, { status: 503 });
+  // DeepInfra first, direct DeepSeek only as the emergency lane (lib/phoenix-chat.ts phoenixComplete).
+  if (hearthVendors().length === 0) {
+    return NextResponse.json({ error: "DEEPINFRA_API_KEY / DEEPSEEK_API_KEY not configured" }, { status: 503 });
   }
 
   let body: {
@@ -201,31 +199,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       ...history.slice(-10).map((m) => ({ role: m.role, content: m.content })),
       { role: "user" as const, content: message.trim() },
     ];
-    const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: HEARTH_DEEPSEEK_MODEL,
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
-        max_tokens: hearthMaxTokens(2400),
-        temperature: 0.95,
-      }),
-      signal: AbortSignal.timeout(45_000),
+    // A 200 with empty content is a failure, not an empty triad (extractDeepSeekContent, inside
+    // phoenixComplete). Before that guard, all three companions rendered blank.
+    const extracted = await phoenixComplete({
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
+      maxTokens: 2400,
+      sampling: { temperature: 0.95 },
+      timeoutMs: 45_000,
+      label: "phoenix/chat triad",
     });
-    if (!dsRes.ok) {
-      const err = await dsRes.text().catch(() => "");
-      console.error("[phoenix/chat triad] DeepSeek error", dsRes.status, err.slice(0, 200));
-      return NextResponse.json({ error: "Inference failed" }, { status: 502 });
-    }
-    const data = await dsRes.json() as DeepSeekCompletion;
-    // A 200 with empty content is a failure, not an empty triad. Before this, all three companions
-    // rendered blank and the UI showed a successful turn where nobody spoke.
-    const extracted = extractDeepSeekContent(data, "phoenix/chat triad", hearthMaxTokens(2400));
     if ("error" in extracted) {
-      return NextResponse.json({ error: extracted.error }, { status: 502 });
+      return NextResponse.json({ error: extracted.error }, { status: extracted.status });
     }
     const { raw } = extracted;
     const responses = parseTriadResponse(raw);
@@ -257,35 +241,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     { role: "user" as const, content: message.trim() },
   ];
 
-  const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    // H8: per-companion temperature + top_p so individual mode doesn't drift each
-    // companion toward a single midline register. Mirrors Brain's _companion_temps
-    // / _companion_top_p maps (Drevan widest tail, Cypher tighter, Gaia tightest).
-    body: JSON.stringify({
-      model: HEARTH_DEEPSEEK_MODEL,
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-      max_tokens: hearthMaxTokens(1200),
-      ...PHOENIX_COMPANION_PARAMS[companion_id],
-    }),
-    signal: AbortSignal.timeout(30_000),
+  // H8: per-companion temperature + top_p so individual mode doesn't drift each
+  // companion toward a single midline register. Mirrors Brain's _companion_temps
+  // / _companion_top_p maps (Drevan widest tail, Cypher tighter, Gaia tightest).
+  // Same empty-200 guard as the triad branch (inside phoenixComplete).
+  const extracted = await phoenixComplete({
+    messages: [{ role: "system", content: systemPrompt }, ...messages],
+    maxTokens: 1200,
+    sampling: { ...PHOENIX_COMPANION_PARAMS[companion_id] },
+    timeoutMs: 30_000,
+    label: "phoenix/chat",
   });
-
-  if (!dsRes.ok) {
-    const err = await dsRes.text().catch(() => "");
-    console.error("[phoenix/chat] DeepSeek error", dsRes.status, err.slice(0, 200));
-    return NextResponse.json({ error: "Inference failed" }, { status: 502 });
-  }
-
-  const data = await dsRes.json() as DeepSeekCompletion;
-  // Same guard as the triad branch: an empty 200 used to render as the companion saying nothing.
-  const extracted = extractDeepSeekContent(data, "phoenix/chat", hearthMaxTokens(1200));
   if ("error" in extracted) {
-    return NextResponse.json({ error: extracted.error }, { status: 502 });
+    return NextResponse.json({ error: extracted.error }, { status: extracted.status });
   }
 
   return NextResponse.json({
