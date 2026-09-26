@@ -36,6 +36,9 @@ export default async function JournalPage() {
               {agentDisplayName(entry.agent)}
             </span>
             <span className="journal-text">{entry.note_text}</span>
+            {entry.review_state && (
+              <span className={`review-badge ${entry.review_state}`}>{entry.review_state}</span>
+            )}
             <span className="journal-time"><ClientTime iso={entry.created_at} /></span>
           </div>
         ))}

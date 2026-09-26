@@ -187,6 +187,14 @@ export type PresenceData = {
   }>;
 };
 
+// ── Review state (mig 0132, 2026-09-26) ──────────────────────────────────────
+// Companion speech (discord_speech / memory_judge / autonomous / vibecheck journal rows, and
+// wm_continuity_notes stamped [metronome/ [discord:pulse] [discord:observation] or keyed judge:%)
+// is born `draft`. Only `kept` rows are recall. Halseth's list endpoints default to kept; Hearth
+// asks for `all` so the dashboard sees the tray rather than silently hiding it.
+
+export type ReviewState = "draft" | "kept" | "dropped";
+
 // ── Companion Notes ───────────────────────────────────────────────────────────
 
 export type CompanionNote = {
@@ -196,6 +204,8 @@ export type CompanionNote = {
   note_text: string;
   tags: string[] | null;
   session_id: string | null;
+  review_state?: ReviewState;
+  reviewed_at?: string | null;
 };
 
 // ── Bridge (partner data) ─────────────────────────────────────────────────────
@@ -342,6 +352,10 @@ export type CompanionJournalEntry = {
   note_text: string;
   tags: string | null; // JSON array string
   session_id: string | null;
+  source?: string | null;
+  // Optional until every Halseth read path selects the column (history.ts lists columns by name).
+  review_state?: ReviewState;
+  reviewed_at?: string | null;
 };
 
 export type CypherAuditEntry = {
@@ -581,9 +595,45 @@ export async function fetchCompanionJournal(
   agent?: string,
   limit = 20,
 ): Promise<CompanionJournalEntry[] | null> {
-  const q = new URLSearchParams({ limit: String(limit) });
+  // review_state=all: the endpoint defaults to kept (mig 0132) because it is also the Second
+  // Brain puller's feed. The dashboard is Raziel's window, not recall -- drafts must be visible.
+  const q = new URLSearchParams({ limit: String(limit), review_state: "all" });
   if (agent) q.set("agent", agent);
   return hGetSafe<CompanionJournalEntry[]>(`/companion-journal?${q}`);
+}
+
+// ── Imp tray (mig 0132) ───────────────────────────────────────────────────────
+// GET /admin/tray?agent=<id> -- drafts across companion_journal + wm_continuity_notes for one
+// owner, plus the 30-day decision counts. Shape mirrors halseth/src/webmind/tray.ts TrayView.
+
+export type TrayKind = "journal" | "note";
+
+export type TrayDraft = {
+  id: string;
+  kind: TrayKind;
+  source: string | null;
+  created_at: string;
+  excerpt: string;
+};
+
+export type TrayStats = {
+  draft: number;
+  kept: number;
+  dropped: number;
+  keep_rate_pct: number | null;
+  window_days: number;
+};
+
+export type TrayView = {
+  agent: string;
+  drafts: TrayDraft[];
+  stats: TrayStats;
+  stats_line: string;
+};
+
+export async function fetchTray(agent: string, limit = 20): Promise<TrayView | null> {
+  const q = new URLSearchParams({ agent, limit: String(limit) });
+  return hGetSafe<TrayView>(`/admin/tray?${q}`);
 }
 
 export async function fetchCypherAudit(

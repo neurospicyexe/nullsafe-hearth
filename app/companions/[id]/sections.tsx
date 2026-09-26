@@ -82,6 +82,7 @@ export function JournalSection({ entries }: { entries: CompanionJournalEntry[] |
               </div>
             )}
             <div className="delta-meta delta-meta-mt">
+              {e.review_state && <span className={`review-badge ${e.review_state}`}>{e.review_state}</span>}
               <span>{fmtTime(e.created_at)}</span>
               {e.session_id && <span>session {e.session_id.slice(0, 8)}</span>}
             </div>

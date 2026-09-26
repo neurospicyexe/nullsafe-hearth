@@ -79,6 +79,7 @@ const NAV_GROUPS = [
     group: "System",
     items: [
       { href: "/facts",   label: "Facts",   sym: "✓" },
+      { href: "/tray",    label: "Tray",    sym: "▤" },
       { href: "/manage",  label: "Manage",  sym: "⚙" },
       { href: "/shared",  label: "Shared",  sym: "≡" },
       { href: "/tasks",   label: "Tasks",   sym: "☑" },
