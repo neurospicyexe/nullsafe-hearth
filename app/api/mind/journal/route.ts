@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const base = process.env.MIND_URL ?? process.env.HALSETH_URL;
+  // Raziel's journal is human_journal on Halseth (POST /journal). MIND_URL pointed at Brain,
+  // archived 2026-07-29, and /mind/journal was never a Halseth route: every entry was lost.
+  const base = process.env.HALSETH_URL;
   const secret = process.env.HALSETH_SECRET;
-  if (!base) return NextResponse.json({ error: "MIND_URL / HALSETH_URL not set" }, { status: 500 });
+  if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
   let raw: unknown;
   try { raw = await request.json(); }
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (Array.isArray(r["tags"])) body["tags"] = (r["tags"] as unknown[]).filter((t) => typeof t === "string");
 
   try {
-    const res = await fetch(`${base}/mind/journal`, {
+    const res = await fetch(`${base}/journal`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

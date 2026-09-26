@@ -711,17 +711,35 @@ export type DreamSeed = {
   claimed_by: string | null;
 };
 
+// GET /companion-notes returns `tags` as the raw D1 JSON text ('["letter"]'), not an array.
+// The type promises string[], so parse here, once: /mind and /threads crashed on
+// `tags.map`, and `tags.includes("letter")` only worked as a substring match on the string.
+export function parseNoteTags(raw: unknown): string[] | null {
+  if (Array.isArray(raw)) return raw.filter((t): t is string => typeof t === "string");
+  if (typeof raw !== "string" || !raw) return null;
+  try {
+    const p = JSON.parse(raw);
+    return Array.isArray(p) ? p.filter((t): t is string => typeof t === "string") : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeNotes(rows: CompanionNote[] | null): CompanionNote[] {
+  return (rows ?? []).map((n) => ({ ...n, tags: parseNoteTags(n.tags) }));
+}
+
 export async function fetchCompanionNotesByAgent(
   agent: string,
   limit = 50,
 ): Promise<CompanionNote[]> {
-  return (
-    (await hGetSafe<CompanionNote[]>(`/companion-notes?agent=${agent}&limit=${limit}`)) ?? []
+  return normalizeNotes(
+    await hGetSafe<CompanionNote[]>(`/companion-notes?agent=${agent}&limit=${limit}&review_state=all`),
   );
 }
 
 export async function fetchAllCompanionNotes(limit = 50): Promise<CompanionNote[]> {
-  return (await hGetSafe<CompanionNote[]>(`/companion-notes?limit=${limit}`)) ?? [];
+  return normalizeNotes(await hGetSafe<CompanionNote[]>(`/companion-notes?limit=${limit}&review_state=all`));
 }
 
 export type MindHandoff = {

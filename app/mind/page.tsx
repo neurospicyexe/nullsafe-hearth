@@ -1,105 +1,29 @@
 import Link from "next/link";
-import { type MindData, type MindJournalEntry, type CompanionNote } from "@/lib/halseth";
+import {
+  type MindJournalEntry,
+  fetchAllCompanionNotes, fetchHumanJournal, parseNoteTags,
+} from "@/lib/halseth";
 import { CompanionNotesFeedClient, CompanionNoteFormClient, JournalFormClient } from "./client";
 
 export const dynamic = 'force-dynamic';
 
-async function fetchMind(): Promise<MindData | null> {
-  const base = process.env.MIND_URL ?? process.env.HALSETH_URL;
-  const secret = process.env.HALSETH_SECRET;
-  if (!base) return null;
-  const h: Record<string, string> = secret ? { Authorization: `Bearer ${secret}` } : {};
-  try {
-    // H2: Halseth fetches must be cache: 'no-store' (banned revalidate pattern).
-    const [healthRes, patternsRes, journalsRes] = await Promise.all([
-      fetch(`${base}/mind/health`,           { headers: h, cache: 'no-store' }),
-      fetch(`${base}/mind/patterns?days=7`,  { headers: h, cache: 'no-store' }),
-      fetch(`${base}/mind/recent?hours=168`, { headers: h, cache: 'no-store' }),
-    ]);
-    // /mind/health doesn't exist in halseth yet -- hide the panel rather than
-    // rendering a permanent fake-zeros health card.
-    const health          = healthRes.ok   ? await healthRes.json()   : null;
-    const patterns        = patternsRes.ok ? await patternsRes.json() : null;
-    const recent_journals = journalsRes.ok ? await journalsRes.json() : [];
-    return { health, patterns, recent_journals };
-  } catch {
-    return null;
-  }
-}
-
-async function fetchCompanionNotes(): Promise<CompanionNote[]> {
-  const base = process.env.HALSETH_URL;
-  const secret = process.env.HALSETH_SECRET;
-  if (!base) return [];
-  try {
-    const res = await fetch(`${base}/companion-notes`, {
-      headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-      cache: 'no-store',
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
+// Recent Journals used to read Brain-era /mind/recent (and /mind/health, /mind/patterns),
+// none of which Halseth has ever served, so the section was always empty. Raziel's journal
+// lives in human_journal (GET /journal); the form below writes there via POST /journal.
+async function fetchRecentJournals(): Promise<MindJournalEntry[]> {
+  const rows = await fetchHumanJournal(6);
+  return rows.map((r) => ({
+    id: r.id,
+    entry: r.entry_text,
+    tags: parseNoteTags(r.tags) ?? [],
+    created_at: r.created_at,
+  }));
 }
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
     month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
-}
-
-// ── Mind Health Panel ─────────────────────────────────────────────────────────
-
-function MindHealthPanel({ health }: { health: NonNullable<MindData["health"]> }) {
-  const stats = [
-    { label: "entities",     value: health.entities },
-    { label: "observations", value: health.observations },
-    { label: "relations",    value: health.relations },
-    { label: "journals",     value: health.journals },
-  ];
-
-  const salienceColors: Record<string, string> = {
-    foundational: "var(--accent)",
-    active:       "var(--green)",
-    background:   "var(--muted)",
-    archive:      "var(--border)",
-  };
-
-  const maxSalience = Math.max(...Object.values(health.salience), 1);
-
-  return (
-    <div className="card card-accent">
-      <div className="card-title">Mind Health</div>
-      <div className="mind-stat-grid">
-        {stats.map((s) => (
-          <div key={s.label} className="mind-stat">
-            <div className="mind-stat-value">{s.value}</div>
-            <div className="mind-stat-label">{s.label}</div>
-          </div>
-        ))}
-      </div>
-      {Object.keys(health.salience).length > 0 && (
-        <div className="valence-bars">
-          {Object.entries(health.salience).map(([key, count]) => (
-            <div key={key} className="valence-row">
-              <span className="valence-label">{key}</span>
-              <div className="valence-track">
-                <div
-                  className="valence-fill"
-                  style={{
-                    width: `${Math.round((count / maxSalience) * 100)}%`,
-                    background: salienceColors[key] ?? "var(--accent)",
-                  }}
-                />
-              </div>
-              <span className="valence-count">{count}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ── Journal Feed ──────────────────────────────────────────────────────────────
@@ -133,18 +57,17 @@ function JournalFeed({ journals }: { journals: MindJournalEntry[] }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function MindPage() {
-  const [mind, notes] = await Promise.all([fetchMind(), fetchCompanionNotes()]);
+  const [journals, notes] = await Promise.all([fetchRecentJournals(), fetchAllCompanionNotes(20)]);
 
   return (
     <>
       <div className="page-header">
         <h1 className="page-title">Mind</h1>
-        <p className="page-subtitle">companion notes, journals, and knowledge graph health</p>
+        <p className="page-subtitle">companion notes and journals</p>
       </div>
-      {mind?.health && <MindHealthPanel health={mind.health} />}
       <CompanionNotesFeedClient initialNotes={notes} />
       <CompanionNoteFormClient />
-      {mind?.recent_journals && <JournalFeed journals={mind.recent_journals} />}
+      <JournalFeed journals={journals} />
       <JournalFormClient />
     </>
   );

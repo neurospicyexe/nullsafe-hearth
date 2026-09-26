@@ -1,5 +1,5 @@
 import PersonalityCard from "@/components/PersonalityCard";
-import { fetchPresence, type Delta, type Wound, type CompanionNote } from "@/lib/halseth";
+import { fetchPresence, fetchCompanionNotesByAgent, type Delta, type Wound, type CompanionNote } from "@/lib/halseth";
 
 export const dynamic = 'force-dynamic';
 
@@ -35,20 +35,10 @@ async function fetchWounds(): Promise<Wound[]> {
   }
 }
 
+// Through the lib fetcher, not a raw fetch: it parses `tags` (raw JSON text on the wire; the
+// page 500'd on `tags.map`) and passes review_state=all so drafts aren't silently hidden.
 async function fetchGaiaNotes(): Promise<CompanionNote[]> {
-  const base = process.env.HALSETH_URL;
-  const secret = process.env.HALSETH_SECRET;
-  if (!base) return [];
-  try {
-    const res = await fetch(`${base}/companion-notes?agent=gaia`, {
-      headers: secret ? { Authorization: `Bearer ${secret}` } : {},
-      cache: 'no-store',
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
+  return fetchCompanionNotesByAgent("gaia", 20);
 }
 
 import ClientTime from "@/components/ClientTime";
