@@ -30,7 +30,11 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(10_000),
     });
-    const data = await res.json();
+    // Halseth sends bridge errors as plain text ("Not found or not shared"); res.json() threw
+    // and every rejection surfaced as 502 "Halseth unreachable".
+    const text = await res.text();
+    let data: unknown;
+    try { data = JSON.parse(text); } catch { data = { error: text || `HTTP ${res.status}` }; }
     return NextResponse.json(data, { status: res.status });
   } catch {
     return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });

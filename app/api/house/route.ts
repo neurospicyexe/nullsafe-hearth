@@ -6,10 +6,13 @@ export async function POST(request: NextRequest) {
   if (!base) return NextResponse.json({ error: "HALSETH_URL not set" }, { status: 500 });
 
   const raw = await request.json();
+  // null is a real value here (clear the field); Halseth binds it. Stripping it made
+  // "clear room" report saved while the room stayed put.
+  const strOrNull = (v: unknown) => (typeof v === "string" || v === null ? v : undefined);
   const body = {
-    current_room:       typeof raw.current_room       === "string" ? raw.current_room       : undefined,
-    companion_mood:     typeof raw.companion_mood     === "string" ? raw.companion_mood     : undefined,
-    companion_activity: typeof raw.companion_activity === "string" ? raw.companion_activity : undefined,
+    current_room:       strOrNull(raw.current_room),
+    companion_mood:     strOrNull(raw.companion_mood),
+    companion_activity: strOrNull(raw.companion_activity),
     spoon_count:        typeof raw.spoon_count        === "number" ? raw.spoon_count        : undefined,
     love_meter:         typeof raw.love_meter         === "number" ? raw.love_meter         : undefined,
   };

@@ -23,8 +23,9 @@ export async function POST(request: NextRequest) {
   let url: string | null = null;
   if (rawUrl) {
     try {
-      const parsed = new URL(rawUrl);
-      if (parsed.protocol === "http:" || parsed.protocol === "https:") url = rawUrl;
+      // The form field is type="text": "youtube.com/..." used to be dropped silently.
+      const parsed = new URL(/^[a-z][a-z0-9+.-]*:/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") url = parsed.toString();
     } catch { /* invalid URL -- drop silently */ }
   }
   const pitch = typeof raw.pitch === "string" ? raw.pitch.trim().slice(0, MAX_PITCH) || null : null;

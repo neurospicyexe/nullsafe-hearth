@@ -160,11 +160,13 @@ export function BridgeStatusClient({ sharing }: { sharing: SharingState }) {
     const enabled = !state[category];
     setState((prev) => ({ ...prev, [category]: enabled }));
     setSaving(category);
-    await fetch("/api/bridge/toggle", {
+    // Optimistic, but roll back on failure: a rejected toggle used to stay flipped on screen.
+    const ok = await fetch("/api/bridge/toggle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category, enabled }),
-    });
+    }).then((r) => r.ok).catch(() => false);
+    if (!ok) setState((prev) => ({ ...prev, [category]: !enabled }));
     setSaving(null);
   }
 

@@ -18,7 +18,7 @@ export async function POST(
   const body: Record<string, unknown> = { author: "raziel" };
   if (typeof raw.cfi_range === "string" && raw.cfi_range) body.cfi_range = raw.cfi_range;
   if (typeof raw.selected_text === "string" && raw.selected_text) body.selected_text = raw.selected_text.slice(0, 2000);
-  if (typeof raw.comment === "string" && raw.comment.trim()) body.comment = raw.comment.trim().slice(0, 4000);
+  if (typeof raw.comment === "string" && raw.comment.trim()) body.comment = raw.comment.trim().slice(0, 3000) /* Halseth caps at 3000 (books.ts); 4000 here silently lost the tail */;
   if (typeof raw.color === "string" && raw.color) body.color = raw.color;
   if (!body.cfi_range && !body.selected_text && !body.comment) {
     return NextResponse.json({ error: "at least one of cfi_range, selected_text, comment required" }, { status: 400 });

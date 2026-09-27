@@ -196,7 +196,9 @@ function ActionForm({
       companion_id: companion,
       name: name.trim(),
       action_type: actionType,
-      prompt: prompt.trim() || undefined,
+      // null, not undefined: JSON.stringify drops an undefined key, and Halseth only writes
+      // `prompt` when the key is present -- so clearing it showed "done" and kept the old prompt.
+      prompt: prompt.trim() || null,
       quiet_hours_allowed: quiet ? 1 : 0,
       max_per_day: max,
     };

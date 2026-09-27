@@ -50,6 +50,12 @@ export async function fixFact(
     supersedes_id: supersedesId,
   });
   revalidatePath("/facts");
+  // Halseth's novelty gate runs before the supersede and can match the very row being fixed
+  // (a typo fix is near-identical): it answers {ok:true, deduped:true}, writes nothing and retires
+  // nothing. Reporting that as "superseded" hid it; say what actually happened.
+  if (r?.deduped) {
+    return { ok: false, message: "not changed: Halseth read this as a duplicate of an existing fact (likely the one you are fixing)" };
+  }
   return r?.ok
     ? { ok: true, message: "superseded" }
     : { ok: false, message: "fix failed — Halseth did not accept the new fact" };

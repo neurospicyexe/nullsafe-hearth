@@ -22,6 +22,9 @@ export function CloseLoopButton({
         body: JSON.stringify({ companion_id: companionId }),
       });
       if (!res.ok) throw new Error();
+      // Halseth answers 200 {ok:false} when no row changed (already done, or not this companion's).
+      const data = await res.json().catch(() => null);
+      if (data && data.ok === false) throw new Error();
       setStatus("done");
       router.refresh();
     } catch {

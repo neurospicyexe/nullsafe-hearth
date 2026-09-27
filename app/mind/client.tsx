@@ -105,6 +105,7 @@ export function CompanionNoteFormClient() {
           <label className="form-label">Note</label>
           <textarea
             className="form-textarea"
+            maxLength={4000}
             rows={3}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -166,6 +167,7 @@ export function JournalFormClient() {
         <div className="form-field">
           <textarea
             className="form-textarea"
+            maxLength={8000}
             rows={4}
             value={entry}
             onChange={(e) => setEntry(e.target.value)}

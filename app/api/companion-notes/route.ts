@@ -46,7 +46,11 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return NextResponse.json({ error: "Request failed" }, { status: res.status });
+    if (!res.ok) {
+      // Pass Halseth's reason through (e.g. "note_text exceeds 4000 character limit").
+      const detail = await res.json().catch(() => null) as { error?: string } | null;
+      return NextResponse.json({ error: detail?.error ?? "Request failed" }, { status: res.status });
+    }
     return NextResponse.json(await res.json());
   } catch {
     return NextResponse.json({ error: "Halseth unreachable" }, { status: 502 });

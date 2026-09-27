@@ -2239,6 +2239,6 @@ export async function postArchitectFact(payload: {
   source?: string;
   weight?: number;
   supersedes_id?: string;
-}): Promise<{ ok: boolean; id: string; supersedes_id: string | null; status: string; category: string } | null> {
+}): Promise<{ ok: boolean; id: string; supersedes_id: string | null; status: string; category: string; deduped?: boolean } | null> {
   return hPost("/identity/architect-facts", payload);
 }

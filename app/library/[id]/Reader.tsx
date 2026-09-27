@@ -231,8 +231,10 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
       if (!res.ok) throw new Error(`annotation save failed (${res.status})`);
       const body = await res.json().catch(() => ({} as Record<string, unknown>));
       const returned = (body as { annotation?: BookAnnotation }).annotation;
-      const ann: BookAnnotation = returned ?? {
-        id: (body as { id?: string }).id ?? `local-${Date.now()}`,
+      // Halseth returns only {id, book_id, author}, so `returned ?? local` showed a blank note
+      // ("raziel ·", no quote, no comment) until reload. Server fields win; the rest is local.
+      const ann: BookAnnotation = {
+        id: `local-${Date.now()}`,
         book_id: bookId,
         author: "raziel",
         cfi_range: pending.cfiRange,
@@ -240,6 +242,8 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
         comment: comment.trim() || null,
         color: null,
         created_at: new Date().toISOString(),
+        ...(typeof (body as { id?: unknown }).id === "string" ? { id: (body as { id: string }).id } : {}),
+        ...(returned ?? {}),
       };
       setAnnotations((prev) => [...prev, ann]);
       try {
