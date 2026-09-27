@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { uploadBook } from "@/lib/library-upload";
 
 type Conflict = {
   file: File;
@@ -17,30 +18,19 @@ export default function UploadBox() {
   const [errors, setErrors] = useState<string[]>([]);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
 
+  // The file goes browser -> Halseth directly on a short-lived ticket (lib/library-upload.ts),
+  // never through a Vercel function, whose ~4.5 MB body cap used to fail real books.
   async function uploadOne(file: File, replace: boolean): Promise<"ok" | "conflict" | "error"> {
-    const form = new FormData();
-    form.append("file", file);
-    if (replace) form.append("replace", "true");
-    try {
-      const res = await fetch("/api/library/upload", { method: "POST", body: form });
-      if (res.status === 409) {
-        const body = await res.json().catch(() => ({}));
-        setConflicts((prev) => [
-          ...prev.filter((c) => c.file.name !== file.name),
-          { file, message: (body as { hint?: string; error?: string }).hint ?? (body as { error?: string }).error ?? "already on the shelf" },
-        ]);
-        return "conflict";
-      }
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setErrors((prev) => [...prev, `${file.name}: ${(body as { error?: string }).error ?? `failed (${res.status})`}`]);
-        return "error";
-      }
-      return "ok";
-    } catch {
-      setErrors((prev) => [...prev, `${file.name}: network error`]);
-      return "error";
+    const result = await uploadBook(file, replace);
+    if (result.kind === "conflict") {
+      setConflicts((prev) => [
+        ...prev.filter((c) => c.file.name !== file.name),
+        { file, message: result.message },
+      ]);
+    } else if (result.kind === "error") {
+      setErrors((prev) => [...prev, `${file.name}: ${result.message}`]);
     }
+    return result.kind;
   }
 
   async function handleFiles(files: FileList | null) {
