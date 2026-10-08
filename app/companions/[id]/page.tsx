@@ -9,8 +9,8 @@ import {
   fetchGaiaWitness,
   fetchNotes,
   fetchCompanionNotesByAgent,
-  fetchWmOrient,
   fetchMindState,
+  wmOrientFromMindState,
   fetchSynthesisSummaries,
   fetchInterCompanionNotes,
   fetchSomaStates,
@@ -133,14 +133,13 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const config = COMPANION_CONFIG[id.toLowerCase()];
   if (!config) notFound();
 
-  const [journal, deltas, notes, companionNotes, audit, witness, orient, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes, voiceScoresRes, fermentRes, mindStateRes] = await Promise.allSettled([
+  const [journal, deltas, notes, companionNotes, audit, witness, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes, voiceScoresRes, fermentRes, mindStateRes] = await Promise.allSettled([
     fetchCompanionJournal(id, 6),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
     fetchCompanionNotesByAgent(id, 50),
     id === "cypher" ? fetchCypherAudit(6)  : Promise.resolve(null as CypherAuditEntry[] | null),
     id === "gaia"   ? fetchGaiaWitness(6)  : Promise.resolve(null as GaiaWitnessEntry[] | null),
-    fetchWmOrient(id),
     fetchSynthesisSummaries(20),
     fetchInterCompanionNotes(30),
     fetchSomaStates(),
@@ -157,6 +156,8 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
     fetchFermentation(id),
     // D11 (2026-08-15): the loader names sources that FAILED this load in meta.degraded;
     // this page is the human tending surface, so it wears the badge. Pure read, safe to poll.
+    // Also the single source for the continuity panel (wmOrientFromMindState below): the page used
+    // to call fetchWmOrient(id) alongside this, which was the same /mind/state read twice.
     fetchMindState(id),
   ]);
 
@@ -166,7 +167,6 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const allCompNotes    = companionNotes.status === "fulfilled" ? companionNotes.value : [];
   const auditEntries    = audit.status          === "fulfilled" ? audit.value          : null;
   const witnessEntries  = witness.status        === "fulfilled" ? witness.value        : null;
-  const orientData      = orient.status         === "fulfilled" ? orient.value         : null;
   const summaryEntries  = synthesis.status      === "fulfilled" ? synthesis.value      : [];
   const icNoteEntries   = icNotes.status        === "fulfilled" ? icNotes.value        : [];
   // Same predicate InterCompanionNotesSection applies internally, hoisted so the clip and the
@@ -188,6 +188,8 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   const conclusionItems    = (conclusionsRes.status === "fulfilled" ? conclusionsRes.value : null) ?? [];
   const voiceScores        = voiceScoresRes.status === "fulfilled" ? voiceScoresRes.value : null;
   const degradedSources    = mindStateRes.status === "fulfilled" ? (mindStateRes.value?.meta?.degraded ?? []) : [];
+  const mindState          = mindStateRes.status === "fulfilled" ? mindStateRes.value : null;
+  const orientData         = mindState ? wmOrientFromMindState(mindState) : null;
 
   const lettersOut   = allNotes.filter((n) => n.note_type === `letter:${id}`);
   const lettersIn    = allCompNotes.filter((n) => n.tags?.includes("letter") ?? false);

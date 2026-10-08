@@ -33,6 +33,7 @@ export async function PATCH(
     // which is the exact thing he asked to fix ("if I click done on the Hearth page it
     // translates back to them"). Sent only on 'done'; the handler clears it on a reopen.
     const res = await fetch(`${base}/tasks/${id}`, {
+      cache: "no-store",
       method: "PATCH",
       headers: authHeaders(true),
       body: JSON.stringify({

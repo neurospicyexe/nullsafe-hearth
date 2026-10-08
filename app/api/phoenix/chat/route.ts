@@ -49,12 +49,6 @@ function buildSystemPrompt(companionId: CompanionId, orient: CompanionOrientForC
   if (orient.constraints_summary) {
     parts.push(`Lane violations (never cross these): ${orient.constraints_summary}`);
   }
-  if (orient.emotional_register) {
-    parts.push(`Current state: ${orient.emotional_register}`);
-  }
-  if (orient.drift_vector) {
-    parts.push(`Drift: ${orient.drift_vector}`);
-  }
   if (orient.active_tensions.length > 0) {
     parts.push(`Active tensions:\n${orient.active_tensions.map((t) => `- ${t}`).join("\n")}`);
   }
@@ -76,8 +70,6 @@ function buildCompanionBlock(companionId: CompanionId, orient: CompanionOrientFo
   if (orient.constraints_summary) {
     lines.push(`Forbidden (lane violations): ${orient.constraints_summary}`);
   }
-  if (orient.emotional_register) lines.push(`State: ${orient.emotional_register}`);
-  if (orient.drift_vector) lines.push(`Drift: ${orient.drift_vector}`);
   if (orient.active_tensions.length > 0) {
     lines.push(`Tensions: ${orient.active_tensions.map((t) => `- ${t}`).join(" ")}`);
   }

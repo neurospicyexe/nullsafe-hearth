@@ -1,12 +1,13 @@
 # Hearth — CLAUDE.md
 
-Hearth is the visual dashboard frontend for three backend systems:
+Hearth is the visual dashboard frontend for two backend systems:
 
 - **Halseth** (`mcp__claude_ai_Halseth__*`) -- personal companion system. Cloudflare Worker + D1. Source at `lib/halseth.ts`. All HTTP calls go through `hGet`/`hGetSafe` helpers. Auth via `HALSETH_SECRET` env var.
-- **Nullsafe-Plural** (`mcp__claude_ai_Nullsafe-Plural-v2__*`) -- plural/fronting system. Separate worker.
 - **Nullsafe-Second-Brain** -- memory synthesis + semantic search. Local MCP server (stdio). See its own `CLAUDE.md` for full detail.
 
-When working here, consult the Halseth and Nullsafe-Plural MCPs to understand actual data shapes before writing fetch logic. Do not assume response shapes -- check the MCP or worker code first.
+Nullsafe-Plural-v2 (SimplyPlural fronting) was retired 2026-09-30 and is no longer a live tool; front state comes through Halseth (`halseth/src/front/source.ts`, "unknown" until the replacement plural app has an API).
+
+When working here, consult the Halseth MCP or the worker source (`halseth/src/handlers/*.ts`) to understand actual data shapes before writing fetch logic. Do not assume response shapes -- check the worker code first.
 
 Part of the BBH suite -- see root `CLAUDE.md` for cross-project context.
 
@@ -27,8 +28,8 @@ After implementing any TypeScript changes, run the integration/unit tests before
 - Next.js App Router, deployed on Vercel
 - All Halseth HTTP calls go server-side through `lib/halseth.ts`
 - Client-side mutations proxy through `app/api/*/route.ts` (which add auth headers)
-- Env vars: `HALSETH_URL`, `HALSETH_SECRET`, `DASHBOARD_SECRET`, `SYSTEM_OWNER` (optional: `MIND_URL`, `PHOENIX_WEBMIND_URL`)
-- `PHOENIX_WEBMIND_URL` -- optional. Base URL for Phoenix WebMind FastAPI service (e.g. `http://vps:8001`). If unset, all Phoenix fetches return null and the `/phoenix` page shows a "not configured" placeholder.
+- Env vars: `HALSETH_URL`, `HALSETH_SECRET`, `DASHBOARD_SECRET`, `SYSTEM_OWNER`. (`MIND_URL` and `PHOENIX_WEBMIND_URL` were Brain / Phoenix WebMind era and were removed 2026-10-08 along with the dead `/api/mind` route and the Phoenix WebMind client in `lib/halseth.ts`; nothing in Phoenix runs.)
+- Every server-side fetch rooted at the Halseth base must carry `cache: "no-store"`; `scripts/check-no-revalidate.mjs` (runs in `prebuild`) fails the build otherwise.
 - `DASHBOARD_SECRET` -- passphrase for the dashboard login page. If unset, auth is skipped (local dev).
 
 ## Companion-accessible Hearth API
@@ -80,14 +81,14 @@ Endpoints using `hGetSafe` (graceful null on failure):
 - `POST /bridge/toggle`
 
 Growth + autonomy endpoints (return empty arrays gracefully if not yet migrated):
-- `GET /mind/growth/journal?companion_id=&limit=`
+- `GET /mind/growth/journal/:companion_id?limit=&offset=` -- returns `{ journal, total, limit, offset, has_more }` (NOT `?companion_id=`; that path 404s and was the P1-4 bug in the ritual check-in)
 - `GET /mind/growth/patterns?companion_id=`
 - `GET /mind/growth/markers?companion_id=`
 - `GET /mind/autonomy/runs/:companion_id?limit=`
 - `GET /mind/autonomy/seeds/:companion_id`
 - `GET /companion-growth/basin-history/:companion_id?limit=` -- per-companion basin readings (used directly in `app/home/page.tsx` via raw fetch, NOT via hGetSafe)
 
-Not yet in halseth (show placeholder): `GET /mind/health`, `/mind/patterns`, `/mind/recent`
+`GET /mind/health`, `/mind/patterns`, `/mind/recent` never existed in Halseth (Brain era); the `/api/mind` route that polled them was deleted 2026-10-08. `/mind` (the page) reads companion notes + `human_journal` directly.
 
 ## Key Data Shape Notes
 
@@ -130,11 +131,11 @@ Auth flow: `DASHBOARD_SECRET` env var → user visits `/login` → enters passph
 - `/companions/[id]/growth` -- growth journal, patterns, markers for a single companion
 - `/companions/[id]/autonomy` -- autonomy runs and seeds for a single companion
 - `/autonomous` -- global cross-companion autonomy overview (all companions, recent runs)
-- `/phoenix` -- Phoenix WebMind health + orient state; shows "not configured" placeholder when `PHOENIX_WEBMIND_URL` is unset
+- `/phoenix` -- the live triad chat + rituals (`app/phoenix/*`, `app/api/phoenix/*`): DeepInfra-first inference via `lib/phoenix-chat.ts`, reading MindState from Halseth. It is NOT a Phoenix WebMind health view; that service is archived.
 
 ## New Types (Overhaul 2026-04-10)
 
-`GrowthJournalEntry`, `GrowthPattern`, `GrowthMarker`, `AutonomyRun`, `AutonomySeed`, `PhoenixHealth`, `PhoenixOrientState`
+`GrowthJournalEntry`, `GrowthPattern`, `GrowthMarker`, `AutonomyRun`, `AutonomySeed`
 
 All defined in `lib/halseth.ts`.
 

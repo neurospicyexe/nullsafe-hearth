@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     // Halseth serves only GET /companion-notes (an alias of the journal read); writes land on
     // POST /companion-journal. Posting to /companion-notes 404'd, so the /mind form never saved.
     const res = await fetch(`${base}/companion-journal`, {
+      cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify(body),

@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
   };
   try {
     const res = await fetch(`${base}/routines`, {
+      cache: "no-store",
       method: "POST",
       headers: authHeaders(true),
       body: JSON.stringify(body),

@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const res = await fetch(`${base}/mind/shelf`, {
+      cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json", ...(secret ? { Authorization: `Bearer ${secret}` } : {}) },
       body: JSON.stringify(body),
@@ -43,6 +44,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const res = await fetch(`${base}/mind/shelf/${id}`, {
+      cache: "no-store",
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...(secret ? { Authorization: `Bearer ${secret}` } : {}) },
       body: JSON.stringify(patch),

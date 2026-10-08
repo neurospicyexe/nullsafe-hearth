@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const upstream = await fetch(`${base}/biometrics`, {
+      cache: "no-store",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
     if (upstream.ok && typeof body.spoons === "number") {
       const spoonCount = Math.min(12, Math.max(0, Math.round(body.spoons)));
       await fetch(`${base}/house`, {
+        cache: "no-store",
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
         body: JSON.stringify({ spoon_count: spoonCount }),

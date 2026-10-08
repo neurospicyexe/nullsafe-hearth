@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as unknown;
     const res = await fetch(`${url}/mind/metronome/actions`, {
+      cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
       body: JSON.stringify(body),

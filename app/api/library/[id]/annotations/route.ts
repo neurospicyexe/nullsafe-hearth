@@ -26,6 +26,7 @@ export async function POST(
 
   try {
     const res = await fetch(`${base}/mind/books/${encodeURIComponent(id)}/annotations`, {
+      cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json", ...(secret ? { Authorization: `Bearer ${secret}` } : {}) },
       body: JSON.stringify(body),
@@ -56,6 +57,7 @@ export async function DELETE(
     const res = await fetch(
       `${base}/mind/books/${encodeURIComponent(id)}/annotations/${encodeURIComponent(annId)}`,
       {
+        cache: "no-store",
         method: "DELETE",
         headers: secret ? { Authorization: `Bearer ${secret}` } : {},
         signal: AbortSignal.timeout(10_000),

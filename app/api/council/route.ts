@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const res = await fetch(`${base}/mind/council/convene`, {
+      cache: "no-store",
       method: "POST",
       headers: {
         "Content-Type": "application/json",

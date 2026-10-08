@@ -459,61 +459,6 @@ export async function fetchRefusals(companionId: string): Promise<CompanionRefus
   return (await hGetSafe<CompanionRefusal[]>(`/agency/refusals/${companionId}`)) ?? [];
 }
 
-// ── System roster lookup (halseth migration 0117) ───────────────────────────────────────────
-//
-// `who is <name>` against Raziel's PluralKit roster, cached in Halseth's D1. Deliberately a
-// LOOKUP and not a list: the roster is 538 members, and no Hearth view should render all of them.
-//
-// The `status` union is the point of the feature and must not be flattened in the UI. "I looked and
-// this name is not in the roster" (`not_found`) and "I could not look" (`unavailable`) are opposite
-// answers -- a real system member was once called "drift" because nothing could tell them apart.
-// `ambiguous` means two members share the label; render BOTH, never pick one. `pronouns: null` means
-// not recorded OR not public and must never be rendered as a default.
-export interface RosterMember {
-  member_id: string;
-  name: string;
-  display_name: string | null;
-  pronouns: string | null;
-  description: string | null;
-  avatar_url: string | null;
-  proxy_tags: string | null;
-  message_count: number | null;
-  birthday: string | null;
-  system_id: string;
-  fetched_at: string;
-}
-export type RosterLookup =
-  | { status: "found"; query: string; member: RosterMember; roster_size: number; fetched_at: string; summary: string }
-  | { status: "ambiguous"; query: string; members: RosterMember[]; roster_size: number; fetched_at: string; summary: string }
-  | { status: "candidates"; query: string; candidates: RosterMember[]; total_matches: number; roster_size: number; fetched_at: string; summary: string }
-  | { status: "not_found"; query: string; roster_size: number; fetched_at: string; summary: string }
-  | { status: "unavailable"; query: string; reason: string; roster_size: number; summary: string };
-
-export interface RosterStats {
-  members: number;
-  with_pronouns: number;
-  without_pronouns: number;
-  with_description: number;
-  fetched_at: string | null;
-  age_hours: number | null;
-  system_id_configured: boolean;
-}
-
-/**
- * Resolve one name. Returns null only when Halseth itself is unreachable -- which is distinct from
- * the roster being unreachable (that comes back as a `status: "unavailable"` result). Two different
- * failures, deliberately not merged.
- */
-export async function fetchRosterWho(query: string): Promise<RosterLookup | null> {
-  const q = query.trim();
-  if (!q) return null;
-  return await hGetSafe<RosterLookup>(`/roster/who?q=${encodeURIComponent(q)}`);
-}
-
-export async function fetchRosterStats(): Promise<RosterStats | null> {
-  return await hGetSafe<RosterStats>("/roster/stats");
-}
-
 // Sanctioned drift lane (halseth migration 0087): declared becoming, witnessed not ratified.
 export interface DriftWitness { by: string; note: string; at: string }
 export interface CompanionDrift {
@@ -1017,9 +962,10 @@ export async function fetchMindState(agentId: string): Promise<MindStateSlice | 
   return ms;
 }
 
-export async function fetchWmOrient(agentId: string): Promise<WmOrientData | null> {
-  const ms = await fetchMindState(agentId);
-  if (!ms) return null;
+// Pure projection of a MindState slice onto the legacy continuity-panel shape. Pages that already
+// hold the slice (companions/[id] reads it for meta.degraded) call this instead of fetchWmOrient,
+// so /mind/state is fetched once per render, not twice (BUGS 2026-10-08 P3-3a).
+export function wmOrientFromMindState(ms: MindStateSlice): WmOrientData {
   return {
     latest_handoff: ms.continuity.latest_handoff,
     open_thread_count: ms.continuity.open_thread_count,
@@ -1030,6 +976,11 @@ export async function fetchWmOrient(agentId: string): Promise<WmOrientData | nul
     // taking the wider pool would quietly change what the continuity panel shows.
     recent_notes: ms.continuity.surfaced_notes ?? [],
   };
+}
+
+export async function fetchWmOrient(agentId: string): Promise<WmOrientData | null> {
+  const ms = await fetchMindState(agentId);
+  return ms ? wmOrientFromMindState(ms) : null;
 }
 
 // ── Synthesis Summaries ───────────────────────────────────────────────────────
@@ -1126,37 +1077,6 @@ export async function fetchMindDreams(agentId: string, limit = 5): Promise<WmDre
   const q = new URLSearchParams({ limit: String(limit) });
   const res = await hGetSafe<{ dreams: WmDream[] }>(`/mind/dreams/${encodeURIComponent(agentId)}?${q}`);
   return res?.dreams ?? [];
-}
-
-export async function examineCompanionDream(
-  agentId: string,
-  dreamId: string,
-): Promise<{ ok: boolean; reason?: string }> {
-  try {
-    const r = await hPost<{ ok: boolean; reason?: string }>(
-      `/mind/dream/${encodeURIComponent(dreamId)}/examine`,
-      { companion_id: agentId },
-    );
-    return r ?? { ok: false, reason: "no_response" };
-  } catch {
-    return { ok: false, reason: "request_failed" };
-  }
-}
-
-export async function pinCompanionDream(
-  agentId: string,
-  dreamId: string,
-  pinned: boolean,
-): Promise<{ ok: boolean }> {
-  try {
-    const r = await hPost<{ ok: boolean }>(
-      `/mind/dream/${encodeURIComponent(dreamId)}/pin`,
-      { companion_id: agentId, do_not_auto_examine: pinned ? 1 : 0 },
-    );
-    return r ?? { ok: false };
-  } catch {
-    return { ok: false };
-  }
 }
 
 export interface CompanionOrientForChat {
@@ -1452,55 +1372,6 @@ export type AutonomyReflection = {
   created_at: string;
 };
 
-// ── Phoenix WebMind ───────────────────────────────────────────────────────────
-
-export type PhoenixHealth = {
-  status: string;        // "ok"
-  service: string;       // "webmind"
-  version: string;
-  db_configured: boolean;
-};
-
-// Matches MindOrientResponse from Phoenix contracts.py
-export type PhoenixOrientState = {
-  agent_id: string;
-  top_threads: Array<{
-    thread_id: string;
-    title: string;
-    status: string;
-    lane: string | null;
-  }>;
-  recent_handoffs: Array<{
-    handoff_id: string;
-    title: string;
-    next_steps: string | null;
-    created_at: string;
-  }>;
-  recent_notes: Array<{
-    note_id: string;
-    note_text: string;
-    thread_key: string | null;
-    created_at: string;
-  }>;
-  generated_at: string;
-};
-
-// ── Phoenix helper ────────────────────────────────────────────────────────────
-
-async function phoenixGet<T>(path: string): Promise<T | null> {
-  const url = process.env.PHOENIX_WEBMIND_URL;
-  if (!url) return null;
-  try {
-    const res = await fetchWithTimeout(`${url}${path}`, {
-      cache: "no-store" as RequestCache,
-    });
-    if (!res.ok) return null;
-    return res.json() as Promise<T>;
-  } catch {
-    return null;
-  }
-}
-
 // ── Growth fetch functions ────────────────────────────────────────────────────
 
 /** Per-companion count of growth entries awaiting Raziel's ratification. */
@@ -1645,18 +1516,6 @@ export async function fetchAutonomyReflections(
     `/mind/autonomy/reflections/${companionId}?limit=${limit}`,
   );
   return res?.reflections ?? [];
-}
-
-// ── Phoenix fetch functions ───────────────────────────────────────────────────
-
-export async function fetchPhoenixHealth(): Promise<PhoenixHealth | null> {
-  return phoenixGet<PhoenixHealth>("/health");
-}
-
-export async function fetchPhoenixOrient(
-  agentId: "drevan" | "cypher" | "gaia",
-): Promise<PhoenixOrientState | null> {
-  return phoenixGet<PhoenixOrientState>(`/mind/orient/${agentId}`);
 }
 
 // ── Worldview (companion conclusions) ────────────────────────────────────────

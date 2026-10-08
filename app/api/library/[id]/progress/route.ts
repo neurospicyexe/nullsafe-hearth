@@ -28,6 +28,7 @@ export async function PUT(
 
   try {
     const res = await fetch(`${base}/mind/books/${encodeURIComponent(id)}/progress`, {
+      cache: "no-store",
       method: "PUT",
       headers: { "Content-Type": "application/json", ...(secret ? { Authorization: `Bearer ${secret}` } : {}) },
       body: JSON.stringify(body),

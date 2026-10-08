@@ -22,6 +22,7 @@ export async function PATCH(
 
   try {
     const res = await fetch(`${base}/mind/guardian/flags/${encodeURIComponent(id)}`, {
+      cache: "no-store",
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

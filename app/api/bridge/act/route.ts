@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const res = await fetch(`${base}/bridge/act`, {
+      cache: "no-store",
       method: "POST",
       headers: {
         "Content-Type": "application/json",

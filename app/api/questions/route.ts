@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
   let res: Response;
   try {
     res = await fetch(`${base}/mind/questions/${encodeURIComponent(id)}`, {
+      cache: "no-store",
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

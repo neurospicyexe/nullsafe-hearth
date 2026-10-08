@@ -286,8 +286,6 @@ export function buildCompanionBlock(
   if (orient.constraints_summary) {
     lines.push(`Forbidden (lane violations): ${orient.constraints_summary}`);
   }
-  if (orient.emotional_register) lines.push(`State: ${orient.emotional_register}`);
-  if (orient.drift_vector) lines.push(`Drift: ${orient.drift_vector}`);
   if (orient.active_tensions.length > 0) {
     lines.push(`Tensions: ${orient.active_tensions.map((t) => `- ${t}`).join(" ")}`);
   }

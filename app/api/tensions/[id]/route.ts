@@ -34,6 +34,7 @@ export async function PATCH(
 
   try {
     const res = await fetch(`${base}/companion-growth/tensions/${encodeURIComponent(id)}`, {
+      cache: "no-store",
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

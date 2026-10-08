@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
   let res: Response;
   try {
     res = await fetch(`${base}/companion-growth/basin-history/${encodeURIComponent(id)}/${action}`, {
+      cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json", ...(secret ? { Authorization: `Bearer ${secret}` } : {}) },
       signal: AbortSignal.timeout(10_000),

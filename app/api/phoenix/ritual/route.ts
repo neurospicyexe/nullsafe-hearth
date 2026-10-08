@@ -29,6 +29,7 @@ import {
   threadTitles,
   type OrientThread,
 } from "@/lib/phoenix-chat";
+import { fetchRecentGrowthJournal, type HalsethEnv } from "./growth-journal";
 
 const SCRIBE_AGENT_ID: PhoenixCompanionId = "cypher";
 
@@ -74,8 +75,6 @@ async function loadAllOrients(): Promise<{
 
 // ─── Halseth helpers (server-only fetches) ──────────────────────────────────
 
-interface HalsethEnv { url: string; secret: string }
-
 function getHalsethEnv(): HalsethEnv | null {
   const url = process.env.HALSETH_URL;
   const secret = process.env.HALSETH_SECRET;
@@ -110,37 +109,6 @@ async function fetchTensionTextsForCompanion(companionId: PhoenixCompanionId): P
     .filter((t) => t.status !== "resolved" && t.status !== "archived")
     .map((t) => t.tension_text)
     .filter((s) => s.length > 0);
-}
-
-interface GrowthJournalEntry {
-  entry_text?: string;
-  insight_text?: string;
-  content?: string;
-  companion_id?: string;
-  created_at?: string;
-}
-
-async function fetchRecentGrowthJournal(env: HalsethEnv, days: number): Promise<string> {
-  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-  const lines: string[] = [];
-  for (const id of PHOENIX_COMPANION_IDS) {
-    try {
-      const url = `${env.url}/mind/growth/journal?companion_id=${id}&limit=10&since=${encodeURIComponent(cutoff)}`;
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${env.secret}` },
-        cache: "no-store",
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!res.ok) continue;
-      const data = await res.json() as GrowthJournalEntry[] | { entries?: GrowthJournalEntry[] };
-      const entries = Array.isArray(data) ? data : (data.entries ?? []);
-      for (const e of entries) {
-        const text = e.entry_text ?? e.insight_text ?? e.content ?? "";
-        if (text) lines.push(`(${id}) ${text.slice(0, 200)}`);
-      }
-    } catch { /* continue */ }
-  }
-  return lines.slice(0, 15).join("\n");
 }
 
 interface HandoverPacket {
@@ -367,7 +335,7 @@ async function handleCheckIn(env: HalsethEnv, sessionId: string | null): Promise
   if (!orients) return NextResponse.json({ error: "Could not load all three orients" }, { status: 503 });
 
   const [recentGrowth, recentHandoffs] = await Promise.all([
-    fetchRecentGrowthJournal(env, 30),
+    fetchRecentGrowthJournal(env, PHOENIX_COMPANION_IDS, 30),
     fetchRecentHandoffs(env, 5),
   ]);
 

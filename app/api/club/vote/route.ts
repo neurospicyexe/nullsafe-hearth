@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
   let res: Response;
   try {
     res = await fetch(`${base}/mind/club/vote`, {
+      cache: "no-store",
       method: "POST",
       headers: {
         "Content-Type": "application/json",

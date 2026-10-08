@@ -25,6 +25,7 @@ export async function POST(
 
   try {
     const res = await fetch(`${base}/mind/creatures/${encodeURIComponent(id)}/interact`, {
+      cache: "no-store",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
