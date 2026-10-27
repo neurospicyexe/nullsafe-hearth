@@ -1,26 +1,9 @@
-import { ImageResponse } from "next/og";
+import { renderAppIcon } from "@/lib/app-icon";
 
-export const size = { width: 512, height: 512 };
+// 180x180 is iOS's native apple-touch-icon size; iOS rounds the corners itself.
+export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
 export default function AppleIcon() {
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          background: "#0e0b08",
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 320,
-          color: "#e8a83e",
-        }}
-      >
-        ◈
-      </div>
-    ),
-    { ...size },
-  );
+  return renderAppIcon(180, 0.14);
 }

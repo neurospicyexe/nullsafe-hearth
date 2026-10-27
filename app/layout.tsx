@@ -3,6 +3,7 @@ import { Caveat, Quicksand } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import ScrollToTop from "@/components/ScrollToTop";
+import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 
 const caveat = Caveat({
   subsets: ["latin"],
@@ -23,6 +24,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  // Home-screen app: draw edge to edge; globals.css pads the notch and home bar via safe-area insets.
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -45,6 +48,7 @@ export default function RootLayout({
       <body>
         <div className="app-layout">
           <ScrollToTop />
+          <RegisterServiceWorker />
           <Nav />
           <main className="app-main">{children}</main>
         </div>

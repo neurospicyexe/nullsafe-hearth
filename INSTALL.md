@@ -98,7 +98,17 @@ Click **Deploy**. Vercel will build and give you a URL. That's your dashboard.
 
 ### 5. Log in
 
-Open your Vercel URL. You'll see a login page — use your `DASHBOARD_SECRET`. The dashboard cookie lasts until you clear it.
+Open your Vercel URL. You'll see a login page; use your `DASHBOARD_SECRET`. You stay signed in as long as you open Hearth at least once a month: each visit after the first day quietly renews the sign-in, and 30 days without opening it signs you out.
+
+### 6. Put Hearth on your iPhone home screen
+
+1. Open your Hearth URL in **Safari** (the install option only exists in Safari).
+2. Tap **Share** (the square with the arrow), scroll, tap **Add to Home Screen**, then **Add**.
+3. Open Hearth from the new icon. It opens straight into Today, full screen, with no browser bar.
+4. **Sign in once inside the app.** The home-screen app keeps its own sign-in, separate from Safari, so it asks one time even if Safari is already signed in. Let iCloud Keychain save the passphrase.
+5. Close it and open it again: you should still be signed in.
+
+If you open it with no signal you'll see a "No connection" page with a Try again button. Nothing from Hearth is stored on the phone.
 
 ---
 

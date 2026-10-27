@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signSession } from "@/lib/session";
+import { signSession, SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from "@/lib/session";
 import { safeCompare } from "@/lib/timing-safe";
 import { checkLoginRateLimit, getClientKey } from "@/lib/rate-limit";
 
@@ -27,13 +27,7 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({ success: true });
 
-  response.cookies.set("hearth_session", await signSession(secret), {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-    path: "/",
-  });
+  response.cookies.set(SESSION_COOKIE, await signSession(secret), SESSION_COOKIE_OPTIONS);
 
   return response;
 }

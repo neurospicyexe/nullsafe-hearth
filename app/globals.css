@@ -62,7 +62,12 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  padding-bottom: 5rem; /* For mobile nav */
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom)); /* For mobile nav (+ iPhone home bar) */
+  /* Home-screen app (viewport-fit=cover, black-translucent status bar): keep content out from under the
+     notch / Dynamic Island and the rounded side edges. env() is 0 everywhere else, so no change there. */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* Typography elements */
@@ -177,9 +182,9 @@ input, select, textarea { font-family: inherit; }
 .nav-bottom {
   display: flex;
   position: fixed;
-  bottom: 1rem;
-  left: 1rem;
-  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  left: calc(1rem + env(safe-area-inset-left));
+  right: calc(1rem + env(safe-area-inset-right));
   background: var(--surface-base);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "@/lib/session";
+import {
+  verifySession, signSession, sessionNeedsRenewal, SESSION_COOKIE, SESSION_COOKIE_OPTIONS,
+} from "@/lib/session";
 
 export async function middleware(request: NextRequest) {
   const secret = process.env.DASHBOARD_SECRET;
@@ -19,8 +21,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const session = request.cookies.get("hearth_session")?.value;
-  if (await verifySession(session, secret)) return NextResponse.next();
+  const session = request.cookies.get(SESSION_COOKIE)?.value;
+  if (session && await verifySession(session, secret)) {
+    const res = NextResponse.next();
+    // Sliding session (2026-10-27): a token over a day old is re-issued on the way through, so the
+    // home-screen app stays signed in while it is used and only a month of silence signs it out.
+    if (sessionNeedsRenewal(session)) {
+      res.cookies.set(SESSION_COOKIE, await signSession(secret), SESSION_COOKIE_OPTIONS);
+    }
+    return res;
+  }
 
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("from", request.nextUrl.pathname);
@@ -30,5 +40,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // Protect all routes except login page, auth API, Next internals, and static files.
   // api/companion/* uses its own HALSETH_SECRET Bearer auth -- no cookie needed.
-  matcher: ["/((?!api/auth|api/companion|login|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  // Home-screen install files are public on purpose (2026-10-27): iOS fetches the manifest and the
+  // apple-touch-icon without the session, and a redirect to /login there gave a screenshot instead of
+  // an icon. The service worker and its offline page must be public too, or `cache.addAll` caches the
+  // login page AS the offline page. None of these carry any data.
+  matcher: [
+    "/((?!api/auth|api/companion|login|_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest$|icon$|apple-icon$|pwa-icon/|sw\\.js$|offline\\.html$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
