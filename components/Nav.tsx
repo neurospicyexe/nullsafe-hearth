@@ -49,7 +49,7 @@ const NAV_GROUPS = [
       { href: "/basins",     label: "Basins",     sym: "≋" },
       { href: "/guardian",   label: "Guardian",   sym: "⛨" },
       { href: "/council",    label: "Council",    sym: "⚖" },
-      { href: "/graph",      label: "Graph",      sym: "❂" },
+      { href: "/map",        label: "Map",        sym: "❂" },
     ],
   },
   {

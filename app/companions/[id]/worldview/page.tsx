@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { fetchConclusions } from "@/lib/halseth";
+import PinButton from "@/components/PinButton";
 import type { ConclusionRow } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
 
@@ -110,6 +111,8 @@ export default async function WorldviewPage({ params }: { params: Promise<{ id: 
 
                     {/* Meta row */}
                     <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                      {/* Pin (mig 0148): keeps this belief in front of them at every boot */}
+                      <PinButton companionId={id} kind="conclusion" id={c.id} pinned={!!c.pinned_at} compact />
                       {/* Confidence bar + value */}
                       <span
                         className="badge"

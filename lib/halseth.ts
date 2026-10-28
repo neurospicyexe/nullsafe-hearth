@@ -1533,6 +1533,9 @@ export type ConclusionRow = {
   subject: string | null;
   provenance: string | null;
   contradiction_flagged: number;
+  /** mig 0148: set when a companion or Raziel pinned it; absent on Workers older than map M3. */
+  pinned_at?: string | null;
+  pinned_by?: string | null;
 };
 
 // Uses cache: "no-store" directly — conclusions are live state, never revalidate
@@ -2100,4 +2103,33 @@ export async function postArchitectFact(payload: {
   supersedes_id?: string;
 }): Promise<{ ok: boolean; id: string; supersedes_id: string | null; status: string; category: string; deduped?: boolean } | null> {
   return hPost("/identity/architect-facts", payload);
+}
+
+// ── The memory map (Halseth GET /mind/map, docs/PLAN-memory-map-2026-10-28.md) ──────────────────
+// A bounded neighborhood with a name on every node and the writer on every edge. Read-only on the
+// Halseth side (viewing warms nothing).
+
+export type MapReader = "raziel" | "cypher" | "drevan" | "gaia";
+
+export type MapNode = {
+  key: string;
+  table: string;
+  id: string;
+  kind: string;
+  label: string;
+  text: string | null;
+  owner: string | null;
+  created_at: string | null;
+  pinned: boolean;
+  seed: boolean;
+};
+
+export type MapEdge = { src: string; dst: string; type: string; writer: string; provenance: string; created_at: string };
+
+export type MemoryMap = { nodes: MapNode[]; edges: MapEdge[]; truncated: boolean; center: string | null };
+
+export async function fetchMemoryMap(reader: MapReader, center?: string | null, hops: 1 | 2 = 1): Promise<MemoryMap | null> {
+  const q = new URLSearchParams({ reader, hops: String(hops) });
+  if (center) q.set("center", center);
+  return hGetSafe<MemoryMap>(`/mind/map?${q.toString()}`);
 }

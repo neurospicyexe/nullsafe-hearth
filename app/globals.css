@@ -1903,3 +1903,39 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   white-space: nowrap;
   align-self: center;
 }
+
+/* ── Memory map (/map, docs/PLAN-memory-map-2026-10-28.md) + pin button ─────────────────────────── */
+.map-page { display: flex; flex-direction: column; gap: 0.75rem; }
+.map-readers { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+.map-reader { padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid var(--border-subtle); color: var(--text-muted); text-decoration: none; font-size: 0.85rem; min-height: 32px; display: inline-flex; align-items: center; }
+.map-reader.active { color: var(--text-main); border-color: var(--accent); }
+.map-shell { position: relative; display: flex; flex-direction: column; gap: 0.5rem; }
+.map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.map-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.6rem; border-radius: 999px; border: 1px solid var(--border-subtle); background: transparent; color: var(--text-main); font: inherit; font-size: 0.8rem; min-height: 32px; cursor: pointer; }
+.map-chip.off { opacity: 0.4; }
+.map-count { color: var(--text-muted); font-size: 0.78rem; margin-left: auto; }
+.map-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; flex: none; background: #64748b; }
+.map-dot-raziel { background: var(--raziel); }
+.map-dot-cypher { background: var(--cypher); }
+.map-dot-drevan { background: var(--drevan); }
+.map-dot-gaia { background: var(--gaia); }
+.map-canvas { width: 100%; height: calc(100vh - 230px); min-height: 360px; border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; touch-action: none; }
+.map-panel { position: absolute; right: 0.75rem; top: 3rem; width: min(360px, calc(100% - 1.5rem)); max-height: calc(100% - 4rem); overflow: auto; z-index: 5; display: flex; flex-direction: column; gap: 0.6rem; }
+.map-panel-head { display: flex; align-items: center; gap: 0.5rem; }
+.map-panel-who { color: var(--text-muted); font-size: 0.8rem; }
+.map-close { margin-left: auto; background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; line-height: 1; cursor: pointer; min-width: 44px; min-height: 44px; }
+.map-panel-text { white-space: pre-wrap; font-size: 0.92rem; line-height: 1.45; margin: 0; }
+.map-links { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.82rem; }
+.map-links li { display: flex; align-items: baseline; gap: 0.4rem; }
+.map-link-type { color: var(--text-muted); white-space: nowrap; }
+.map-explore { color: var(--accent); font-size: 0.85rem; text-decoration: none; }
+.pin-wrap { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.pin-btn { padding: 0.3rem 0.75rem; border-radius: 999px; border: 1px solid var(--border-subtle); background: transparent; color: var(--text-muted); font: inherit; font-size: 0.8rem; min-height: 32px; cursor: pointer; }
+.pin-btn.pinned { color: #fbbf24; border-color: #fbbf2488; }
+.pin-btn.compact { padding: 0.15rem 0.55rem; min-height: 28px; }
+.pin-btn:disabled { opacity: 0.6; }
+.pin-msg { color: var(--text-muted); font-size: 0.75rem; }
+@media (max-width: 767px) {
+  .map-canvas { height: calc(100vh - 340px - env(safe-area-inset-bottom)); }
+  .map-panel { position: fixed; left: 0.5rem; right: 0.5rem; top: auto; bottom: calc(100px + env(safe-area-inset-bottom)); width: auto; max-height: 48vh; }
+}
