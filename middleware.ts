@@ -40,11 +40,13 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // Protect all routes except login page, auth API, Next internals, and static files.
   // api/companion/* uses its own HALSETH_SECRET Bearer auth -- no cookie needed.
+  // Every exclusion must end at `$` or `/`: a bare `api/companion` also matched `api/companion-notes`
+  // and left every companion journal public until 2026-10-29 (pinned by lib/middleware-matcher.test.ts).
   // Home-screen install files are public on purpose (2026-10-27): iOS fetches the manifest and the
   // apple-touch-icon without the session, and a redirect to /login there gave a screenshot instead of
   // an icon. The service worker and its offline page must be public too, or `cache.addAll` caches the
   // login page AS the offline page. None of these carry any data.
   matcher: [
-    "/((?!api/auth|api/companion|login|_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest$|icon$|apple-icon$|pwa-icon/|sw\\.js$|offline\\.html$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api/auth$|api/companion/|login$|_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest$|icon$|apple-icon$|pwa-icon/|sw\\.js$|offline\\.html$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
