@@ -50,6 +50,15 @@ function readColors(): Record<string, string> {
   return { raziel: pick("--raziel", "raziel"), cypher: pick("--cypher", "cypher"), drevan: pick("--drevan", "drevan"), gaia: pick("--gaia", "gaia"), system: FALLBACK.system! };
 }
 
+// The theme colours are not all hex (--drevan is hsl()), and hex-alpha appended to hsl() is an
+// invalid colour that canvas draws as black: every Drevan edge drew black until 10-29.
+function withAlpha(c: string, a: number): string {
+  const hsl = /^hsla?\(([^)]+)\)$/i.exec(c);
+  if (hsl) return `hsla(${hsl[1]!.split(",").slice(0, 3).join(",")}, ${a})`;
+  if (/^#[0-9a-f]{6}$/i.test(c)) return c + Math.round(a * 255).toString(16).padStart(2, "0");
+  return c;
+}
+
 const ageOf = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 
 // /api/pin accepts only these three; a system-owned note offered a pin that always 400'd.
@@ -135,8 +144,11 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
         .linkSource("source")
         .linkTarget("target")
         .nodeLabel((n: any) => `${n.kind}: ${n.label}`)
-        .linkColor((l: any) => `${color(l.writer)}${isLink(l.type) ? "cc" : "66"}`)
+        .linkColor((l: any) => withAlpha(color(l.writer), isLink(l.type) ? 0.8 : 0.4))
         .linkWidth((l: any) => (isLink(l.type) ? 2.2 : 1))
+        // Two minds linking the same pair would draw one line over the other; each writer's links bow
+        // their own way so every voice on a pair stays visible.
+        .linkCurvature((l: any) => (isLink(l.type) ? ({ raziel: 0.25, cypher: -0.25, drevan: 0.12, gaia: -0.12 } as Record<string, number>)[l.writer] ?? 0 : 0))
         .linkLabel((l: any) => (isLink(l.type) ? `${OWNER_NAME[l.writer] ?? l.writer}${l.why ? `: ${l.why}` : ""}` : l.type.replace(/_/g, " ")))
         .linkDirectionalArrowLength(3)
         .linkDirectionalArrowRelPos(0.9)
