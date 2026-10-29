@@ -50,6 +50,7 @@ const NAV_GROUPS = [
       { href: "/guardian",   label: "Guardian",   sym: "⛨" },
       { href: "/council",    label: "Council",    sym: "⚖" },
       { href: "/map",        label: "Map",        sym: "❂" },
+      { href: "/people",     label: "People",     sym: "☺" },
     ],
   },
   {

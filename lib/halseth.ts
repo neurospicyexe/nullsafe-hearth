@@ -2133,3 +2133,24 @@ export async function fetchMemoryMap(reader: MapReader, center?: string | null, 
   if (center) q.set("center", center);
   return hGetSafe<MemoryMap>(`/mind/map?${q.toString()}`);
 }
+
+// ── People the memory graph may link to (Halseth mig 0149, map M5) ─────────────────────────────────
+export type PersonKind = "headmate" | "person" | "pet" | "other";
+
+export interface GraphPerson {
+  id: string;
+  label: string;
+  match_names: string[];
+  kind: PersonKind;
+  pk_member_id: string | null;
+  note: string | null;
+  added_by: string;
+  created_at: string;
+  /** Kept rows the graph links to this person (as of the last rebuild). */
+  mentions: number;
+}
+
+export async function fetchPeople(): Promise<GraphPerson[] | null> {
+  const r = await hGetSafe<{ people: GraphPerson[] }>("/mind/people");
+  return r?.people ?? null;
+}
