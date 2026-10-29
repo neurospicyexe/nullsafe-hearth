@@ -2146,7 +2146,7 @@ export interface GraphPerson {
   note: string | null;
   added_by: string;
   created_at: string;
-  /** Kept rows the graph links to this person (as of the last rebuild). */
+  /** Visible (kept, live) rows the graph links to this person as of the last rebuild -- the same rows the map shows. */
   mentions: number;
 }
 
