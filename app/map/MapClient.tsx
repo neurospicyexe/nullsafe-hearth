@@ -25,6 +25,9 @@ function readColors(): Record<string, string> {
 
 const ageOf = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 
+// /api/pin accepts only these three; a system-owned note offered a pin that always 400'd.
+const PIN_OWNERS = new Set(["cypher", "drevan", "gaia"]);
+
 export default function MapClient({ map, reader }: { map: MemoryMap; reader: MapReader }) {
   const box = useRef<HTMLDivElement>(null);
   const graph = useRef<any>(null);
@@ -52,6 +55,8 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
       .map((e) => ({ source: e.src, target: e.dst, type: e.type, writer: e.writer }));
     return { nodes, links, lonely };
   }, [map, hidden, showLonely]);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   useEffect(() => {
     let alive = true;
@@ -109,8 +114,18 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
       fit();
       ro = new ResizeObserver(fit);
       ro.observe(box.current);
-      g.graphData({ nodes: data.nodes.map((n) => ({ ...n })), links: data.links.map((l) => ({ ...l })) });
-      g.onEngineStop(() => g.zoomToFit(400, 40));
+      // dataRef, not `data`: a legend toggle made while force-graph was still importing ran the
+      // [data] effect against a null graph and was lost; the ref holds whatever is current now.
+      const d = dataRef.current;
+      g.graphData({ nodes: d.nodes.map((n) => ({ ...n })), links: d.links.map((l) => ({ ...l })) });
+      // Fit once, after the first layout. onEngineStop also fires after every drag or filter reheat,
+      // which kept snapping the view back to fit-all.
+      let fitted = false;
+      g.onEngineStop(() => {
+        if (fitted) return;
+        fitted = true;
+        g.zoomToFit(400, 40);
+      });
     })();
     return () => {
       alive = false;
@@ -143,7 +158,7 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
       return next;
     });
 
-  const pinnable = selected && (selected.table === "companion_conclusions" || selected.table === "wm_continuity_notes") && selected.owner && selected.owner !== "raziel";
+  const pinnable = selected && (selected.table === "companion_conclusions" || selected.table === "wm_continuity_notes") && selected.owner && PIN_OWNERS.has(selected.owner);
 
   return (
     <div className="map-shell">
@@ -180,6 +195,9 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
           <p className="map-panel-text">{selected.text ?? selected.label}</p>
           {pinnable && (
             <PinButton
+              // key: without it React reuses the instance across nodes and useState keeps the
+              // previous node's pinned state (a pinned node, then an unpinned one, read "Pinned").
+              key={selected.key}
               companionId={selected.owner!}
               kind={selected.table === "companion_conclusions" ? "conclusion" : "note"}
               id={selected.id}

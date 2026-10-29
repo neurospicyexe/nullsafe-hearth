@@ -15,7 +15,7 @@ const CLOCK_SKEW_TOLERANCE_MS = 60_000;
 
 // ── The cookie (2026-10-27, home-screen app) ────────────────────────────────
 // Raziel's ask: open Hearth from the phone's home screen with FEWER steps, and sign in once. Two things
-// broke that: the token expired 30 days from SIGN-IN no matter how often he used Hearth, and
+// broke that: the token expired 30 days from SIGN-IN no matter how often they used Hearth, and
 // SameSite=strict drops the cookie on the first request whenever Hearth is opened from outside the site
 // (a link in Discord or Telegram), which reads as "logged out" and lands on /login.
 // Now: middleware re-issues the token once it is a day old (sliding), so daily use never expires and
