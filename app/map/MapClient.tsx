@@ -2,19 +2,46 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { MapNode, MemoryMap, MapReader } from "@/lib/halseth";
 import PinButton from "@/components/PinButton";
 
 // The memory map (docs/PLAN-memory-map-2026-10-28.md, M2): force layout on a canvas, pan + pinch zoom
 // from force-graph. Colour = whose it is (node owner, edge writer), so Raziel's connections and each
 // companion's read as theirs. Tap a node for its words, its connections, and a pin.
+// M4 (Halseth 0.24.0): Raziel draws their own links here -- "Link from this", tap another thing, say
+// why. A mind's link (type 'linked:<writer>') draws thicker, in its writer's colour, with the why on
+// hover and in the panel. Only Raziel's own links offer Unlink; the companions' are theirs.
 
 const OWNERS = ["raziel", "cypher", "drevan", "gaia"] as const;
 const OWNER_NAME: Record<string, string> = { raziel: "Raziel", cypher: "Cypher", drevan: "Drevan", gaia: "Gaia", system: "the house" };
 const FALLBACK: Record<string, string> = { raziel: "#f59e0b", cypher: "#e2e8f0", drevan: "#8b7cf6", gaia: "#4ade80", system: "#64748b" };
 
 type GNode = MapNode & { x?: number; y?: number; degree: number };
-type GLink = { source: string; target: string; type: string; writer: string };
+type GLink = { source: string; target: string; type: string; writer: string; why: string | null };
+type LinkFrom = { key: string; table: string; id: string; label: string };
+
+const isLink = (type: string) => type.startsWith("linked:");
+const LINK_FROM_KEY = "map-link-from";
+const WHY_CHARS = 160;
+// The start of a link survives "Show everything connected to this" (a new page) so Raziel can walk to
+// the other end. Storage can be absent (private window); the control still works within one view.
+function loadLinkFrom(): LinkFrom | null {
+  try {
+    const v = sessionStorage.getItem(LINK_FROM_KEY);
+    return v ? (JSON.parse(v) as LinkFrom) : null;
+  } catch {
+    return null;
+  }
+}
+function saveLinkFrom(v: LinkFrom | null) {
+  try {
+    if (v) sessionStorage.setItem(LINK_FROM_KEY, JSON.stringify(v));
+    else sessionStorage.removeItem(LINK_FROM_KEY);
+  } catch {
+    /* per-view only */
+  }
+}
 
 function readColors(): Record<string, string> {
   if (typeof window === "undefined") return FALLBACK;
@@ -36,6 +63,42 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
   // Unconnected things hide by default: measured 10-28, 82 of 105 nodes in the everyone view had no
   // connection yet and buried the real clusters. The count stays visible so the gap is not hidden.
   const [showLonely, setShowLonely] = useState(false);
+  const router = useRouter();
+  const [linkFrom, setLinkFromState] = useState<LinkFrom | null>(null);
+  const [why, setWhy] = useState("");
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkMsg, setLinkMsg] = useState<string | null>(null);
+  useEffect(() => setLinkFromState(loadLinkFrom()), []);
+  const setLinkFrom = (v: LinkFrom | null) => {
+    setLinkFromState(v);
+    saveLinkFrom(v);
+  };
+  useEffect(() => {
+    setLinkMsg(null);
+    setWhy("");
+  }, [selected?.key]);
+
+  async function sendLink(body: Record<string, unknown>, done: string) {
+    if (linkBusy) return;
+    setLinkBusy(true);
+    setLinkMsg(null);
+    try {
+      const res = await fetch("/api/link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || out?.ok === false) {
+        setLinkMsg(out?.reason ?? out?.error ?? "Could not save that.");
+        return;
+      }
+      setLinkMsg(out?.changed === false ? "Already that way." : done);
+      if (!body.unlink) setLinkFrom(null);
+      setWhy("");
+      router.refresh();
+    } catch {
+      setLinkMsg("Halseth unreachable.");
+    } finally {
+      setLinkBusy(false);
+    }
+  }
 
   const data = useMemo(() => {
     const degree = new Map<string, number>();
@@ -52,7 +115,7 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
     const keep = new Set(nodes.map((n) => n.key));
     const links: GLink[] = map.edges
       .filter((e) => keep.has(e.src) && keep.has(e.dst))
-      .map((e) => ({ source: e.src, target: e.dst, type: e.type, writer: e.writer }));
+      .map((e) => ({ source: e.src, target: e.dst, type: e.type, writer: e.writer, why: e.why ?? null }));
     return { nodes, links, lonely };
   }, [map, hidden, showLonely]);
   const dataRef = useRef(data);
@@ -72,8 +135,9 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
         .linkSource("source")
         .linkTarget("target")
         .nodeLabel((n: any) => `${n.kind}: ${n.label}`)
-        .linkColor((l: any) => `${color(l.writer)}66`)
-        .linkWidth(1)
+        .linkColor((l: any) => `${color(l.writer)}${isLink(l.type) ? "cc" : "66"}`)
+        .linkWidth((l: any) => (isLink(l.type) ? 2.2 : 1))
+        .linkLabel((l: any) => (isLink(l.type) ? `${OWNER_NAME[l.writer] ?? l.writer}${l.why ? `: ${l.why}` : ""}` : l.type.replace(/_/g, " ")))
         .linkDirectionalArrowLength(3)
         .linkDirectionalArrowRelPos(0.9)
         .cooldownTicks(120)
@@ -209,11 +273,77 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
               {neighbours.map(({ e, other }) => (
                 <li key={`${e.src}|${e.dst}|${e.type}`}>
                   <span className={`map-dot map-dot-${e.writer}`} />
-                  <span className="map-link-type">{e.type.replace(/_/g, " ")}</span> {other.label}
+                  <span className="map-link-type">
+                    {isLink(e.type) ? `linked by ${OWNER_NAME[e.writer] ?? e.writer}` : e.type.replace(/_/g, " ")}
+                  </span>{" "}
+                  <span className="map-link-body">
+                    {other.label}
+                    {isLink(e.type) && e.why && <em className="map-link-why"> {e.why}</em>}
+                  </span>
+                  {e.type === "linked:raziel" && (
+                    <button
+                      type="button"
+                      className="pin-btn compact"
+                      disabled={linkBusy}
+                      onClick={() => {
+                        const [st, ...si] = e.src.split("/");
+                        const [dt, ...di] = e.dst.split("/");
+                        sendLink({ unlink: true, src: { table: st, id: si.join("/") }, dst: { table: dt, id: di.join("/") } }, "Unlinked.");
+                      }}
+                    >
+                      Unlink
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
           )}
+          <div className="map-linker">
+            {linkFrom && linkFrom.key !== selected.key ? (
+              <>
+                <span className="map-linker-from">
+                  Link <strong>{linkFrom.label.length > 48 ? linkFrom.label.slice(0, 47) + "…" : linkFrom.label}</strong> to this
+                </span>
+                <input
+                  className="map-why"
+                  value={why}
+                  maxLength={WHY_CHARS}
+                  placeholder="why (optional, shown on the line)"
+                  onChange={(ev) => setWhy(ev.target.value)}
+                  aria-label="Why these connect"
+                />
+                <div className="pin-wrap">
+                  <button
+                    type="button"
+                    className="pin-btn pinned"
+                    disabled={linkBusy}
+                    onClick={() => sendLink({ src: { table: linkFrom.table, id: linkFrom.id }, dst: { table: selected.table, id: selected.id }, why }, "Linked.")}
+                  >
+                    {linkBusy ? "Linking…" : "Link"}
+                  </button>
+                  <button type="button" className="pin-btn" onClick={() => setLinkFrom(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : linkFrom ? (
+              <div className="pin-wrap">
+                <span className="pin-msg">Now tap the other thing to link this to.</span>
+                <button type="button" className="pin-btn compact" onClick={() => setLinkFrom(null)}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="pin-btn"
+                onClick={() => setLinkFrom({ key: selected.key, table: selected.table, id: selected.id, label: selected.label })}
+              >
+                Link from this
+              </button>
+            )}
+            {linkMsg && <span className="pin-msg">{linkMsg}</span>}
+          </div>
           <Link className="map-explore" href={`/map?reader=${reader}&center=${encodeURIComponent(`${selected.table}:${selected.id}`)}&hops=2`}>
             Show everything connected to this →
           </Link>

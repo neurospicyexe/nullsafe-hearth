@@ -2124,7 +2124,9 @@ export type MapNode = {
   seed: boolean;
 };
 
-export type MapEdge = { src: string; dst: string; type: string; writer: string; provenance: string; created_at: string };
+// `why` (Halseth 0.24.0, M4): the writer's own words on a mind's link (type 'linked:<writer>',
+// provenance 'asserted'); null on every derived edge. Optional so an older Worker still parses.
+export type MapEdge = { src: string; dst: string; type: string; writer: string; provenance: string; created_at: string; why?: string | null };
 
 export type MemoryMap = { nodes: MapNode[]; edges: MapEdge[]; truncated: boolean; center: string | null };
 

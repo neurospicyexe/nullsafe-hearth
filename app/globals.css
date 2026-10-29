@@ -1929,6 +1929,11 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .map-links li { display: flex; align-items: baseline; gap: 0.4rem; }
 .map-link-type { color: var(--text-muted); white-space: nowrap; }
 .map-explore { color: var(--accent); font-size: 0.85rem; text-decoration: none; }
+.map-link-body { min-width: 0; overflow-wrap: anywhere; }
+.map-link-why { color: var(--text-muted); }
+.map-linker { display: flex; flex-direction: column; gap: 0.45rem; border-top: 1px solid var(--border-subtle); padding-top: 0.6rem; }
+.map-linker-from { font-size: 0.85rem; }
+.map-why { width: 100%; padding: 0.45rem 0.6rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: transparent; color: inherit; font: inherit; font-size: 16px; min-height: 40px; }
 .pin-wrap { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .pin-btn { padding: 0.3rem 0.75rem; border-radius: 999px; border: 1px solid var(--border-subtle); background: transparent; color: var(--text-muted); font: inherit; font-size: 0.8rem; min-height: 32px; cursor: pointer; }
 .pin-btn.pinned { color: #fbbf24; border-color: #fbbf2488; }
