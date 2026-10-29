@@ -1955,3 +1955,8 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .people-kind, .people-count { font-size: 0.8rem; color: var(--text-muted); }
 .people-sub { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--text-muted); }
 .people-remove { grid-row: 1; grid-column: 2; min-height: 32px; padding: 0 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: transparent; color: var(--text-muted); cursor: pointer; }
+.people-centre { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem 1rem; border: 1px solid var(--accent); border-radius: 12px; text-decoration: none; color: var(--text-main); }
+.people-centre-name { font-size: 1.15rem; font-weight: 700; }
+.people-centre-sub { font-size: 0.9rem; color: var(--text-main); overflow-wrap: anywhere; }
+.people-heading { font-size: 1rem; margin: 0.5rem 0 0; }
+.people-hint { margin: 0; font-size: 0.82rem; color: var(--text-muted); }

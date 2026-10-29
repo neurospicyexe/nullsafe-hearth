@@ -2135,7 +2135,8 @@ export async function fetchMemoryMap(reader: MapReader, center?: string | null, 
 }
 
 // ── People the memory graph may link to (Halseth mig 0149, map M5) ─────────────────────────────────
-export type PersonKind = "headmate" | "person" | "pet" | "other";
+/** Halseth mig 0150: one "centre" (Raziel, also Crash); "self" = a system name, which is Raziel fronting. */
+export type PersonKind = "centre" | "self" | "person" | "pet" | "other";
 
 export interface GraphPerson {
   id: string;

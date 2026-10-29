@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 //   POST { action: "add", label, match_names?: string[], kind?, note? } -> Halseth POST /mind/people
 //   POST { action: "archive", id }                                      -> POST /mind/people/:id/archive
 // Halseth records added_by = 'raziel'. Links appear at the next graph rebuild.
-const KINDS = new Set(["headmate", "person", "pet", "other"]);
+const KINDS = new Set(["self", "person", "pet", "other"]);
 
 export async function POST(request: NextRequest) {
   const base = process.env.HALSETH_URL;

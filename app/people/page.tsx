@@ -13,8 +13,8 @@ export default async function PeoplePage() {
       <header className="page-header">
         <h1 className="page-title">People</h1>
         <p className="page-subtitle">
-          Who the map links to. A name here is matched exactly as you spell it, capital letters included, so &ldquo;Blue&rdquo; finds
-          &ldquo;Blue&rdquo; and not &ldquo;blue&rdquo;. New links show up after the nightly rebuild.
+          You&rsquo;re the centre of the map, and every name that is you points there. Names are matched exactly as you spell
+          them, capital letters included, so &ldquo;Blue&rdquo; finds &ldquo;Blue&rdquo; and not &ldquo;blue&rdquo;. New links show up after the nightly rebuild.
         </p>
       </header>
       {people === null ? (
