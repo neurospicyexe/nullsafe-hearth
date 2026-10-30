@@ -28,7 +28,8 @@ function wordBody(mood: string, energy: number | null): Extra {
   return extra;
 }
 
-export default function SpoonsStrip() {
+/** `notice`: AppShell's line for writes kept for retry ("1 thing didn't save..."); empty hides it. */
+export default function SpoonsStrip({ notice = "" }: { notice?: string }) {
   const pathname = usePathname() ?? "/";
   const queue = useWriteQueue();
   const [latest, setLatest] = useState<Latest | null>(null);
@@ -99,6 +100,11 @@ export default function SpoonsStrip() {
   const showLast = picked === null && phase !== "removed";
   return (
     <section className="h-spoons" aria-label="Spoons check-in">
+      {notice && (
+        <p className="h-spoons-unsaved" role="status">
+          {notice}
+        </p>
+      )}
       <div className="h-spoons-head">
         <span className="h-spoons-title">Spoons right now</span>
         {showLast && <span className="h-spoons-last">{lastLoggedLabel(latest, new Date())}</span>}

@@ -216,3 +216,9 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
     },
   };
 }
+
+/** The calm line above the spoons strip for writes kept for retry. Empty when there are none. */
+export function unsavedLine(n: number): string {
+  if (n <= 0) return "";
+  return `${n} ${n === 1 ? "thing" : "things"} didn’t save. I’ll retry next time Hearth opens.`;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { createWriteQueue, STORAGE_KEY, type QueueDeps, type QueuedWrite } from "../write-queue";
+import { createWriteQueue, unsavedLine, STORAGE_KEY, type QueueDeps, type QueuedWrite } from "../write-queue";
 
 type FakeRes = { status?: number; redirected?: boolean; notJson?: boolean };
 
@@ -319,5 +319,13 @@ describe("write-queue", () => {
     const n = seen.length;
     h.queue.submit(spoons(5));
     expect(seen.length).toBe(n);
+  });
+});
+
+describe("unsavedLine", () => {
+  it("is empty at 0 and counts honestly otherwise", () => {
+    expect(unsavedLine(0)).toBe("");
+    expect(unsavedLine(1)).toBe("1 thing didn’t save. I’ll retry next time Hearth opens.");
+    expect(unsavedLine(3)).toBe("3 things didn’t save. I’ll retry next time Hearth opens.");
   });
 });

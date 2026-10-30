@@ -7,6 +7,8 @@ import { shellHidden } from "@/lib/shell";
 import Header from "./Header";
 import TabBar from "./TabBar";
 import SpoonsStrip from "./SpoonsStrip";
+import { useWriteQueue } from "./WriteQueueProvider";
+import { unsavedLine } from "@/lib/write-queue";
 import GreetingTitle from "../home/GreetingTitle";
 
 const SearchOverlay = dynamic(() => import("../SearchOverlay"), { ssr: false });
@@ -20,11 +22,20 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
   const hidden = shellHidden(pathname);
+  const queue = useWriteQueue();
+  const [unsaved, setUnsaved] = useState(0);
+
+  // Writes kept for retry (offline, server down). Refreshed on every queue change: sends, restore, discard.
+  useEffect(() => {
+    const read = () => setUnsaved(queue.failed().length);
+    read();
+    return queue.subscribe(read);
+  }, [queue]);
 
   useEffect(() => {
     if (hidden) return;
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen((o) => !o);
       }
@@ -39,7 +50,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <div className="h-shell">
       <Header onSearch={() => setSearchOpen(true)}>{pathname === "/" ? <GreetingTitle /> : undefined}</Header>
       <main className="app-main h-main">{children}</main>
-      <SpoonsStrip />
+      <SpoonsStrip notice={unsavedLine(unsaved)} />
       <TabBar />
       <SearchOverlay open={searchOpen} onClose={closeSearch} />
     </div>
