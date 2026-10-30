@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { biometricsPostBody } from "@/lib/biometrics-body";
 
 export async function GET() {
   const base = process.env.HALSETH_URL;
@@ -31,31 +32,8 @@ export async function POST(req: NextRequest) {
   if (typeof raw !== "object" || raw === null) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
-  const r = raw as Record<string, unknown>;
-
-  // Allowlist: only forward known BiometricSnapshot fields
-  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
-  const str = (v: unknown) => (typeof v === "string" ? v : null);
-  const bool = (v: unknown) => (typeof v === "boolean" ? v : v === 1 ? true : v === 0 ? false : null);
-  const body = {
-    recorded_at:   typeof r["recorded_at"] === "string" ? r["recorded_at"] : new Date().toISOString(),
-    source:        str(r["source"]),
-    hrv_resting:   num(r["hrv_resting"]),
-    resting_hr:    num(r["resting_hr"]),
-    sleep_hours:   num(r["sleep_hours"]),
-    sleep_quality: str(r["sleep_quality"]),
-    stress_score:  num(r["stress_score"]),
-    steps:         num(r["steps"]),
-    active_energy: num(r["active_energy"]),
-    notes:         str(r["notes"]),
-    // Subjective ND-state layer (migration 0081)
-    mood:          str(r["mood"]),
-    pain:          num(r["pain"]),
-    energy:        num(r["energy"]),
-    focus:         num(r["focus"]),
-    spoons:        num(r["spoons"]),
-    meds_taken:    bool(r["meds_taken"]),
-  };
+  // Allowlist: only forward known BiometricSnapshot fields (plus the client row id).
+  const body = biometricsPostBody(raw as Record<string, unknown>);
 
   try {
     const upstream = await fetch(`${base}/biometrics`, {
@@ -74,7 +52,10 @@ export async function POST(req: NextRequest) {
     // Keep the dashboard header live: a logged spoon count also updates house
     // state. Best-effort — the snapshot is the record of truth, house is a mirror.
     // Clamped 0-12 to match the worker's snapshot-side clamp (house POST doesn't validate).
-    if (upstream.ok && typeof body.spoons === "number") {
+    // A repeat POST of an id Halseth already has is a no-op (200, duplicate): mirroring it again could
+    // overwrite a value the check-in was amended to since.
+    const duplicate = (data as { duplicate?: unknown } | null)?.duplicate === true;
+    if (upstream.ok && !duplicate && typeof body.spoons === "number") {
       const spoonCount = Math.min(12, Math.max(0, Math.round(body.spoons)));
       await fetch(`${base}/house`, {
         cache: "no-store",
