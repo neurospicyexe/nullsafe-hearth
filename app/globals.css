@@ -1947,6 +1947,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 
 /* People the map links to (Halseth mig 0149, map M5) */
 .people { display: flex; flex-direction: column; gap: 1rem; }
+.people.keep-off { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); }
 .people-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; align-items: end; }
 .people-form label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; color: var(--text-muted); }
 .people-form input, .people-form select { min-height: 40px; padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid var(--border-subtle); background: transparent; color: var(--text-main); font-size: 0.95rem; }

@@ -10,7 +10,7 @@ const isProtected = (path: string) => matcher.test(path);
 
 describe("middleware matcher", () => {
   it("protects companion-notes and every other data route", () => {
-    for (const p of ["/api/companion-notes", "/api/pin", "/api/link", "/api/people", "/api/authz", "/loginx", "/", "/map"]) {
+    for (const p of ["/api/companion-notes", "/api/pin", "/api/link", "/api/keep-off", "/api/people", "/api/authz", "/loginx", "/", "/map"]) {
       expect(isProtected(p), p).toBe(true);
     }
   });

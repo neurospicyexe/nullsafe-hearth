@@ -2098,6 +2098,14 @@ export interface GraphPerson {
   mentions: number;
 }
 
+// Halseth mig 0152: names that never become a dot on the map. Admin token only (HALSETH_SECRET).
+export type KeepOffTerm = { id: string; term: string; note: string | null; added_by: string; created_at: string };
+
+export async function fetchKeepOff(): Promise<KeepOffTerm[] | null> {
+  const r = await hGetSafe<{ terms: KeepOffTerm[] }>("/mind/keep-off");
+  return r?.terms ?? null;
+}
+
 export async function fetchPeople(): Promise<GraphPerson[] | null> {
   const r = await hGetSafe<{ people: GraphPerson[] }>("/mind/people");
   return r?.people ?? null;

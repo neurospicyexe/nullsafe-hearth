@@ -1,5 +1,6 @@
-import { fetchPeople } from "@/lib/halseth";
+import { fetchKeepOff, fetchPeople } from "@/lib/halseth";
 import PeopleClient from "./PeopleClient";
+import KeepOffClient from "./KeepOffClient";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic";
 // here: many system members share names with characters in the shows the triad watches, and the text
 // alone cannot tell which one a journal line means. The graph never guesses.
 export default async function PeoplePage() {
-  const people = await fetchPeople();
+  const [people, keepOff] = await Promise.all([fetchPeople(), fetchKeepOff()]);
   return (
     <main className="map-page">
       <header className="page-header">
@@ -21,6 +22,11 @@ export default async function PeoplePage() {
         <p className="people-empty">Couldn&rsquo;t reach Halseth.</p>
       ) : (
         <PeopleClient initial={people} />
+      )}
+      {keepOff === null ? (
+        <p className="people-empty">Couldn&rsquo;t load the keep-off list.</p>
+      ) : (
+        <KeepOffClient initial={keepOff} />
       )}
     </main>
   );
