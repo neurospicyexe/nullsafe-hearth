@@ -11,6 +11,8 @@ export type CheckinQueue = { submit(w: QueuedWrite): Pending; discard(key: strin
 export type Extra = { mood?: string; energy?: number };
 /** landed: saved. failed: kept, retried next time Hearth opens. dropped: refused, nothing will retry it. */
 export type Outcome = "landed" | "failed" | "dropped";
+/** The word's own save state: shown as "Saving word…" until its write answers. */
+export type WordState = "saving" | "saved" | "failed" | "dropped";
 
 export const POST_KEY = "spoons";
 export const undoKey = (id: string) => `spoons-undo-${id}`;
@@ -24,14 +26,31 @@ type Current = {
   extra: Extra;
   pending: Pending;
   outcome: "pending" | "landed" | "failed";
+  /** "riding": the word travels in the POST; "patch": in its own PATCH (wordKey). */
+  word: { state: WordState; via: "riding" | "patch" } | null;
 };
 
 export function createCheckin(
   queue: CheckinQueue,
   deps: { newId(): string; now(): Date },
   onOutcome: (o: Outcome) => void,
+  onWord: (w: WordState) => void = () => {},
 ) {
   let cur: Current | null = null;
+
+  function setWord(c: Current, state: WordState, via: "riding" | "patch"): void {
+    c.word = { state, via };
+    if (cur === c) onWord(state);
+  }
+
+  function patchWord(c: Current, extra: Extra): void {
+    setWord(c, "saving", "patch");
+    const p = queue.submit({ key: wordKey(c.id), url: rowUrl(c.id), method: "PATCH", body: extra });
+    void p.done.then((r) => {
+      if (r === "undone" || c.word?.via !== "patch") return;
+      setWord(c, r.ok ? "saved" : r.dropped ? "dropped" : "failed", "patch");
+    });
+  }
 
   function submitPost(c: Current): void {
     const p = queue.submit({
@@ -45,7 +64,9 @@ export function createCheckin(
     void p.done.then((r) => {
       if (r === "undone" || c.pending !== p) return; // replaced by a newer intent for this same row
       c.outcome = r.ok ? "landed" : "failed";
-      if (cur === c) onOutcome(r.ok ? "landed" : r.dropped ? "dropped" : "failed");
+      const o: Outcome = r.ok ? "landed" : r.dropped ? "dropped" : "failed";
+      if (cur === c) onOutcome(o);
+      if (c.word?.via === "riding" && c.word.state === "saving") setWord(c, o === "landed" ? "saved" : o, "riding");
     });
   }
 
@@ -59,7 +80,10 @@ export function createCheckin(
       queue.discard(wordKey(c.id));
       deleteRow(c.id);
     } else if (c.outcome === "failed") {
-      queue.discard(POST_KEY); // never landed: forget the stored retry
+      // Forget the stored retry, and DELETE by the client id in case the POST was saved but its answer
+      // was lost (a 404 for a row that never landed is dropped by the queue as non-retryable).
+      queue.discard(POST_KEY);
+      deleteRow(c.id);
     } else if (c.pending.waiting()) {
       c.pending.undo(); // still in grace: nothing was ever sent
     } else {
@@ -90,6 +114,7 @@ export function createCheckin(
         extra: {},
         pending: null as unknown as Pending, // set by submitPost
         outcome: "pending",
+        word: null,
       };
       cur = c;
       submitPost(c);
@@ -102,18 +127,34 @@ export function createCheckin(
       if (!c || Object.keys(extra).length === 0) return false;
       Object.assign(c.extra, extra);
       if (c.outcome === "landed") {
-        queue.submit({ key: wordKey(c.id), url: rowUrl(c.id), method: "PATCH", body: extra });
+        patchWord(c, extra);
       } else if (c.outcome === "failed" || c.pending.waiting()) {
+        setWord(c, "saving", "riding");
         submitPost(c); // one request carries everything; for a failed one the stored retry now does
       } else {
-        const p = c.pending; // in flight: PATCH once it lands; if it fails, the retry carries the word
+        // In flight: PATCH once it lands; if it fails, the retry POST carries the word.
+        setWord(c, "saving", "patch");
+        const p = c.pending;
         void p.done.then((r) => {
           if (r === "undone" || cur !== c || c.pending !== p) return;
-          if (r.ok) queue.submit({ key: wordKey(c.id), url: rowUrl(c.id), method: "PATCH", body: extra });
-          else submitPost(c);
+          if (r.ok) patchWord(c, extra);
+          else {
+            setWord(c, "saving", "riding");
+            submitPost(c);
+          }
         });
       }
       return true;
+    },
+
+    /** Queue keys whose failure the strip is showing right now (the app-wide line leaves those out). */
+    owned(): string[] {
+      const c = cur;
+      if (!c) return [];
+      const keys: string[] = [];
+      if (c.outcome === "failed") keys.push(POST_KEY);
+      if (c.word?.via === "patch" && c.word.state === "failed") keys.push(wordKey(c.id));
+      return keys;
     },
 
     undo(): void {

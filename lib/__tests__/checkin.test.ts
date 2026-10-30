@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { createWriteQueue, type QueueDeps } from "../write-queue";
-import { createCheckin, type Outcome } from "../checkin";
+import { createCheckin, type Outcome, type WordState } from "../checkin";
 
 type Call = { url: string; method: string; body: Record<string, unknown> | undefined };
 
@@ -40,10 +40,12 @@ function harness() {
   };
   const queue = createWriteQueue(deps);
   const outcomes: Outcome[] = [];
+  const words: WordState[] = [];
   const checkin = createCheckin(
     queue,
     { newId: () => `id-${nextId++}-abcdef`, now: () => new Date(Date.UTC(2026, 9, 30, 3, 0, 0) + now) },
     (o) => outcomes.push(o),
+    (w) => words.push(w),
   );
   const settle = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
   const advance = async (ms: number) => {
@@ -52,7 +54,7 @@ function harness() {
     await settle();
   };
   return {
-    queue, checkin, calls, outcomes, advance, settle,
+    queue, checkin, calls, outcomes, words, advance, settle,
     hold: () => { holdNext = true; },
     release: async (r: "ok" | "offline" = "ok") => { held.shift()!(r); await settle(); },
     setMode: (m: typeof mode) => { mode = m; },
@@ -174,17 +176,90 @@ describe("checkin", () => {
     expect(h.calls[1]).toMatchObject({ url: "/api/biometrics/id-1-abcdef", method: "PATCH", body: { mood: "foggy" } });
   });
 
-  it("undo after a failed send forgets the stored write and sends no DELETE", async () => {
+  it("undo after a failed send forgets the stored POST and DELETEs the client id (the answer may have been lost)", async () => {
     const h = harness();
     h.setMode("offline");
     h.checkin.tap(4);
     await h.advance(5000);
     expect(h.outcomes).toEqual(["failed"]);
-    expect(h.queue.failed()).toHaveLength(1);
+    expect(h.queue.failed().map((w) => w.key)).toEqual(["spoons"]);
     h.checkin.undo();
-    await h.advance(10000);
-    expect(h.queue.failed()).toEqual([]);
-    expect(h.calls).toHaveLength(1);
+    h.setMode("404"); // the POST never landed: Halseth has no such row
+    await h.advance(5000);
+    expect(h.calls[1]).toMatchObject({ url: "/api/biometrics/id-1-abcdef", method: "DELETE" });
+    expect(h.queue.failed()).toEqual([]); // the stored POST is gone and the 404 DELETE is dropped, not retried
+  });
+
+  it("an offline undo of a failed send keeps the DELETE for retry", async () => {
+    const h = harness();
+    h.setMode("offline");
+    h.checkin.tap(4);
+    await h.advance(5000);
+    h.checkin.undo();
+    await h.advance(5000);
+    expect(h.queue.failed().map((w) => w.key)).toEqual(["spoons-undo-id-1-abcdef"]);
+  });
+
+  it("a word riding the POST is 'saving' until the POST answers, then 'saved'", async () => {
+    const h = harness();
+    h.checkin.tap(4);
+    h.checkin.saveWord({ mood: "foggy" });
+    expect(h.words).toEqual(["saving"]);
+    await h.advance(5000);
+    expect(h.words).toEqual(["saving", "saved"]);
+  });
+
+  it("a PATCHed word is never 'saved' before the PATCH answers ok", async () => {
+    const h = harness();
+    h.checkin.tap(4);
+    await h.advance(5000);
+    h.checkin.saveWord({ mood: "foggy" });
+    await h.advance(4000);
+    expect(h.words).toEqual(["saving"]);
+    await h.advance(1000);
+    expect(h.words).toEqual(["saving", "saved"]);
+  });
+
+  it("a PATCHed word that fails says so, and the strip owns that failure", async () => {
+    const h = harness();
+    h.checkin.tap(4);
+    await h.advance(5000);
+    h.setMode("offline");
+    h.checkin.saveWord({ mood: "foggy" });
+    await h.advance(5000);
+    expect(h.words).toEqual(["saving", "failed"]);
+    expect(h.checkin.owned()).toEqual(["spoons-word-id-1-abcdef"]);
+
+    const g = harness();
+    g.checkin.tap(4);
+    await g.advance(5000);
+    g.setMode("404");
+    g.checkin.saveWord({ mood: "foggy" });
+    await g.advance(5000);
+    expect(g.words).toEqual(["saving", "dropped"]);
+  });
+
+  it("a word saved while the POST is in flight is 'saving' until its PATCH lands", async () => {
+    const h = harness();
+    h.hold();
+    h.checkin.tap(4);
+    await h.advance(5000);
+    h.checkin.saveWord({ mood: "foggy" });
+    await h.release("ok");
+    expect(h.words).toEqual(["saving", "saving"]);
+    await h.advance(5000);
+    expect(h.words.at(-1)).toBe("saved");
+  });
+
+  it("owned() names the strip's failed POST, and nothing once it is undone", async () => {
+    const h = harness();
+    expect(h.checkin.owned()).toEqual([]);
+    h.setMode("offline");
+    h.checkin.tap(4);
+    await h.advance(5000);
+    expect(h.checkin.owned()).toEqual(["spoons"]);
+    h.checkin.undo();
+    expect(h.checkin.owned()).toEqual([]);
   });
 
   it("a 4xx reports dropped (nothing will retry it)", async () => {
