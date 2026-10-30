@@ -17,10 +17,15 @@ type Entry = {
   write: QueuedWrite;
   handle: unknown;
   state: "waiting" | "sent";
+  seq: number;
   resolve: (r: WriteResult | "undone") => void;
 };
 
 export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
+  // Called unbound: native fetch/setTimeout throw "Illegal invocation" when `this` is deps.
+  const { fetch: doFetch, setTimeout: doSetTimeout, clearTimeout: doClearTimeout } = deps;
+  let seqCounter = 0;
+  const latestSeq = new Map<string, number>(); // newest write intent per key; older sends never record failures
   const waiting = new Map<string, Entry>(); // keyed: a newer submit replaces an older waiting write
   const inflight = new Set<Entry>();
   const failedWrites = new Map<string, QueuedWrite>();
@@ -29,11 +34,12 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
     const { storage } = deps;
     if (!storage) return;
     try {
-      const all = [
-        ...failedWrites.values(),
-        ...[...inflight].map((e) => e.write),
-        ...[...waiting.values()].map((e) => e.write),
-      ];
+      // One stored write per key, newest intent wins.
+      const byKey = new Map<string, QueuedWrite>();
+      for (const w of failedWrites.values()) byKey.set(w.key, w);
+      const live = [...inflight, ...waiting.values()].sort((a, b) => a.seq - b.seq);
+      for (const e of live) byKey.set(e.write.key, e.write);
+      const all = [...byKey.values()];
       if (all.length === 0) storage.removeItem(STORAGE_KEY);
       else storage.setItem(STORAGE_KEY, JSON.stringify(all));
     } catch {
@@ -44,7 +50,7 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
   async function send(entry: Entry, keepalive: boolean): Promise<void> {
     if (entry.state === "sent") return;
     entry.state = "sent";
-    deps.clearTimeout(entry.handle);
+    doClearTimeout(entry.handle);
     if (waiting.get(entry.write.key) === entry) waiting.delete(entry.write.key);
     inflight.add(entry);
     const { write } = entry;
@@ -56,7 +62,7 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
         init.body = JSON.stringify(write.body);
       }
       if (keepalive) init.keepalive = true;
-      const res = await deps.fetch(write.url, init);
+      const res = await doFetch(write.url, init);
       let json: unknown = null;
       try {
         json = await res.json();
@@ -68,8 +74,10 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
       result = { ok: false, status: 0, json: null };
     }
     inflight.delete(entry);
-    if (result.ok) failedWrites.delete(write.key);
-    else failedWrites.set(write.key, write);
+    if (latestSeq.get(write.key) === entry.seq) {
+      if (result.ok) failedWrites.delete(write.key);
+      else failedWrites.set(write.key, write);
+    }
     persist();
     entry.resolve(result);
   }
@@ -77,19 +85,22 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
   function enqueue(write: QueuedWrite, immediate: boolean): Pending {
     const prev = waiting.get(write.key);
     if (prev) {
-      deps.clearTimeout(prev.handle);
+      doClearTimeout(prev.handle);
       waiting.delete(write.key);
+      prev.state = "sent";
       prev.resolve("undone");
     }
     failedWrites.delete(write.key); // superseded by the newer intent
     let resolve!: Entry["resolve"];
     const done = new Promise<WriteResult | "undone">((r) => { resolve = r; });
-    const entry: Entry = { write, handle: null, state: "waiting", resolve };
+    const seq = ++seqCounter;
+    latestSeq.set(write.key, seq);
+    const entry: Entry = { write, handle: null, state: "waiting", seq, resolve };
     if (immediate) {
       void send(entry, false);
     } else {
       waiting.set(write.key, entry);
-      entry.handle = deps.setTimeout(() => { void send(entry, false); }, graceMs);
+      entry.handle = doSetTimeout(() => { void send(entry, false); }, graceMs);
       persist();
     }
     return {
@@ -97,8 +108,13 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
       undo() {
         if (entry.state !== "waiting") return;
         entry.state = "sent"; // settled; blocks any later send
-        deps.clearTimeout(entry.handle);
+        doClearTimeout(entry.handle);
         if (waiting.get(write.key) === entry) waiting.delete(write.key);
+        // Undoing the newest intent hands "latest" back to an older in-flight send, if any.
+        if (latestSeq.get(write.key) === seq) {
+          const older = [...inflight].filter((e) => e.write.key === write.key).map((e) => e.seq);
+          if (older.length) latestSeq.set(write.key, Math.max(...older));
+        }
         persist();
         resolve("undone");
       },
@@ -119,12 +135,23 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
       try {
         const raw = storage.getItem(STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
-        if (Array.isArray(parsed)) stored = parsed.filter((w) => w && typeof w.key === "string" && typeof w.url === "string");
+        if (Array.isArray(parsed)) {
+          stored = parsed.filter(
+            (w) =>
+              w &&
+              typeof w.key === "string" &&
+              typeof w.url === "string" &&
+              w.url.startsWith("/") &&
+              (w.method === "POST" || w.method === "PATCH" || w.method === "DELETE"),
+          );
+        }
       } catch {
         return;
       }
       const live = new Set([...waiting.keys(), ...[...inflight].map((e) => e.write.key)]);
-      const sends = stored.filter((w) => !live.has(w.key)).map((w) => enqueue(w, true).done);
+      const lastByKey = new Map<string, QueuedWrite>();
+      for (const w of stored) lastByKey.set(w.key, w); // duplicate keys: keep the last
+      const sends = [...lastByKey.values()].filter((w) => !live.has(w.key)).map((w) => enqueue(w, true).done);
       await Promise.all(sends);
     },
     failed(): QueuedWrite[] {

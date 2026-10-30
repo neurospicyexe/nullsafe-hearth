@@ -139,4 +139,63 @@ describe("write-queue", () => {
     expect(await p.done).toMatchObject({ ok: true });
     await expect(h.queue.restore()).resolves.toBeUndefined();
   });
+
+  it("a failed in-flight send never resurrects over a newer resubmit", async () => {
+    const h = harness();
+    let rejectFirst!: () => void;
+    h.fetchMock.mockImplementationOnce(
+      () => new Promise<Response>((_, rej) => { rejectFirst = () => rej(new Error("offline")); }),
+    );
+    const first = h.queue.submit(spoons(4));
+    await h.advance(5000); // first now in flight, fetch pending
+    const second = h.queue.submit(spoons(7));
+    rejectFirst();
+    expect(await first.done).toMatchObject({ ok: false, status: 0 });
+    expect(h.queue.failed()).toEqual([]);
+    expect(JSON.parse(h.store[STORAGE_KEY])).toEqual([spoons(7)]);
+    await h.advance(5000);
+    expect(await second.done).toMatchObject({ ok: true });
+    expect(h.store[STORAGE_KEY]).toBeUndefined();
+  });
+
+  it("restore collapses duplicate keys keeping the last", async () => {
+    const h = harness({ storage: { [STORAGE_KEY]: JSON.stringify([spoons(4), spoons(7)]) } });
+    await h.queue.restore();
+    expect(h.fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse((h.fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual({ spoons: 7 });
+  });
+
+  it("restore drops stored writes with a bad method or non-relative url", async () => {
+    const bad = [
+      { key: "a", url: "https://evil.example/x", method: "POST" },
+      { key: "b", url: "/api/x", method: "GET" },
+      { key: "c", url: "api/x", method: "POST" },
+    ];
+    const h = harness({ storage: { [STORAGE_KEY]: JSON.stringify([...bad, spoons(1)]) } });
+    await h.queue.restore();
+    expect(h.fetchMock).toHaveBeenCalledTimes(1);
+    expect(h.fetchMock.mock.calls[0][0]).toBe("/api/spoons");
+  });
+
+  it("calls fetch and timers unbound (no Illegal invocation)", async () => {
+    const h = harness();
+    const guard = <A extends unknown[], R>(fn: (...a: A) => R) =>
+      function (this: unknown, ...a: A): R {
+        if (this !== undefined && this !== globalThis) throw new TypeError("Illegal invocation");
+        return fn(...a);
+      };
+    const deps: QueueDeps = {
+      fetch: guard(h.deps.fetch) as typeof fetch,
+      storage: h.deps.storage,
+      setTimeout: guard(h.deps.setTimeout),
+      clearTimeout: guard(h.deps.clearTimeout),
+    };
+    const q = createWriteQueue(deps);
+    const p = q.submit(spoons(4));
+    await h.advance(5000);
+    expect(await p.done).toMatchObject({ ok: true, status: 200 });
+    const p2 = q.submit(spoons(5));
+    p2.undo();
+    expect(await p2.done).toBe("undone");
+  });
 });
