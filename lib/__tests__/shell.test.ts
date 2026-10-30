@@ -1,6 +1,52 @@
 import { describe, it, expect } from "vitest";
 import { TABS, HUBS, activeTab, shellHidden, COMPANION_COLOR } from "../shell";
-import { NAV_HREFS } from "../../components/Nav";
+import nextConfig from "../../next.config";
+
+/** Frozen copy of every href the retired sidebar Nav carried; each must stay reachable from the new tabs and hubs. */
+const NAV_HREFS: readonly string[] = Object.freeze([
+  "/",
+  "/halseth",
+  "/today",
+  "/checkin",
+  "/soma",
+  "/wellness",
+  "/us",
+  "/log",
+  "/between",
+  "/phoenix/chat",
+  "/presence",
+  "/orient",
+  "/feelings",
+  "/questions",
+  "/home",
+  "/autonomous",
+  "/agency",
+  "/drifts",
+  "/basins",
+  "/guardian",
+  "/council",
+  "/map",
+  "/people",
+  "/club",
+  "/shelf",
+  "/library",
+  "/gallery",
+  "/creatures",
+  "/collection",
+  "/imps",
+  "/handovers",
+  "/sessions",
+  "/dreams",
+  "/memory",
+  "/synthesis",
+  "/facts",
+  "/tray",
+  "/manage",
+  "/shared",
+  "/tasks",
+  "/house",
+  "/phoenix",
+]);
 
 describe("activeTab", () => {
   it("maps routes to tabs", () => {
@@ -39,5 +85,17 @@ describe("reachability", () => {
   });
   it("companion colors are css vars", () => {
     expect(COMPANION_COLOR.drevan).toBe("var(--h-drevan)");
+  });
+});
+
+describe("redirects", () => {
+  it("forwards /today and /checkin home, temporarily", async () => {
+    const redirects = await nextConfig.redirects!();
+    for (const source of ["/today", "/checkin"]) {
+      const r = redirects.find((x) => x.source === source);
+      expect(r, source).toBeDefined();
+      expect(r!.destination).toBe("/");
+      expect((r as { permanent?: boolean }).permanent).toBe(false);
+    }
   });
 });

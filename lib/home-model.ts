@@ -88,14 +88,20 @@ function titleCase(s: string): string {
   return s.length ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
+/** Display name and color for a letter writer; non-companions ("steward", "guardian") get a neutral color. */
+export function agentIdentity(agent: string): { who: string; colorVar: string | null } {
+  const c = COMPANIONS.find((x) => x.id === agent);
+  return { who: c ? c.name : titleCase(agent), colorVar: c ? COMPANION_COLOR[c.id] : null };
+}
+
 export function buildLeftForYou(inbox: InboxResponse | null, now: Date): { items: LeftItem[]; unread: number } {
   if (!inbox) return { items: [], unread: 0 };
   const items = inbox.items.map((it): LeftItem => {
-    const c = COMPANIONS.find((x) => x.id === it.agent);
+    const { who, colorVar } = agentIdentity(it.agent);
     return {
       id: it.id,
-      who: c ? c.name : titleCase(it.agent),
-      colorVar: c ? COMPANION_COLOR[c.id] : null,
+      who,
+      colorVar,
       kind: "a letter",
       when: ageLabel(it.created_at, now),
       preview: it.preview,

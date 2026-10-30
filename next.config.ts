@@ -8,6 +8,13 @@ const halsethOrigin = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  // The old Today and Check-in pages live on Home now (spoons strip + check-in sheet).
+  async redirects() {
+    return [
+      { source: "/today", destination: "/", permanent: false },
+      { source: "/checkin", destination: "/", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

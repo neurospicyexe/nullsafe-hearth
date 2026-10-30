@@ -854,6 +854,11 @@ export async function fetchInbox(limit = 3): Promise<InboxResponse | null> {
   return hGetSafe<InboxResponse>("/raziel/inbox?limit=" + limit);
 }
 
+export async function fetchInboxItem(id: string): Promise<InboxItem | null> {
+  const data = await hGetSafe<{ item: InboxItem }>("/raziel/inbox/" + encodeURIComponent(id));
+  return data?.item ?? null;
+}
+
 export async function fetchHumanBlocks(
   companionId: string,
   limit = 20,
