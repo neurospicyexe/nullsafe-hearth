@@ -2071,3 +2071,66 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
     padding: 24px 8px;
   }
 }
+
+/* Spoons strip (Hearth v2): one-tap check-in, sticks above the tab bar. */
+.h-spoons {
+  position: sticky;
+  bottom: calc(var(--h-tabbar-h) + env(safe-area-inset-bottom));
+  z-index: 90;
+  background: var(--h-surface);
+  border-top: 1px solid var(--h-line);
+  padding: 14px 0 6px;
+  font-family: var(--h-font, system-ui, sans-serif);
+  color: var(--h-ink);
+}
+.h-spoons-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 20px 10px; }
+.h-spoons-title { font-size: 1.0625rem; font-weight: 700; }
+.h-spoons-last { font-size: 0.8125rem; color: var(--h-faint); }
+.h-spoons-row { display: flex; gap: 6px; overflow-x: auto; padding: 0 20px 4px; scrollbar-width: none; }
+.h-spoons-row::-webkit-scrollbar { display: none; }
+.h-spoons-chip {
+  flex: none;
+  width: var(--h-tap);
+  height: var(--h-tap);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--h-ground);
+  color: var(--h-ink);
+  border: 1px solid var(--h-line);
+}
+.h-spoons-chip[aria-pressed="true"] { background: var(--h-lamp); color: var(--h-ground); border-color: var(--h-lamp); }
+.h-spoons-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 20px 2px; min-height: var(--h-tap); }
+.h-spoons-msg { font-size: 0.9375rem; color: var(--h-ink); }
+.h-spoons-msg.is-warn { color: var(--h-drevan); }
+.h-spoons-hint { font-size: 0.875rem; color: var(--h-faint); }
+.h-spoons-actions { display: flex; gap: 6px; }
+.h-spoons-btn {
+  min-height: var(--h-tap);
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--h-line);
+  background: transparent;
+  color: var(--h-muted);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.h-spoons-btn.is-lamp { color: var(--h-lamp); }
+.h-spoons-word { display: grid; gap: 8px; padding: 8px 20px 4px; }
+.h-spoons-input {
+  min-height: var(--h-tap);
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--h-line);
+  background: var(--h-ground);
+  color: var(--h-ink);
+  font-family: inherit;
+  font-size: 1rem;
+}
+.h-spoons-chip:focus-visible, .h-spoons-btn:focus-visible, .h-spoons-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+@media (min-width: 1024px) {
+  .h-spoons { bottom: 0; }
+}

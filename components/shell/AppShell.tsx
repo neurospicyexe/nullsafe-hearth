@@ -6,14 +6,15 @@ import { usePathname } from "next/navigation";
 import { shellHidden } from "@/lib/shell";
 import Header from "./Header";
 import TabBar from "./TabBar";
+import SpoonsStrip from "./SpoonsStrip";
 
 const SearchOverlay = dynamic(() => import("../SearchOverlay"), { ssr: false });
 
 /**
- * Header, page, optional strip (the spoons strip arrives in Task 8), tab bar.
+ * Header, page, spoons strip (one-tap check-in), tab bar.
  * The reader and login render bare, with no chrome.
  */
-export default function AppShell({ children, strip }: { children: ReactNode; strip?: ReactNode }) {
+export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const [searchOpen, setSearchOpen] = useState(false);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
@@ -37,7 +38,7 @@ export default function AppShell({ children, strip }: { children: ReactNode; str
     <div className="h-shell">
       <Header onSearch={() => setSearchOpen(true)} />
       <main className="app-main h-main">{children}</main>
-      {strip}
+      <SpoonsStrip />
       <TabBar />
       <SearchOverlay open={searchOpen} onClose={closeSearch} />
     </div>
