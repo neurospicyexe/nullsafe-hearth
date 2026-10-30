@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { shellHidden } from "@/lib/shell";
 import { SPOON_VALUES, confirmLine, lastLoggedLabel } from "@/lib/spoons";
-import { createCheckin, type Extra } from "@/lib/checkin";
+import { createCheckin, type Extra, type WordState } from "@/lib/checkin";
+import { unsavedCount, unsavedLine } from "@/lib/write-queue";
 import { useWriteQueue } from "./WriteQueueProvider";
 
 type Latest = { spoons: number | null; recorded_at: string };
@@ -21,6 +22,15 @@ function newRowId(): string {
   }
 }
 
+/** The word's line is only "saved" once its write answered ok. */
+function wordLine(base: string, w: WordState | null): string {
+  if (w === "saving") return `${base} Saving word…`;
+  if (w === "saved") return `${base} Word saved.`;
+  if (w === "failed") return "Word didn’t save. I’ll retry next time Hearth opens.";
+  if (w === "dropped") return "Word didn’t save.";
+  return base;
+}
+
 function wordBody(mood: string, energy: number | null): Extra {
   const extra: Extra = {};
   if (mood.trim() !== "") extra.mood = mood.trim();
@@ -28,8 +38,7 @@ function wordBody(mood: string, energy: number | null): Extra {
   return extra;
 }
 
-/** `notice`: AppShell's line for writes kept for retry ("1 thing didn't save..."); empty hides it. */
-export default function SpoonsStrip({ notice = "" }: { notice?: string }) {
+export default function SpoonsStrip() {
   const pathname = usePathname() ?? "/";
   const queue = useWriteQueue();
   const [latest, setLatest] = useState<Latest | null>(null);
@@ -38,14 +47,28 @@ export default function SpoonsStrip({ notice = "" }: { notice?: string }) {
   const [wordOpen, setWordOpen] = useState(false);
   const [mood, setMood] = useState("");
   const [energy, setEnergy] = useState<number | null>(null);
-  const [wordSaved, setWordSaved] = useState(false);
+  const [wordState, setWordState] = useState<WordState | null>(null);
+  const [failedKeys, setFailedKeys] = useState<string[]>([]);
 
   // Which write goes where (tap / undo / word, by row id) lives in lib/checkin.ts.
   const [checkin] = useState(() =>
-    createCheckin(queue, { newId: newRowId, now: () => new Date() }, (o) =>
-      setPhase(o === "landed" ? "logged" : o),
+    createCheckin(
+      queue,
+      { newId: newRowId, now: () => new Date() },
+      (o) => setPhase(o === "landed" ? "logged" : o),
+      setWordState,
     ),
   );
+
+  // Writes kept for retry (offline, server down), refreshed on every queue change: sends, restore,
+  // discard. Subscribed here, before the provider's restore effect runs (child effects run first).
+  useEffect(() => {
+    const read = () => setFailedKeys(queue.failed().map((w) => w.key));
+    read();
+    return queue.subscribe(read);
+  }, [queue]);
+  // Said once: what this strip already shows as failed is left out of the app-wide line.
+  const notice = unsavedLine(unsavedCount(failedKeys, checkin.owned()));
 
   const hidden = shellHidden(pathname);
 
@@ -71,7 +94,7 @@ export default function SpoonsStrip({ notice = "" }: { notice?: string }) {
       setMood("");
       setEnergy(null);
       setWordOpen(false);
-      setWordSaved(false);
+      setWordState(null);
     }
     setPicked(n);
     setPhase("logged");
@@ -82,7 +105,7 @@ export default function SpoonsStrip({ notice = "" }: { notice?: string }) {
     setPicked(null);
     setPhase("removed");
     setWordOpen(false);
-    setWordSaved(false);
+    setWordState(null);
     setMood("");
     setEnergy(null);
     window.setTimeout(() => setPhase((ph) => (ph === "removed" ? "idle" : ph)), 2000);
@@ -91,7 +114,6 @@ export default function SpoonsStrip({ notice = "" }: { notice?: string }) {
   function saveWord() {
     if (picked === null) return;
     if (!checkin.saveWord(wordBody(mood, energy))) return;
-    setWordSaved(true);
     setWordOpen(false);
   }
 
@@ -136,7 +158,9 @@ export default function SpoonsStrip({ notice = "" }: { notice?: string }) {
         </div>
       ) : picked !== null ? (
         <div className="h-spoons-line" role="status">
-          <span className="h-spoons-msg">{wordSaved ? `${confirmLine(picked)} Word saved.` : confirmLine(picked)}</span>
+          <span className={wordState === "failed" || wordState === "dropped" ? "h-spoons-msg is-warn" : "h-spoons-msg"}>
+            {wordLine(confirmLine(picked), wordState)}
+          </span>
           <span className="h-spoons-actions">
             {!wordOpen && (
               <button type="button" className="h-spoons-btn is-lamp" onClick={() => setWordOpen(true)}>

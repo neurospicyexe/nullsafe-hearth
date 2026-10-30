@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { createWriteQueue, unsavedLine, STORAGE_KEY, type QueueDeps, type QueuedWrite } from "../write-queue";
+import { createWriteQueue, unsavedLine, unsavedCount, STORAGE_KEY, type QueueDeps, type QueuedWrite } from "../write-queue";
 
 type FakeRes = { status?: number; redirected?: boolean; notJson?: boolean };
 
@@ -327,5 +327,13 @@ describe("unsavedLine", () => {
     expect(unsavedLine(0)).toBe("");
     expect(unsavedLine(1)).toBe("1 thing didn’t save. I’ll retry next time Hearth opens.");
     expect(unsavedLine(3)).toBe("3 things didn’t save. I’ll retry next time Hearth opens.");
+  });
+});
+
+describe("unsavedCount", () => {
+  it("leaves out the failures the strip is already showing", () => {
+    expect(unsavedCount(["spoons", "spoons-undo-a", "pin"], ["spoons"])).toBe(2);
+    expect(unsavedCount(["spoons-word-b"], ["spoons-word-b"])).toBe(0);
+    expect(unsavedCount(["spoons"], [])).toBe(1); // a restored failure from an earlier visit still counts
   });
 });

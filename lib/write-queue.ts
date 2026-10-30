@@ -217,6 +217,12 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
   };
 }
 
+/** Failed writes the app-wide line should count: everything except what the strip already says itself. */
+export function unsavedCount(failedKeys: string[], ownedByStrip: string[]): number {
+  const owned = new Set(ownedByStrip);
+  return failedKeys.filter((k) => !owned.has(k)).length;
+}
+
 /** The calm line above the spoons strip for writes kept for retry. Empty when there are none. */
 export function unsavedLine(n: number): string {
   if (n <= 0) return "";
