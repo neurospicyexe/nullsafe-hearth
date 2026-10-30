@@ -15,10 +15,8 @@ export default async function HomePage() {
   ]);
   const now = new Date();
 
-  // Soma and inbox both null means Halseth is down (either alone can be a missing endpoint).
-  if (!soma && !inbox) {
-    return <p className="h-home-quiet h-home-down">Can&apos;t reach Halseth right now.</p>;
-  }
+  // /soma null means Halseth is down or that endpoint failed: say so, still show the bare rows.
+  const down = !soma;
 
   const rows = buildWhoIsHome(soma, now);
   const left = buildLeftForYou(inbox, now);
@@ -26,8 +24,9 @@ export default async function HomePage() {
 
   return (
     <div className="h-home">
+      {down && <p className="h-home-quiet h-home-down">Can&apos;t reach Halseth right now.</p>}
       <WhoIsHome rows={rows} />
-      <LeftForYou items={left.items} />
+      {inbox && <LeftForYou items={left.items} />}
       {book && <ReadingLine book={book} />}
       <section className="h-home-section">
         <Link href="/phoenix/chat" className="h-home-talk">Talk to them</Link>
