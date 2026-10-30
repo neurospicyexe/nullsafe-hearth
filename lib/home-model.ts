@@ -59,7 +59,8 @@ export function buildWhoIsHome(soma: SomaData | null, now: Date): HomeRow[] {
     if (!s) return { ...base, status: null, statusStale: false, statusAge: "", seenLabel: "", bars: [] };
 
     const status = s.current_mood ?? s.compound_state ?? null;
-    const setAt = s.current_mood && s.mood_set_at ? parseUtc(s.mood_set_at) : null;
+    // Halseth stamps mood_set_at for a mood word OR a compound state, so staleness gates on whichever is shown.
+    const setAt = status && s.mood_set_at ? parseUtc(s.mood_set_at) : null;
     const statusStale = setAt !== null && now.getTime() - setAt.getTime() > DAY_MS;
 
     const bars: { label: string; pct: number }[] = [];
@@ -78,7 +79,9 @@ export function buildWhoIsHome(soma: SomaData | null, now: Date): HomeRow[] {
       status,
       statusStale,
       statusAge: statusStale ? ageLabel(s.mood_set_at, now) : "",
-      seenLabel: ageLabel(s.updated_at, now),
+      // seen_at = the companion's own last act (mood, journal entry, session close). Never updated_at:
+      // the ferment cron moves that every hour, so every row would read "now".
+      seenLabel: ageLabel(s.seen_at ?? null, now),
       bars,
     };
   });

@@ -52,11 +52,21 @@ describe("buildWhoIsHome", () => {
     const rows = buildWhoIsHome(soma(row({ soma_float_2: null })), now);
     expect(rows[0].bars.map((b) => b.label)).toEqual(["heat", "weight"]);
   });
-  it("seenLabel from updated_at", () => {
-    expect(buildWhoIsHome(soma(row({ updated_at: "2026-10-29 19:59:30" })), now)[0].seenLabel).toBe("now");
-    expect(buildWhoIsHome(soma(row({ updated_at: "2026-10-29 19:56:00" })), now)[0].seenLabel).toBe("4m");
-    expect(buildWhoIsHome(soma(row({ updated_at: "2026-10-29 18:00:00" })), now)[0].seenLabel).toBe("2h");
-    expect(buildWhoIsHome(soma(row({ updated_at: "2026-10-27 20:00:00" })), now)[0].seenLabel).toBe("2d");
+  it("seenLabel from seen_at (the companion's own last act)", () => {
+    expect(buildWhoIsHome(soma(row({ seen_at: "2026-10-29T19:59:30.000Z" })), now)[0].seenLabel).toBe("now");
+    expect(buildWhoIsHome(soma(row({ seen_at: "2026-10-29T19:56:00.000Z" })), now)[0].seenLabel).toBe("4m");
+    expect(buildWhoIsHome(soma(row({ seen_at: "2026-10-29T18:00:00.000Z" })), now)[0].seenLabel).toBe("2h");
+    expect(buildWhoIsHome(soma(row({ seen_at: "2026-10-27T20:00:00.000Z" })), now)[0].seenLabel).toBe("2d");
+  });
+  it("seenLabel never falls back to updated_at (the ferment cron moves it hourly)", () => {
+    expect(buildWhoIsHome(soma(row({ updated_at: "2026-10-29 19:59:30" })), now)[0].seenLabel).toBe("");
+    expect(buildWhoIsHome(soma(row({ seen_at: null, updated_at: "2026-10-29 19:59:30" })), now)[0].seenLabel).toBe("");
+  });
+  it("a stale compound_state (no mood word) reads as stale too", () => {
+    const rows = buildWhoIsHome(soma(row({ compound_state: "steady", mood_set_at: "2026-10-28 18:00:00" })), now);
+    expect(rows[0].status).toBe("steady");
+    expect(rows[0].statusStale).toBe(true);
+    expect(rows[0].statusAge).toBe("1d");
   });
 });
 

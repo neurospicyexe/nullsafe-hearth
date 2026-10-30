@@ -820,8 +820,10 @@ export type CompanionSomaState = {
   heat: string | null;
   reach: string | null;
   weight: string | null;
-  /** When current_mood was last set (Halseth UTC). Older than 24h reads as stale. */
+  /** When current_mood / compound_state was last set by the companion (Halseth UTC). Older than 24h reads as stale. */
   mood_set_at: string | null;
+  /** Latest of mood_set_at, the companion's own journal entry and session close (ISO); null = nothing yet. Halseth mig 0153 era. */
+  seen_at?: string | null;
   updated_at: string;
 } | null;
 
