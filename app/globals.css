@@ -62,7 +62,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  padding-bottom: calc(5rem + env(safe-area-inset-bottom)); /* For mobile nav (+ iPhone home bar) */
+  /* Bottom clearance for the tab bar lives on .h-shell (Hearth v2). */
   /* Home-screen app (viewport-fit=cover, black-translucent status bar): keep content out from under the
      notch / Dynamic Island and the rounded side edges. env() is 0 everywhere else, so no change there. */
   padding-top: env(safe-area-inset-top);
@@ -222,8 +222,6 @@ input, select, textarea { font-family: inherit; }
 @media (min-width: 1024px) {
   .nav-sidebar { display: flex; }
   .nav-bottom { display: none; }
-  body { padding-bottom: 0; }
-  .app-main { margin-left: 260px; }
 }
 
 /* Login page — no nav rendered, remove margin and bottom padding */
@@ -1966,3 +1964,110 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .people-centre-sub { font-size: 0.9rem; color: var(--text-main); overflow-wrap: anywhere; }
 .people-heading { font-size: 1rem; margin: 0.5rem 0 0; }
 .people-hint { margin: 0; font-size: 0.82rem; color: var(--text-muted); }
+
+/* Hearth v2 tokens */
+:root {
+  --h-ground: #1b1814;
+  --h-surface: #24201b;
+  --h-line: #3a342c;
+  --h-ink: #f1e9dc;
+  --h-muted: #b3a897;
+  --h-faint: #9a8f7f;
+  --h-lamp: #e9ad48;
+  --h-drevan: #e47a52;
+  --h-cypher: #c4d0dd;
+  --h-gaia: #86c27f;
+  --h-radius: 14px;
+  --h-tap: 44px;
+  --h-tabbar-h: 72px;
+}
+
+/* Hearth v2 shell */
+.h-shell {
+  min-height: 100vh;
+  background: var(--h-ground);
+  padding-bottom: calc(var(--h-tabbar-h) + env(safe-area-inset-bottom));
+  font-family: var(--h-font, system-ui, sans-serif);
+}
+.h-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 6px;
+  color: var(--h-ink);
+}
+.h-header-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+.h-search-btn {
+  width: var(--h-tap);
+  height: var(--h-tap);
+  border-radius: 22px;
+  border: 1px solid var(--h-line);
+  background: var(--h-surface);
+  color: var(--h-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.h-search-btn:focus-visible, .h-tab:focus-visible, .h-door:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+
+.h-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--h-surface);
+  border-top: 1px solid var(--h-line);
+  padding: 4px 8px calc(10px + env(safe-area-inset-bottom));
+}
+.h-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: var(--h-tap);
+  padding: 8px 0;
+  color: var(--h-muted);
+  font-family: var(--h-font, system-ui, sans-serif);
+  font-size: 13px;
+  text-decoration: none;
+}
+.h-tab.is-active { color: var(--h-lamp); font-weight: 700; }
+
+.h-page-title { font-size: 1.75rem; font-weight: 700; color: var(--h-ink); margin-bottom: 1rem; font-family: var(--h-font, system-ui, sans-serif); }
+.h-doors { list-style: none; display: grid; gap: 8px; }
+.h-door {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 10px 16px;
+  background: var(--h-surface);
+  border: 1px solid var(--h-line);
+  border-radius: var(--h-radius);
+  color: var(--h-ink);
+  font-family: var(--h-font, system-ui, sans-serif);
+  text-decoration: none;
+}
+.h-door-label { font-size: 1.0625rem; font-weight: 700; }
+.h-door-hint { font-size: 0.875rem; color: var(--h-faint); }
+
+@media (min-width: 1024px) {
+  .h-shell { padding-bottom: 0; padding-left: 96px; }
+  .h-tabbar {
+    top: 0;
+    right: auto;
+    width: 96px;
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 4px;
+    border-top: 0;
+    border-right: 1px solid var(--h-line);
+    padding: 24px 8px;
+  }
+}

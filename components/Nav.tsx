@@ -90,6 +90,9 @@ const NAV_GROUPS = [
   },
 ];
 
+/** Every href in the old nav; shell.test.ts asserts each stays reachable from the new tabs and hubs. */
+export const NAV_HREFS: string[] = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
+
 // Mobile bottom nav — core items only, rest reachable via search
 const MOBILE_NAV = [
   { href: "/",       label: "Home",     sym: "◈" },
