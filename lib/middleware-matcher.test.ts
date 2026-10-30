@@ -15,6 +15,12 @@ describe("middleware matcher", () => {
     }
   });
 
+  it("protects the Hearth v2 write routes (inbox read marks, check-in undo/amend by id)", () => {
+    for (const p of ["/api/inbox/read", "/api/biometrics", "/api/biometrics/0b7c6f1e-3a2d-4c5b-9e8f-1a2b3c4d5e6f"]) {
+      expect(isProtected(p), p).toBe(true);
+    }
+  });
+
   it("leaves the deliberate public paths public", () => {
     for (const p of ["/api/auth", "/login", "/api/companion/house", "/manifest.webmanifest", "/sw.js", "/offline.html", "/icon.png"]) {
       expect(isProtected(p), p).toBe(false);
