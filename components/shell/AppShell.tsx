@@ -7,6 +7,7 @@ import { shellHidden } from "@/lib/shell";
 import Header from "./Header";
 import TabBar from "./TabBar";
 import SpoonsStrip from "./SpoonsStrip";
+import GreetingTitle from "../home/GreetingTitle";
 
 const SearchOverlay = dynamic(() => import("../SearchOverlay"), { ssr: false });
 
@@ -36,7 +37,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="h-shell">
-      <Header onSearch={() => setSearchOpen(true)} />
+      <Header onSearch={() => setSearchOpen(true)}>{pathname === "/" ? <GreetingTitle /> : undefined}</Header>
       <main className="app-main h-main">{children}</main>
       <SpoonsStrip />
       <TabBar />
