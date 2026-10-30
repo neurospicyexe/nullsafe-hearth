@@ -820,6 +820,10 @@ export type CompanionSomaState = {
   heat: string | null;
   reach: string | null;
   weight: string | null;
+  /** When current_mood / compound_state was last set by the companion (Halseth UTC). Older than 24h reads as stale. */
+  mood_set_at: string | null;
+  /** Latest of mood_set_at, the companion's own journal entry and session close (ISO); null = nothing yet. Halseth mig 0153 era. */
+  seen_at?: string | null;
   updated_at: string;
 } | null;
 
@@ -832,6 +836,29 @@ export type SomaData = {
 
 export async function fetchSomaStates(): Promise<SomaData | null> {
   return hGetSafe<SomaData>("/soma");
+}
+
+// ── Raziel inbox (letters left for him) ───────────────────────────────────────
+
+export type InboxItem = {
+  id: string;
+  kind: "letter";
+  agent: string;
+  created_at: string;
+  preview: string;
+  text: string;
+  read: boolean;
+};
+
+export type InboxResponse = { items: InboxItem[]; unread_count: number };
+
+export async function fetchInbox(limit = 3): Promise<InboxResponse | null> {
+  return hGetSafe<InboxResponse>("/raziel/inbox?limit=" + limit);
+}
+
+export async function fetchInboxItem(id: string): Promise<InboxItem | null> {
+  const data = await hGetSafe<{ item: InboxItem }>("/raziel/inbox/" + encodeURIComponent(id));
+  return data?.item ?? null;
 }
 
 export async function fetchHumanBlocks(

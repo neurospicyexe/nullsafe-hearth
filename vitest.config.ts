@@ -2,6 +2,8 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  // tsconfig has jsx: preserve (Next compiles it); tests that import a .tsx module need the transformer to compile it.
+  oxc: { jsx: { runtime: "automatic" } },
   // Mirrors tsconfig `@/*` -> `./*`, so a test can import modules that use the alias (middleware.ts).
   resolve: { alias: { "@": fileURLToPath(new URL(".", import.meta.url)) } },
   test: {

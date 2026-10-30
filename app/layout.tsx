@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, Quicksand } from "next/font/google";
+import { Atkinson_Hyperlegible, Caveat, Quicksand } from "next/font/google";
 import "./globals.css";
-import Nav from "@/components/Nav";
+import AppShell from "@/components/shell/AppShell";
+import { WriteQueueProvider } from "@/components/shell/WriteQueueProvider";
 import ScrollToTop from "@/components/ScrollToTop";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 
@@ -19,8 +20,15 @@ const quicksand = Quicksand({
   display: "swap",
 });
 
+const atkinson = Atkinson_Hyperlegible({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--h-font",
+  display: "swap",
+});
+
 export const viewport: Viewport = {
-  themeColor: "#e8a83e",
+  themeColor: "#1b1814",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -44,13 +52,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${caveat.variable} ${quicksand.variable}`}>
+    <html lang="en" className={`${caveat.variable} ${quicksand.variable} ${atkinson.variable}`}>
       <body>
         <div className="app-layout">
           <ScrollToTop />
           <RegisterServiceWorker />
-          <Nav />
-          <main className="app-main">{children}</main>
+          <WriteQueueProvider>
+            <AppShell>{children}</AppShell>
+          </WriteQueueProvider>
         </div>
       </body>
     </html>
