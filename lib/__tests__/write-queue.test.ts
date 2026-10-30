@@ -1,15 +1,28 @@
 import { describe, it, expect, vi } from "vitest";
 import { createWriteQueue, STORAGE_KEY, type QueueDeps, type QueuedWrite } from "../write-queue";
 
+type FakeRes = { status?: number; redirected?: boolean; notJson?: boolean };
+
 function harness(opts: { storage?: "null" | "throws" | Record<string, string>; status?: number; reject?: boolean } = {}) {
   let now = 0;
   let nextId = 1;
   const timers = new Map<number, { at: number; fn: () => void }>();
   const store: Record<string, string> = typeof opts.storage === "object" ? opts.storage : {};
+  const respond = (r: FakeRes = {}) => {
+    const status = r.status ?? opts.status ?? 200;
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      redirected: r.redirected ?? false,
+      json: async () => {
+        if (r.notJson) throw new SyntaxError("Unexpected token <");
+        return { ok: true };
+      },
+    } as unknown as Response;
+  };
   const fetchMock = vi.fn(async (_url: unknown, _init?: unknown) => {
     if (opts.reject) throw new Error("offline");
-    const status = opts.status ?? 200;
-    return { ok: status >= 200 && status < 300, status, json: async () => ({ ok: true }) } as unknown as Response;
+    return respond();
   });
   const storage =
     opts.storage === "null"
@@ -38,7 +51,7 @@ function harness(opts: { storage?: "null" | "throws" | Record<string, string>; s
     }
     await Promise.resolve();
   };
-  return { deps, fetchMock, store, advance, queue: createWriteQueue(deps) };
+  return { deps, fetchMock, store, advance, respond, queue: createWriteQueue(deps) };
 }
 
 const spoons = (n: number): QueuedWrite => ({ key: "spoons", url: "/api/spoons", method: "POST", body: { spoons: n } });
@@ -197,5 +210,114 @@ describe("write-queue", () => {
     const p2 = q.submit(spoons(5));
     p2.undo();
     expect(await p2.done).toBe("undone");
+  });
+  it("a 4xx (not 408/429) resolves ok:false once, marked dropped, and is not kept for retry", async () => {
+    const h = harness({ status: 404 });
+    const p = h.queue.submit(spoons(4));
+    await h.advance(5000);
+    expect(await p.done).toMatchObject({ ok: false, status: 404, dropped: true });
+    expect(h.queue.failed()).toEqual([]);
+    expect(h.store[STORAGE_KEY]).toBeUndefined();
+  });
+
+  it("408 and 429 stay retryable", async () => {
+    for (const status of [408, 429]) {
+      const h = harness({ status });
+      const p = h.queue.submit(spoons(4));
+      await h.advance(5000);
+      const r = await p.done;
+      expect(r).toMatchObject({ ok: false, status });
+      expect((r as { dropped?: boolean }).dropped).toBeUndefined();
+      expect(h.queue.failed()).toHaveLength(1);
+    }
+  });
+
+  it("a stored 4xx is dropped from storage on restore", async () => {
+    const h = harness({ storage: { [STORAGE_KEY]: JSON.stringify([spoons(5)]) }, status: 400 });
+    await h.queue.restore();
+    expect(h.queue.failed()).toEqual([]);
+    expect(h.store[STORAGE_KEY]).toBeUndefined();
+  });
+
+  it("a redirected response (expired session -> /login) is a failure, kept for retry", async () => {
+    const h = harness();
+    h.fetchMock.mockImplementationOnce(async () => h.respond({ status: 200, redirected: true }));
+    const p = h.queue.submit(spoons(4));
+    await h.advance(5000);
+    expect(await p.done).toMatchObject({ ok: false, status: 200 });
+    expect(h.queue.failed()).toHaveLength(1);
+  });
+
+  it("a 200 that is not JSON (an HTML page) is a failure, kept for retry", async () => {
+    const h = harness();
+    h.fetchMock.mockImplementationOnce(async () => h.respond({ status: 200, notJson: true }));
+    const p = h.queue.submit(spoons(4));
+    await h.advance(5000);
+    expect(await p.done).toMatchObject({ ok: false, status: 200 });
+    expect(h.queue.failed()).toHaveLength(1);
+  });
+
+  it("restore rejects protocol-relative // urls", async () => {
+    const bad = { key: "a", url: "//evil.example/x", method: "POST" };
+    const h = harness({ storage: { [STORAGE_KEY]: JSON.stringify([bad, spoons(1)]) } });
+    await h.queue.restore();
+    expect(h.fetchMock).toHaveBeenCalledTimes(1);
+    expect(h.fetchMock.mock.calls[0][0]).toBe("/api/spoons");
+  });
+
+  it("discard(key) removes a failed stored write so it is never retried", async () => {
+    const h = harness({ reject: true });
+    const p = h.queue.submit(spoons(4));
+    await h.advance(5000);
+    await p.done;
+    expect(h.queue.failed()).toHaveLength(1);
+    h.queue.discard("spoons");
+    expect(h.queue.failed()).toEqual([]);
+    expect(h.store[STORAGE_KEY]).toBeUndefined();
+  });
+
+  it("discard(key) cancels a waiting write and stops an in-flight one from recording failure", async () => {
+    const h = harness();
+    const waiting = h.queue.submit(spoons(4));
+    h.queue.discard("spoons");
+    expect(await waiting.done).toBe("undone");
+    let rejectIt!: () => void;
+    h.fetchMock.mockImplementationOnce(() => new Promise<Response>((_, rej) => { rejectIt = () => rej(new Error("offline")); }));
+    const flying = h.queue.submit(spoons(5));
+    await h.advance(5000);
+    h.queue.discard("spoons");
+    rejectIt();
+    expect(await flying.done).toMatchObject({ ok: false, status: 0 });
+    expect(h.queue.failed()).toEqual([]);
+    expect(h.store[STORAGE_KEY]).toBeUndefined();
+    await h.advance(10000);
+    expect(h.fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("pending.waiting() is true only inside the grace window", async () => {
+    const h = harness();
+    const p = h.queue.submit(spoons(4));
+    expect(p.waiting()).toBe(true);
+    await h.advance(5000);
+    expect(p.waiting()).toBe(false);
+    const u = h.queue.submit(spoons(6));
+    u.undo();
+    expect(u.waiting()).toBe(false);
+  });
+
+  it("subscribe fires when failed() changes, and unsubscribe stops it", async () => {
+    const h = harness({ reject: true, storage: "null" }); // fires without storage too
+    const seen: number[] = [];
+    const off = h.queue.subscribe(() => seen.push(h.queue.failed().length));
+    const p = h.queue.submit(spoons(4));
+    await h.advance(5000);
+    await p.done;
+    expect(seen.at(-1)).toBe(1);
+    h.queue.discard("spoons");
+    expect(seen.at(-1)).toBe(0);
+    off();
+    const n = seen.length;
+    h.queue.submit(spoons(5));
+    expect(seen.length).toBe(n);
   });
 });

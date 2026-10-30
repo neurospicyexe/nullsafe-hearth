@@ -2,14 +2,25 @@
 // Pure module: no React, no window access; everything is injected via QueueDeps.
 
 export type QueuedWrite = { key: string; url: string; method: "POST" | "PATCH" | "DELETE"; body?: unknown };
-export type WriteResult = { ok: boolean; status: number; json: unknown };
+/** `dropped`: a non-retryable answer (4xx other than 408/429). Resolved once so the UI can say so, never stored. */
+export type WriteResult = { ok: boolean; status: number; json: unknown; dropped?: true };
 export type QueueDeps = {
   fetch: typeof fetch;
   storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null; // null when unavailable
   setTimeout: (fn: () => void, ms: number) => unknown;
   clearTimeout: (h: unknown) => void;
 };
-export type Pending = { undo(): void; done: Promise<WriteResult | "undone"> };
+export type Pending = {
+  undo(): void;
+  /** True only while the write sits in its grace window (not yet sent, not undone). */
+  waiting(): boolean;
+  done: Promise<WriteResult | "undone">;
+};
+
+/** 4xx means the request itself is wrong (or the row is gone): retrying cannot help. 408/429 can. */
+function retryable(status: number): boolean {
+  return !(status >= 400 && status < 500) || status === 408 || status === 429;
+}
 
 export const STORAGE_KEY = "hearth:write-queue:v1";
 
@@ -29,8 +40,24 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
   const waiting = new Map<string, Entry>(); // keyed: a newer submit replaces an older waiting write
   const inflight = new Set<Entry>();
   const failedWrites = new Map<string, QueuedWrite>();
+  const listeners = new Set<() => void>();
+
+  function notify(): void {
+    for (const fn of [...listeners]) {
+      try {
+        fn();
+      } catch {
+        // a listener's error never breaks the queue
+      }
+    }
+  }
 
   function persist(): void {
+    writeStorage();
+    notify(); // even with no storage: the in-memory failed() set may have changed
+  }
+
+  function writeStorage(): void {
     const { storage } = deps;
     if (!storage) return;
     try {
@@ -63,19 +90,24 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
       }
       if (keepalive) init.keepalive = true;
       const res = await doFetch(write.url, init);
+      // Every target is a JSON API. A redirect (expired session -> /login) or a body that is not JSON
+      // (that login page, an HTML error) is a failure even when the final status is 200.
       let json: unknown = null;
+      let parsed = true;
       try {
         json = await res.json();
       } catch {
         json = null;
+        parsed = false;
       }
-      result = { ok: res.ok, status: res.status, json };
+      result = { ok: res.ok && !res.redirected && parsed, status: res.status, json };
+      if (!res.ok && !retryable(res.status)) result.dropped = true;
     } catch {
       result = { ok: false, status: 0, json: null };
     }
     inflight.delete(entry);
     if (latestSeq.get(write.key) === entry.seq) {
-      if (result.ok) failedWrites.delete(write.key);
+      if (result.ok || result.dropped) failedWrites.delete(write.key);
       else failedWrites.set(write.key, write);
     }
     persist();
@@ -105,6 +137,9 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
     }
     return {
       done,
+      waiting() {
+        return entry.state === "waiting";
+      },
       undo() {
         if (entry.state !== "waiting") return;
         entry.state = "sent"; // settled; blocks any later send
@@ -142,6 +177,8 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
               typeof w.key === "string" &&
               typeof w.url === "string" &&
               w.url.startsWith("/") &&
+              !w.url.startsWith("//") && // protocol-relative: another origin
+              !w.url.startsWith("/\\") && // browsers read "/\host" as "//host" too
               (w.method === "POST" || w.method === "PATCH" || w.method === "DELETE"),
           );
         }
@@ -156,6 +193,26 @@ export function createWriteQueue(deps: QueueDeps, graceMs = 5000) {
     },
     failed(): QueuedWrite[] {
       return [...failedWrites.values()];
+    },
+    /** Forget a write for good: cancel it if waiting, drop it if stored, and let an in-flight send record nothing. */
+    discard(key: string): void {
+      const w = waiting.get(key);
+      if (w) {
+        doClearTimeout(w.handle);
+        waiting.delete(key);
+        w.state = "sent";
+        w.resolve("undone");
+      }
+      latestSeq.set(key, ++seqCounter); // no live entry owns this seq, so an in-flight result records nothing
+      failedWrites.delete(key);
+      persist();
+    },
+    /** Called whenever the stored/failed set may have changed. Returns an unsubscribe. */
+    subscribe(fn: () => void): () => void {
+      listeners.add(fn);
+      return () => {
+        listeners.delete(fn);
+      };
     },
   };
 }
