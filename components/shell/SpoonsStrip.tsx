@@ -1,20 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { shellHidden } from "@/lib/shell";
 import { SPOON_VALUES, confirmLine, lastLoggedLabel } from "@/lib/spoons";
+import { createCheckin, type Extra } from "@/lib/checkin";
 import { useWriteQueue } from "./WriteQueueProvider";
 
 type Latest = { spoons: number | null; recorded_at: string };
-type Phase = "idle" | "logged" | "failed" | "removed";
-type Extra = { mood?: string; energy?: number };
+type Phase = "idle" | "logged" | "failed" | "dropped" | "removed";
 
 const ENERGY_VALUES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-function idFrom(json: unknown): string | null {
-  const id = (json as { id?: unknown } | null)?.id;
-  return typeof id === "string" || typeof id === "number" ? String(id) : null;
+/** Row id generated at tap time; Halseth takes 8..64 chars of [A-Za-z0-9_-]. */
+function newRowId(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `hq${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+  }
 }
 
 function wordBody(mood: string, energy: number | null): Extra {
@@ -35,10 +39,12 @@ export default function SpoonsStrip() {
   const [energy, setEnergy] = useState<number | null>(null);
   const [wordSaved, setWordSaved] = useState(false);
 
-  // Check-in lifecycle lives in refs so async results never read stale state.
-  const pendingRef = useRef<ReturnType<typeof queue.submit> | null>(null);
-  const idRef = useRef<string | null>(null); // set once the POST has landed
-  const tokenRef = useRef(0); // identifies the newest check-in; older results are ignored
+  // Which write goes where (tap / undo / word, by row id) lives in lib/checkin.ts.
+  const [checkin] = useState(() =>
+    createCheckin(queue, { newId: newRowId, now: () => new Date() }, (o) =>
+      setPhase(o === "landed" ? "logged" : o),
+    ),
+  );
 
   const hidden = shellHidden(pathname);
 
@@ -58,54 +64,20 @@ export default function SpoonsStrip() {
     };
   }, [hidden]);
 
-  const post = useCallback(
-    (spoons: number, extra: Extra) => {
-      const token = ++tokenRef.current;
-      const p = queue.submit({
-        key: "spoons",
-        url: "/api/biometrics",
-        method: "POST",
-        body: { spoons, source: "hearth-quick", ...extra },
-      });
-      pendingRef.current = p;
-      void p.done.then((r) => {
-        if (r === "undone" || token !== tokenRef.current) return;
-        if (r.ok) {
-          idRef.current = idFrom(r.json);
-          setPhase("logged");
-        } else {
-          setPhase("failed"); // the queue keeps the write and retries it
-        }
-      });
-    },
-    [queue],
-  );
-
   function tap(n: number) {
-    if (idRef.current !== null) {
-      // The previous check-in already landed: this one is a new log.
-      idRef.current = null;
+    if (checkin.tap(n) === "new") {
+      // A new row: any word belonged to the previous check-in.
       setMood("");
       setEnergy(null);
       setWordOpen(false);
       setWordSaved(false);
-      post(n, {});
-    } else {
-      // Still in grace (or first tap): resubmitting the same key replaces the pending POST.
-      post(n, wordBody(mood, energy));
     }
     setPicked(n);
     setPhase("logged");
   }
 
-  function deleteRow(id: string) {
-    queue.submit({ key: "spoons-undo", url: `/api/biometrics/${encodeURIComponent(id)}`, method: "DELETE" });
-  }
-
   function undo() {
-    const id = idRef.current;
-    const p = pendingRef.current;
-    tokenRef.current++; // ignore the POST's own result from here on
+    checkin.undo();
     setPicked(null);
     setPhase("removed");
     setWordOpen(false);
@@ -113,35 +85,11 @@ export default function SpoonsStrip() {
     setMood("");
     setEnergy(null);
     window.setTimeout(() => setPhase((ph) => (ph === "removed" ? "idle" : ph)), 2000);
-    pendingRef.current = null;
-    if (id !== null) {
-      idRef.current = null;
-      deleteRow(id);
-      return;
-    }
-    if (!p) return;
-    p.undo(); // before send: nothing was ever written
-    // If the POST was already in flight, undo() is a no-op: delete the row once it lands.
-    void p.done.then((r) => {
-      if (r === "undone") return;
-      const landed = r.ok ? idFrom(r.json) : null;
-      if (landed !== null) deleteRow(landed);
-    });
   }
 
   function saveWord() {
-    const extra = wordBody(mood, energy);
-    if (picked === null || Object.keys(extra).length === 0) return;
-    if (idRef.current !== null) {
-      queue.submit({
-        key: "spoons-word",
-        url: `/api/biometrics/${encodeURIComponent(idRef.current)}`,
-        method: "PATCH",
-        body: extra,
-      });
-    } else {
-      post(picked, extra); // still in grace: one request carries everything
-    }
+    if (picked === null) return;
+    if (!checkin.saveWord(wordBody(mood, energy))) return;
     setWordSaved(true);
     setWordOpen(false);
   }
@@ -169,9 +117,16 @@ export default function SpoonsStrip() {
           </button>
         ))}
       </div>
-      {phase === "failed" && picked !== null ? (
+      {(phase === "failed" || phase === "dropped") && picked !== null ? (
         <div className="h-spoons-line" role="status">
-          <span className="h-spoons-msg is-warn">Didn&apos;t save. Retrying when you&apos;re back online.</span>
+          <span className="h-spoons-msg is-warn">
+            {phase === "failed" ? "Didn’t save. I’ll retry next time Hearth opens." : "Didn’t save."}
+          </span>
+          <span className="h-spoons-actions">
+            <button type="button" className="h-spoons-btn" onClick={undo}>
+              undo
+            </button>
+          </span>
         </div>
       ) : picked !== null ? (
         <div className="h-spoons-line" role="status">
