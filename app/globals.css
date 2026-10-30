@@ -1829,7 +1829,8 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .pin-msg { color: var(--text-muted); font-size: 0.75rem; }
 @media (max-width: 767px) {
   .map-canvas { height: calc(100vh - 340px - env(safe-area-inset-bottom)); }
-  .map-panel { position: fixed; left: 0.5rem; right: 0.5rem; top: auto; bottom: calc(100px + env(safe-area-inset-bottom)); width: auto; max-height: 48vh; }
+  /* clears the tab bar and the spoons strip on phones */
+  .map-panel { position: fixed; left: 0.5rem; right: 0.5rem; top: auto; bottom: calc(var(--h-tabbar-h) + 160px + env(safe-area-inset-bottom)); width: auto; max-height: 48vh; }
 }
 
 /* People the map links to (Halseth mig 0149, map M5) */
@@ -1868,7 +1869,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   --h-gaia: #86c27f;
   --h-radius: 14px;
   --h-tap: 44px;
-  --h-tabbar-h: 72px;
+  --h-tabbar-h: 76px;
 }
 
 /* Hearth v2 shell */
@@ -1995,6 +1996,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-spoons-msg { font-size: 0.9375rem; color: var(--h-ink); }
 .h-spoons-msg.is-warn { color: var(--h-drevan); }
 .h-spoons-hint { font-size: 0.875rem; color: var(--h-faint); }
+.h-spoons-unsaved { margin: 0; padding: 0 20px 8px; font-size: 0.8125rem; color: var(--h-muted); }
 .h-spoons-actions { display: flex; gap: 6px; }
 .h-spoons-btn {
   min-height: var(--h-tap);
@@ -2060,7 +2062,9 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-home-talk { display: flex; align-items: center; justify-content: center; min-height: var(--h-tap); border: 1px solid var(--h-line); border-radius: var(--h-radius); background: var(--h-surface); color: var(--h-lamp); font-weight: 700; text-decoration: none; }
 .h-home-quiet { margin: 0 4px; font-size: 0.9375rem; color: var(--h-muted); }
 .h-home-down { padding: 22px 20px; }
-.h-home-row:focus-visible, .h-home-item:focus-visible, .h-home-reading:focus-visible, .h-home-talk:focus-visible, .h-home-link:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-home-item:focus-visible, .h-home-reading:focus-visible, .h-home-talk:focus-visible, .h-home-link:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+/* inset: the card's overflow:hidden would clip an outset ring */
+.h-home-row:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: -2px; }
 
 /* ── Letters ─────────────────────────────────────────────────────────────── */
 .h-letters { display: flex; flex-direction: column; gap: 8px; }
