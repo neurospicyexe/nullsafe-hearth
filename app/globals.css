@@ -1927,6 +1927,22 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   text-decoration: none;
 }
 .h-tab.is-active { color: var(--h-lamp); font-weight: 700; }
+.h-tab-icon { position: relative; display: inline-flex; }
+.h-tab-badge {
+  position: absolute;
+  top: -6px;
+  left: 60%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--h-lamp);
+  color: var(--h-ground);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
 
 .h-page-title { font-size: 1.75rem; font-weight: 700; color: var(--h-ink); margin-bottom: 1rem; font-family: var(--h-font, system-ui, sans-serif); }
 .h-doors { list-style: none; display: grid; gap: 8px; }

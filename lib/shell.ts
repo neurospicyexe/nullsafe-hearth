@@ -30,6 +30,12 @@ export function activeTab(pathname: string): string | null {
   return null;
 }
 
+/** Tab badge text: null hides it (unknown count or nothing waiting); capped so it fits the pill. */
+export function badgeText(n: number | null): string | null {
+  if (n === null || n <= 0) return null;
+  return n > 9 ? "9+" : String(n);
+}
+
 /** The reader and the login page get the whole screen. */
 export function shellHidden(pathname: string): boolean {
   return pathname === "/login" || /^\/library\/[^/]+/.test(pathname);

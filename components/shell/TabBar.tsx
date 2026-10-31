@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
-import { TABS, activeTab, type TabLabel } from "@/lib/shell";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { TABS, activeTab, badgeText, type TabLabel } from "@/lib/shell";
 
 const icon = (children: ReactNode, round = false) => (
   <svg
@@ -44,13 +44,50 @@ const ICONS: Record<TabLabel, ReactNode> = {
 export default function TabBar() {
   const pathname = usePathname() ?? "/";
   const current = activeTab(pathname);
+  const [waiting, setWaiting] = useState<number | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch("/api/needs/count", { cache: "no-store" });
+      if (!res.ok) { setWaiting(null); return; }
+      const data = (await res.json()) as { total?: unknown };
+      setWaiting(typeof data.total === "number" ? data.total : null);
+    } catch {
+      setWaiting(null);
+    }
+  }, []);
+
+  // On mount, on every route change, on tab focus, and when /needs resolves something. No polling.
+  useEffect(() => {
+    void refresh();
+  }, [pathname, refresh]);
+  useEffect(() => {
+    const go = () => { void refresh(); };
+    window.addEventListener("focus", go);
+    window.addEventListener("hearth:needs-changed", go);
+    return () => {
+      window.removeEventListener("focus", go);
+      window.removeEventListener("hearth:needs-changed", go);
+    };
+  }, [refresh]);
+
   return (
     <nav className="h-tabbar" aria-label="Main">
       {TABS.map((tab) => {
         const active = tab.label === current;
+        const badge = tab.label === "Needs you" ? badgeText(waiting) : null;
         return (
-          <Link key={tab.href} href={tab.href} className={`h-tab${active ? " is-active" : ""}`} aria-current={active ? "page" : undefined}>
-            {ICONS[tab.label]}
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`h-tab${active ? " is-active" : ""}`}
+            aria-current={active ? "page" : undefined}
+            aria-label={badge ? `${tab.label}, ${waiting} waiting` : undefined}
+          >
+            <span className="h-tab-icon">
+              {ICONS[tab.label]}
+              {badge && <span className="h-tab-badge" aria-hidden="true">{badge}</span>}
+            </span>
             <span>{tab.label}</span>
           </Link>
         );

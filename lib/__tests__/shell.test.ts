@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TABS, HUBS, activeTab, shellHidden, COMPANION_COLOR } from "../shell";
+import { TABS, HUBS, activeTab, shellHidden, badgeText, COMPANION_COLOR } from "../shell";
 import nextConfig from "../../next.config";
 
 /** Frozen copy of every href the retired sidebar Nav carried; each must stay reachable from the new tabs and hubs. */
@@ -109,5 +109,25 @@ describe("redirects", () => {
       expect(r!.destination).toBe("/");
       expect((r as { permanent?: boolean }).permanent).toBe(false);
     }
+  });
+
+  it("forwards /questions to /needs, temporarily", async () => {
+    const redirects = await nextConfig.redirects!();
+    const r = redirects.find((x) => x.source === "/questions");
+    expect(r).toBeDefined();
+    expect(r!.destination).toBe("/needs");
+    expect((r as { permanent?: boolean }).permanent).toBe(false);
+  });
+});
+
+describe("badgeText", () => {
+  it("hides when unknown or zero", () => {
+    expect(badgeText(null)).toBeNull();
+    expect(badgeText(0)).toBeNull();
+  });
+  it("shows the count, capped at 9+", () => {
+    expect(badgeText(3)).toBe("3");
+    expect(badgeText(9)).toBe("9");
+    expect(badgeText(10)).toBe("9+");
   });
 });
