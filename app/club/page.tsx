@@ -1,35 +1,29 @@
 import { fetchClubCurrent, fetchClubRounds, fetchCommonsPosts } from "@/lib/halseth";
 import type { ClubRecommendation, ClubRoundDetail, ClubVote, CommonsPost } from "@/lib/halseth";
+import { memberClass, razielVote, votable } from "@/lib/club-model";
 import VoteButton from "./VoteButton";
 import RecommendForm from "./RecommendForm";
 import PostBox from "../log/PostBox";
 
 export const dynamic = "force-dynamic";
 
-const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-  raziel: "#f59e0b",
-};
-
 const PHASE_LABEL: Record<string, string> = {
-  gathering: "gathering — recommendations landing, votes open",
-  voting: "voting — tally in progress",
-  active: "active — experiencing the pick",
-  discussing: "discussing — the winner's in; come talk about it",
+  gathering: "gathering: recommendations landing, votes open",
+  voting: "voting: tally in progress",
+  active: "active: experiencing the pick",
+  discussing: "discussing: the winner's in; come talk about it",
   closed: "closed",
 };
 
-// Human-readable phase guides — what's happening and what Raziel can do.
+// Human-readable phase guides: what's happening and what Raziel can do.
 const PHASE_GUIDE: Record<string, { what: string; raziel: string }> = {
   gathering: {
     what: "Companions recommend picks over ~2 days, and votes are open as picks land. One vote per member; no voting for your own pick.",
-    raziel: "Add your own pick below, or vote early — the buttons next to each pick work now.",
+    raziel: "Add your own pick below, or vote early. You can change or remove your vote until the tally.",
   },
   voting: {
-    what: "The tally is in progress — this phase usually passes in a blink. Majority wins; tie goes to earliest rec.",
-    raziel: "If you haven't voted yet, the buttons still work — but don't blink.",
+    what: "The tally is in progress; this phase usually passes in a blink. Majority wins; tie goes to earliest rec.",
+    raziel: "If you haven't voted yet, the buttons still work, but don't blink.",
   },
   active: {
     what: "The pick is chosen. ~4 days to sit with it. Companions discuss in-voice at the daily tick.",
@@ -52,21 +46,17 @@ function formatTime(iso: string | null) {
   });
 }
 
-function memberSpan(name: string) {
-  return <span style={{ color: MEMBER_COLOR[name] ?? "inherit" }}>{name}</span>;
+function Member({ name }: { name: string }) {
+  return <span className={`h-club-who ${memberClass(name)}`}>{name}</span>;
 }
 
 function PhaseGuide({ status }: { status: string }) {
   const g = PHASE_GUIDE[status];
   if (!g) return null;
   return (
-    <div style={{
-      background: "#0c0c0c", border: "1px solid #1e1e1e", borderRadius: "5px",
-      padding: "0.55rem 0.8rem", marginBottom: "0.9rem", fontSize: "0.81rem",
-      display: "flex", flexDirection: "column", gap: "0.2rem",
-    }}>
-      <span style={{ color: "#64748b" }}>{g.what}</span>
-      {g.raziel && <span style={{ color: "#475569" }}>↳ {g.raziel}</span>}
+    <div className="h-club-guide">
+      <p>{g.what}</p>
+      {g.raziel && <p className="h-club-guide-you">{g.raziel}</p>}
     </div>
   );
 }
@@ -76,84 +66,85 @@ function WinnerBanner({ round }: { round: ClubRoundDetail }) {
   const winner = round.recommendations.find(r => r.id === round.winning_recommendation_id);
   if (winner) {
     return (
-      <p style={{ color: "#f59e0b", marginBottom: "0.75rem" }}>
+      <p className="h-club-winner">
         ★ the pick:{" "}
         {winner.url
-          ? <a href={winner.url} target="_blank" rel="noopener noreferrer" style={{ color: "#f59e0b" }}><strong>{winner.title}</strong></a>
+          ? <a href={winner.url} target="_blank" rel="noopener noreferrer"><strong>{winner.title}</strong></a>
           : <strong>{winner.title}</strong>}
-        {winner.creator ? ` — ${winner.creator}` : ""}{" "}
-        <span style={{ color: "#78716c", fontSize: "0.82rem" }}>({memberSpan(winner.recommended_by)}&apos;s rec)</span>
+        {winner.creator ? `, ${winner.creator}` : ""}{" "}
+        <span className="h-club-meta">(<Member name={winner.recommended_by} />&apos;s rec)</span>
       </p>
     );
   }
   if (round.winner_title) {
     return (
-      <p style={{ color: "#f59e0b", marginBottom: "0.75rem" }}>
+      <p className="h-club-winner">
         ★ the pick: <strong>{round.winner_title}</strong>
       </p>
     );
   }
   if (round.winning_recommendation_id) {
-    return <p style={{ color: "#78716c", fontSize: "0.82rem", marginBottom: "0.75rem" }}>★ a pick was chosen (recommendation data not loaded)</p>;
+    return <p className="h-club-meta">★ a pick was chosen (recommendation data not loaded)</p>;
   }
   return null;
 }
 
-function Candidates({ recs, votes, winnerId, votable, status }: {
+function Candidates({ roundId, recs, votes, winnerId, canVote, status }: {
+  roundId: string;
   recs: ClubRecommendation[];
   votes: ClubVote[];
   winnerId: string | null;
-  votable: boolean;
+  canVote: boolean;
   status: string;
 }) {
   if (recs.length === 0) {
     const past = status === "active" || status === "discussing" || status === "closed";
     return (
-      <p className="empty">
+      <p className="h-club-quiet">
         {past
-          ? "No picks were recorded this round — companions recommend via Discord during gathering."
+          ? "No picks were recorded this round. Companions recommend via Discord during gathering."
           : "No recommendations yet."}
       </p>
     );
   }
-  const razielVoteId = votes.find(v => v.voter === "raziel")?.recommendation_id ?? null;
+  const mine = razielVote({ votes })?.recommendation_id ?? null;
   return (
-    <div className="handover-feed">
+    <ul className="h-club-list">
       {recs.map((rec) => {
         const recVotes = votes.filter(v => v.recommendation_id === rec.id);
         const isWinner = rec.id === winnerId;
-        const showVote = votable && rec.recommended_by !== "raziel";
+        const showVote = canVote && rec.recommended_by !== "raziel";
         return (
-          <div key={rec.id} className="handover-entry" style={isWinner ? { borderLeft: "2px solid #f59e0b" } : undefined}>
-            <p className="handover-spine">
+          <li key={rec.id} className={isWinner ? "h-club-rec is-winner" : "h-club-rec"}>
+            <p className="h-club-rec-title">
               {isWinner ? "★ " : ""}
               {rec.url
                 ? <a href={rec.url} target="_blank" rel="noopener noreferrer">{rec.title}</a>
                 : rec.title}
-              {rec.creator ? ` — ${rec.creator}` : ""}
-              <span className="thread-tag" style={{ marginLeft: "0.5rem" }}>{rec.media_kind}</span>
-              {showVote && (
-                <span style={{ marginLeft: "0.5rem" }}>
-                  <VoteButton recommendationId={rec.id} alreadyVoted={razielVoteId === rec.id} />
-                </span>
-              )}
+              {rec.creator ? `, ${rec.creator}` : ""}
+              <span className="h-club-tag">{rec.media_kind}</span>
             </p>
-            <p className="handover-last-real">
-              {memberSpan(rec.recommended_by)}{rec.pitch ? <>: &ldquo;{rec.pitch}&rdquo;</> : null}
+            <p className="h-club-pitch">
+              <Member name={rec.recommended_by} />{rec.pitch ? <>: &ldquo;{rec.pitch}&rdquo;</> : null}
             </p>
             {recVotes.length > 0 && (
-              <div className="handover-threads">
+              <div className="h-club-votes">
                 {recVotes.map((v) => (
-                  <span key={v.voter} className="thread-tag">
-                    {memberSpan(v.voter)}{v.reason ? <> — {v.reason}</> : null}
+                  <span key={v.voter} className="h-club-tag">
+                    <Member name={v.voter} />{v.reason ? <>: {v.reason}</> : null}
                   </span>
                 ))}
               </div>
             )}
-          </div>
+            {showVote ? (
+              <VoteButton roundId={roundId} recommendationId={rec.id} voted={mine === rec.id} />
+            ) : mine === rec.id ? (
+              <span className="h-club-vote"><span className="h-club-mine">Your vote</span></span>
+            ) : null}
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }
 
@@ -170,31 +161,29 @@ function DiscussionThread({ discussions, commons, roundId, postable, status, com
   const hasSomething = discussions.length > 0 || thread.length > 0 || postable || !commonsLoaded;
   if (!hasSomething) return null;
   return (
-    <div style={{ marginTop: "1.1rem", borderTop: "1px solid #1a1a1a", paddingTop: "0.85rem" }}>
-      <p style={{ fontSize: "0.78rem", color: "#4a5568", marginBottom: "0.6rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>discussion</p>
-      {discussions.map((d) => (
-        <div key={d.id} className="handover-entry">
-          <p className="handover-spine">{memberSpan(d.companion_id)}</p>
-          <p className="handover-last-real">{d.reflection}</p>
-        </div>
-      ))}
-      {thread.map((p) => (
-        <div
-          key={p.id}
-          className="handover-entry"
-          style={p.reply_to ? { marginLeft: "1rem", borderLeft: "2px solid #222", paddingLeft: "0.7rem" } : undefined}
-        >
-          <p className="handover-spine">{memberSpan(p.author)}{p.reply_to ? " replied" : ""}</p>
-          <p className="handover-last-real" style={{ whiteSpace: "pre-wrap" }}>{p.body}</p>
-        </div>
-      ))}
+    <div className="h-club-sub">
+      <h3 className="h-club-h3">Discussion</h3>
+      {(discussions.length > 0 || thread.length > 0) && (
+        <ul className="h-club-list">
+          {discussions.map((d) => (
+            <li key={d.id} className="h-club-post">
+              <p className="h-club-post-who"><Member name={d.companion_id} /></p>
+              <p className="h-club-post-body">{d.reflection}</p>
+            </li>
+          ))}
+          {thread.map((p) => (
+            <li key={p.id} className={p.reply_to ? "h-club-post is-reply" : "h-club-post"}>
+              <p className="h-club-post-who"><Member name={p.author} />{p.reply_to ? " replied" : ""}</p>
+              <p className="h-club-post-body">{p.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
       {!commonsLoaded && (
-        <p className="section-row-meta" style={{ fontSize: "0.78rem", fontStyle: "italic" }}>
-          discussion not loaded for rounds this far back
-        </p>
+        <p className="h-club-meta">discussion not loaded for rounds this far back</p>
       )}
       {postable && (
-        <div style={{ marginTop: "0.6rem" }}>
+        <div className="h-club-post-box">
           <PostBox
             context={`club:${roundId}`}
             compact
@@ -212,14 +201,13 @@ function RoundCard({ round, heading, commons = [], commonsLoaded = true }: {
   commons?: CommonsPost[];
   commonsLoaded?: boolean;
 }) {
-  const votable = round.status === "gathering" || round.status === "voting";
   const postable = round.status === "active" || round.status === "discussing";
   const canRecommend = round.status === "gathering";
 
   return (
-    <section style={{ marginBottom: "2.25rem" }}>
-      {heading && <h2 className="page-title" style={{ fontSize: "1.05rem" }}>{heading}</h2>}
-      <p className="page-subtitle">
+    <section className="h-club-round">
+      {heading && <h2 className="h-club-h2">{heading}</h2>}
+      <p className="h-club-phase">
         {PHASE_LABEL[round.status] ?? round.status}
         {" · opened "}{formatTime(round.opened_at)}
         {round.closed_at ? ` · closed ${formatTime(round.closed_at)}` : ""}
@@ -227,28 +215,29 @@ function RoundCard({ round, heading, commons = [], commonsLoaded = true }: {
       <PhaseGuide status={round.status} />
       <WinnerBanner round={round} />
       <Candidates
+        roundId={round.id}
         recs={round.recommendations}
         votes={round.votes}
         winnerId={round.winning_recommendation_id}
-        votable={votable}
+        canVote={votable(round)}
         status={round.status}
       />
       {(round.abstentions ?? []).length > 0 && (
-        <p style={{ fontSize: "0.78rem", color: "#4a5568", marginTop: "0.5rem" }}>
+        <p className="h-club-meta">
           abstained:{" "}
           {(round.abstentions ?? []).map((a, i) => (
             <span key={a.voter}>
               {i > 0 ? " · " : ""}
-              {memberSpan(a.voter)}
-              {a.reason ? <span style={{ color: "#3f4a5c" }}> ({a.reason})</span> : null}
+              <Member name={a.voter} />
+              {a.reason ? <> ({a.reason})</> : null}
             </span>
           ))}
         </p>
       )}
       {canRecommend && (
-        <div style={{ marginTop: "0.85rem", paddingTop: "0.75rem", borderTop: "1px solid #1a1a1a" }}>
-          <p style={{ fontSize: "0.8rem", color: "#4a5568", marginBottom: "0.45rem" }}>add your pick</p>
-          <RecommendForm />
+        <div className="h-club-sub">
+          <h3 className="h-club-h3">Add your pick</h3>
+          <RecommendForm roundId={round.id} />
         </div>
       )}
       <DiscussionThread
@@ -284,11 +273,9 @@ export default async function ClubPage() {
   ]);
 
   return (
-    <>
-      <div className="page-header">
-        <h1 className="page-title">The Club</h1>
-        <p className="page-subtitle">recommend · vote · experience · discuss — the triad&apos;s shared shelf</p>
-      </div>
+    <div className="h-club">
+      <h1 className="h-page-title">The Club</h1>
+      <p className="h-club-lede">recommend · vote · experience · discuss: the triad&apos;s shared shelf</p>
 
       {current?.round ? (
         <RoundCard
@@ -304,14 +291,12 @@ export default async function ClubPage() {
           commons={currentCommons}
         />
       ) : (
-        <p className="empty">No round open — the next one opens at the 6 PM tick.</p>
+        <p className="h-club-quiet">No round open. The next one opens at the 6 PM tick.</p>
       )}
 
       {history.length > 0 && (
         <>
-          <div className="page-header" style={{ marginTop: "1rem" }}>
-            <h2 className="page-title" style={{ fontSize: "1.05rem" }}>Past rounds</h2>
-          </div>
+          <h2 className="h-club-h2 is-section">Past rounds</h2>
           {history.map((r, idx) => (
             <RoundCard
               key={r.id}
@@ -322,6 +307,6 @@ export default async function ClubPage() {
           ))}
         </>
       )}
-    </>
+    </div>
   );
 }

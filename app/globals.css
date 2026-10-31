@@ -2164,6 +2164,77 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-needs-answered-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .h-needs-answered-item { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; }
 
+/* The Club (P4): rounds, picks, Raziel's vote and pick controls. Tokens only. */
+.h-club { color: var(--h-ink); font-family: var(--h-font, system-ui, sans-serif); }
+.h-club-lede { margin: -0.5rem 4px 16px; font-size: 0.9375rem; color: var(--h-muted); }
+.h-club-quiet { margin: 0 4px 12px; font-size: 0.9375rem; color: var(--h-muted); }
+.h-club-round { padding-bottom: 28px; }
+.h-club-h2 { margin: 0 4px 4px; font-size: 1.125rem; font-weight: 700; color: var(--h-ink); }
+.h-club-h2.is-section { padding-top: 20px; border-top: 1px solid var(--h-line); margin-bottom: 12px; }
+.h-club-h3 { margin: 0 4px 8px; font-size: 0.9375rem; font-weight: 700; color: var(--h-muted); }
+.h-club-phase { margin: 0 4px 10px; font-size: 0.875rem; color: var(--h-faint); }
+.h-club-guide { display: flex; flex-direction: column; gap: 4px; margin: 0 0 12px; padding: 10px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); font-size: 0.875rem; line-height: 1.45; color: var(--h-muted); }
+.h-club-guide p { margin: 0; }
+.h-club-guide-you { color: var(--h-ink); }
+.h-club-winner { margin: 0 4px 12px; font-size: 1rem; color: var(--h-lamp); }
+.h-club-winner a { color: inherit; }
+.h-club-meta { margin: 8px 4px 0; font-size: 0.8125rem; color: var(--h-faint); }
+.h-club-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.h-club-rec { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); }
+.h-club-rec.is-winner { border-color: var(--h-lamp); }
+.h-club-rec-title { margin: 0; font-size: 1rem; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
+.h-club-rec-title a { color: var(--h-ink); }
+.h-club-rec.is-winner .h-club-rec-title { color: var(--h-lamp); }
+.h-club-pitch { margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--h-muted); overflow-wrap: anywhere; }
+.h-club-votes { display: flex; flex-wrap: wrap; gap: 6px; }
+.h-club-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border: 1px solid var(--h-line); border-radius: 10px; font-size: 0.8125rem; font-weight: 400; color: var(--h-muted); }
+.h-club-votes .h-club-tag { margin-left: 0; }
+.h-club-who.is-drevan { color: var(--h-drevan); }
+.h-club-who.is-cypher { color: var(--h-cypher); }
+.h-club-who.is-gaia { color: var(--h-gaia); }
+.h-club-who.is-raziel { color: var(--h-lamp); }
+.h-club-who.is-other { color: var(--h-ink); }
+.h-club-vote, .h-club-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: var(--h-tap); }
+.h-club-mine { font-size: 0.9375rem; font-weight: 700; color: var(--h-lamp); }
+.h-club-msg { font-size: 0.9375rem; color: var(--h-ink); }
+.h-club-msg.is-warn { color: var(--h-drevan); }
+.h-club-btn {
+  min-height: var(--h-tap);
+  min-width: var(--h-tap);
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--h-line);
+  background: transparent;
+  color: var(--h-muted);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.h-club-btn.is-lamp { color: var(--h-lamp); }
+.h-club-btn:disabled { opacity: 0.45; cursor: default; }
+.h-club-sub { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--h-line); }
+.h-club-post { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; }
+.h-club-post.is-reply { margin-left: 16px; }
+.h-club-post-who { margin: 0; font-size: 0.875rem; font-weight: 700; }
+.h-club-post-body { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--h-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-club-post-box { margin-top: 10px; }
+.h-club-form { display: flex; flex-direction: column; gap: 8px; }
+.h-club-form-row { display: flex; gap: 8px; }
+.h-club-input {
+  min-height: var(--h-tap);
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--h-line);
+  background: var(--h-ground);
+  color: var(--h-ink);
+  font-family: inherit;
+  font-size: 1rem;
+  min-width: 0;
+}
+.h-club-input.is-grow { flex: 1; }
+.h-club-input.is-area { min-height: 72px; line-height: 1.5; resize: vertical; }
+.h-club-btn:focus-visible, .h-club-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+
 /* ── P3 companion pages (/companions/<id>): --c is the companion color, set inline from COMPANION_COLOR ── */
 .h-companion { padding: 14px 16px 24px; color: var(--h-ink); font-family: var(--h-font, system-ui, sans-serif); }
 .h-companion-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 4px 6px; }
