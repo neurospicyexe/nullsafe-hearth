@@ -1871,6 +1871,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   --h-drevan: #e47a52;
   --h-cypher: #c4d0dd;
   --h-gaia: #86c27f;
+  --h-paper: #f5f0e6;
   --h-radius: 14px;
   --h-tap: 44px;
   --h-tabbar-h: 76px;
@@ -2445,3 +2446,105 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-collection-meta { font-size: 0.8125rem; color: var(--h-faint); }
 .h-collection-spark { flex: none; font-size: 0.8125rem; color: var(--h-muted); }
 .h-collection-spark.is-none { color: var(--h-faint); }
+
+/* ── P4 Library (/library): the cover grid + upload box; cover URLs /api/library/<id>/cover unchanged ── */
+.h-library { color: var(--h-ink); font-family: var(--h-font, system-ui, sans-serif); }
+.h-library-lede { margin: -0.5rem 4px 16px; font-size: 0.9375rem; color: var(--h-muted); }
+.h-library-quiet { margin: 16px 4px 0; font-size: 0.9375rem; color: var(--h-muted); }
+.h-library-upload { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; margin-bottom: 8px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); }
+.h-library-upload-label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: var(--h-tap); font-size: 0.9375rem; color: var(--h-muted); }
+.h-library-file { max-width: 100%; font-family: inherit; font-size: 0.875rem; color: var(--h-muted); }
+.h-library-busy { color: var(--h-lamp); overflow-wrap: anywhere; }
+.h-library-conflict { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--h-line); border-radius: 12px; font-size: 0.875rem; color: var(--h-ink); overflow-wrap: anywhere; }
+.h-library-btn { min-height: var(--h-tap); min-width: var(--h-tap); padding: 0 14px; border-radius: 12px; border: 1px solid var(--h-line); background: transparent; color: var(--h-muted); font-family: inherit; font-size: 0.9375rem; cursor: pointer; }
+.h-library-btn.is-lamp { color: var(--h-lamp); border-color: var(--h-lamp); }
+.h-library-btn:focus-visible, .h-library-file:focus-visible, .h-library-card:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-library-error { margin: 0; font-size: 0.875rem; color: var(--h-drevan); overflow-wrap: anywhere; }
+.h-library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; margin-top: 20px; }
+.h-library-card { display: block; color: inherit; text-decoration: none; border-radius: var(--h-radius); min-width: 0; }
+.h-library-cover { position: relative; aspect-ratio: 2 / 3; margin-bottom: 8px; border-radius: 10px; box-shadow: var(--shadow-sm); }
+.h-library-cover-img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+.h-library-spine { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 10px; text-align: center; border-radius: 10px; background: var(--h-surface); border: 1px solid var(--h-line); }
+.h-library-spine-title { font-size: 0.8125rem; line-height: 1.35; font-style: italic; color: var(--h-muted); overflow-wrap: anywhere; }
+.h-library-badge { position: absolute; right: 6px; padding: 1px 8px; border-radius: 999px; background: var(--h-ground); border: 1px solid var(--h-line); font-size: 0.75rem; }
+.h-library-badge.is-notes { top: 6px; color: var(--h-lamp); }
+.h-library-badge.is-finished { bottom: 6px; color: var(--h-ink); }
+.h-library-progress { height: 3px; margin-bottom: 6px; border-radius: 2px; background: var(--h-line); overflow: hidden; }
+.h-library-progress-fill { height: 100%; border-radius: 2px; background: var(--h-lamp); }
+.h-library-title { margin: 0 0 2px; font-size: 0.9375rem; font-weight: 700; line-height: 1.3; color: var(--h-ink); overflow-wrap: anywhere; }
+.h-library-meta { margin: 0; font-size: 0.8125rem; color: var(--h-muted); overflow-wrap: anywhere; }
+.h-library-meta-faint { color: var(--h-faint); }
+
+/* ── P4 Reader (/library/[id]): full-screen, no app chrome. Nothing that appears or disappears may resize
+   the epub viewer box (an epubjs resize clears the views and drops a live selection), so the note box and
+   the phone margins sheet are overlays; on wide screens the margins are a fixed side column. ── */
+.h-reader {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  background: var(--h-ground); color: var(--h-ink);
+  font-family: var(--h-font, system-ui, sans-serif);
+}
+.h-reader-bar {
+  flex: none; display: flex; align-items: center; gap: 10px; min-width: 0;
+  padding: calc(4px + env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 4px max(10px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--h-line);
+}
+.h-reader-back { flex: none; display: inline-flex; align-items: center; min-height: var(--h-tap); padding: 0 10px; border-radius: 12px; color: var(--h-muted); text-decoration: none; font-size: 0.9375rem; }
+.h-reader-back:hover { color: var(--h-ink); }
+.h-reader-heading { min-width: 0; display: flex; flex-direction: column; }
+.h-reader-title { margin: 0; font-size: 1rem; font-weight: 700; line-height: 1.25; color: var(--h-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-reader-author { margin: 0; font-size: 0.8125rem; color: var(--h-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-reader-body { flex: 1 1 auto; min-height: 0; display: flex; }
+.h-reader-body > .empty, .h-reader-quiet { margin: 16px; font-size: 0.9375rem; font-style: italic; color: var(--h-muted); }
+.h-reader-layout { position: relative; flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; gap: 12px; padding: 8px max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left)); }
+.h-reader-main { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.h-reader-stage { position: relative; flex: 1 1 auto; min-height: 0; }
+.h-reader-page { width: 100%; height: 100%; overflow: hidden; border-radius: 10px; border: 1px solid var(--h-line); background: var(--h-paper); }
+.h-reader-pdf { display: block; width: 100%; height: 100%; border-radius: 10px; border: 1px solid var(--h-line); }
+.h-reader-opening { position: absolute; top: 1rem; left: 1rem; margin: 0; font-size: 0.9375rem; font-style: italic; color: var(--h-faint); }
+.h-reader-controls { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); }
+.h-reader-hint { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 0.8125rem; color: var(--h-faint); }
+.h-reader-btn { min-height: var(--h-tap); min-width: var(--h-tap); padding: 0 14px; border-radius: 12px; border: 1px solid var(--h-line); background: var(--h-ground); color: var(--h-muted); font-family: inherit; font-size: 0.9375rem; cursor: pointer; }
+.h-reader-btn.is-lamp { color: var(--h-lamp); border-color: var(--h-lamp); }
+.h-reader-btn:disabled { opacity: 0.45; cursor: default; }
+.h-reader-btn:focus-visible, .h-reader-back:focus-visible, .h-reader-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-reader-note-box {
+  position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 3;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px; max-height: 70%; overflow-y: auto;
+  background: var(--h-surface); border: 1px solid var(--h-lamp); border-radius: var(--h-radius);
+  box-shadow: var(--shadow-md);
+}
+.h-reader-quote { margin: 0; font-size: 0.875rem; font-style: italic; color: var(--h-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-reader-input { width: 100%; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--h-line); background: var(--h-ground); color: var(--h-ink); font-family: inherit; font-size: 1rem; resize: vertical; }
+.h-reader-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.h-reader-margins {
+  display: none; flex-direction: column; min-height: 0; overflow-y: auto;
+  padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius);
+}
+.h-reader-margins.is-open { display: flex; position: absolute; inset: 8px; z-index: 4; box-shadow: var(--shadow-md); }
+.h-reader-margins-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.h-reader-margins-label { margin: 0; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--h-muted); }
+.h-reader-note { margin: 0 0 14px; padding-left: 10px; border-left: 2px solid var(--h-line); }
+.h-reader-note.is-raziel { border-left-color: var(--h-lamp); }
+.h-reader-note.is-drevan { border-left-color: var(--h-drevan); }
+.h-reader-note.is-cypher { border-left-color: var(--h-cypher); }
+.h-reader-note.is-gaia { border-left-color: var(--h-gaia); }
+.h-reader-note-who { margin: 0 0 2px; font-size: 0.875rem; }
+.h-reader-who { font-weight: 700; color: var(--h-ink); }
+.h-reader-who.is-raziel { color: var(--h-lamp); }
+.h-reader-who.is-drevan { color: var(--h-drevan); }
+.h-reader-who.is-cypher { color: var(--h-cypher); }
+.h-reader-who.is-gaia { color: var(--h-gaia); }
+.h-reader-note-at { font-size: 0.8125rem; color: var(--h-faint); }
+.h-reader-note-quote { margin: 0 0 2px; font-size: 0.875rem; font-style: italic; color: var(--h-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-reader-note-body { margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--h-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 599px) {
+  .h-reader-hint { display: none; }
+}
+@media (min-width: 1024px) {
+  .h-reader-margins, .h-reader-margins.is-open { display: flex; position: static; inset: auto; z-index: auto; box-shadow: none; flex: 0 0 320px; margin-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .h-reader-margins-toggle, .h-reader-margins-close { display: none; }
+}

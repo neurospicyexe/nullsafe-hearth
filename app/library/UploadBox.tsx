@@ -10,7 +10,7 @@ type Conflict = {
 };
 
 // Add books to the library. Uploads run one at a time; a duplicate (409) is
-// held aside and asked about inline — never a browser confirm dialog.
+// held aside and asked about inline, never a browser confirm dialog.
 export default function UploadBox() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -57,12 +57,8 @@ export default function UploadBox() {
   }
 
   return (
-    <div style={{
-      background: "#0c0c0c", border: "1px solid #1e1e1e", borderRadius: "5px",
-      padding: "0.7rem 0.9rem", marginBottom: "0.5rem",
-      display: "flex", flexDirection: "column", gap: "0.5rem",
-    }}>
-      <label style={{ display: "flex", alignItems: "center", gap: "0.7rem", flexWrap: "wrap", fontSize: "0.82rem", color: "#64748b" }}>
+    <div className="h-library-upload">
+      <label className="h-library-upload-label">
         <span>add a book (epub or pdf)</span>
         <input
           ref={inputRef}
@@ -71,31 +67,25 @@ export default function UploadBox() {
           multiple
           disabled={busy !== null}
           onChange={(e) => handleFiles(e.target.files)}
-          style={{ fontSize: "0.8rem", color: "#8b8b96" }}
+          className="h-library-file"
         />
-        {busy && <span style={{ color: "#f59e0b" }}>uploading {busy}…</span>}
+        {busy && <span className="h-library-busy">uploading {busy}…</span>}
       </label>
 
       {conflicts.map((c) => (
-        <div key={c.file.name} style={{
-          border: "1px solid #3a2f14", borderRadius: "4px", padding: "0.5rem 0.7rem",
-          fontSize: "0.8rem", color: "#a8a29e",
-          display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap",
-        }}>
-          <span><strong>{c.file.name}</strong> — {c.message}. replace the existing copy?</span>
+        <div key={c.file.name} className="h-library-conflict">
+          <span><strong>{c.file.name}</strong>: {c.message}. replace the existing copy?</span>
           <button
             type="button"
-            className="thread-tag"
+            className="h-library-btn is-lamp"
             onClick={() => resolveConflict(c, true)}
-            style={{ cursor: "pointer", background: "transparent", border: "1px solid #f59e0b", color: "#f59e0b" }}
           >
             replace
           </button>
           <button
             type="button"
-            className="thread-tag"
+            className="h-library-btn"
             onClick={() => resolveConflict(c, false)}
-            style={{ cursor: "pointer", background: "transparent", border: "1px solid #333", color: "#64748b" }}
           >
             keep existing
           </button>
@@ -103,7 +93,7 @@ export default function UploadBox() {
       ))}
 
       {errors.map((e) => (
-        <p key={e} style={{ fontSize: "0.78rem", color: "#ef4444" }}>{e}</p>
+        <p key={e} className="h-library-error">{e}</p>
       ))}
     </div>
   );

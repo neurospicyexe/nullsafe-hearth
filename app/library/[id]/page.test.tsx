@@ -54,6 +54,7 @@ describe("/library/[id]", () => {
     };
     const html = await render();
     expect(html).toContain('data-reader="book1"');
+    expect(html).toMatch(/<header class="h-reader-bar"><a [^>]*href="\/library"/);
   });
 
   it("renders a message with a back link, not notFound, when the book is missing", async () => {
