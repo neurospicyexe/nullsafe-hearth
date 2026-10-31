@@ -11,9 +11,12 @@ export default function DoorList({ doors }: { doors: Door[] }) {
             <span className="h-door-top">
               <span className="h-door-label">{d.label}</span>
               {d.count !== undefined && d.count > 0 && (
-                <span className="h-door-count" aria-label={`${d.count} new`}>
-                  {d.count}
-                </span>
+                <>
+                  <span className="h-door-count" aria-hidden="true">
+                    {d.count}
+                  </span>
+                  <span className="sr-only">{` ${d.count} new`}</span>
+                </>
               )}
             </span>
             {d.hint && <span className="h-door-hint">{d.hint}</span>}

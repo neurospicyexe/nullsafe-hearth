@@ -1,9 +1,14 @@
 // Companion page model (/companions/<id>). Pure: no React, no fetching.
-import type { CompanionId, CompanionRundown } from "./halseth";
+import type { CompanionId, CompanionRundown, CompanionSomaState, FloatKey, Project } from "./halseth";
 import type { Door } from "./shell";
 import { ageLabel } from "./home-model";
 
 export const COMPANION_IDS = ["drevan", "cypher", "gaia"] as const;
+
+// Compile-time guard: COMPANION_IDS and lib/halseth's CompanionId must be the same set, both ways.
+type SameSet<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+type AssertTrue<T extends true> = T;
+export type CompanionIdsMatch = AssertTrue<SameSet<(typeof COMPANION_IDS)[number], CompanionId>>;
 
 export const COMPANION_NAME: Record<CompanionId, string> = {
   drevan: "Drevan",
@@ -119,4 +124,72 @@ export function rundownLines(r: CompanionRundown, now: number): { heading: strin
 /** A trace is drawable only with all 7 days present. */
 export function traceValid(t: (number | null)[]): t is number[] {
   return t.length === 7 && t.every((v) => typeof v === "number" && Number.isFinite(v));
+}
+
+export type CompanionBar = { label: string; pct: number; trace?: number[] };
+
+const FLOATS = [
+  ["soma_float_1", "float_1_label", "float 1"],
+  ["soma_float_2", "float_2_label", "float 2"],
+  ["soma_float_3", "float_3_label", "float 3"],
+] as const satisfies readonly (readonly [FloatKey, string, string])[];
+
+/**
+ * The companion's three meters, mapped as Home's buildWhoIsHome does (null float dropped, label
+ * fallback "float N"), each carrying its own float key's 7-day trace when all 7 points exist.
+ * Keyed by float, never by position: a dropped float_2 must not hand float_3 float_2's trace.
+ */
+export function companionBars(soma: CompanionSomaState, r: CompanionRundown | null): CompanionBar[] {
+  if (!soma) return [];
+  const bars: CompanionBar[] = [];
+  for (const [key, labelKey, fallback] of FLOATS) {
+    const v = soma[key];
+    if (typeof v !== "number" || !Number.isFinite(v)) continue;
+    const bar: CompanionBar = { label: soma[labelKey] ?? fallback, pct: Math.round(Math.min(1, Math.max(0, v)) * 100) };
+    const t = r?.trace?.[key];
+    if (t && traceValid(t)) bar.trace = t;
+    bars.push(bar);
+  }
+  return bars;
+}
+
+export interface SubnavModel {
+  back: { href: string; label: string };
+  links: { href: string; label: string; current: boolean }[];
+}
+
+/**
+ * The slim nav over a sub-route: back to the overview plus the sibling routes of the current
+ * door group. Null on the overview itself. `/all`, single-route groups and unknown slugs get the
+ * back link only. Hrefs use the parsed (lowercase) id whatever case the URL carried.
+ */
+export function subnavFor(id: CompanionId, pathname: string): SubnavModel | null {
+  const slug = pathname.split("/").filter(Boolean)[2] ?? "";
+  if (!slug) return null;
+  const base = `/companions/${id}`;
+  const back = { href: base, label: COMPANION_NAME[id] };
+  const group = slug === "all" ? null : groupForSlug(id, slug);
+  if (!group || group.routes.length < 2) return { back, links: [] };
+  return {
+    back,
+    links: group.routes.map((r) => ({ href: `${base}/${r.slug}`, label: r.label, current: r.slug === slug })),
+  };
+}
+
+/** Generated-image prompt as /gallery shows it: the stored "prompt: " prefix dropped. */
+export function imagePrompt(argsSummary: string): string {
+  return argsSummary.replace(/^prompt:\s*/i, "").trim() || "(untitled)";
+}
+
+const PROJECT_GROUPS: { heading: string; statuses: Project["status"][] }[] = [
+  { heading: "Open", statuses: ["open"] },
+  { heading: "Paused", statuses: ["paused"] },
+  { heading: "Done and released", statuses: ["done", "released"] },
+];
+
+/** Projects under Open, Paused, Done and released (Halseth's row order kept); empty groups left out. */
+export function groupProjects(projects: Project[]): { heading: string; projects: Project[] }[] {
+  return PROJECT_GROUPS.map((g) => ({ heading: g.heading, projects: projects.filter((p) => g.statuses.includes(p.status)) })).filter(
+    (g) => g.projects.length > 0,
+  );
 }

@@ -6,6 +6,7 @@ import { fetchNotes, fetchCompanionNotesByAgent } from "@/lib/halseth";
 import type { Note, CompanionNote } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
 import { LetterFormClient } from "../client";
+import { parseCompanionId } from "@/lib/companion-page";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
@@ -18,8 +19,11 @@ type LetterItem =
   | { kind: "outgoing"; note: Note;          at: string };
 
 export default async function CompanionLettersPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const config = COMPANION_CONFIG[id.toLowerCase()];
+  const { id: rawId } = await params;
+  // Lowercase + validate once, before any Halseth call; every fetch below gets the parsed id.
+  const id = parseCompanionId(rawId);
+  if (!id) notFound();
+  const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
   const [notes, companionNotes] = await Promise.allSettled([

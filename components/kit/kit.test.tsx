@@ -32,7 +32,11 @@ describe("DoorList", () => {
       />,
     );
     expect(html.match(/h-door-count/g)).toHaveLength(1);
-    expect(html).toContain('aria-label="3 new"');
+    // Visible number hidden from screen readers; the spoken text is " 3 new" (a role-less span's
+    // aria-label is ignored by screen readers, so the pill carries no aria-label).
+    expect(html).toMatch(/<span[^>]*class="h-door-count"[^>]*aria-hidden="true"[^>]*>3<\/span>/);
+    expect(html).toContain('<span class="sr-only"> 3 new</span>');
+    expect(html).not.toContain("aria-label");
     // The pill follows the label.
     expect(html.indexOf(">A<")).toBeLessThan(html.indexOf("h-door-count"));
     expect(html).toContain("see");

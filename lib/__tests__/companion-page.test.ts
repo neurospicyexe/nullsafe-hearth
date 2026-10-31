@@ -8,8 +8,12 @@ import {
   groupForSlug,
   rundownLines,
   traceValid,
+  companionBars,
+  subnavFor,
+  imagePrompt,
+  groupProjects,
 } from "../companion-page";
-import type { CompanionId, CompanionRundown } from "../halseth";
+import type { CompanionId, CompanionRundown, CompanionSomaState, Project } from "../halseth";
 
 function rundown(over: Partial<CompanionRundown> = {}): CompanionRundown {
   return {
@@ -159,5 +163,98 @@ describe("traceValid", () => {
     expect(traceValid([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])).toBe(false);
     expect(traceValid([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])).toBe(false);
     expect(traceValid([])).toBe(false);
+  });
+});
+
+describe("companionBars", () => {
+  const soma: CompanionSomaState = {
+    companion_id: "cypher",
+    soma_float_1: 0.42, soma_float_2: null, soma_float_3: 0.9,
+    float_1_label: "focus", float_2_label: "warmth", float_3_label: null,
+    compound_state: null, current_mood: null, surface_emotion: null, surface_intensity: null,
+    undercurrent_emotion: null, undercurrent_intensity: null, heat: null, reach: null, weight: null,
+    mood_set_at: null, seen_at: null, updated_at: "2026-10-30 10:00:00",
+  };
+  const seven = (v: number) => [v, v, v, v, v, v, v];
+
+  it("maps floats like Home (null float dropped, label fallback) without a rundown", () => {
+    expect(companionBars(soma, null)).toEqual([
+      { label: "focus", pct: 42 },
+      { label: "float 3", pct: 90 },
+    ]);
+  });
+
+  it("attaches each trace to its own float key, not by position", () => {
+    const r = rundown({ trace: { soma_float_1: seven(0.1), soma_float_2: seven(0.2), soma_float_3: seven(0.3) } });
+    expect(companionBars(soma, r)).toEqual([
+      { label: "focus", pct: 42, trace: seven(0.1) },
+      { label: "float 3", pct: 90, trace: seven(0.3) },
+    ]);
+  });
+
+  it("leaves out a trace with a gap", () => {
+    const r = rundown({ trace: { soma_float_1: [0.1, null, 0.1, 0.1, 0.1, 0.1, 0.1], soma_float_2: [], soma_float_3: seven(0.3) } });
+    expect(companionBars(soma, r)[0]).toEqual({ label: "focus", pct: 42 });
+  });
+
+  it("is empty with no soma row", () => {
+    expect(companionBars(null, rundown())).toEqual([]);
+  });
+});
+
+describe("subnavFor", () => {
+  it("is null on the overview", () => {
+    expect(subnavFor("cypher", "/companions/cypher")).toBeNull();
+    expect(subnavFor("cypher", "/companions/Cypher/")).toBeNull();
+  });
+
+  it("shows the back link and the group's siblings, current marked", () => {
+    expect(subnavFor("cypher", "/companions/cypher/worldview")).toEqual({
+      back: { href: "/companions/cypher", label: "Cypher" },
+      links: [
+        { href: "/companions/cypher/growth", label: "Growth", current: false },
+        { href: "/companions/cypher/worldview", label: "Worldview", current: true },
+        { href: "/companions/cypher/loops", label: "Open loops", current: false },
+        { href: "/companions/cypher/blocks", label: "Blocks", current: false },
+        { href: "/companions/cypher/audit", label: "Audit", current: false },
+      ],
+    });
+  });
+
+  it("uses the lowercased id even when the URL is not", () => {
+    expect(subnavFor("gaia", "/companions/GAIA/witness")?.links.map((l) => l.href)).toContain("/companions/gaia/witness");
+  });
+
+  it("shows only the back link on /all, single-route groups and unknown slugs", () => {
+    for (const p of ["/companions/drevan/all", "/companions/drevan/letters", "/companions/drevan/made", "/companions/drevan/nope"]) {
+      expect(subnavFor("drevan", p), p).toEqual({ back: { href: "/companions/drevan", label: "Drevan" }, links: [] });
+    }
+  });
+});
+
+describe("imagePrompt", () => {
+  it("strips the stored prompt: prefix like /gallery", () => {
+    expect(imagePrompt("prompt: a lantern")).toBe("a lantern");
+    expect(imagePrompt("Prompt:   moss")).toBe("moss");
+    expect(imagePrompt("prompt:   ")).toBe("(untitled)");
+  });
+});
+
+describe("groupProjects", () => {
+  const p = (id: string, status: Project["status"]): Project => ({
+    id, companion_id: "gaia", title: id, intention: "", status,
+    horizon_note: null, resolution_note: null, created_at: "2026-10-01 00:00:00", last_worked_at: null, closed_at: null,
+  });
+
+  it("groups Open, Paused, Done and released in that order, keeping row order, dropping empty groups", () => {
+    const groups = groupProjects([p("a", "done"), p("b", "open"), p("c", "released"), p("d", "open")]);
+    expect(groups.map((g) => [g.heading, g.projects.map((x) => x.id)])).toEqual([
+      ["Open", ["b", "d"]],
+      ["Done and released", ["a", "c"]],
+    ]);
+  });
+
+  it("is empty for no projects", () => {
+    expect(groupProjects([])).toEqual([]);
   });
 });
