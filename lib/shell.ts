@@ -36,6 +36,20 @@ export function badgeText(n: number | null): string | null {
   return n > 9 ? "9+" : String(n);
 }
 
+/** A window focus refreshes the badge at most this often; route changes and resolves always refresh. */
+export const FOCUS_REFRESH_MIN_MS = 30_000;
+
+/** Whether a focus should refetch the count, given when the last fetch (from any trigger) started. */
+export function focusRefreshDue(lastFetchMs: number | null, nowMs: number): boolean {
+  return lastFetchMs === null || nowMs - lastFetchMs >= FOCUS_REFRESH_MIN_MS;
+}
+
+/** Request sequencing: only the most recently started request may apply its response. */
+export function latestOnly(): { start: () => number; isLatest: (n: number) => boolean } {
+  let seq = 0;
+  return { start: () => ++seq, isLatest: (n) => n === seq };
+}
+
 /** The reader and the login page get the whole screen. */
 export function shellHidden(pathname: string): boolean {
   return pathname === "/login" || /^\/library\/[^/]+/.test(pathname);

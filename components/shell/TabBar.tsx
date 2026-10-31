@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { TABS, activeTab, badgeText, type TabLabel } from "@/lib/shell";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { TABS, activeTab, badgeText, focusRefreshDue, latestOnly, type TabLabel } from "@/lib/shell";
 
 const icon = (children: ReactNode, round = false) => (
   <svg
@@ -46,28 +46,39 @@ export default function TabBar() {
   const current = activeTab(pathname);
   const [waiting, setWaiting] = useState<number | null>(null);
 
+  // Only the latest request sets the count, so a slow earlier response can't overwrite a newer one.
+  const seq = useRef(latestOnly());
+  const lastFetch = useRef<number | null>(null);
+
   const refresh = useCallback(async () => {
+    const n = seq.current.start();
+    lastFetch.current = Date.now();
+    let next: number | null = null;
     try {
       const res = await fetch("/api/needs/count", { cache: "no-store" });
-      if (!res.ok) { setWaiting(null); return; }
-      const data = (await res.json()) as { total?: unknown };
-      setWaiting(typeof data.total === "number" ? data.total : null);
+      if (res.ok) {
+        const data = (await res.json()) as { total?: unknown };
+        next = typeof data.total === "number" ? data.total : null;
+      }
     } catch {
-      setWaiting(null);
+      next = null;
     }
+    if (seq.current.isLatest(n)) setWaiting(next);
   }, []);
 
-  // On mount, on every route change, on tab focus, and when /needs resolves something. No polling.
+  // On mount, on every route change, and when /needs resolves something. A window focus refreshes
+  // at most once per 30 seconds (app-switching shouldn't cost four COUNTs each time). No polling.
   useEffect(() => {
     void refresh();
   }, [pathname, refresh]);
   useEffect(() => {
-    const go = () => { void refresh(); };
-    window.addEventListener("focus", go);
-    window.addEventListener("hearth:needs-changed", go);
+    const now = () => { void refresh(); };
+    const onFocus = () => { if (focusRefreshDue(lastFetch.current, Date.now())) void refresh(); };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("hearth:needs-changed", now);
     return () => {
-      window.removeEventListener("focus", go);
-      window.removeEventListener("hearth:needs-changed", go);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("hearth:needs-changed", now);
     };
   }, [refresh]);
 

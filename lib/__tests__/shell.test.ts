@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TABS, HUBS, activeTab, shellHidden, badgeText, COMPANION_COLOR } from "../shell";
+import { TABS, HUBS, activeTab, shellHidden, badgeText, COMPANION_COLOR, focusRefreshDue, FOCUS_REFRESH_MIN_MS, latestOnly } from "../shell";
 import nextConfig from "../../next.config";
 
 /** Frozen copy of every href the retired sidebar Nav carried; each must stay reachable from the new tabs and hubs. */
@@ -129,5 +129,31 @@ describe("badgeText", () => {
     expect(badgeText(3)).toBe("3");
     expect(badgeText(9)).toBe("9");
     expect(badgeText(10)).toBe("9+");
+  });
+});
+
+describe("focusRefreshDue", () => {
+  it("refreshes when nothing has been fetched yet", () => {
+    expect(focusRefreshDue(null, 1_000)).toBe(true);
+  });
+  it("skips a focus within 30 seconds of the last fetch", () => {
+    expect(focusRefreshDue(100_000, 100_000 + 29_999)).toBe(false);
+  });
+  it("refreshes once 30 seconds have passed", () => {
+    expect(focusRefreshDue(100_000, 130_000)).toBe(true);
+    expect(FOCUS_REFRESH_MIN_MS).toBe(30_000);
+  });
+});
+
+describe("latestOnly", () => {
+  it("only the most recently started request may apply its response", () => {
+    const seq = latestOnly();
+    const a = seq.start();
+    const b = seq.start();
+    expect(seq.isLatest(a)).toBe(false);
+    expect(seq.isLatest(b)).toBe(true);
+    const c = seq.start();
+    expect(seq.isLatest(b)).toBe(false);
+    expect(seq.isLatest(c)).toBe(true);
   });
 });
