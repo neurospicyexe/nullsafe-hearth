@@ -2,6 +2,7 @@ import { fetchClubCurrent, fetchClubRounds, fetchCommonsPosts } from "@/lib/hals
 import type { ClubRecommendation, ClubRoundDetail, ClubVote, CommonsPost } from "@/lib/halseth";
 import { memberClass, razielVote, votable } from "@/lib/club-model";
 import VoteButton from "./VoteButton";
+import { ClubVoteProvider } from "./ClubVote";
 import RecommendForm from "./RecommendForm";
 import PostBox from "../log/PostBox";
 
@@ -109,42 +110,46 @@ function Candidates({ roundId, recs, votes, winnerId, canVote, status }: {
   }
   const mine = razielVote({ votes })?.recommendation_id ?? null;
   return (
-    <ul className="h-club-list">
-      {recs.map((rec) => {
-        const recVotes = votes.filter(v => v.recommendation_id === rec.id);
-        const isWinner = rec.id === winnerId;
-        const showVote = canVote && rec.recommended_by !== "raziel";
-        return (
-          <li key={rec.id} className={isWinner ? "h-club-rec is-winner" : "h-club-rec"}>
-            <p className="h-club-rec-title">
-              {isWinner ? "★ " : ""}
-              {rec.url
-                ? <a href={rec.url} target="_blank" rel="noopener noreferrer">{rec.title}</a>
-                : rec.title}
-              {rec.creator ? `, ${rec.creator}` : ""}
-              <span className="h-club-tag">{rec.media_kind}</span>
-            </p>
-            <p className="h-club-pitch">
-              <Member name={rec.recommended_by} />{rec.pitch ? <>: &ldquo;{rec.pitch}&rdquo;</> : null}
-            </p>
-            {recVotes.length > 0 && (
-              <div className="h-club-votes">
-                {recVotes.map((v) => (
-                  <span key={v.voter} className="h-club-tag">
-                    <Member name={v.voter} />{v.reason ? <>: {v.reason}</> : null}
-                  </span>
-                ))}
-              </div>
-            )}
-            {showVote ? (
-              <VoteButton roundId={roundId} recommendationId={rec.id} voted={mine === rec.id} />
-            ) : mine === rec.id ? (
-              <span className="h-club-vote"><span className="h-club-mine">Your vote</span></span>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
+    <ClubVoteProvider serverPick={mine}>
+      <ul className="h-club-list">
+        {recs.map((rec) => {
+          const isWinner = rec.id === winnerId;
+          const showVote = canVote && rec.recommended_by !== "raziel";
+          // Where "Your vote" (or its control) speaks for Raziel, a raziel tag would say it twice.
+          const ownsMine = showVote || mine === rec.id;
+          const recVotes = votes.filter(v => v.recommendation_id === rec.id && !(ownsMine && v.voter === "raziel"));
+          return (
+            <li key={rec.id} className={isWinner ? "h-club-rec is-winner" : "h-club-rec"}>
+              <p className="h-club-rec-title">
+                {isWinner ? "★ " : ""}
+                {rec.url
+                  ? <a href={rec.url} target="_blank" rel="noopener noreferrer">{rec.title}</a>
+                  : rec.title}
+                {rec.creator ? `, ${rec.creator}` : ""}
+                <span className="h-club-tag">{rec.media_kind}</span>
+              </p>
+              <p className="h-club-pitch">
+                <Member name={rec.recommended_by} />{rec.pitch ? <>: &ldquo;{rec.pitch}&rdquo;</> : null}
+              </p>
+              {recVotes.length > 0 && (
+                <div className="h-club-votes">
+                  {recVotes.map((v) => (
+                    <span key={v.voter} className="h-club-tag">
+                      <Member name={v.voter} />{v.reason ? <>: {v.reason}</> : null}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {showVote ? (
+                <VoteButton roundId={roundId} recommendationId={rec.id} voted={mine === rec.id} />
+              ) : mine === rec.id ? (
+                <span className="h-club-vote"><span className="h-club-mine">Your vote</span></span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </ClubVoteProvider>
   );
 }
 
@@ -277,7 +282,9 @@ export default async function ClubPage() {
       <h1 className="h-page-title">The Club</h1>
       <p className="h-club-lede">recommend · vote · experience · discuss: the triad&apos;s shared shelf</p>
 
-      {current?.round ? (
+      {current === null ? (
+        <p className="h-club-quiet">Can&apos;t reach Halseth right now.</p>
+      ) : current.round ? (
         <RoundCard
           round={{
             ...current.round,

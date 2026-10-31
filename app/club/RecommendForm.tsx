@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Pending } from "@/lib/write-queue";
-import { recommendWrite } from "@/lib/club-model";
+import { failureLine, recommendWrite } from "@/lib/club-model";
 import { useWriteQueue } from "@/components/shell/WriteQueueProvider";
 
 const KINDS = ["song", "album", "book", "article", "video", "forage", "other"] as const;
@@ -66,7 +66,7 @@ export default function RecommendForm({ roundId }: { roundId: string }) {
         router.refresh();
         return;
       }
-      setError("Didn't save."); // the fields stay as typed, so a retry is one tap
+      setError(failureLine(r)); // the fields stay as typed, so a retry is one tap
       setPhase("editing");
     });
   }

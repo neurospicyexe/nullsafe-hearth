@@ -3,17 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Pending } from "@/lib/write-queue";
-import { voteWrite } from "@/lib/club-model";
+import { failureLine, voteWrite } from "@/lib/club-model";
 import { useWriteQueue } from "@/components/shell/WriteQueueProvider";
-
-/** What Raziel's last tap on this pick asked for, until the page's own data catches up. */
-type Look = "idle" | "voted" | "removed";
-type Note = null | "closed" | "failed";
+import { useClubVote, usePickState } from "./ClubVote";
 
 // Raziel's vote control on one pick. Rendered only while the round accepts votes (gathering/voting)
-// and only on picks Raziel did not recommend. Every button in a round writes the same queue key, so
-// a newer tap supersedes an older one still in its grace window; the older button then hears
-// "undone" and goes back to how it looked. That one rule covers undo and a change of pick.
+// and only on picks Raziel did not recommend. Which pick shows as voted lives in the round's
+// ClubVoteProvider, so one tap moves the mark across every button at once. Every button in a round
+// also writes the same queue key, so a newer tap supersedes an older one still in its grace window.
 export default function VoteButton({ roundId, recommendationId, voted }: {
   roundId: string;
   recommendationId: string;
@@ -21,17 +18,17 @@ export default function VoteButton({ roundId, recommendationId, voted }: {
 }) {
   const queue = useWriteQueue();
   const router = useRouter();
-  const [look, setLook] = useState<Look>("idle");
-  const [note, setNote] = useState<Note>(null);
-  const [inGrace, setInGrace] = useState(false);
-  const [seenVoted, setSeenVoted] = useState(voted);
-  const pendingRef = useRef<Pending | null>(null);
+  const shared = useClubVote();
+  // Outside a provider (a lone button) the same rules run on this button's own state.
+  const local = usePickState(voted ? recommendationId : null);
+  const picks = shared ?? local;
 
-  // Fresh page data is the truth once it arrives; a tap still in flight keeps its own look.
-  if (seenVoted !== voted) {
-    setSeenVoted(voted);
-    if (!pendingRef.current) setLook("idle");
-  }
+  const [tapped, setTapped] = useState<"voted" | "removed">("voted");
+  const [note, setNote] = useState<string | null>(null);
+  const [closed, setClosed] = useState(false);
+  const [inGrace, setInGrace] = useState(false);
+  const pendingRef = useRef<Pending | null>(null);
+  const tokenRef = useRef(0);
 
   // `waiting()` is not reactive: watch it during the grace window so undo leaves once the write sends.
   useEffect(() => {
@@ -47,25 +44,30 @@ export default function VoteButton({ roundId, recommendationId, voted }: {
   }, [inGrace]);
 
   function tap(next: "voted" | "removed") {
-    const pending = queue.submit(voteWrite(roundId, next === "voted" ? recommendationId : null));
+    const value = next === "voted" ? recommendationId : null;
+    const token = picks.begin(value);
+    const pending = queue.submit(voteWrite(roundId, value));
     pendingRef.current = pending;
-    setLook(next);
+    tokenRef.current = token;
+    setTapped(next);
     setNote(null);
     setInGrace(true);
     void pending.done.then((r) => {
-      if (pendingRef.current !== pending) return; // undone here, or replaced by a newer tap on this button
+      if (pendingRef.current !== pending) return; // undone here
       pendingRef.current = null;
       setInGrace(false);
       if (r === "undone") {
-        setLook("idle"); // superseded by a tap on another pick in this round
+        picks.settle(token, false); // superseded: a no-op when a newer tap owns the pick
         return;
       }
       if (r.ok) {
+        picks.settle(token, true);
         router.refresh();
         return;
       }
-      setLook("idle");
-      setNote(r.dropped && r.status === 409 ? "closed" : "failed");
+      picks.settle(token, false);
+      if (r.dropped && r.status === 409) setClosed(true);
+      else setNote(failureLine(r));
     });
   }
 
@@ -75,26 +77,27 @@ export default function VoteButton({ roundId, recommendationId, voted }: {
     pendingRef.current = null;
     p.undo();
     setInGrace(false);
-    setLook("idle");
+    picks.settle(tokenRef.current, false);
   }
 
-  if (note === "closed") {
+  if (closed) {
     return <span className="h-club-vote" role="status"><span className="h-club-msg is-warn">Voting has closed.</span></span>;
   }
 
-  if (inGrace && look !== "idle") {
+  // Still this button's ask: a tap on another pick takes the confirmation away at once.
+  const mineAsked = tapped === "voted" ? picks.pick === recommendationId : picks.pick === null;
+  if (inGrace && mineAsked) {
     return (
       <span className="h-club-vote" role="status">
-        <span className="h-club-msg">{look === "voted" ? "Voted" : "Vote removed"}</span>
+        <span className="h-club-msg">{tapped === "voted" ? "Voted" : "Vote removed"}</span>
         <button type="button" className="h-club-btn" onClick={undo}>undo</button>
       </span>
     );
   }
 
-  const shownVoted = look === "voted" ? true : look === "removed" ? false : voted;
   return (
     <span className="h-club-vote">
-      {shownVoted ? (
+      {picks.pick === recommendationId ? (
         <>
           <span className="h-club-mine">Your vote</span>
           <button type="button" className="h-club-btn" onClick={() => tap("removed")}>Remove vote</button>
@@ -102,7 +105,7 @@ export default function VoteButton({ roundId, recommendationId, voted }: {
       ) : (
         <button type="button" className="h-club-btn is-lamp" onClick={() => tap("voted")}>Vote for this</button>
       )}
-      {note === "failed" && <span className="h-club-msg is-warn" role="status">Didn&apos;t save.</span>}
+      {note && <span className="h-club-msg is-warn" role="status">{note}</span>}
     </span>
   );
 }

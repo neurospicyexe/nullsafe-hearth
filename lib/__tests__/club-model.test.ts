@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { votable, razielVote, voteWrite, recommendWrite, memberClass } from "@/lib/club-model";
+import { votable, razielVote, voteWrite, recommendWrite, memberClass, failureLine } from "@/lib/club-model";
 import type { ClubRound, ClubVote } from "@/lib/halseth";
 
 const round = (status: ClubRound["status"]): ClubRound => ({
@@ -57,5 +57,16 @@ describe("memberClass", () => {
     expect(memberClass("drevan")).toBe("is-drevan");
     expect(memberClass("raziel")).toBe("is-raziel");
     expect(memberClass("someone")).toBe("is-other");
+  });
+});
+
+describe("failureLine", () => {
+  it("says Halseth's own refusal for a dropped 4xx", () => {
+    expect(failureLine({ ok: false, status: 400, json: { error: "no voting for your own pick" }, dropped: true })).toBe("no voting for your own pick");
+  });
+  it("says Didn't save. for network errors, 5xx and a refusal with no words", () => {
+    expect(failureLine({ ok: false, status: 0, json: null })).toBe("Didn't save.");
+    expect(failureLine({ ok: false, status: 503, json: { error: "upstream" } })).toBe("Didn't save.");
+    expect(failureLine({ ok: false, status: 400, json: {}, dropped: true })).toBe("Didn't save.");
   });
 });

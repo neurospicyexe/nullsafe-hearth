@@ -1,6 +1,6 @@
 // Pure helpers for the Club page and its write controls. No React, no fetch.
 import type { ClubCurrent, ClubRound, ClubVote } from "@/lib/halseth";
-import type { QueuedWrite } from "@/lib/write-queue";
+import type { QueuedWrite, WriteResult } from "@/lib/write-queue";
 
 /** A round takes (and gives back) votes only while gathering or voting. */
 export function votable(round: Pick<ClubRound, "status"> | null): boolean {
@@ -38,4 +38,10 @@ export function recommendWrite(roundId: string, pick: ClubPick): QueuedWrite {
 /** The member's colour class suffix; unknown names get the muted look. */
 export function memberClass(name: string): string {
   return name === "drevan" || name === "cypher" || name === "gaia" || name === "raziel" ? `is-${name}` : "is-other";
+}
+
+/** Halseth's own refusal when the queue dropped a 4xx; the plain line for network errors and 5xx. */
+export function failureLine(r: WriteResult): string {
+  const error = r.dropped ? (r.json as { error?: unknown } | null)?.error : null;
+  return typeof error === "string" && error.trim() ? error : "Didn't save.";
 }
