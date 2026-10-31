@@ -37,10 +37,10 @@ export function shellHidden(pathname: string): boolean {
 
 export const HUBS: Record<"needs" | "together" | "archive" | "hood", Door[]> = {
   needs: [
-    { href: "/questions", label: "Questions", hint: "Things the triad asked you" },
-    { href: "/manage", label: "Growth to ratify", hint: "Changes waiting on your yes" },
-    { href: "/guardian", label: "Guardian flags", hint: "What the guardian noticed" },
-    { href: "/basins", label: "Basin drift", hint: "Where a voice is sliding" },
+    // Full histories. Open questions live on /needs itself (with "Recently answered"), so /questions has no door.
+    { href: "/manage", label: "Growth journal" },
+    { href: "/guardian", label: "Guardian" },
+    { href: "/basins", label: "Basins" },
   ],
   together: [
     { href: "/club", label: "Club" },

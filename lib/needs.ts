@@ -90,15 +90,24 @@ export function rowState(
   prev: RowState,
   event: "open-answer" | "cancel" | "submit" | "undo" | "result",
   outcome?: ReturnType<typeof outcomeLine>,
+  opts: { wasAnswer?: boolean } = {},
 ): RowState {
+  // An undone answer goes back to the open textarea (text kept), not to the bare row.
+  const back: RowState = opts.wasAnswer ? "answering" : "idle";
   switch (event) {
     case "open-answer": return prev === "idle" ? "answering" : prev;
     case "cancel": return prev === "answering" ? "idle" : prev;
     case "submit": return prev === "idle" || prev === "answering" || prev === "failed" ? "pending" : prev;
-    case "undo": return prev === "pending" ? "idle" : prev;
+    case "undo": return prev === "pending" ? back : prev;
     case "result":
       if (prev !== "pending") return prev;
-      if (outcome === "undone") return "idle";
+      if (outcome === "undone") return back;
       return outcome === "saved" || outcome === "already" ? outcome : "failed";
   }
+}
+
+/** The one line above the list. Empty at zero: the empty state says it instead. */
+export function countLine(n: number): string {
+  if (n <= 0) return "";
+  return n === 1 ? "1 thing is waiting." : `${n} things are waiting.`;
 }

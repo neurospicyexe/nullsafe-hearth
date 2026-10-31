@@ -74,13 +74,25 @@ describe("shellHidden", () => {
   });
 });
 
+describe("needs hub", () => {
+  it("keeps the full-history doors and drops /questions", () => {
+    expect(HUBS.needs).toEqual([
+      { href: "/manage", label: "Growth journal" },
+      { href: "/guardian", label: "Guardian" },
+      { href: "/basins", label: "Basins" },
+    ]);
+  });
+});
+
 describe("reachability", () => {
   it("every old nav href is reachable", () => {
     const reachable = new Set<string>([
       ...TABS.map((t) => t.href),
       ...Object.values(HUBS).flatMap((h) => h.map((d) => d.href)),
     ]);
-    const missing = NAV_HREFS.filter((h) => h !== "/today" && h !== "/checkin" && !reachable.has(h));
+    // /questions is absorbed into /needs (open questions + "Recently answered" live there).
+    const absorbed = new Set(["/today", "/checkin", "/questions"]);
+    const missing = NAV_HREFS.filter((h) => !absorbed.has(h) && !reachable.has(h));
     expect(missing).toEqual([]);
   });
   it("companion colors are css vars", () => {

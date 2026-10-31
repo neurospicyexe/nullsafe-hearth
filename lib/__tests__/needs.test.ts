@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  resolveWrite, whoLabel, titleText, kindLabel, buttons, doneLine, outcomeLine, canSend, rowState,
+  resolveWrite, whoLabel, titleText, kindLabel, buttons, doneLine, outcomeLine, canSend, rowState, countLine,
 } from "../needs";
 import type { NeedsItem } from "../halseth";
 
@@ -88,5 +88,22 @@ describe("rowState", () => {
     expect(rowState("pending", "result", "saved")).toBe("saved");
     expect(rowState("pending", "result", "already")).toBe("already");
     expect(rowState("pending", "result", "failed")).toBe("failed");
+  });
+});
+
+describe("countLine", () => {
+  it("says how many are waiting, nothing at zero", () => {
+    expect(countLine(0)).toBe("");
+    expect(countLine(1)).toBe("1 thing is waiting.");
+    expect(countLine(3)).toBe("3 things are waiting.");
+  });
+});
+
+describe("rowState undo of an answer", () => {
+  it("returns to answering so the text is still there", () => {
+    expect(rowState("pending", "undo", undefined, { wasAnswer: true })).toBe("answering");
+    expect(rowState("pending", "undo", undefined, { wasAnswer: false })).toBe("idle");
+    expect(rowState("pending", "result", "undone", { wasAnswer: true })).toBe("answering");
+    expect(rowState("saved", "undo", undefined, { wasAnswer: true })).toBe("saved");
   });
 });
