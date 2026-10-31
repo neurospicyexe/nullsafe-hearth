@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/today", destination: "/", permanent: false },
       { source: "/checkin", destination: "/", permanent: false },
+      // Questions are one kind of "needs you" now.
+      { source: "/questions", destination: "/needs", permanent: false },
     ];
   },
   async headers() {

@@ -30,6 +30,26 @@ export function activeTab(pathname: string): string | null {
   return null;
 }
 
+/** Tab badge text: null hides it (unknown count or nothing waiting); capped so it fits the pill. */
+export function badgeText(n: number | null): string | null {
+  if (n === null || n <= 0) return null;
+  return n > 9 ? "9+" : String(n);
+}
+
+/** A window focus refreshes the badge at most this often; route changes and resolves always refresh. */
+export const FOCUS_REFRESH_MIN_MS = 30_000;
+
+/** Whether a focus should refetch the count, given when the last fetch (from any trigger) started. */
+export function focusRefreshDue(lastFetchMs: number | null, nowMs: number): boolean {
+  return lastFetchMs === null || nowMs - lastFetchMs >= FOCUS_REFRESH_MIN_MS;
+}
+
+/** Request sequencing: only the most recently started request may apply its response. */
+export function latestOnly(): { start: () => number; isLatest: (n: number) => boolean } {
+  let seq = 0;
+  return { start: () => ++seq, isLatest: (n) => n === seq };
+}
+
 /** The reader and the login page get the whole screen. */
 export function shellHidden(pathname: string): boolean {
   return pathname === "/login" || /^\/library\/[^/]+/.test(pathname);
@@ -37,10 +57,10 @@ export function shellHidden(pathname: string): boolean {
 
 export const HUBS: Record<"needs" | "together" | "archive" | "hood", Door[]> = {
   needs: [
-    { href: "/questions", label: "Questions", hint: "Things the triad asked you" },
-    { href: "/manage", label: "Growth to ratify", hint: "Changes waiting on your yes" },
-    { href: "/guardian", label: "Guardian flags", hint: "What the guardian noticed" },
-    { href: "/basins", label: "Basin drift", hint: "Where a voice is sliding" },
+    // Full histories. Open questions live on /needs itself (with "Recently answered"), so /questions has no door.
+    { href: "/manage", label: "Growth journal" },
+    { href: "/guardian", label: "Guardian" },
+    { href: "/basins", label: "Basins" },
   ],
   together: [
     { href: "/club", label: "Club" },

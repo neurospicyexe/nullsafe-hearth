@@ -2137,3 +2137,21 @@ export async function fetchPeople(): Promise<GraphPerson[] | null> {
   const r = await hGetSafe<{ people: GraphPerson[] }>("/mind/people");
   return r?.people ?? null;
 }
+
+// "Needs you" inbox (Halseth GET /raziel/needs): everything waiting on Raziel, one list.
+export type NeedsKind = "question" | "growth" | "guardian" | "basin";
+export interface NeedsItem {
+  key: string; // `${kind}:${id}`
+  kind: NeedsKind;
+  id: string;
+  companion_id: string | null;
+  created_at: string; // SQLite UTC; basin: recorded_at
+  title: string | null;
+  detail: string | null;
+  severity?: "notice" | "warning" | "red"; // guardian only
+  drift_score?: number; // basin only
+}
+export interface NeedsCounts { total: number; question: number; growth: number; guardian: number; basin: number }
+export async function fetchNeeds(limit = 50): Promise<{ items: NeedsItem[]; counts: NeedsCounts } | null> {
+  return hGetSafe<{ items: NeedsItem[]; counts: NeedsCounts }>(`/raziel/needs?limit=${limit}`);
+}

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
-import { TABS, activeTab, type TabLabel } from "@/lib/shell";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { TABS, activeTab, badgeText, focusRefreshDue, latestOnly, type TabLabel } from "@/lib/shell";
 
 const icon = (children: ReactNode, round = false) => (
   <svg
@@ -44,13 +44,61 @@ const ICONS: Record<TabLabel, ReactNode> = {
 export default function TabBar() {
   const pathname = usePathname() ?? "/";
   const current = activeTab(pathname);
+  const [waiting, setWaiting] = useState<number | null>(null);
+
+  // Only the latest request sets the count, so a slow earlier response can't overwrite a newer one.
+  const seq = useRef(latestOnly());
+  const lastFetch = useRef<number | null>(null);
+
+  const refresh = useCallback(async () => {
+    const n = seq.current.start();
+    lastFetch.current = Date.now();
+    let next: number | null = null;
+    try {
+      const res = await fetch("/api/needs/count", { cache: "no-store" });
+      if (res.ok) {
+        const data = (await res.json()) as { total?: unknown };
+        next = typeof data.total === "number" ? data.total : null;
+      }
+    } catch {
+      next = null;
+    }
+    if (seq.current.isLatest(n)) setWaiting(next);
+  }, []);
+
+  // On mount, on every route change, and when /needs resolves something. A window focus refreshes
+  // at most once per 30 seconds (app-switching shouldn't cost four COUNTs each time). No polling.
+  useEffect(() => {
+    void refresh();
+  }, [pathname, refresh]);
+  useEffect(() => {
+    const now = () => { void refresh(); };
+    const onFocus = () => { if (focusRefreshDue(lastFetch.current, Date.now())) void refresh(); };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("hearth:needs-changed", now);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("hearth:needs-changed", now);
+    };
+  }, [refresh]);
+
   return (
     <nav className="h-tabbar" aria-label="Main">
       {TABS.map((tab) => {
         const active = tab.label === current;
+        const badge = tab.label === "Needs you" ? badgeText(waiting) : null;
         return (
-          <Link key={tab.href} href={tab.href} className={`h-tab${active ? " is-active" : ""}`} aria-current={active ? "page" : undefined}>
-            {ICONS[tab.label]}
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`h-tab${active ? " is-active" : ""}`}
+            aria-current={active ? "page" : undefined}
+            aria-label={badge ? `${tab.label}, ${waiting} waiting` : undefined}
+          >
+            <span className="h-tab-icon">
+              {ICONS[tab.label]}
+              {badge && <span className="h-tab-badge" aria-hidden="true">{badge}</span>}
+            </span>
             <span>{tab.label}</span>
           </Link>
         );
