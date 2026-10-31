@@ -1,3 +1,4 @@
+import { parseUtc } from "@/lib/spoons";
 // ── Constants ─────────────────────────────────────────────────────────────
 
 // H10: lifted from hardcoded `/3` literals in app/page.tsx, app/user/page.tsx,
@@ -2205,4 +2206,24 @@ export interface Project {
 export async function fetchProjects(id: CompanionId): Promise<Project[] | null> {
   const r = await hGetSafe<{ projects: Project[] }>(`/mind/projects/${id}`);
   return Array.isArray(r?.projects) ? r.projects : null;
+}
+
+/**
+ * Newest generated image across the triad, or null. Limit 10 per companion, not 1: the success
+ * filter in fetchToolImages runs client-side, so a newest failed row would hide an older good one.
+ */
+export async function fetchNewestImage(): Promise<ToolCall | null> {
+  const lists = await Promise.all(
+    ["cypher", "drevan", "gaia"].map((id) => fetchToolImages(id, 10).catch(() => [] as ToolCall[])),
+  );
+  let best: ToolCall | null = null;
+  let bestAt = -Infinity;
+  for (const c of lists.flat()) {
+    const t = parseUtc(c.created_at)?.getTime() ?? -Infinity;
+    if (best === null || t > bestAt) {
+      best = c;
+      bestAt = t;
+    }
+  }
+  return best;
 }
