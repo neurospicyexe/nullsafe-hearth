@@ -2020,14 +2020,58 @@ export type CollectionListenItem = {
   sparkle: number;
 };
 
-export async function fetchCollection(
-  companionId: string,
-  limit = 30,
-): Promise<{ forage: CollectionForageItem[]; listens: CollectionListenItem[] }> {
+export type CollectionData = { forage: CollectionForageItem[]; listens: CollectionListenItem[] };
+
+/** As fetchCollection, but null when Halseth could not be read, so a page can tell "down" from "none". */
+export async function fetchCollectionOrNull(companionId: string, limit = 30): Promise<CollectionData | null> {
   const res = await hGetSafe<{ forage?: CollectionForageItem[]; listens?: CollectionListenItem[] }>(
     `/mind/collection/${encodeURIComponent(companionId)}?limit=${limit}`,
   );
-  return { forage: res?.forage ?? [], listens: res?.listens ?? [] };
+  return res ? { forage: res.forage ?? [], listens: res.listens ?? [] } : null;
+}
+
+export async function fetchCollection(companionId: string, limit = 30): Promise<CollectionData> {
+  return (await fetchCollectionOrNull(companionId, limit)) ?? { forage: [], listens: [] };
+}
+
+// ── The Home (rooms + presence + basin readings) ──
+export type HomeRoom = {
+  key: string;
+  name: string;
+  sym: string;
+  register: string;
+  primary_lane: string | null;
+  gradient?: string;
+};
+
+export type HomePresence = {
+  companion_id: string;
+  current_room: string;
+  activity: string;
+  micro_mood: string | null;
+  basin_distance: number;
+  updated_at: string;
+};
+
+export type HomeBasinReading = {
+  drift_score: number;
+  drift_type: "stable" | "growth" | "pressure";
+  worst_basin: string | null;
+  recorded_at: string;
+};
+
+/** Rooms and who is in them; null when Halseth could not be read. */
+export async function fetchHomePresence(): Promise<{ presence: HomePresence[]; rooms: HomeRoom[] } | null> {
+  const res = await hGetSafe<{ presence?: HomePresence[]; rooms?: HomeRoom[] }>("/home/presence");
+  return res ? { presence: res.presence ?? [], rooms: res.rooms ?? [] } : null;
+}
+
+/** Latest basin reading for one companion; null when there is none or Halseth could not be read. */
+export async function fetchHomeBasin(companionId: string): Promise<HomeBasinReading | null> {
+  const res = await hGetSafe<{ history?: HomeBasinReading[] }>(
+    `/companion-growth/basin-history/${encodeURIComponent(companionId)}?limit=1`,
+  );
+  return res?.history?.[0] ?? null;
 }
 
 // ── Council (0080, take 8): convene a hard question, blind cross-rank, Gaia synthesis ──
