@@ -2,7 +2,8 @@
 
 export type TabLabel = "Home" | "Needs you" | "Together" | "Archive";
 export type Tab = { href: string; label: TabLabel; match: string[] };
-export type Door = { href: string; label: string; hint?: string };
+/** `count` > 0 shows a "new" pill after the label (companion page doors). */
+export type Door = { href: string; label: string; hint?: string; count?: number };
 
 export const TABS: Tab[] = [
   { href: "/", label: "Home", match: ["/", "/companions"] },

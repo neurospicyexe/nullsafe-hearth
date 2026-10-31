@@ -1960,7 +1960,20 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   font-family: var(--h-font, system-ui, sans-serif);
   text-decoration: none;
 }
+.h-door-top { display: flex; align-items: center; gap: 8px; }
 .h-door-label { font-size: 1.0625rem; font-weight: 700; }
+.h-door-count {
+  flex: none;
+  min-width: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: var(--h-lamp);
+  color: var(--h-ground);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
 .h-door-hint { font-size: 0.875rem; color: var(--h-faint); }
 
 @media (min-width: 1024px) {
@@ -2059,11 +2072,13 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-home-name { font-size: 1.1875rem; font-weight: 700; }
 .h-home-status { font-size: 0.9375rem; color: var(--h-muted); }
 .h-home-seen { font-size: 0.8125rem; color: var(--h-faint); flex: none; }
-.h-home-bars { display: flex; flex-direction: column; gap: 6px; }
-.h-home-bar { display: flex; align-items: center; gap: 10px; }
-.h-home-bar-label { width: 74px; flex: none; font-size: 0.8125rem; color: var(--h-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.h-home-bar-track { flex: 1; height: 8px; border-radius: 4px; background: var(--h-line); display: flex; }
-.h-home-bar-fill { height: 8px; border-radius: 4px; }
+/* Kit: Bars (components/kit/Bars.tsx), shared by Home and the companion pages. */
+.h-bars { display: flex; flex-direction: column; gap: 6px; }
+.h-bars-row { display: flex; align-items: center; gap: 10px; }
+.h-bars-label { width: 74px; flex: none; font-size: 0.8125rem; color: var(--h-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-bars-track { flex: 1; height: 8px; border-radius: 4px; background: var(--h-line); display: flex; }
+.h-bars-fill { height: 8px; border-radius: 4px; }
+.h-trace { flex: none; display: block; }
 .h-home-left { display: flex; flex-direction: column; gap: 8px; }
 .h-home-item { display: flex; gap: 12px; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); color: var(--h-ink); text-decoration: none; }
 .h-home-item-dot { margin-top: 6px; }

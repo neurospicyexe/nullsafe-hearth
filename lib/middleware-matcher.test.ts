@@ -21,6 +21,12 @@ describe("middleware matcher", () => {
     }
   });
 
+  it("protects the companion page look proxy", () => {
+    for (const p of ["/api/companions/cypher/looked", "/api/companions/gaia/looked", "/api/companions/drevan/looked"]) {
+      expect(isProtected(p), p).toBe(true);
+    }
+  });
+
   it("leaves the deliberate public paths public", () => {
     for (const p of ["/api/auth", "/login", "/api/companion/house", "/manifest.webmanifest", "/sw.js", "/offline.html", "/icon.png"]) {
       expect(isProtected(p), p).toBe(false);

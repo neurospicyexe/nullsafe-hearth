@@ -2155,3 +2155,38 @@ export interface NeedsCounts { total: number; question: number; growth: number; 
 export async function fetchNeeds(limit = 50): Promise<{ items: NeedsItem[]; counts: NeedsCounts } | null> {
   return hGetSafe<{ items: NeedsItem[]; counts: NeedsCounts }>(`/raziel/needs?limit=${limit}`);
 }
+
+// Companion page (Halseth GET /raziel/companion/:id). Types copied verbatim from Halseth's
+// src/handlers/raziel-companion.ts contract (P3 Task 1).
+export type CompanionId = "drevan" | "cypher" | "gaia";
+export type FloatKey = "soma_float_1" | "soma_float_2" | "soma_float_3";
+export interface CompanionRundown {
+  companion_id: CompanionId;
+  last_real_thing: { text: string; at: string } | null;
+  last_looked_at: string | null;            // as stored, or null on first visit
+  since_basis: "last_looked" | "week";      // "week" when no companion_page row
+  since: { journal: number; letters: number; book_notes: number; sol: number; autonomy: number };
+  doors: { journal: number; letters_unread: number; growth: number; feelings: number; upto: number; made: number };
+  trace: Record<FloatKey, (number | null)[]>; // exactly 7 points, oldest -> newest, last = current value
+}
+export async function fetchCompanionRundown(id: CompanionId): Promise<CompanionRundown | null> {
+  return hGetSafe<CompanionRundown>(`/raziel/companion/${id}`);
+}
+
+// Companion projects (Halseth GET /mind/projects/:companion_id; row = ProjectRow in src/handlers/projects.ts).
+export interface Project {
+  id: string;
+  companion_id: string;
+  title: string;
+  intention: string;
+  status: "open" | "paused" | "done" | "released";
+  horizon_note: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  last_worked_at: string | null;
+  closed_at: string | null;
+}
+export async function fetchProjects(id: CompanionId): Promise<Project[] | null> {
+  const r = await hGetSafe<{ projects: Project[] }>(`/mind/projects/${id}`);
+  return Array.isArray(r?.projects) ? r.projects : null;
+}
