@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
-import { fetchToolImages } from "@/lib/halseth";
+import { fetchCompanionImages } from "@/lib/halseth";
 import { ageLabel } from "@/lib/home-model";
 import { COMPANION_NAME, imagePrompt, parseCompanionId } from "@/lib/companion-page";
 
@@ -11,13 +11,15 @@ export default async function CompanionMadePage({ params }: { params: Promise<{ 
   const id = parseCompanionId(rawId);
   if (!id) notFound();
 
-  const images = await fetchToolImages(id, 40);
+  const images = await fetchCompanionImages(id, 40);
   const now = new Date();
 
   return (
     <div className="h-companion">
       <h1 className="h-companion-title">What {COMPANION_NAME[id]} made</h1>
-      {images.length === 0 ? (
+      {images === null ? (
+        <p className="h-companion-quiet">Can&apos;t reach Halseth right now.</p>
+      ) : images.length === 0 ? (
         <p className="h-companion-quiet">Nothing made yet.</p>
       ) : (
         <ul className="h-made-grid">

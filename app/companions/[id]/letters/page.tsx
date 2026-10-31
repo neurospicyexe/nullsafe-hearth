@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { fetchNotes, fetchCompanionNotesByAgent } from "@/lib/halseth";
 import type { Note, CompanionNote } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
@@ -45,12 +44,6 @@ export default async function CompanionLettersPage({ params }: { params: Promise
   return (
     <>
       <div className="page-header" style={{ marginBottom: "2rem" }}>
-        <Link
-          href={`/companions/${id}`}
-          style={{ fontSize: "0.82rem", color: "var(--text-muted)", textDecoration: "none" }}
-        >
-          ← {config.display}
-        </Link>
         <h1 className="page-title" style={{ marginTop: "0.4rem" }}>Letters</h1>
         <p className="page-subtitle">
           full thread · {letters.length} {letters.length === 1 ? "letter" : "letters"}

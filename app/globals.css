@@ -2187,3 +2187,4 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-project-intention { font-size: 0.9375rem; color: var(--h-ink); }
 .h-project-note { font-size: 0.875rem; color: var(--h-muted); }
 .h-subnav-back:focus-visible, .h-subnav-link:focus-visible, .h-companion-more:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-companion-cap { margin-top: 12px; }

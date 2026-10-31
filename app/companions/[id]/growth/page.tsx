@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound, redirect } from "next/navigation";
+import { parseCompanionId } from "@/lib/companion-page";
 import Link from "next/link";
 import {
   fetchGrowthJournal,
@@ -36,7 +37,8 @@ export default async function GrowthPage({
   searchParams: Promise<{ view?: string; page?: string }>;
 }) {
   const { id: rawId } = await params;
-  const id = rawId.toLowerCase();
+  const id = parseCompanionId(rawId);
+  if (!id) notFound();
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
@@ -104,13 +106,6 @@ export default async function GrowthPage({
 
   return (
     <div data-companion={id}>
-      {/* Back link */}
-      <div style={{ padding: "1rem 1.5rem 0" }}>
-        <Link href={`/companions/${id}`} className="home-section-link" style={{ fontSize: "0.85rem" }}>
-          ← back
-        </Link>
-      </div>
-
       {/* Page title */}
       <div
         className="companion-header"

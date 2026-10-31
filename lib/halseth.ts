@@ -1826,6 +1826,15 @@ export async function fetchToolImages(companionId: string, limit = 40): Promise<
   return (res?.calls ?? []).filter(c => c.status === "success" && c.result_ref);
 }
 
+/** As fetchToolImages, but null when Halseth could not be read, so a page can tell "down" from "none". */
+export async function fetchCompanionImages(companionId: CompanionId, limit = 40): Promise<ToolCall[] | null> {
+  const res = await hGetSafe<{ calls?: ToolCall[] }>(
+    `/mind/tools/calls/${companionId}?tool=generate_image&limit=${limit}`,
+  );
+  if (!Array.isArray(res?.calls)) return null;
+  return res.calls.filter(c => c.status === "success" && c.result_ref);
+}
+
 // ── Creatures (0078, take 10): corvid + Raziel's animals as named presences ──
 export type Creature = {
   id: string;

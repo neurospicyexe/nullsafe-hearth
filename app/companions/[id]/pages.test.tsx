@@ -34,11 +34,24 @@ import LettersPage from "./letters/page";
 import MadePage from "./made/page";
 import ProjectsPage from "./projects/page";
 import Layout from "./layout";
+import JournalPage from "./journal/page";
+import NotesPage from "./notes/page";
+import SittingPage from "./sitting/page";
+import WitnessPage from "./witness/page";
+import GrowthPage from "./growth/page";
+import WorldviewPage from "./worldview/page";
+import LoopsPage from "./loops/page";
+import BlocksPage from "./blocks/page";
+import AuditPage from "./audit/page";
+import FeelingsPage from "./feelings/page";
+import RelationalPage from "./relational/page";
+import DeltasPage from "./deltas/page";
+import AutonomyPage from "./autonomy/page";
 
 const mocks = () =>
   Object.values(halseth as Record<string, unknown>).filter((v): v is Mock => vi.isMockFunction(v));
 const allCalls = () => mocks().flatMap((m) => m.mock.calls);
-const params = (id: string) => ({ params: Promise.resolve({ id }) });
+const params = (id: string) => ({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) });
 
 function rundown(over: Partial<CompanionRundown> = {}): CompanionRundown {
   return {
@@ -80,6 +93,23 @@ describe("unknown companion", () => {
       expect(allCalls()).toEqual([]);
     });
   }
+  // "constructor" is not an own key of COMPANION_CONFIG but IS reachable through Object.prototype;
+  // the old `COMPANION_CONFIG[rawId.toLowerCase()]` guard let it through to Halseth.
+  const oldPages = {
+    JournalPage, NotesPage, SittingPage, WitnessPage, GrowthPage, WorldviewPage, LoopsPage, BlocksPage,
+    AuditPage, FeelingsPage, RelationalPage, DeltasPage, AutonomyPage, LettersPage, AllPage,
+  } as const;
+  for (const [name, Page] of Object.entries(oldPages)) {
+    it(`${name} 404s on /companions/constructor with no Halseth call`, async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pages differ only in searchParams
+      await expect((Page as (p: any) => Promise<unknown>)(params("constructor"))).rejects.toThrow("NEXT_NOT_FOUND");
+      expect(allCalls()).toEqual([]);
+    });
+  }
+  it("journal passes the lowercased id to its fetch", async () => {
+    await JournalPage(params("Cypher"));
+    expect(halseth.fetchCompanionJournal).toHaveBeenCalledWith("cypher", 200);
+  });
   it("the layout 404s too, so no sub-route ever renders with a bad id", async () => {
     await expect(Layout({ children: null, ...params("blue") })).rejects.toThrow("NEXT_NOT_FOUND");
   });
@@ -115,7 +145,7 @@ describe("mixed-case id is lowercased before every fetch", () => {
 
   it("made", async () => {
     await MadePage(params("Cypher"));
-    expect(halseth.fetchToolImages).toHaveBeenCalledWith("cypher", 40);
+    expect(halseth.fetchCompanionImages).toHaveBeenCalledWith("cypher", 40);
     noRawId();
   });
 
@@ -158,6 +188,13 @@ describe("overview", () => {
 });
 
 describe("made", () => {
+  it("Halseth down reads Can't reach Halseth right now., not Nothing made yet.", async () => {
+    overrides.fetchCompanionImages = async () => null;
+    const html = renderToStaticMarkup(await MadePage(params("gaia")));
+    expect(html).toContain("Can&#x27;t reach Halseth right now.");
+    expect(html).not.toContain("Nothing made yet.");
+  });
+
   it("empty reads Nothing made yet.", async () => {
     const html = renderToStaticMarkup(await MadePage(params("gaia")));
     expect(html).toContain("Nothing made yet.");
@@ -168,7 +205,7 @@ describe("made", () => {
       id: "t1", companion_id: "gaia", tool: "generate_image", args_summary: "prompt: a moss lantern",
       status: "success", provider: null, result_ref: "r2/x", result_summary: null, created_at: "2026-10-29T10:00:00Z",
     };
-    overrides.fetchToolImages = async () => [call];
+    overrides.fetchCompanionImages = async () => [call];
     const html = renderToStaticMarkup(await MadePage(params("gaia")));
     expect(html).toContain('src="/api/mind/tools/image/t1"');
     expect(html).toContain('alt="a moss lantern"');
@@ -186,6 +223,13 @@ describe("projects", () => {
     overrides.fetchProjects = async () => null;
     const html = renderToStaticMarkup(await ProjectsPage(params("drevan")));
     expect(html).toContain("Can&#x27;t reach Halseth right now.");
+  });
+
+  it("says the list is capped only when Halseth returned its cap", async () => {
+    overrides.fetchProjects = async () => Array.from({ length: 20 }, (_, i) => p(`p${i}`, "open"));
+    expect(renderToStaticMarkup(await ProjectsPage(params("drevan")))).toContain("Showing the first 20.");
+    overrides.fetchProjects = async () => Array.from({ length: 19 }, (_, i) => p(`p${i}`, "open"));
+    expect(renderToStaticMarkup(await ProjectsPage(params("drevan")))).not.toContain("Showing the first");
   });
 
   it("empty reads No projects yet.", async () => {

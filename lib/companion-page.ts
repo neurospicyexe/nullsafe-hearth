@@ -164,7 +164,7 @@ export interface SubnavModel {
  * back link only. Hrefs use the parsed (lowercase) id whatever case the URL carried.
  */
 export function subnavFor(id: CompanionId, pathname: string): SubnavModel | null {
-  const slug = pathname.split("/").filter(Boolean)[2] ?? "";
+  const slug = (pathname.split("/").filter(Boolean)[2] ?? "").toLowerCase();
   if (!slug) return null;
   const base = `/companions/${id}`;
   const back = { href: base, label: COMPANION_NAME[id] };
@@ -180,6 +180,9 @@ export function subnavFor(id: CompanionId, pathname: string): SubnavModel | null
 export function imagePrompt(argsSummary: string): string {
   return argsSummary.replace(/^prompt:\s*/i, "").trim() || "(untitled)";
 }
+
+/** Halseth's GET /mind/projects/:id row cap (readProjects default limit; the route passes none). */
+export const PROJECTS_CAP = 20;
 
 const PROJECT_GROUPS: { heading: string; statuses: Project["status"][] }[] = [
   { heading: "Open", statuses: ["open"] },

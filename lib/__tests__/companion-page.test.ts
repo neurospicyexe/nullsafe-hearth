@@ -221,6 +221,11 @@ describe("subnavFor", () => {
     });
   });
 
+  it("lowercases the slug too, so /Journal still finds its group and marks current", () => {
+    const nav = subnavFor("cypher", "/companions/cypher/Journal");
+    expect(nav?.links.find((l) => l.current)?.href).toBe("/companions/cypher/journal");
+  });
+
   it("uses the lowercased id even when the URL is not", () => {
     expect(subnavFor("gaia", "/companions/GAIA/witness")?.links.map((l) => l.href)).toContain("/companions/gaia/witness");
   });

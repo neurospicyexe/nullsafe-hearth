@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import { parseCompanionId } from "@/lib/companion-page";
 import { fetchPersonaBlocks, fetchHumanBlocks } from "@/lib/halseth";
 import { COMPANION_CONFIG } from "../sections";
 
@@ -17,7 +17,8 @@ function fmtTime(iso: string) {
 
 export default async function CompanionBlocksPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
-  const id = rawId.toLowerCase();
+  const id = parseCompanionId(rawId);
+  if (!id) notFound();
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
@@ -28,12 +29,6 @@ export default async function CompanionBlocksPage({ params }: { params: Promise<
 
   return (
     <div>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <Link href={`/companions/${id}`} className="home-section-link">
-          ← {config.display}
-        </Link>
-      </div>
-
       <div className="page-header">
         <h1 className="page-title">{config.display} · Memory Blocks</h1>
         <p className="page-subtitle">persona and relational distillations from conversation</p>
