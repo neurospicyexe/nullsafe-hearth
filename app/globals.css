@@ -2486,6 +2486,10 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   background: var(--h-ground); color: var(--h-ink);
   font-family: var(--h-font, system-ui, sans-serif);
 }
+/* The page behind the reader must never scroll: body is min-height 100vh (the LARGE viewport on iOS), so a
+   drag would collapse the toolbar, change 100dvh and fire epubjs's window resize mid-selection. */
+html:has(.h-reader), body:has(.h-reader) { overflow: hidden; overscroll-behavior: none; }
+body:has(.h-reader) { min-height: 0; }
 .h-reader-bar {
   flex: none; display: flex; align-items: center; gap: 10px; min-width: 0;
   padding: calc(4px + env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 4px max(10px, env(safe-area-inset-left));
