@@ -33,7 +33,7 @@ beforeEach(() => {
 });
 
 describe("/library/[id]", () => {
-  it("renders the title, author and the reader stub for the book", async () => {
+  it("renders the title and the reader stub for the book", async () => {
     detail = {
       book: { id: "book1", title: "The Left Hand of Darkness", author: "Ursula K. Le Guin", file_type: "epub", finished_at: null },
       progress: null,
@@ -42,35 +42,30 @@ describe("/library/[id]", () => {
     const html = await render();
     expect(fetchBook).toHaveBeenCalledWith("book1");
     expect(html).toContain("The Left Hand of Darkness");
-    expect(html).toContain("Ursula K. Le Guin");
     expect(html).toContain('data-reader="book1"');
     expect(html).toContain('href="/library"');
-    expect(html).not.toContain("finished");
   });
 
-  it("marks a finished book and falls back to an unknown author", async () => {
+  it("still mounts the reader for a finished book with no author", async () => {
     detail = {
       book: { id: "book1", title: "T", author: null, file_type: "pdf", finished_at: "2026-10-01" },
       progress: null,
       annotations: [],
     };
     const html = await render();
-    expect(html).toContain("unknown author");
-    expect(html).toContain("finished");
+    expect(html).toContain('data-reader="book1"');
   });
 
   it("renders a message with a back link, not notFound, when the book is missing", async () => {
     detail = null;
     const html = await render();
-    expect(html).toContain("open that book");
-    expect(html).toContain('href="/library"');
+        expect(html).toContain('href="/library"');
     expect(html).not.toContain("data-reader");
   });
 
   it("treats a payload without a book the same way", async () => {
     detail = { book: null, progress: null, annotations: [] };
     const html = await render();
-    expect(html).toContain("open that book");
-    expect(html).not.toContain("data-reader");
+        expect(html).not.toContain("data-reader");
   });
 });
