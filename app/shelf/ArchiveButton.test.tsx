@@ -54,6 +54,22 @@ describe("ArchiveButton", () => {
     expect(sent).toHaveLength(0);
   });
 
+  it("a tap after a retryable failure supersedes the stored write (stable key): one archive lands", async () => {
+    respond = async () => new Response("{}", { status: 503 });
+    const view = render(<WriteQueueProvider><ArchiveButton id="o1" /></WriteQueueProvider>);
+    fireEvent.click(screen.getByRole("button", { name: "archive" }));
+    await pass(5000);
+    respond = async () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+    fireEvent.click(screen.getByRole("button", { name: "archive" }));
+    await pass(5000);
+    expect(sent).toHaveLength(2);
+    view.unmount();
+    render(<WriteQueueProvider><ArchiveButton id="o1" /></WriteQueueProvider>);
+    await pass(100);
+    expect(sent).toHaveLength(2);
+    expect(window.localStorage.length).toBe(0);
+  });
+
   it("a failure brings the control back and says Didn't save.", async () => {
     respond = async () => new Response("{}", { status: 503 });
     render(<WriteQueueProvider><ArchiveButton id="o1" /></WriteQueueProvider>);

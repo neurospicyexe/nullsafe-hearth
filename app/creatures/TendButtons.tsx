@@ -33,6 +33,10 @@ export default function TendButtons({ creatureId }: { creatureId: string }) {
   const [landed, setLanded] = useState<Record<Action, number>>({ feed: 0, play: 0, talk: 0, give: 0 });
   const [sending, setSending] = useState<Record<Action, number>>({ feed: 0, play: 0, talk: 0, give: 0 });
   const timers = useRef<number[]>([]);
+  // A tend that failed retryably is stored by the queue and retried on the next Hearth open. The
+  // next tap of the same action reuses its key, so the tap supersedes the stored write instead of
+  // adding a second one (one owner for the retry: the queue).
+  const failedKey = useRef<Partial<Record<Action, string>>>({});
 
   useEffect(() => () => { for (const t of timers.current) window.clearTimeout(t); }, []);
 
@@ -54,8 +58,10 @@ export default function TendButtons({ creatureId }: { creatureId: string }) {
 
   function tend(action: Action) {
     const words = note.trim();
+    const key = failedKey.current[action] ?? `creature-${creatureId}-${action}-${Date.now()}`;
+    delete failedKey.current[action];
     const pending = queue.submit({
-      key: `creature-${creatureId}-${action}-${Date.now()}`,
+      key,
       url: `/api/creatures/${encodeURIComponent(creatureId)}`,
       method: "POST",
       body: { action, ...(words ? { note: words } : {}) },
@@ -73,6 +79,7 @@ export default function TendButtons({ creatureId }: { creatureId: string }) {
       setGraceCount((c) => ({ ...c, [action]: pendingRef.current[action].filter((p) => p.waiting()).length }));
       if (r === "undone") return;
       if (!r.ok) {
+        if (!r.dropped) failedKey.current[action] = key; // stored for retry: the next tap supersedes it
         setError(failureLine(r)); // the words stay in the box, so a retry is one tap
         return;
       }

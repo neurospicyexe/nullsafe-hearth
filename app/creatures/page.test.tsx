@@ -43,6 +43,13 @@ describe("CreaturesPage", () => {
     expect(html).toContain("feed");
   });
 
+  it("a failed detail read still shows when he was last tended, from the list read", async () => {
+    creatures = [{ ...sol, last_interaction_at: "2026-10-30T12:00:00Z" } as Creature];
+    const html = renderToStaticMarkup(await CreaturesPage());
+    expect(html).toContain("Couldn&#x27;t load the rest of this card from Halseth.");
+    expect(html).toContain("Last tended");
+  });
+
   it("Sol's appear moment and his note render as written", async () => {
     creatures = [sol];
     detail = {

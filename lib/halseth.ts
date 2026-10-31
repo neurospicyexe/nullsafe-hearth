@@ -1737,10 +1737,7 @@ export type CommonsPost = {
 
 /** Posts in one context, newest first (default the global log). Graceful [] on error. */
 export async function fetchCommonsPosts(context = "global", limit = 50): Promise<CommonsPost[]> {
-  const res = await hGetSafe<{ posts?: CommonsPost[] }>(
-    `/mind/commons?context=${encodeURIComponent(context)}&limit=${limit}`,
-  );
-  return res?.posts ?? [];
+  return (await fetchCommonsPostsOrNull(context, limit)) ?? [];
 }
 
 /** As fetchCommonsPosts, but null when Halseth cannot be read, so a page can tell failure from empty. */
@@ -1763,8 +1760,7 @@ export type Obsession = {
 };
 
 export async function fetchObsessions(status = "active"): Promise<Obsession[]> {
-  const res = await hGetSafe<{ items?: Obsession[] }>(`/mind/shelf?status=${encodeURIComponent(status)}`);
-  return res?.items ?? [];
+  return (await fetchObsessionsOrNull(status)) ?? [];
 }
 
 /** As fetchObsessions, but null when Halseth cannot be read, so the shelf can tell failure from empty. */
@@ -1910,8 +1906,7 @@ export type NestItem = {
 export type CreatureFamiliarity = { actor: string; tendings: number; last_at: string };
 
 export async function fetchCreatures(): Promise<Creature[]> {
-  const res = await hGetSafe<{ creatures?: Creature[] }>("/mind/creatures");
-  return res?.creatures ?? [];
+  return (await fetchCreaturesOrNull()) ?? [];
 }
 
 /** As fetchCreatures, but null when Halseth cannot be read, so the page can tell failure from empty. */

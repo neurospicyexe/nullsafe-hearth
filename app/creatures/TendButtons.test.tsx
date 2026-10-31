@@ -105,6 +105,38 @@ describe("TendButtons", () => {
     expect(screen.getByRole("button", { name: "talk" })).toBeTruthy();
   });
 
+  it("a second tap after a retryable failure supersedes the stored write: one tend lands", async () => {
+    respond = async () => new Response("{}", { status: 503 });
+    const view = render(<WriteQueueProvider><TendButtons creatureId="sol" /></WriteQueueProvider>);
+    fireEvent.click(screen.getByRole("button", { name: "feed" }));
+    await pass(5000);
+    expect(screen.getByText("Didn't save.")).toBeTruthy();
+    respond = async () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+    await pass(1);
+    fireEvent.click(screen.getByRole("button", { name: "feed" }));
+    await pass(5000);
+    expect(sent).toHaveLength(2);
+    view.unmount();
+    // The next Hearth open: the provider's restore() sends whatever is still stored.
+    render(<WriteQueueProvider><TendButtons creatureId="sol" /></WriteQueueProvider>);
+    await pass(100);
+    expect(sent).toHaveLength(2);
+    expect(window.localStorage.length).toBe(0);
+  });
+
+  it("a failed tend left alone is retried once on the next open", async () => {
+    respond = async () => new Response("{}", { status: 503 });
+    const view = render(<WriteQueueProvider><TendButtons creatureId="sol" /></WriteQueueProvider>);
+    fireEvent.click(screen.getByRole("button", { name: "play" }));
+    await pass(5000);
+    view.unmount();
+    respond = async () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+    render(<WriteQueueProvider><TendButtons creatureId="sol" /></WriteQueueProvider>);
+    await pass(100);
+    expect(sent).toHaveLength(2);
+    expect(JSON.parse(String(sent[1].init.body))).toEqual({ action: "play" });
+  });
+
   it("a refusal shows Halseth's own words", async () => {
     respond = async () => new Response(JSON.stringify({ error: "creature not found" }), { status: 404 });
     mount();

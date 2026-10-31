@@ -80,6 +80,31 @@ describe("AddBox", () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
+  it("a second submit after a retryable failure supersedes the stored write: one item lands", async () => {
+    respond = async () => new Response("{}", { status: 503 });
+    fill();
+    await pass(5000);
+    expect(screen.getByText("Didn't save.")).toBeTruthy();
+    respond = async () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+    await pass(1);
+    fireEvent.click(screen.getByRole("button", { name: "add to shelf" }));
+    await pass(5000);
+    expect(sent).toHaveLength(2);
+    cleanup();
+    // The next Hearth open: the provider's restore() sends whatever is still stored.
+    render(<WriteQueueProvider><AddBox /></WriteQueueProvider>);
+    await pass(100);
+    expect(sent).toHaveLength(2);
+    expect(window.localStorage.length).toBe(0);
+  });
+
+  it("a refusal (dropped) is not reused: the next add gets a fresh key", async () => {
+    respond = async () => new Response(JSON.stringify({ error: "nope" }), { status: 400 });
+    fill();
+    await pass(5000);
+    expect(window.localStorage.length).toBe(0);
+  });
+
   it("a refusal shows Halseth's own words and keeps the text", async () => {
     respond = async () => new Response(JSON.stringify({ error: "title required" }), { status: 400 });
     fill();

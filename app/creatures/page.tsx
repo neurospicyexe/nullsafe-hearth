@@ -170,7 +170,10 @@ function CreatureCard({ creature, detail }: { creature: Creature; detail: Creatu
       <TendButtons creatureId={creature.id} />
 
       {detail === null ? (
-        <p className="h-creature-quiet is-section">Couldn&apos;t load the rest of this card from Halseth.</p>
+        <p className="h-creature-quiet is-section">
+          Couldn&apos;t load the rest of this card from Halseth.
+          {creature.last_interaction_at && <> Last tended <ClientTime iso={creature.last_interaction_at} />.</>}
+        </p>
       ) : (
         <>
           {isPet && (

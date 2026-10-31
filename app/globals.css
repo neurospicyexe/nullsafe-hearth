@@ -2251,9 +2251,9 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-creature-bar-head { display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--h-muted); }
 .h-creature-bar-track { height: 6px; margin-top: 3px; border-radius: 3px; background: var(--h-ground); overflow: hidden; }
 .h-creature-bar-fill { height: 100%; background: var(--h-muted); }
-.h-creature-bar-fill.is-trust { background: var(--h-lamp); }
+.h-creature-bar-fill.is-trust { background: var(--h-ink); }
 .h-creature-bar-fill.is-quiet { background: var(--h-gaia); }
-.h-creature-bar-fill.is-loud { background: var(--h-lamp); }
+.h-creature-bar-fill.is-loud { background: var(--h-ink); }
 .h-creature-bar-fill.is-urgent { background: var(--h-drevan); }
 .h-creature-bar-fill.is-energy { background: var(--h-cypher); }
 .h-creature-section { padding-top: 14px; }
@@ -2262,8 +2262,8 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-creature-quiet.is-section { padding-top: 14px; }
 .h-creature-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .h-creature-chip { padding: 2px 10px; border: 1px solid var(--h-line); border-radius: 999px; font-size: 0.8125rem; color: var(--h-muted); overflow-wrap: anywhere; }
-.h-creature-chip.is-treasured { border-color: var(--h-lamp); color: var(--h-lamp); }
-.h-creature-chip.is-moment { color: var(--h-lamp); background: var(--h-ground); }
+.h-creature-chip.is-treasured { border-color: var(--h-ink); color: var(--h-ink); }
+.h-creature-chip.is-moment { color: var(--h-ink); background: var(--h-ground); }
 .h-creature-given { list-style: none; margin: 6px 0 0; padding: 0; font-size: 0.8125rem; color: var(--h-faint); }
 .h-creature-feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .h-creature-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 0.875rem; }
@@ -2271,7 +2271,9 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-creature-row.is-drevan .h-creature-row-who { color: var(--h-drevan); }
 .h-creature-row.is-cypher .h-creature-row-who { color: var(--h-cypher); }
 .h-creature-row.is-gaia .h-creature-row-who { color: var(--h-gaia); }
-.h-creature-row.is-raziel .h-creature-row-who, .h-creature-row.is-sol .h-creature-row-who { color: var(--h-lamp); }
+/* Lamp is Raziel's. Sol reads in ink with his ✦ marker until the colour pass gives him a token. */
+.h-creature-row.is-raziel .h-creature-row-who { color: var(--h-lamp); }
+.h-creature-row.is-sol .h-creature-row-who { color: var(--h-ink); font-weight: 700; }
 .h-creature-row-note { color: var(--h-muted); overflow-wrap: anywhere; }
 .h-creature-row-at { margin-left: auto; font-size: 0.8125rem; color: var(--h-faint); white-space: nowrap; }
 .h-creature-tend { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; }
@@ -2304,7 +2306,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 }
 .h-creature-msg { margin: 0; font-size: 0.9375rem; color: var(--h-ink); }
 .h-creature-msg.is-warn { color: var(--h-drevan); }
-.h-creature-moment { margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--h-lamp); overflow-wrap: anywhere; }
+.h-creature-moment { margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--h-ink); overflow-wrap: anywhere; }
 .h-creature-btn:focus-visible, .h-creature-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
 
 /* ── P4 Shelf (/shelf): what Raziel's into; the add/archive payloads cy: into relies on are unchanged ── */
@@ -2361,6 +2363,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-shelf-who.is-gaia { color: var(--h-gaia); }
 .h-shelf-who.is-raziel { color: var(--h-lamp); }
 .h-shelf-who.is-other { color: var(--h-ink); }
+.h-shelf-post-box { padding-top: 4px; }
 .h-shelf-post-body { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--h-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
 .h-shelf-btn:focus-visible, .h-shelf-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
 

@@ -25,6 +25,10 @@ export default function AddBox() {
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pendingRef = useRef<Pending | null>(null);
+  // An add that failed retryably is stored by the queue and retried on the next Hearth open. The box
+  // holds that same draft (the text is kept), so the next submit reuses its key and supersedes the
+  // stored write instead of adding the item twice.
+  const failedKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (!inGrace) return;
@@ -41,8 +45,10 @@ export default function AddBox() {
   function add(e?: React.FormEvent) {
     e?.preventDefault();
     if (!title.trim() || phase !== "editing") return;
+    const key = failedKey.current ?? `shelf-add-${Date.now()}`;
+    failedKey.current = null;
     const pending = queue.submit({
-      key: `shelf-add-${Date.now()}`,
+      key,
       url: "/api/shelf",
       method: "POST",
       body: { title: title.trim(), kind, note: note.trim() || null },
@@ -64,6 +70,7 @@ export default function AddBox() {
         router.refresh();
         return;
       }
+      if (!r.dropped) failedKey.current = key; // stored for retry: the next submit supersedes it
       setError(failureLine(r)); // the fields stay as typed, so a retry is one tap
     });
   }
