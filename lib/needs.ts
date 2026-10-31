@@ -106,10 +106,16 @@ export function rowState(
   }
 }
 
-/** The one line above the list. Empty at zero: the empty state says it instead. */
-export function countLine(n: number): string {
+/**
+ * The one line above the list. Empty at zero: the empty state says it instead.
+ * `counts.total` covers everything waiting; `shown` is how many rows the list holds. When the
+ * list is capped below the total, the line says so rather than letting the count look wrong.
+ */
+export function countLine(counts: number | { total: number }, shown?: number): string {
+  const n = typeof counts === "number" ? counts : counts.total;
   if (n <= 0) return "";
-  return n === 1 ? "1 thing is waiting." : `${n} things are waiting.`;
+  const base = n === 1 ? "1 thing is waiting." : `${n} things are waiting.`;
+  return shown !== undefined && shown < n ? `${base} Showing the newest ${shown}.` : base;
 }
 
 /** "Recently answered": newest ANSWER first (an old question answered today leads), capped. */

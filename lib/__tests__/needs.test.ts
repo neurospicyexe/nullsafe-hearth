@@ -97,6 +97,12 @@ describe("countLine", () => {
     expect(countLine(1)).toBe("1 thing is waiting.");
     expect(countLine(3)).toBe("3 things are waiting.");
   });
+  it("says so when the list shows fewer than are waiting", () => {
+    expect(countLine({ total: 73 }, 50)).toBe("73 things are waiting. Showing the newest 50.");
+    expect(countLine({ total: 50 }, 50)).toBe("50 things are waiting.");
+    expect(countLine({ total: 3 }, 3)).toBe("3 things are waiting.");
+    expect(countLine({ total: 0 }, 0)).toBe("");
+  });
 });
 
 describe("rowState undo of an answer", () => {
