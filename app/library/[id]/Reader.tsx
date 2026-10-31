@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ePub from "epubjs";
 import type { Book as EpubBook, Rendition, Location, NavItem, Contents } from "epubjs";
 import type { BookAnnotation, BookProgress } from "@/lib/halseth";
+import { HIGHLIGHT_FILL } from "./highlight";
 
 // Panel colours come from the kit tokens via an is-<author> class (globals.css .h-reader-*);
 // an unknown author gets the plain ink colour.
@@ -12,12 +13,7 @@ function authorClass(author: string) {
   return KNOWN_AUTHORS.has(author) ? ` is-${author}` : "";
 }
 
-// Highlight fills live inside the epub iframe, where the page's CSS variables
-// don't reach, so these are literal hexes, one warm tone per voice. They are epubjs DATA (highlightStyle
-// only), not page chrome; the margin panel uses the kit tokens instead.
-const HIGHLIGHT_FILL: Record<string, string> = {
-  raziel: "#d4a24e", cypher: "#7aa2f7", drevan: "#f7768e", gaia: "#9ece6a",
-};
+// Highlight fills (iframe data, hex mirrors of the kit tokens): see ./highlight.ts.
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -37,6 +33,8 @@ function highlightStyle(author: string, color: string | null) {
 
 // The margins are the point: every note the triad has left in this book,
 // oldest first, like marginalia accumulating in a shared copy.
+const MARGINS_ID = "h-reader-margins";
+
 // On a phone or portrait iPad (<1024px) the panel is a sheet over the page, opened from the controls
 // strip; at >=1024px it is a fixed side column. Either way it never changes the epub viewer's box.
 function MarginPanel({ annotations, open, onClose }: {
@@ -45,11 +43,24 @@ function MarginPanel({ annotations, open, onClose }: {
   onClose: () => void;
 }) {
   const sorted = [...annotations].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Sheet a11y: focus moves into the sheet when it opens, and Escape closes it.
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   return (
-    <aside className={`h-reader-margins${open ? " is-open" : ""}`} aria-label="margin notes">
+    <aside id={MARGINS_ID} className={`h-reader-margins${open ? " is-open" : ""}`} aria-label="margin notes">
       <div className="h-reader-margins-head">
         <p className="h-reader-margins-label">in the margins</p>
-        <button type="button" className="h-reader-btn h-reader-margins-close" onClick={onClose}>
+        <button ref={closeRef} type="button" className="h-reader-btn h-reader-margins-close" onClick={onClose}>
           close
         </button>
       </div>
@@ -98,6 +109,12 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
   const [marginsOpen, setMarginsOpen] = useState(false);
+  const marginsToggleRef = useRef<HTMLButtonElement>(null);
+  // Stable so the sheet's Escape listener isn't re-bound every render; focus returns to the toggle.
+  const closeMargins = useCallback(() => {
+    setMarginsOpen(false);
+    marginsToggleRef.current?.focus();
+  }, []);
 
   // ── epub lifecycle ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -285,8 +302,10 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
   const noteCount = annotations.length;
   const marginsToggle = (
     <button
+      ref={marginsToggleRef}
       type="button"
       className="h-reader-btn h-reader-margins-toggle"
+      aria-controls={MARGINS_ID}
       aria-expanded={marginsOpen}
       onClick={() => setMarginsOpen((o) => !o)}
     >
@@ -311,7 +330,7 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
             {marginsToggle}
           </div>
         </div>
-        <MarginPanel annotations={annotations} open={marginsOpen} onClose={() => setMarginsOpen(false)} />
+        <MarginPanel annotations={annotations} open={marginsOpen} onClose={closeMargins} />
       </div>
     );
   }
@@ -320,7 +339,16 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
     <div className="h-reader-layout">
       <div className="h-reader-main">
         {error ? (
-          <p className="h-reader-quiet">{error}</p>
+          <>
+            <div className="h-reader-stage">
+              <p className="h-reader-quiet">{error}</p>
+            </div>
+            {/* A book that won't open still shows its notes on a phone. */}
+            <div className="h-reader-controls">
+              <span className="h-reader-hint" />
+              {marginsToggle}
+            </div>
+          </>
         ) : (
           <>
             <div className="h-reader-stage">
@@ -385,7 +413,7 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
         )}
       </div>
 
-      <MarginPanel annotations={annotations} open={marginsOpen} onClose={() => setMarginsOpen(false)} />
+      <MarginPanel annotations={annotations} open={marginsOpen} onClose={closeMargins} />
     </div>
   );
 }
