@@ -1,6 +1,6 @@
 import { fetchCreaturesOrNull, fetchCreature, creatureMood } from "@/lib/halseth";
 import type { Creature, CreatureInteraction, CreatureDetail, NestItem, CreatureMilestone } from "@/lib/halseth";
-import { memberClass } from "@/lib/club-model";
+import { memberClass } from "@/lib/kit";
 import ClientTime from "@/components/ClientTime";
 import TendButtons from "./TendButtons";
 
@@ -25,7 +25,7 @@ function Bar({ label, value, tone }: { label: string; value: number; tone: Tone 
   return (
     <div className="h-creature-bar">
       <div className="h-creature-bar-head">
-        <span>{label}</span><span>{value.toFixed(2)}</span>
+        <span>{label}{tone === "urgent" && <span className="h-creature-bar-mark" aria-label="urgent">!</span>}</span><span>{value.toFixed(2)}</span>
       </div>
       <div className="h-creature-bar-track">
         <div className={`h-creature-bar-fill is-${tone}`} style={{ width: `${pct}%` }} />

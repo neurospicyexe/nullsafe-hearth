@@ -1813,10 +1813,16 @@ export type BookDetail = {
   annotations: BookAnnotation[];
 };
 
-export async function fetchBooks(search?: string, limit = 100): Promise<Book[]> {
+/** null when Halseth could not be reached; [] only when it answered with no books. */
+export async function fetchBooksOrNull(search?: string, limit = 100): Promise<Book[] | null> {
   const q = search ? `&search=${encodeURIComponent(search)}` : "";
   const res = await hGetSafe<{ books?: Book[] }>(`/mind/books?limit=${limit}${q}`);
-  return res?.books ?? [];
+  if (!res) return null;
+  return res.books ?? [];
+}
+
+export async function fetchBooks(search?: string, limit = 100): Promise<Book[]> {
+  return (await fetchBooksOrNull(search, limit)) ?? [];
 }
 
 export async function fetchBook(id: string): Promise<BookDetail | null> {

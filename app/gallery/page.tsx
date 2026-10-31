@@ -1,7 +1,7 @@
 import { fetchCompanionImages } from "@/lib/halseth";
 import type { ToolCall } from "@/lib/halseth";
 import { imagePrompt } from "@/lib/companion-page";
-import { memberClass } from "@/lib/club-model";
+import { memberClass } from "@/lib/kit";
 
 export const dynamic = "force-dynamic";
 

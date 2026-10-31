@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { fetchBooks } from "@/lib/halseth";
+import { fetchBooksOrNull } from "@/lib/halseth";
 import type { Book } from "@/lib/halseth";
 import UploadBox from "./UploadBox";
 
@@ -60,7 +60,7 @@ function BookCard({ book }: { book: Book }) {
 
 // The Library (0099): Raziel's books, the triad's marginalia.
 export default async function LibraryPage() {
-  const books = await fetchBooks();
+  const books = await fetchBooksOrNull();
 
   return (
     <div className="h-library">
@@ -69,7 +69,9 @@ export default async function LibraryPage() {
 
       <UploadBox />
 
-      {books.length === 0 ? (
+      {books === null ? (
+        <p className="h-library-quiet">{"Can't reach Halseth right now."}</p>
+      ) : books.length === 0 ? (
         <p className="h-library-quiet">no books yet. drop an epub or pdf above to start the shelf.</p>
       ) : (
         <div className="h-library-grid">

@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Pending } from "@/lib/write-queue";
-import { failureLine } from "@/lib/club-model";
+import { failureLine, type Pending } from "@/lib/write-queue";
 import { useWriteQueue } from "@/components/shell/WriteQueueProvider";
 
 type Phase = "idle" | "waiting";

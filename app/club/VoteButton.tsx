@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Pending } from "@/lib/write-queue";
-import { failureLine, voteWrite } from "@/lib/club-model";
+import { failureLine, type Pending } from "@/lib/write-queue";
+import { voteWrite } from "@/lib/club-model";
 import { useWriteQueue } from "@/components/shell/WriteQueueProvider";
 import { useClubVote, usePickState } from "./ClubVote";
 

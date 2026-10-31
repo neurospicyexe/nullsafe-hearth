@@ -1,5 +1,5 @@
 import { fetchObsessionsOrNull, fetchCommonsPostsOrNull, type CommonsPost } from "@/lib/halseth";
-import { memberClass } from "@/lib/club-model";
+import { memberClass } from "@/lib/kit";
 import PostBox from "../log/PostBox";
 import AddBox from "./AddBox";
 import ArchiveButton from "./ArchiveButton";

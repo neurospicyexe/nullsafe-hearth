@@ -1,6 +1,6 @@
 import { fetchCollectionOrNull } from "@/lib/halseth";
 import type { CollectionForageItem, CollectionListenItem } from "@/lib/halseth";
-import { memberClass } from "@/lib/club-model";
+import { memberClass } from "@/lib/kit";
 
 export const dynamic = "force-dynamic";
 

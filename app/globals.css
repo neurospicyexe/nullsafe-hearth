@@ -2177,15 +2177,15 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-club-guide { display: flex; flex-direction: column; gap: 4px; margin: 0 0 12px; padding: 10px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); font-size: 0.875rem; line-height: 1.45; color: var(--h-muted); }
 .h-club-guide p { margin: 0; }
 .h-club-guide-you { color: var(--h-ink); }
-.h-club-winner { margin: 0 4px 12px; font-size: 1rem; color: var(--h-lamp); }
+.h-club-winner { margin: 0 4px 12px; font-size: 1rem; color: var(--h-ink); }
 .h-club-winner a { color: inherit; }
 .h-club-meta { margin: 8px 4px 0; font-size: 0.8125rem; color: var(--h-faint); }
 .h-club-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .h-club-rec { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); }
-.h-club-rec.is-winner { border-color: var(--h-lamp); }
+.h-club-rec.is-winner { border-color: var(--h-ink); }
 .h-club-rec-title { margin: 0; font-size: 1rem; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
 .h-club-rec-title a { color: var(--h-ink); }
-.h-club-rec.is-winner .h-club-rec-title { color: var(--h-lamp); }
+.h-club-rec.is-winner .h-club-rec-title { color: var(--h-ink); }
 .h-club-pitch { margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--h-muted); overflow-wrap: anywhere; }
 .h-club-votes { display: flex; flex-wrap: wrap; gap: 6px; }
 .h-club-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border: 1px solid var(--h-line); border-radius: 10px; font-size: 0.8125rem; font-weight: 400; color: var(--h-muted); }
@@ -2198,7 +2198,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-club-vote, .h-club-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: var(--h-tap); }
 .h-club-mine { font-size: 0.9375rem; font-weight: 700; color: var(--h-lamp); }
 .h-club-msg { font-size: 0.9375rem; color: var(--h-ink); }
-.h-club-msg.is-warn { color: var(--h-drevan); }
+.h-club-msg.is-warn { color: var(--h-ink); }
 .h-club-btn {
   min-height: var(--h-tap);
   min-width: var(--h-tap);
@@ -2253,10 +2253,11 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-creature-bar-track { height: 6px; margin-top: 3px; border-radius: 3px; background: var(--h-ground); overflow: hidden; }
 .h-creature-bar-fill { height: 100%; background: var(--h-muted); }
 .h-creature-bar-fill.is-trust { background: var(--h-ink); }
-.h-creature-bar-fill.is-quiet { background: var(--h-gaia); }
+.h-creature-bar-fill.is-quiet { background: var(--h-faint); }
 .h-creature-bar-fill.is-loud { background: var(--h-ink); }
-.h-creature-bar-fill.is-urgent { background: var(--h-drevan); }
-.h-creature-bar-fill.is-energy { background: var(--h-cypher); }
+.h-creature-bar-fill.is-urgent { background: var(--h-ink); }
+.h-creature-bar-mark { margin-left: 4px; font-weight: 700; color: var(--h-ink); }
+.h-creature-bar-fill.is-energy { background: var(--h-muted); }
 .h-creature-section { padding-top: 14px; }
 .h-creature-h3 { margin: 0 0 6px; font-size: 0.875rem; font-weight: 700; color: var(--h-muted); }
 .h-creature-quiet { margin: 0; font-size: 0.9375rem; color: var(--h-muted); }
@@ -2306,7 +2307,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   min-width: 0;
 }
 .h-creature-msg { margin: 0; font-size: 0.9375rem; color: var(--h-ink); }
-.h-creature-msg.is-warn { color: var(--h-drevan); }
+.h-creature-msg.is-warn { color: var(--h-ink); }
 .h-creature-moment { margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--h-ink); overflow-wrap: anywhere; }
 .h-creature-btn:focus-visible, .h-creature-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
 
@@ -2345,7 +2346,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-shelf-btn.is-lamp { color: var(--h-lamp); }
 .h-shelf-btn:disabled { opacity: 0.45; cursor: default; }
 .h-shelf-msg { font-size: 0.9375rem; color: var(--h-ink); }
-.h-shelf-msg.is-warn { color: var(--h-drevan); }
+.h-shelf-msg.is-warn { color: var(--h-ink); }
 .h-shelf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .h-shelf-item { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); min-width: 0; }
 .h-shelf-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -2459,7 +2460,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-library-btn { min-height: var(--h-tap); min-width: var(--h-tap); padding: 0 14px; border-radius: 12px; border: 1px solid var(--h-line); background: transparent; color: var(--h-muted); font-family: inherit; font-size: 0.9375rem; cursor: pointer; }
 .h-library-btn.is-lamp { color: var(--h-lamp); border-color: var(--h-lamp); }
 .h-library-btn:focus-visible, .h-library-file:focus-visible, .h-library-card:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
-.h-library-error { margin: 0; font-size: 0.875rem; color: var(--h-drevan); overflow-wrap: anywhere; }
+.h-library-error { margin: 0; font-size: 0.875rem; color: var(--h-ink); overflow-wrap: anywhere; }
 .h-library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; margin-top: 20px; }
 .h-library-card { display: block; color: inherit; text-decoration: none; border-radius: var(--h-radius); min-width: 0; }
 .h-library-cover { position: relative; aspect-ratio: 2 / 3; margin-bottom: 8px; border-radius: 10px; box-shadow: var(--shadow-sm); }
@@ -2467,7 +2468,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-library-spine { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 10px; text-align: center; border-radius: 10px; background: var(--h-surface); border: 1px solid var(--h-line); }
 .h-library-spine-title { font-size: 0.8125rem; line-height: 1.35; font-style: italic; color: var(--h-muted); overflow-wrap: anywhere; }
 .h-library-badge { position: absolute; right: 6px; padding: 1px 8px; border-radius: 999px; background: var(--h-ground); border: 1px solid var(--h-line); font-size: 0.75rem; }
-.h-library-badge.is-notes { top: 6px; color: var(--h-lamp); }
+.h-library-badge.is-notes { top: 6px; color: var(--h-muted); }
 .h-library-badge.is-finished { bottom: 6px; color: var(--h-ink); }
 .h-library-progress { height: 3px; margin-bottom: 6px; border-radius: 2px; background: var(--h-line); overflow: hidden; }
 .h-library-progress-fill { height: 100%; border-radius: 2px; background: var(--h-lamp); }
@@ -2552,3 +2553,38 @@ body:has(.h-reader) { min-height: 0; }
   .h-reader-margins, .h-reader-margins.is-open { display: flex; position: static; inset: auto; z-index: auto; box-shadow: none; flex: 0 0 320px; margin-bottom: calc(8px + env(safe-area-inset-bottom)); }
   .h-reader-margins-toggle, .h-reader-margins-close { display: none; }
 }
+
+/* PostBox (commons write box, P4): kit tokens only. The post button is a primary action (lamp);
+   a failure reads in ink, the words carry the meaning. */
+.h-post { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.h-post.is-compact { margin-bottom: 12px; }
+.h-post-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: var(--h-tap); }
+.h-post.h-post-line { flex-direction: row; }
+.h-post-input {
+  width: 100%;
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--h-line);
+  background: var(--h-ground);
+  color: var(--h-ink);
+  font-family: inherit;
+  font-size: 1rem;
+}
+.h-post-btn {
+  min-height: var(--h-tap);
+  min-width: var(--h-tap);
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--h-line);
+  background: transparent;
+  color: var(--h-muted);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.h-post-btn.is-lamp { color: var(--h-lamp); }
+.h-post-btn:disabled { opacity: 0.45; cursor: default; }
+.h-post-msg { font-size: 0.9375rem; color: var(--h-ink); }
+.h-post-hint { font-size: 0.8125rem; color: var(--h-faint); }
+.h-post-btn:focus-visible, .h-post-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }

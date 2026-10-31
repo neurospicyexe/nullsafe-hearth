@@ -4,6 +4,12 @@
 export type QueuedWrite = { key: string; url: string; method: "POST" | "PATCH" | "DELETE"; body?: unknown };
 /** `dropped`: a non-retryable answer (4xx other than 408/429). Resolved once so the UI can say so, never stored. */
 export type WriteResult = { ok: boolean; status: number; json: unknown; dropped?: true };
+
+/** Halseth's own refusal when the queue dropped a 4xx; the plain line for network errors and 5xx. */
+export function failureLine(r: WriteResult): string {
+  const error = r.dropped ? (r.json as { error?: unknown } | null)?.error : null;
+  return typeof error === "string" && error.trim() ? error : "Didn't save.";
+}
 export type QueueDeps = {
   fetch: typeof fetch;
   storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null; // null when unavailable

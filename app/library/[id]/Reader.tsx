@@ -202,7 +202,7 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
           .then(() => { locationsReadyRef.current = true; })
           .catch(() => {});
       } catch {
-        if (!cancelled) setError("couldn't open the epub — the file may be missing or corrupt.");
+        if (!cancelled) setError("couldn't open the epub: the file may be missing or corrupt.");
       }
     })();
 

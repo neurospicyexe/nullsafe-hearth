@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { votable, razielVote, voteWrite, recommendWrite, memberClass, failureLine } from "@/lib/club-model";
+import { votable, razielVote, voteWrite, recommendWrite } from "@/lib/club-model";
+import { memberClass } from "@/lib/kit";
+import { failureLine } from "@/lib/write-queue";
 import type { ClubRound, ClubVote } from "@/lib/halseth";
 
 const round = (status: ClubRound["status"]): ClubRound => ({

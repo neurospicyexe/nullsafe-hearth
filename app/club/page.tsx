@@ -1,6 +1,7 @@
 import { fetchClubCurrent, fetchClubRounds, fetchCommonsPosts } from "@/lib/halseth";
 import type { ClubRecommendation, ClubRoundDetail, ClubVote, CommonsPost } from "@/lib/halseth";
-import { memberClass, razielVote, votable } from "@/lib/club-model";
+import { razielVote, votable } from "@/lib/club-model";
+import { memberClass } from "@/lib/kit";
 import VoteButton from "./VoteButton";
 import { ClubVoteProvider } from "./ClubVote";
 import RecommendForm from "./RecommendForm";
