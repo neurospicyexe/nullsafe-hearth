@@ -83,4 +83,26 @@ describe("/home (The Home)", () => {
     expect(html).toContain("0.250");
     expect(html).toContain("↑ tender");
   });
+  it("passes room.gradient as --room-wash and drops url() values", async () => {
+    m.fetchHomePresence.mockResolvedValue({
+      rooms: [
+        { key: "a", name: "Alpha", sym: "A", register: "r", primary_lane: null, gradient: "linear-gradient(135deg, #123456, #654321)" },
+        { key: "b", name: "Beta", sym: "B", register: "r", primary_lane: null, gradient: "url(https://x.test/p.png)" },
+      ],
+      presence: [],
+    });
+    const html = renderToStaticMarkup(await Home());
+    expect(html).toContain("--room-wash:linear-gradient(135deg, #123456, #654321)");
+    expect(html).not.toContain("url(");
+    expect(html).toContain("Beta");
+  });
+  it("marks pressure with a leading !", async () => {
+    m.fetchHomePresence.mockResolvedValue({
+      rooms: [{ key: "a", name: "Alpha", sym: "A", register: "r", primary_lane: null }],
+      presence: [{ companion_id: "gaia", current_room: "a", activity: "x", micro_mood: null, basin_distance: 0, updated_at: "" }],
+    });
+    m.fetchHomeBasin.mockImplementation(async (id: string) =>
+      id === "gaia" ? { drift_score: 0.9, drift_type: "pressure", worst_basin: null, recorded_at: new Date().toISOString() } : null);
+    expect(renderToStaticMarkup(await Home())).toContain("! pressure");
+  });
 });

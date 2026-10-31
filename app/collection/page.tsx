@@ -36,7 +36,7 @@ function ListenRow({ item }: { item: CollectionListenItem }) {
     <li className="h-collection-row">
       <div className="h-collection-line">
         <span className="h-collection-title">
-          {item.title}{item.artist ? <span className="h-collection-artist"> — {item.artist}</span> : null}
+          {item.title}{item.artist ? <span className="h-collection-artist"> · {item.artist}</span> : null}
         </span>
         <Sparkle weight={item.sparkle} />
       </div>
@@ -59,7 +59,7 @@ export default async function CollectionPage() {
       ) : (
         <>
           <p className="h-collection-lede">
-            emotional archaeology — what each companion has gathered, ordered by what gripped (sparkle).
+            emotional archaeology; what each companion has gathered, ordered by what gripped (sparkle).
             a forage find shines when explored; a listen shines when it earns a reaction.
           </p>
           {unreached.map((s) => (

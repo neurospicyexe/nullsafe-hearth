@@ -18,6 +18,15 @@ function driftClass(type: string | undefined) {
   return type === "stable" || type === "growth" || type === "pressure" ? `is-${type}` : "is-none";
 }
 
+function driftLabel(type: string) {
+  return type === "pressure" ? "! pressure" : type;
+}
+
+// room.gradient is authored data; pass it through only as a plain colour/gradient, never a url().
+function roomWash(gradient: unknown): string | null {
+  return typeof gradient === "string" && gradient.trim() && !/url\(/i.test(gradient) ? gradient : null;
+}
+
 function fmt(score: number) {
   return score.toFixed(3);
 }
@@ -34,8 +43,11 @@ function timeAgo(iso: string) {
 type Basins = Record<CompanionKey, HomeBasinReading | null>;
 
 function RoomCard({ room, occupants, basins }: { room: HomeRoom; occupants: HomePresence[]; basins: Basins }) {
+  const wash = roomWash(room.gradient);
+  const style = wash ? ({ "--room-wash": wash } as React.CSSProperties) : undefined;
   return (
-    <li className={`h-rooms-room${occupants.length > 0 ? " is-occupied" : ""}`}>
+    <li className={`h-rooms-room${occupants.length > 0 ? " is-occupied" : ""}`} style={style}>
+      <span className="h-rooms-swatch" aria-hidden="true" />
       <span className="h-rooms-sym">{room.sym}</span>
       <span className="h-rooms-room-name">{room.name}</span>
       <span className="h-rooms-register">{room.register}</span>
@@ -48,7 +60,7 @@ function RoomCard({ room, occupants, basins }: { room: HomeRoom; occupants: Home
             return (
               <span key={o.companion_id} className={`h-rooms-chip is-${o.companion_id}`}>
                 {meta ? meta.abbr : o.companion_id}
-                {basin && <span className={`h-rooms-drift ${driftClass(basin.drift_type)}`}> {basin.drift_type}</span>}
+                {basin && <span className={`h-rooms-drift ${driftClass(basin.drift_type)}`}> {driftLabel(basin.drift_type)}</span>}
               </span>
             );
           })}
@@ -77,7 +89,7 @@ function Topology({ rooms, companions, basins }: { rooms: HomeRoom[]; companions
       )}
       <ul className="h-rooms-legend">
         {DRIFT_TYPES.map((type) => (
-          <li key={type} className={`h-rooms-drift ${driftClass(type)}`}>{type}</li>
+          <li key={type} className={`h-rooms-drift ${driftClass(type)}`}>{driftLabel(type)}</li>
         ))}
       </ul>
     </section>
@@ -102,7 +114,7 @@ function Readings({ companions, basins }: { companions: HomePresence[]; basins: 
               </div>
               {basin ? (
                 <div className="h-rooms-reading-bottom">
-                  <span className={`h-rooms-drift ${driftClass(basin.drift_type)}`}>{basin.drift_type}</span>
+                  <span className={`h-rooms-drift ${driftClass(basin.drift_type)}`}>{driftLabel(basin.drift_type)}</span>
                   <span className="h-rooms-score">{fmt(basin.drift_score)}</span>
                   {basin.worst_basin && <span className="h-rooms-worst">↑ {basin.worst_basin}</span>}
                 </div>
@@ -118,8 +130,10 @@ function Readings({ companions, basins }: { companions: HomePresence[]; basins: 
 }
 
 export default async function HomePage() {
-  const home = await fetchHomePresence();
-  const readings = home ? await Promise.all(COMPANIONS.map((c) => fetchHomeBasin(c))) : [];
+  const [home, ...readings] = await Promise.all([
+    fetchHomePresence(),
+    ...COMPANIONS.map((c) => fetchHomeBasin(c)),
+  ]);
   const basins: Basins = { cypher: readings[0] ?? null, drevan: readings[1] ?? null, gaia: readings[2] ?? null };
 
   return (
