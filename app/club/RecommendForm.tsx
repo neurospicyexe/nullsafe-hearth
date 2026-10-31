@@ -66,8 +66,7 @@ export default function RecommendForm({ roundId }: { roundId: string }) {
         router.refresh();
         return;
       }
-      const reason = r.dropped ? (r.json as { error?: unknown } | null)?.error : null;
-      setError(typeof reason === "string" && reason ? `Didn't save: ${reason}` : "Didn't save.");
+      setError("Didn't save."); // the fields stay as typed, so a retry is one tap
       setPhase("editing");
     });
   }
