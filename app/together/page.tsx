@@ -15,7 +15,7 @@ export default async function Page() {
     fetchCreatures().catch(() => []),
     fetchNewestImage().catch(() => null),
   ]);
-  const sol = (creatures ?? []).find((c) => c.name === "Sol");
+  const sol = (creatures ?? []).find((c) => c.name.toLowerCase() === "sol");
   const solDetail = sol ? await fetchCreature(sol.id).catch(() => null) : null;
 
   const hints = {

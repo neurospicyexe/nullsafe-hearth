@@ -12,6 +12,11 @@ function oneLine(text: string, max: number): string {
   return chars.length > max ? chars.slice(0, max).join("") + "…" : flat;
 }
 
+/** "<age>: <text>", or just the text when the date did not parse. */
+function withAge(age: string, text: string): string {
+  return age ? `${age}: ${text}` : text;
+}
+
 export function clubHint(c: ClubCurrent | null): string | null {
   const round = c?.round;
   if (!c || !round) return null;
@@ -32,7 +37,7 @@ export function clubHint(c: ClubCurrent | null): string | null {
 export function solHint(detail: CreatureDetail | null, now: Date): string | null {
   const hit = detail?.interactions.find((i) => i.actor === "sol" && i.action === "appear" && (i.note ?? "").trim() !== "");
   if (!hit) return null;
-  return `${ageLabel(hit.created_at, now)}: ${oneLine(hit.note ?? "", 80)}`;
+  return withAge(ageLabel(hit.created_at, now), oneLine(hit.note ?? "", 80));
 }
 
 export function readingHint(book: Book | null): string | null {
@@ -42,7 +47,9 @@ export function readingHint(book: Book | null): string | null {
 
 export function galleryHint(img: ToolCall | null, now: Date): string | null {
   if (!img) return null;
-  return `${ageLabel(img.created_at, now)}: ${oneLine(imagePrompt(img.args_summary), 60)}`;
+  const prompt = imagePrompt(img.args_summary);
+  if (prompt === "(untitled)") return null;
+  return withAge(ageLabel(img.created_at, now), oneLine(prompt, 60));
 }
 
 /** Doors with their hints attached, keyed by href. A null or missing hint leaves the door as it was. */

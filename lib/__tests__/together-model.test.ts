@@ -64,6 +64,10 @@ describe("solHint", () => {
     expect(solHint(detail([ix("sol", "appear", "x".repeat(200))]), now)).toBe(`2h: ${"x".repeat(80)}…`);
     expect(solHint(detail([ix("sol", "appear", "y".repeat(80))]), now)).toBe(`2h: ${"y".repeat(80)}`);
   });
+  it("drops the age prefix when the date does not parse", () => {
+    const bad = { ...ix("sol", "appear", "hello"), created_at: "garbage" };
+    expect(solHint(detail([bad]), now)).toBe("hello");
+  });
   it("null when none", () => {
     expect(solHint(detail([]), now)).toBeNull();
     expect(solHint(detail([ix("sol", "appear", "  ")]), now)).toBeNull();
@@ -83,6 +87,13 @@ describe("galleryHint", () => {
   it("age and prompt", () => {
     expect(galleryHint(img("prompt: a fox"), now)).toBe("1h: a fox");
     expect(galleryHint(null, now)).toBeNull();
+  });
+  it("drops the age prefix when the date does not parse", () => {
+    expect(galleryHint({ args_summary: "prompt: a fox", created_at: "garbage" } as ToolCall, now)).toBe("a fox");
+  });
+  it("null when the prompt is empty", () => {
+    expect(galleryHint(img("prompt:   "), now)).toBeNull();
+    expect(galleryHint(img(""), now)).toBeNull();
   });
   it("truncates a 2000 character prompt at 60", () => {
     expect(galleryHint(img("prompt: " + "z".repeat(2000)), now)).toBe(`1h: ${"z".repeat(60)}…`);
