@@ -118,6 +118,15 @@ export function countLine(counts: number | { total: number }, shown?: number): s
   return shown !== undefined && shown < n ? `${base} Showing the newest ${shown}.` : base;
 }
 
+/**
+ * NeedsList's line. Settled rows dim and stay on screen, so they leave BOTH sides: the waiting count
+ * and the rows shown that are still waiting. Otherwise settling rows would hide the cap suffix while
+ * rows past the cap are still unseen.
+ */
+export function listCountLine(total: number | undefined, listed: number, settled: number): string {
+  return countLine((total ?? listed) - settled, listed - settled);
+}
+
 /** "Recently answered": newest ANSWER first (an old question answered today leads), capped. */
 export function recentAnswered(questions: CompanionQuestion[], n = 8): CompanionQuestion[] {
   const at = (q: CompanionQuestion) => q.answered_at ?? q.created_at;

@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import type { NeedsItem } from "@/lib/halseth";
-import { countLine } from "@/lib/needs";
+import { listCountLine } from "@/lib/needs";
 import NeedsRow from "./NeedsRow";
 
 /** The inbox: one count line, then every item, each resolving in place. Handled rows dim and stay. */
@@ -14,7 +14,7 @@ export default function NeedsList({ items, total, nowMs }: { items: NeedsItem[];
 
   if (items.length === 0) return <p className="h-needs-quiet">Nothing needs you right now.</p>;
 
-  const count = countLine((total ?? items.length) - settled.size, items.length);
+  const count = listCountLine(total, items.length, settled.size);
   return (
     <>
       {count && (
