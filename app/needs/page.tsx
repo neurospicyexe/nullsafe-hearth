@@ -2,6 +2,7 @@ import DoorList from "@/components/kit/DoorList";
 import NeedsList from "@/components/needs/NeedsList";
 import { fetchCompanionQuestions, fetchNeeds, type CompanionQuestion } from "@/lib/halseth";
 import { COMPANION_COLOR, HUBS } from "@/lib/shell";
+import { recentAnswered } from "@/lib/needs";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Needs you | Hearth" };
@@ -14,7 +15,7 @@ export default async function Page() {
     fetchCompanionQuestions("answered", 8),
   ]);
   const needs = needsRes.status === "fulfilled" ? needsRes.value : null;
-  const answered = answeredRes.status === "fulfilled" ? answeredRes.value.slice(0, 8) : [];
+  const answered = answeredRes.status === "fulfilled" ? recentAnswered(answeredRes.value, 8) : [];
   // One clock for the whole render, passed down so server and client age labels agree.
   const nowMs = Date.now();
 

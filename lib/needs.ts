@@ -1,6 +1,6 @@
 // "Needs you" model: pure logic for the inbox rows (what to write, what to say, row state).
 // No React, no fetch; the page wires these to the write queue.
-import type { NeedsItem, NeedsKind } from "./halseth";
+import type { CompanionQuestion, NeedsItem, NeedsKind } from "./halseth";
 import type { QueuedWrite, WriteResult } from "./write-queue";
 
 export type NeedsAction =
@@ -110,4 +110,10 @@ export function rowState(
 export function countLine(n: number): string {
   if (n <= 0) return "";
   return n === 1 ? "1 thing is waiting." : `${n} things are waiting.`;
+}
+
+/** "Recently answered": newest ANSWER first (an old question answered today leads), capped. */
+export function recentAnswered(questions: CompanionQuestion[], n = 8): CompanionQuestion[] {
+  const at = (q: CompanionQuestion) => q.answered_at ?? q.created_at;
+  return [...questions].sort((a, b) => at(b).localeCompare(at(a))).slice(0, n);
 }

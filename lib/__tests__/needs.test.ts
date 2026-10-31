@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  resolveWrite, whoLabel, titleText, kindLabel, buttons, doneLine, outcomeLine, canSend, rowState, countLine,
+  resolveWrite, whoLabel, titleText, kindLabel, buttons, doneLine, outcomeLine, canSend, rowState, countLine, recentAnswered,
 } from "../needs";
 import type { NeedsItem } from "../halseth";
 
@@ -105,5 +105,23 @@ describe("rowState undo of an answer", () => {
     expect(rowState("pending", "undo", undefined, { wasAnswer: false })).toBe("idle");
     expect(rowState("pending", "result", "undone", { wasAnswer: true })).toBe("answering");
     expect(rowState("saved", "undo", undefined, { wasAnswer: true })).toBe("saved");
+  });
+});
+
+describe("recentAnswered", () => {
+  const qa = (id: string, created_at: string, answered_at: string | null) =>
+    ({ id, companion_id: "cypher", question: "q", context: null, status: "answered", answer: "a", answered_at, created_at }) as never;
+  it("sorts by answered_at, falling back to created_at, newest first, and caps", () => {
+    const out = recentAnswered([
+      qa("new_asked_old_answer", "2026-10-20 10:00:00", "2026-10-21 10:00:00"),
+      qa("old_asked_answered_today", "2026-08-01 10:00:00", "2026-10-30 09:00:00"),
+      qa("legacy", "2026-10-25 10:00:00", null),
+    ], 2);
+    expect(out.map((q: { id: string }) => q.id)).toEqual(["old_asked_answered_today", "legacy"]);
+  });
+  it("does not mutate its input", () => {
+    const input = [qa("a", "2026-10-01 00:00:00", "2026-10-02 00:00:00"), qa("b", "2026-10-01 00:00:00", "2026-10-03 00:00:00")];
+    recentAnswered(input);
+    expect(input.map((q: { id: string }) => q.id)).toEqual(["a", "b"]);
   });
 });
