@@ -16,7 +16,9 @@ export default async function CompanionJournalPage({ params }: { params: Promise
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
-  const journalEntries = await fetchCompanionJournal(id, 200).catch(() => null);
+  // Substantive lane only: the overview's Journal door counts it, so the page lists the same set
+  // (Discord speech transcripts and clerk rows stay reachable from /all and search).
+  const journalEntries = await fetchCompanionJournal(id, 200, { substantive: true }).catch(() => null);
 
   return (
     <div>

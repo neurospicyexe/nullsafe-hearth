@@ -539,11 +539,15 @@ export async function fetchHandovers(
 export async function fetchCompanionJournal(
   agent?: string,
   limit = 20,
+  opts: { substantive?: boolean } = {},
 ): Promise<CompanionJournalEntry[] | null> {
   // review_state=all: the endpoint defaults to kept (mig 0132) because it is also the Second
   // Brain puller's feed. The dashboard is Raziel's window, not recall -- drafts must be visible.
   const q = new URLSearchParams({ limit: String(limit), review_state: "all" });
   if (agent) q.set("agent", agent);
+  // substantive: leave out Discord speech transcripts and clerk rows (the companion page's Journal
+  // door counts that lane, so the page behind it lists the same one).
+  if (opts.substantive) q.set("substantive", "1");
   return hGetSafe<CompanionJournalEntry[]>(`/companion-journal?${q}`);
 }
 
@@ -852,8 +856,11 @@ export type InboxItem = {
 
 export type InboxResponse = { items: InboxItem[]; unread_count: number };
 
-export async function fetchInbox(limit = 3): Promise<InboxResponse | null> {
-  return hGetSafe<InboxResponse>("/raziel/inbox?limit=" + limit);
+export async function fetchInbox(limit = 3, agent?: CompanionId): Promise<InboxResponse | null> {
+  // agent: one companion's letters (list and unread_count), for that companion's Letters door.
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (agent) q.set("agent", agent);
+  return hGetSafe<InboxResponse>(`/raziel/inbox?${q}`);
 }
 
 export async function fetchInboxItem(id: string): Promise<InboxItem | null> {

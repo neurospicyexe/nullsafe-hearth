@@ -23,6 +23,8 @@ vi.mock("next/navigation", () => ({
     throw new Error("NEXT_REDIRECT");
   },
   usePathname: () => "/companions/cypher",
+  // The Letters page renders LetterFormClient, which holds a router for refresh after send.
+  useRouter: () => ({ refresh: () => {}, push: () => {} }),
 }));
 // The look is written by a client effect; here it only matters whether the page mounts it.
 vi.mock("./LookedMark", () => ({ default: ({ id }: { id: string }) => <i data-looked={id} /> }));
@@ -108,7 +110,7 @@ describe("unknown companion", () => {
   }
   it("journal passes the lowercased id to its fetch", async () => {
     await JournalPage(params("Cypher"));
-    expect(halseth.fetchCompanionJournal).toHaveBeenCalledWith("cypher", 200);
+    expect(halseth.fetchCompanionJournal).toHaveBeenCalledWith("cypher", 200, { substantive: true });
   });
   it("the layout 404s too, so no sub-route ever renders with a bad id", async () => {
     await expect(Layout({ children: null, ...params("blue") })).rejects.toThrow("NEXT_NOT_FOUND");
@@ -138,8 +140,9 @@ describe("mixed-case id is lowercased before every fetch", () => {
   });
 
   it("letters", async () => {
+    overrides.fetchInbox = async () => ({ items: [], unread_count: 0 });
     await LettersPage(params("Cypher"));
-    expect(halseth.fetchCompanionNotesByAgent).toHaveBeenCalledWith("cypher", 200);
+    expect(halseth.fetchInbox).toHaveBeenCalledWith(100, "cypher");
     noRawId();
   });
 
@@ -247,5 +250,55 @@ describe("projects", () => {
     expect(html.indexOf("Open")).toBeLessThan(html.indexOf("Done and released"));
     for (const s of ["T-a", "I-a", "by winter", "T-b", "let it go"]) expect(html).toContain(s);
     expect(html).not.toContain("Paused");
+  });
+});
+
+describe("letters door", () => {
+  const letter = (id: string, read: boolean, created_at: string, text: string) => ({
+    id, kind: "letter" as const, agent: "cypher", created_at, preview: text, text, read,
+  });
+
+  it("incoming letters come from the inbox for this companion, link to the letter page, unread marked", async () => {
+    overrides.fetchInbox = async () => ({
+      items: [
+        letter("j_new", false, "2026-10-29T10:00:00Z", "a drift letter"),
+        letter("j_old", true, "2026-10-20 10:00:00", "an old letter"),
+      ],
+      unread_count: 1,
+    });
+    overrides.fetchNotes = async () => [
+      { id: "n1", note_type: "letter:cypher", content: "from Raziel", created_at: "2026-10-25T10:00:00Z" },
+    ];
+    const html = renderToStaticMarkup(await LettersPage(params("cypher")));
+    expect(halseth.fetchInbox).toHaveBeenCalledWith(100, "cypher");
+    expect(halseth.fetchCompanionNotesByAgent).not.toHaveBeenCalled();
+    expect(html).toContain('href="/letters/j_new"');
+    expect(html).toContain('href="/letters/j_old"');
+    expect(html).toContain("a drift letter");
+    expect(html).toContain("from Raziel");
+    // Unread is marked; read is not.
+    const bubble = (id: string) => {
+      const at = html.indexOf(`href="/letters/${id}"`);
+      return html.slice(html.lastIndexOf("<a", at), html.indexOf("</a>", at));
+    };
+    const newBubble = bubble("j_new");
+    const oldBubble = bubble("j_old");
+    expect(newBubble).toContain("is-unread");
+    expect(newBubble).toContain(">new</span>");
+    expect(newBubble).not.toContain("<span>read</span>");
+    expect(oldBubble).not.toContain("is-unread");
+    expect(oldBubble).toContain("<span>read</span>");
+    expect(oldBubble).not.toContain(">new</span>");
+    // Oldest first: old incoming, Raziel's, then the new one.
+    expect(html.indexOf("an old letter")).toBeLessThan(html.indexOf("from Raziel"));
+    expect(html.indexOf("from Raziel")).toBeLessThan(html.indexOf("a drift letter"));
+    expect(html).toContain("3 letters");
+  });
+
+  it("Halseth down: says so instead of an empty thread", async () => {
+    overrides.fetchInbox = async () => null;
+    const html = renderToStaticMarkup(await LettersPage(params("cypher")));
+    expect(html).toContain("Can&#x27;t reach Halseth right now.");
+    expect(html).not.toContain("No letters yet");
   });
 });
