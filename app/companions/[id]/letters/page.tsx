@@ -38,7 +38,8 @@ export default async function CompanionLettersPage({ params }: { params: Promise
   const inbox    = inboxRes.status === "fulfilled" ? inboxRes.value : null;
 
   const lettersOut = allNotes.filter((n) => n.note_type === `letter:${id}`);
-  const lettersIn  = inbox?.items ?? [];
+  // Belt and braces: a Halseth that predates ?agent= ignores it and returns every writer's letters.
+  const lettersIn  = (inbox?.items ?? []).filter((n) => n.agent === id);
 
   const letters: LetterItem[] = [
     ...lettersIn.map((n): LetterItem  => ({ kind: "incoming", note: n, at: n.created_at })),

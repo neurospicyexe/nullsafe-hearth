@@ -263,6 +263,7 @@ describe("letters door", () => {
       items: [
         letter("j_new", false, "2026-10-29T10:00:00Z", "a drift letter"),
         letter("j_old", true, "2026-10-20 10:00:00", "an old letter"),
+        { ...letter("j_steward", false, "2026-10-28T10:00:00Z", "a steward briefing"), agent: "steward" },
       ],
       unread_count: 1,
     });
@@ -275,6 +276,7 @@ describe("letters door", () => {
     expect(html).toContain('href="/letters/j_new"');
     expect(html).toContain('href="/letters/j_old"');
     expect(html).toContain("a drift letter");
+    expect(html).not.toContain("a steward briefing");
     expect(html).toContain("from Raziel");
     // Unread is marked; read is not.
     const bubble = (id: string) => {
