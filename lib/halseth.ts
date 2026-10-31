@@ -539,11 +539,15 @@ export async function fetchHandovers(
 export async function fetchCompanionJournal(
   agent?: string,
   limit = 20,
+  opts: { substantive?: boolean } = {},
 ): Promise<CompanionJournalEntry[] | null> {
   // review_state=all: the endpoint defaults to kept (mig 0132) because it is also the Second
   // Brain puller's feed. The dashboard is Raziel's window, not recall -- drafts must be visible.
   const q = new URLSearchParams({ limit: String(limit), review_state: "all" });
   if (agent) q.set("agent", agent);
+  // substantive: leave out Discord speech transcripts and clerk rows (the companion page's Journal
+  // door counts that lane, so the page behind it lists the same one).
+  if (opts.substantive) q.set("substantive", "1");
   return hGetSafe<CompanionJournalEntry[]>(`/companion-journal?${q}`);
 }
 
@@ -852,8 +856,11 @@ export type InboxItem = {
 
 export type InboxResponse = { items: InboxItem[]; unread_count: number };
 
-export async function fetchInbox(limit = 3): Promise<InboxResponse | null> {
-  return hGetSafe<InboxResponse>("/raziel/inbox?limit=" + limit);
+export async function fetchInbox(limit = 3, agent?: CompanionId): Promise<InboxResponse | null> {
+  // agent: one companion's letters (list and unread_count), for that companion's Letters door.
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (agent) q.set("agent", agent);
+  return hGetSafe<InboxResponse>(`/raziel/inbox?${q}`);
 }
 
 export async function fetchInboxItem(id: string): Promise<InboxItem | null> {
@@ -1826,6 +1833,15 @@ export async function fetchToolImages(companionId: string, limit = 40): Promise<
   return (res?.calls ?? []).filter(c => c.status === "success" && c.result_ref);
 }
 
+/** As fetchToolImages, but null when Halseth could not be read, so a page can tell "down" from "none". */
+export async function fetchCompanionImages(companionId: CompanionId, limit = 40): Promise<ToolCall[] | null> {
+  const res = await hGetSafe<{ calls?: ToolCall[] }>(
+    `/mind/tools/calls/${companionId}?tool=generate_image&limit=${limit}`,
+  );
+  if (!Array.isArray(res?.calls)) return null;
+  return res.calls.filter(c => c.status === "success" && c.result_ref);
+}
+
 // ── Creatures (0078, take 10): corvid + Raziel's animals as named presences ──
 export type Creature = {
   id: string;
@@ -2154,4 +2170,39 @@ export interface NeedsItem {
 export interface NeedsCounts { total: number; question: number; growth: number; guardian: number; basin: number }
 export async function fetchNeeds(limit = 50): Promise<{ items: NeedsItem[]; counts: NeedsCounts } | null> {
   return hGetSafe<{ items: NeedsItem[]; counts: NeedsCounts }>(`/raziel/needs?limit=${limit}`);
+}
+
+// Companion page (Halseth GET /raziel/companion/:id). Types copied verbatim from Halseth's
+// src/handlers/raziel-companion.ts contract (P3 Task 1).
+export type CompanionId = "drevan" | "cypher" | "gaia";
+export type FloatKey = "soma_float_1" | "soma_float_2" | "soma_float_3";
+export interface CompanionRundown {
+  companion_id: CompanionId;
+  last_real_thing: { text: string; at: string } | null;
+  last_looked_at: string | null;            // as stored, or null on first visit
+  since_basis: "last_looked" | "week";      // "week" when no companion_page row
+  since: { journal: number; letters: number; book_notes: number; sol: number; autonomy: number };
+  doors: { journal: number; letters_unread: number; growth: number; feelings: number; upto: number; made: number };
+  trace: Record<FloatKey, (number | null)[]>; // exactly 7 points, oldest -> newest, last = current value
+}
+export async function fetchCompanionRundown(id: CompanionId): Promise<CompanionRundown | null> {
+  return hGetSafe<CompanionRundown>(`/raziel/companion/${id}`);
+}
+
+// Companion projects (Halseth GET /mind/projects/:companion_id; row = ProjectRow in src/handlers/projects.ts).
+export interface Project {
+  id: string;
+  companion_id: string;
+  title: string;
+  intention: string;
+  status: "open" | "paused" | "done" | "released";
+  horizon_note: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  last_worked_at: string | null;
+  closed_at: string | null;
+}
+export async function fetchProjects(id: CompanionId): Promise<Project[] | null> {
+  const r = await hGetSafe<{ projects: Project[] }>(`/mind/projects/${id}`);
+  return Array.isArray(r?.projects) ? r.projects : null;
 }

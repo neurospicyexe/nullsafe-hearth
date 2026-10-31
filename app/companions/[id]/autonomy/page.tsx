@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import { parseCompanionId } from "@/lib/companion-page";
 import {
   fetchAutonomyRuns,
   fetchAutonomySeeds,
@@ -18,7 +18,8 @@ export function generateStaticParams() {
 
 export default async function AutonomyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
-  const id = rawId.toLowerCase();
+  const id = parseCompanionId(rawId);
+  if (!id) notFound();
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
@@ -50,13 +51,6 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
 
   return (
     <div data-companion={id}>
-      {/* Back link */}
-      <div style={{ padding: "1rem 1.5rem 0" }}>
-        <Link href={`/companions/${id}`} className="home-section-link" style={{ fontSize: "0.85rem" }}>
-          ← back
-        </Link>
-      </div>
-
       {/* Page title */}
       <div
         className="companion-header"

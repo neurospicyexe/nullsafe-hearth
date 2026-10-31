@@ -24,7 +24,7 @@ export default async function Page() {
       <h1 className="h-page-title">Needs you</h1>
 
       {needs ? (
-        <NeedsList items={needs.items} nowMs={nowMs} />
+        <NeedsList items={needs.items} total={needs.counts.total} nowMs={nowMs} />
       ) : (
         <p className="h-needs-quiet">Can&apos;t reach Halseth right now.</p>
       )}

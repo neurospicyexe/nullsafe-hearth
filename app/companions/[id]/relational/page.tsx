@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import { parseCompanionId } from "@/lib/companion-page";
 import { fetchRelationalHistory, type RelationalState } from "@/lib/halseth";
 import { COMPANION_CONFIG } from "../sections";
 
@@ -37,7 +37,8 @@ function WeightDot({ value }: { value: number }) {
 
 export default async function CompanionRelationalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
-  const id = rawId.toLowerCase();
+  const id = parseCompanionId(rawId);
+  if (!id) notFound();
   const config = COMPANION_CONFIG[id];
   if (!config) notFound();
 
@@ -51,12 +52,6 @@ export default async function CompanionRelationalPage({ params }: { params: Prom
 
   return (
     <div>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <Link href={`/companions/${id}`} className="home-section-link">
-          ← {config.display}
-        </Link>
-      </div>
-
       <div className="page-header">
         <h1 className="page-title">{config.display} · Relational State</h1>
         <p className="page-subtitle">what {config.display} is holding toward each relationship</p>

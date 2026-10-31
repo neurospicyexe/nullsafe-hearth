@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  resolveWrite, whoLabel, titleText, kindLabel, buttons, doneLine, outcomeLine, canSend, rowState, countLine, recentAnswered,
+  resolveWrite, whoLabel, titleText, kindLabel, buttons, doneLine, outcomeLine, canSend, rowState, countLine, listCountLine, recentAnswered,
 } from "../needs";
 import type { NeedsItem } from "../halseth";
 
@@ -96,6 +96,30 @@ describe("countLine", () => {
     expect(countLine(0)).toBe("");
     expect(countLine(1)).toBe("1 thing is waiting.");
     expect(countLine(3)).toBe("3 things are waiting.");
+  });
+  it("says so when the list shows fewer than are waiting", () => {
+    expect(countLine({ total: 73 }, 50)).toBe("73 things are waiting. Showing the newest 50.");
+    expect(countLine({ total: 50 }, 50)).toBe("50 things are waiting.");
+    expect(countLine({ total: 3 }, 3)).toBe("3 things are waiting.");
+    expect(countLine({ total: 0 }, 0)).toBe("");
+  });
+  it("takes a plain number with shown too", () => {
+    expect(countLine(52, 50)).toBe("52 things are waiting. Showing the newest 50.");
+    expect(countLine(50, 50)).toBe("50 things are waiting.");
+  });
+});
+
+describe("listCountLine (NeedsList: settled rows dim and stay)", () => {
+  it("keeps the cap suffix while rows are still hidden after some settle", () => {
+    // 52 waiting, the list holds 50, two of those settle: 50 still waiting, 48 of them on screen.
+    expect(listCountLine(52, 50, 2)).toBe("50 things are waiting. Showing the newest 48.");
+  });
+  it("no suffix when the list holds everything", () => {
+    expect(listCountLine(3, 3, 1)).toBe("2 things are waiting.");
+    expect(listCountLine(3, 3, 3)).toBe("");
+  });
+  it("total unknown falls back to the list length", () => {
+    expect(listCountLine(undefined, 4, 1)).toBe("3 things are waiting.");
   });
 });
 
