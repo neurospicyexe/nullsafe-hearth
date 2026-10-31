@@ -85,7 +85,7 @@ export default function NeedsRow({
   }
 
   const who = whoLabel(item);
-  const dot = item.kind === "guardian" ? null : (item.companion_id && COMPANION_COLOR[item.companion_id as keyof typeof COMPANION_COLOR]) || "var(--h-muted)";
+  const dot = who === "Guardian" ? null : (item.companion_id && COMPANION_COLOR[item.companion_id as keyof typeof COMPANION_COLOR]) || "var(--h-muted)";
   const age = ageLabel(item.created_at, new Date(nowMs));
   const settled = st === "saved" || st === "already";
 
