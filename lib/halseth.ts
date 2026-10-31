@@ -1743,6 +1743,14 @@ export async function fetchCommonsPosts(context = "global", limit = 50): Promise
   return res?.posts ?? [];
 }
 
+/** As fetchCommonsPosts, but null when Halseth cannot be read, so a page can tell failure from empty. */
+export async function fetchCommonsPostsOrNull(context = "global", limit = 50): Promise<CommonsPost[] | null> {
+  const res = await hGetSafe<{ posts?: CommonsPost[] }>(
+    `/mind/commons?context=${encodeURIComponent(context)}&limit=${limit}`,
+  );
+  return res ? (res.posts ?? []) : null;
+}
+
 // ── Obsession shelf (0094): "what Raziel's into"; triad reacts via commons (shelf:<id>) ──
 export type Obsession = {
   id: string;
@@ -1757,6 +1765,12 @@ export type Obsession = {
 export async function fetchObsessions(status = "active"): Promise<Obsession[]> {
   const res = await hGetSafe<{ items?: Obsession[] }>(`/mind/shelf?status=${encodeURIComponent(status)}`);
   return res?.items ?? [];
+}
+
+/** As fetchObsessions, but null when Halseth cannot be read, so the shelf can tell failure from empty. */
+export async function fetchObsessionsOrNull(status = "active"): Promise<Obsession[] | null> {
+  const res = await hGetSafe<{ items?: Obsession[] }>(`/mind/shelf?status=${encodeURIComponent(status)}`);
+  return res ? (res.items ?? []) : null;
 }
 
 // ── The Library (0099): shared books — Raziel reads, the triad writes in the margins ──
@@ -1898,6 +1912,12 @@ export type CreatureFamiliarity = { actor: string; tendings: number; last_at: st
 export async function fetchCreatures(): Promise<Creature[]> {
   const res = await hGetSafe<{ creatures?: Creature[] }>("/mind/creatures");
   return res?.creatures ?? [];
+}
+
+/** As fetchCreatures, but null when Halseth cannot be read, so the page can tell failure from empty. */
+export async function fetchCreaturesOrNull(): Promise<Creature[] | null> {
+  const res = await hGetSafe<{ creatures?: Creature[] }>("/mind/creatures");
+  return res ? (res.creatures ?? []) : null;
 }
 
 export type CreatureDetail = {
