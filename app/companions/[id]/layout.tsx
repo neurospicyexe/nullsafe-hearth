@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { parseCompanionId } from "@/lib/companion-page";
 import CompanionSubnav from "./CompanionSubnav";
 
-// Lowercases + validates the id once for every /companions/<id>/** route, so no page under it
-// ever renders (or calls Halseth) for anything but drevan, cypher or gaia.
+// Belt and braces: a non-member id 404s at the layout for every /companions/<id>/** route; each
+// page still parses the id itself before fetching (the layout does not gate page data fetching).
 export default async function CompanionLayout({
   children,
   params,
