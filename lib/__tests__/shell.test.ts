@@ -123,6 +123,20 @@ describe("redirects", () => {
   });
 });
 
+describe("retired page redirects", () => {
+  it.each([
+    ["/deltas", "/feelings"],
+    ["/phoenix/dreams", "/dreams"],
+    ["/uplink", "/"],
+  ])("forwards %s to %s, temporarily", async (source, destination) => {
+    const redirects = await nextConfig.redirects!();
+    const r = redirects.find((x) => x.source === source);
+    expect(r, source).toBeDefined();
+    expect(r!.destination).toBe(destination);
+    expect((r as { permanent?: boolean }).permanent).toBe(false);
+  });
+});
+
 describe("archive hub", () => {
   it("has exactly the five doors in order", () => {
     expect(HUBS.archive.map((d) => [d.href, d.label])).toEqual([
