@@ -1,7 +1,7 @@
 // Query strings the companion pages depend on: the Journal page asks for the substantive lane, the
 // Letters door asks the inbox for one companion. Other callers keep their old URLs.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchCompanionJournal, fetchInbox } from "@/lib/halseth";
+import { fetchCompanionJournal, fetchInbox, fetchLettersOut } from "@/lib/halseth";
 
 let urls: string[] = [];
 beforeEach(() => {
@@ -41,5 +41,31 @@ describe("fetchInbox", () => {
   it("Home's call is unchanged", async () => {
     await fetchInbox(3);
     expect(query(urls[0])).toEqual({ limit: "3" });
+  });
+});
+
+describe("fetchLettersOut", () => {
+  it("asks for the letter prefix, or one companion", async () => {
+    await fetchLettersOut();
+    await fetchLettersOut(50, "gaia");
+    expect(urls[0]).toContain("/notes?");
+    expect(urls[0]).toContain("note_type=letter%3A*");
+    expect(query(urls[0]).limit).toBe("100");
+    expect(urls[1]).toContain("note_type=letter%3Agaia");
+    expect(query(urls[1]).limit).toBe("50");
+  });
+  it("filters client-side and returns newest first", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify([
+      { id: "a", author: "raziel", content: "x", note_type: "letter:gaia", created_at: "2026-01-01T00:00:00Z" },
+      { id: "b", author: "gaia", content: "x", note_type: "letter:gaia", created_at: "2026-01-05T00:00:00Z" },
+      { id: "c", author: "raziel", content: "x", note_type: "message", created_at: "2026-01-06T00:00:00Z" },
+      { id: "d", author: "raziel", content: "x", note_type: "letter:cypher", created_at: "2026-01-03T00:00:00Z" },
+    ]), { status: 200 })));
+    const rows = await fetchLettersOut();
+    expect(rows?.map((r) => r.id)).toEqual(["d", "a"]);
+  });
+  it("returns null on a failed response", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("no", { status: 500 })));
+    expect(await fetchLettersOut()).toBeNull();
   });
 });

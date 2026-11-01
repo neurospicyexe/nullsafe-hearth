@@ -6,7 +6,8 @@ import {
   fetchHandovers,
   fetchTasks,
   fetchWounds,
-  fetchAllCompanionNotes,
+  fetchLettersOut,
+  parseNoteTags,
   fetchMindHandoffs,
   fetchInterCompanionNotes,
   type RelationalDelta,
@@ -15,7 +16,7 @@ import {
   type HandoverPacket,
   type Task,
   type LivingWound,
-  type CompanionNote,
+  type Note,
   type MindHandoff,
   type InterCompanionNote,
 } from "@/lib/halseth";
@@ -45,6 +46,11 @@ function matches(text: string | null | undefined, q: string): boolean {
   return typeof text === "string" && text.toLowerCase().includes(q.toLowerCase());
 }
 
+function isLetterRow(e: CompanionJournalEntry): boolean {
+  const tags = parseNoteTags(e.tags) ?? [];
+  return tags.includes("letter") || tags.includes("letter_to_raziel");
+}
+
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() ?? "";
@@ -59,7 +65,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const want = (t: Exclude<SearchType, "all">) => type === "all" || type === t;
 
   try {
-    const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawMindHandoffs, rawTasks, rawWounds, rawNotes, rawInterNotes] = await Promise.all([
+    const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawMindHandoffs, rawTasks, rawWounds, rawLetters, rawInterNotes] = await Promise.all([
       want("feelings")  ? fetchAllDeltas(50)               : Promise.resolve(null),
       want("journal")   ? fetchCompanionJournal(undefined, 50) : Promise.resolve(null),
       want("dreams")    ? fetchDreams(undefined, 50)        : Promise.resolve(null),
@@ -67,7 +73,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       want("handovers") ? fetchMindHandoffs(50)             : Promise.resolve(null),
       want("tasks")     ? fetchTasks()                      : Promise.resolve([]),
       want("wounds")    ? fetchWounds()                     : Promise.resolve(null),
-      want("notes")     ? fetchAllCompanionNotes(50)        : Promise.resolve(null),
+      want("notes")     ? fetchLettersOut(100)              : Promise.resolve(null),
       want("notes")     ? fetchInterCompanionNotes(50)      : Promise.resolve(null),
     ]);
 
@@ -81,7 +87,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .filter((e: CompanionJournalEntry) => matches(e.note_text, q))
       .map((e: CompanionJournalEntry) => ({
         id: e.id, type: "journal" as const, text: e.note_text, created_at: e.created_at,
-        url: `/companions/${e.agent}`, agent: e.agent,
+        url: isLetterRow(e) ? `/letters/${e.id}` : `/companions/${e.agent}`, agent: e.agent,
       }));
 
     const dreams: SearchResult[] = (rawDreams ?? [])
@@ -94,14 +100,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       ...(rawHandovers ?? [])
         .filter((h: HandoverPacket) => matches(h.spine, q) || matches(h.last_real_thing, q))
         .map((h: HandoverPacket) => ({
-          id: h.id, type: "handover" as const, text: h.spine, created_at: h.created_at, url: "/handovers",
+          id: h.id, type: "handover" as const, text: h.spine, created_at: h.created_at, url: "/sessions",
         })),
       ...(rawMindHandoffs ?? [])
         .filter((h: MindHandoff) => matches(h.title, q) || matches(h.summary, q) || matches(h.next_steps, q))
         .map((h: MindHandoff) => ({
           id: h.id, type: "handover" as const,
           text: [h.title, h.summary].filter(Boolean).join(" — "),
-          created_at: h.created_at, url: "/handovers", agent: h.agent_id,
+          created_at: h.created_at, url: "/sessions", agent: h.agent_id,
         })),
     ];
 
@@ -118,11 +124,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }));
       
     const notes: SearchResult[] = [
-      ...(rawNotes ?? [])
-        .filter((n: CompanionNote) => matches(n.note_text, q))
-        .map((n: CompanionNote) => ({
-          id: n.id, type: "note" as const, text: n.note_text, created_at: n.created_at, url: `/companions/${n.agent}`, agent: n.agent,
-        })),
+      ...(rawLetters ?? [])
+        .filter((n: Note) => matches(n.content, q))
+        .map((n: Note) => {
+          const agent = n.note_type.slice("letter:".length);
+          return {
+            id: n.id, type: "note" as const, text: n.content, created_at: n.created_at,
+            url: `/letters?with=${agent}`, agent,
+          };
+        }),
       ...(rawInterNotes ?? [])
         .filter((n: InterCompanionNote) => matches(n.content, q))
         .map((n: InterCompanionNote) => ({

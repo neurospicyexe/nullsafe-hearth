@@ -508,6 +508,17 @@ export async function fetchVoiceScores(companionId: string, days = 30): Promise<
   return r?.scores ?? null;
 }
 
+// Raziel's outgoing letters (note_type letter:<companion>). Halseth filters server-side via
+// note_type; the client-side filter is a belt for an older Halseth that ignores the param.
+export async function fetchLettersOut(limit = 100, companion?: CompanionId): Promise<Note[] | null> {
+  const q = new URLSearchParams({ limit: String(limit), note_type: companion ? `letter:${companion}` : "letter:*" });
+  const rows = await hGetSafe<Note[]>(`/notes?${q}`);
+  if (!Array.isArray(rows)) return null;
+  return rows
+    .filter((n) => n.author === "raziel" && typeof n.note_type === "string" && n.note_type.startsWith("letter:"))
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
+}
+
 export async function fetchNotes(limit = 30): Promise<Note[]> {
   return (await hGetSafe<Note[]>(`/notes?limit=${limit}`)) ?? [];
 }
