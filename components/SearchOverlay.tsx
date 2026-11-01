@@ -174,6 +174,7 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
           ref={inputRef}
           className="search-input"
           type="text"
+          maxLength={100}
           placeholder="Search…"
           value={q}
           onChange={(e) => setQ(e.target.value)}

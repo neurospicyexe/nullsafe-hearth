@@ -16,6 +16,7 @@ export default function ArchiveSearch() {
       <div className="h-archive-search-row">
         <input
           name="q"
+          maxLength={100}
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
