@@ -49,8 +49,8 @@ describe("room css", () => {
     expect(css).toMatch(/body:has\(\.h-reader\)::before \{\s*display: none/);
   });
   it("keeps every time-of-day lamp at or under 12 percent and the dots at 3", () => {
-    const pcts = [...css.matchAll(/--h-room-top:\s*color-mix\(in srgb, var\(--h-(?:lamp|cypher)\) (\d+)%/g)].map((m) => +m[1]);
-    expect(pcts.length).toBe(5); // default + four times of day
+    const pcts = [...css.matchAll(/--h-room-top:\s*color-mix\(in srgb, var\(--h-lamp\) (\d+)%/g)].map((m) => +m[1]);
+    expect(pcts.length).toBe(4); // default + morning, afternoon, evening (night is the neutral --h-room-night)
     for (const p of pcts) expect(p).toBeLessThanOrEqual(12);
     expect(room).toContain("var(--h-ink) 3%");
   });
