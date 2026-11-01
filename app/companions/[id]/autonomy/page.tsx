@@ -69,7 +69,7 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
       <section className="page-section">
         <h2 className="section-title">Recent Runs</h2>
         {sortedRuns.length === 0 ? (
-          <p className="empty">No runs recorded yet</p>
+          <p className="h-empty">No runs recorded yet</p>
         ) : (
           <div className="section-list">
             {sortedRuns.map((run) => {

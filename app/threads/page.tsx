@@ -85,7 +85,7 @@ function RecentDeltas({ deltas }: { deltas: Delta[] }) {
     return (
       <div className="card">
         <div className="card-title">Recent Moments</div>
-        <p className="empty">No relational moments logged yet.</p>
+        <p className="h-empty">No relational moments logged yet.</p>
       </div>
     );
   }
@@ -163,7 +163,7 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
       )}
 
       {wounds.length === 0 && notes.length === 0 && (
-        <p className="empty">Gaia has not written here.</p>
+        <p className="h-empty">Gaia has not written here.</p>
       )}
     </div>
   );

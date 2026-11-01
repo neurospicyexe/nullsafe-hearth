@@ -86,7 +86,7 @@ export default function SeedForm() {
       </p>
       <form onSubmit={submit} className="h-seed-form">
         <textarea
-          className="h-seed-input is-area"
+          className="h-input is-area"
           aria-label="Dream seed"
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -96,7 +96,7 @@ export default function SeedForm() {
         />
         <div className="h-seed-row">
           <select
-            className="h-seed-input"
+            className="h-input"
             aria-label="For"
             value={forCompanion}
             onChange={(e) => setForCompanion(e.target.value)}
@@ -107,15 +107,15 @@ export default function SeedForm() {
             <option value="cypher">cypher</option>
             <option value="gaia">gaia</option>
           </select>
-          <button type="submit" className="h-seed-btn is-lamp" disabled={busy || !text.trim()}>
+          <button type="submit" className="h-btn is-primary" disabled={busy || !text.trim()}>
             Inject
           </button>
-          {busy && <span className="h-seed-msg" role="status">Seed left</span>}
+          {busy && <span className="h-msg" role="status">Seed left</span>}
           {busy && inGrace && (
-            <button type="button" className="h-seed-btn" onClick={undo}>undo</button>
+            <button type="button" className="h-btn" onClick={undo}>undo</button>
           )}
-          {phase === "left" && <span className="h-seed-msg" role="status">Seed left</span>}
-          {error && <span className="h-seed-msg" role="status">{error}</span>}
+          {phase === "left" && <span className="h-msg" role="status">Seed left</span>}
+          {error && <span className="h-msg" role="status">{error}</span>}
         </div>
       </form>
     </section>

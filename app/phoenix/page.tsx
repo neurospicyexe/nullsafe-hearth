@@ -34,7 +34,7 @@ function truncate(text: string, max: number): string {
 function SomaBlock({ soma }: { soma: CompanionSomaState }) {
   if (!soma) {
     return (
-      <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>
+      <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>
         No SOMA data
       </p>
     );
@@ -155,7 +155,7 @@ function CompanionColumn({
           )}
         </span>
         {!orient || orient.top_threads.length === 0 ? (
-          <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>
+          <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>
             No threads
           </p>
         ) : (
@@ -223,7 +223,7 @@ function CompanionColumn({
           Last Autonomous Run
         </span>
         {!lastRun ? (
-          <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>
+          <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>
             No runs yet
           </p>
         ) : (
@@ -292,7 +292,7 @@ function CompanionColumn({
           </span>
         </span>
         {threads.length === 0 ? (
-          <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No active threads</p>
+          <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>No active threads</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {threads.slice(0, 3).map((t) => (
@@ -334,7 +334,7 @@ function CompanionColumn({
           </span>
         </span>
         {seeds.length === 0 ? (
-          <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>Queue empty</p>
+          <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>Queue empty</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
             {seeds.slice(0, 4).map((s) => (
@@ -371,7 +371,7 @@ function CompanionColumn({
           Last Session Synthesis
         </span>
         {!synthesisSummary ? (
-          <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No summaries yet</p>
+          <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>No summaries yet</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
             {synthesisSummary.subject && (

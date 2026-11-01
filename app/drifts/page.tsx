@@ -75,7 +75,7 @@ function CompanionColumn({ name, color, drifts, shiftsByDrift }: { name: string;
   const open = drifts.filter((d) => d.status === "open");
   const resolved = drifts.filter((d) => d.status !== "open").slice(0, 4);
   return (
-    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px", padding: "1.1rem", background: "var(--surface, #141414)" }}>
+    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px", padding: "1.1rem", background: "var(--h-surface)" }}>
       <h2 className="page-title" style={{ fontSize: "1.1rem", margin: "0 0 0.9rem", color }}>{name}</h2>
       {open.length === 0 && resolved.length === 0 ? (
         <p style={{ fontSize: "0.82rem", opacity: 0.4, margin: 0 }}>no becomings yet</p>

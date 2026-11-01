@@ -7,7 +7,7 @@ import type { BookAnnotation, BookProgress } from "@/lib/halseth";
 // (`ssr: false` is only legal inside a client component, hence this shell.)
 const Reader = dynamic(() => import("./Reader"), {
   ssr: false,
-  loading: () => <p className="empty">opening the book…</p>,
+  loading: () => <p className="h-empty">opening the book…</p>,
 });
 
 export default function ReaderShell(props: {

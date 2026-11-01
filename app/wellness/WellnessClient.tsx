@@ -83,7 +83,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                   <XAxis dataKey="name" tick={CHART_STYLE} axisLine={false} tickLine={false} />
                   <YAxis tick={CHART_STYLE} axisLine={false} tickLine={false} width={24} />
                   <Tooltip
-                    contentStyle={{ background: "var(--surface)", border: "1px solid var(--h-line)", borderRadius: "6px", fontSize: "0.8rem" }}
+                    contentStyle={{ background: "var(--h-surface)", border: "1px solid var(--h-line)", borderRadius: "6px", fontSize: "0.8rem" }}
                     cursor={{ fill: "var(--h-line)", opacity: 0.3 }}
                   />
                   <Bar dataKey="count" radius={[3, 3, 0, 0]}>
@@ -106,20 +106,20 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
               )}
             </>
           ) : (
-            <p className="empty" style={{ margin: 0 }}>No HRV data recorded.</p>
+            <p className="h-empty" style={{ margin: 0 }}>No HRV data recorded.</p>
           )}
         </SectionCard>
 
         <SectionCard title="Session Depth">
           {totalDepth === 0 ? (
-            <p className="empty" style={{ margin: 0 }}>No depth data recorded — recorded at session open when a companion notes it.</p>
+            <p className="h-empty" style={{ margin: 0 }}>No depth data recorded — recorded at session open when a companion notes it.</p>
           ) : (
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={depthCounts} barCategoryGap="30%">
                 <XAxis dataKey="name" tick={CHART_STYLE} axisLine={false} tickLine={false} />
                 <YAxis tick={CHART_STYLE} axisLine={false} tickLine={false} width={24} />
                 <Tooltip
-                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--h-line)", borderRadius: "6px", fontSize: "0.8rem" }}
+                  contentStyle={{ background: "var(--h-surface)", border: "1px solid var(--h-line)", borderRadius: "6px", fontSize: "0.8rem" }}
                   cursor={{ fill: "var(--h-line)", opacity: 0.3 }}
                 />
                 <Bar dataKey="count" radius={[3, 3, 0, 0]}>
@@ -136,7 +136,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
       {/* Front state frequency */}
       <SectionCard title="Front State Frequency">
         {frontStates.length === 0 ? (
-          <p className="empty" style={{ margin: 0 }}>No front state data recorded.</p>
+          <p className="h-empty" style={{ margin: 0 }}>No front state data recorded.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
             {frontStates.map(({ name, count }) => (
@@ -157,7 +157,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
       {/* Emotional frequency word display */}
       <SectionCard title="Emotional Frequency">
         {emotionWords.length === 0 ? (
-          <p className="empty" style={{ margin: 0 }}>No emotional frequency data recorded — recorded at session open when a companion notes it.</p>
+          <p className="h-empty" style={{ margin: 0 }}>No emotional frequency data recorded — recorded at session open when a companion notes it.</p>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 0.75rem", lineHeight: 1.4 }}>
             {emotionWords.map(({ name, count }) => {

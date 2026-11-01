@@ -61,13 +61,13 @@ export default async function CompanionLettersPage({ params }: { params: Promise
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         <LetterFormClient companionId={id} companionName={config.display} />
 
-        {inbox === null && outRows === null && <p className="empty">{HALSETH_DOWN}</p>}
-        {inbox === null && outRows !== null && <p className="empty">Couldn&apos;t load the letters left for you.</p>}
-        {inbox !== null && outRows === null && <p className="empty">Couldn&apos;t load the letters you left for them.</p>}
+        {inbox === null && outRows === null && <p className="h-empty">{HALSETH_DOWN}</p>}
+        {inbox === null && outRows !== null && <p className="h-empty">Couldn&apos;t load the letters left for you.</p>}
+        {inbox !== null && outRows === null && <p className="h-empty">Couldn&apos;t load the letters you left for them.</p>}
 
         {letters.length === 0 ? (
           inbox === null || outRows === null ? null : (
-            <p className="empty">
+            <p className="h-empty">
               No letters yet. Write something. {config.display} will find it next session.
             </p>
           )

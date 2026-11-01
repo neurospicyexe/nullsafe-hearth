@@ -72,7 +72,7 @@ export default async function WorldviewPage({ params }: { params: Promise<{ id: 
       {/* Empty state */}
       {active.length === 0 && (
         <section className="page-section">
-          <p className="empty">No conclusions recorded yet.</p>
+          <p className="h-empty">No conclusions recorded yet.</p>
         </section>
       )}
 

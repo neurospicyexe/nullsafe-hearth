@@ -77,14 +77,14 @@ export default function UploadBox() {
           <span><strong>{c.file.name}</strong>: {c.message}. replace the existing copy?</span>
           <button
             type="button"
-            className="h-library-btn is-lamp"
+            className="h-btn is-primary is-outlined"
             onClick={() => resolveConflict(c, true)}
           >
             replace
           </button>
           <button
             type="button"
-            className="h-library-btn"
+            className="h-btn"
             onClick={() => resolveConflict(c, false)}
           >
             keep existing

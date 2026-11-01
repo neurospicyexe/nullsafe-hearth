@@ -115,14 +115,14 @@ export default function SeedsClient({ companionId, companionColor, availableSeed
       )}
 
       {availableSeeds.length === 0 && usedSeeds.length === 0 ? (
-        <p className="empty">No seeds yet</p>
+        <p className="h-empty">No seeds yet</p>
       ) : (
         <>
           <h3 style={{ fontSize: "0.85rem", color: "#94a3b8", fontWeight: 500, margin: "0 0 0.5rem" }}>
             Available
           </h3>
           {availableSeeds.length === 0 ? (
-            <p className="empty" style={{ marginBottom: "1rem" }}>No seeds available</p>
+            <p className="h-empty" style={{ marginBottom: "1rem" }}>No seeds available</p>
           ) : (
             <div className="section-list" style={{ marginBottom: "1rem" }}>
               {availableSeeds.map((seed) => {

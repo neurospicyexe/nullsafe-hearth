@@ -65,7 +65,7 @@ export default function JournalClient({ entries, companionId, companionColor, em
   }
 
   if (entries.length === 0) {
-    return <p className="empty">{emptyText ?? "No journal entries yet"}</p>;
+    return <p className="h-empty">{emptyText ?? "No journal entries yet"}</p>;
   }
 
   return (

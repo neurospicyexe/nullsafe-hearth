@@ -80,7 +80,7 @@ export default async function BetweenPage({
       </div>
 
       {notes.length === 0 ? (
-        <p className="empty">
+        <p className="h-empty">
           {companion ? `No notes involving ${companion} in this window.` : "No inter-companion notes yet."}
         </p>
       ) : (

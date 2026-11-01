@@ -74,7 +74,7 @@ function PresenceCard({ companion, soma }: { companion: string; soma: CompanionS
     [soma?.float_3_label ?? null, soma?.soma_float_3 ?? null],
   ];
   return (
-    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "12px", padding: "1.25rem", textAlign: "center", background: "var(--surface, #141414)" }}>
+    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "12px", padding: "1.25rem", textAlign: "center", background: "var(--h-surface)" }}>
       <Avatar soma={soma} companion={companion} />
       <h2 className="page-title" style={{ fontSize: "1.1rem", color, margin: "0.4rem 0 0.1rem" }}>{companion}</h2>
       {soma?.current_mood && <p className="page-subtitle" style={{ fontSize: "0.85rem", margin: 0 }}>{soma.current_mood}</p>}
@@ -102,7 +102,7 @@ export default async function PresencePage() {
       </div>
 
       {!soma ? (
-        <p className="empty">SOMA state unavailable right now.</p>
+        <p className="h-empty">SOMA state unavailable right now.</p>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.25rem" }}>
           {COMPANIONS.map(c => <PresenceCard key={c} companion={c} soma={soma[c]} />)}

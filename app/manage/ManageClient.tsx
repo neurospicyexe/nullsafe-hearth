@@ -102,7 +102,7 @@ export default function ManageClient({ bundles }: { bundles: CompanionBundle[] }
       </div>
 
       {msg && (
-        <div className={`manage-msg ${msg.kind}`} role="status">{msg.text}</div>
+        <div className={`h-msg is-box ${msg.kind === "ok" ? "is-ok" : "is-warn"}`} role="status">{msg.text}</div>
       )}
 
       <div style={{ marginTop: "1rem" }}>
@@ -139,7 +139,7 @@ function MetronomeTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; c
       )}
 
       {bundle.actions.length === 0 ? (
-        <p className="empty">No metronome actions. Add one above.</p>
+        <p className="h-empty">No metronome actions. Add one above.</p>
       ) : (
         <div className="section-list">
           {bundle.actions.map((a) => (
@@ -252,7 +252,7 @@ function SeedsTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color
       </div>
 
       {bundle.seeds.length === 0 ? (
-        <p className="empty">No seeds.</p>
+        <p className="h-empty">No seeds.</p>
       ) : (
         <div className="section-list">
           {bundle.seeds.map((s) => {
@@ -289,7 +289,7 @@ function SeedsTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color
 // ── Journal ───────────────────────────────────────────────────────────────────
 
 function JournalTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color: string; busy: boolean; mut: MutFn }) {
-  if (bundle.journal.length === 0) return <p className="empty">No journal entries.</p>;
+  if (bundle.journal.length === 0) return <p className="h-empty">No journal entries.</p>;
   return (
     <section className="section-list">
       {bundle.journal.map((e) => {

@@ -174,7 +174,7 @@ export default async function UsPage() {
         {recentDeltas === null ? (
           <div className="pending-notice"><div className="pending-dot" />Awaiting Halseth /deltas endpoint.</div>
         ) : recentDeltas.length === 0 ? (
-          <p className="empty">No deltas yet.</p>
+          <p className="h-empty">No deltas yet.</p>
         ) : (
           <div className="delta-feed">
             {recentDeltas.slice(0, 5).map((d) => {
@@ -223,7 +223,7 @@ export default async function UsPage() {
           )}
         </div>
         {companionJournal.length === 0
-          ? <p className="empty">No journal entries yet.</p>
+          ? <p className="h-empty">No journal entries yet.</p>
           : (
             <div className="full-notes-feed">
               {companionJournal.slice(0, 5).map((e) => {

@@ -40,7 +40,7 @@ export default async function LogPage() {
       <PostBox context="global" />
 
       {roots.length === 0 ? (
-        <p className="empty">nothing logged yet. the box above is yours.</p>
+        <p className="h-empty">nothing logged yet. the box above is yours.</p>
       ) : (
         <div className="handover-feed">
           {roots.map((post) => {

@@ -32,7 +32,7 @@ export function CompanionNotesFeedClient({ initialNotes }: { initialNotes: Compa
         ))}
       </div>
       {filtered.length === 0 ? (
-        <p className="empty">No notes{filter !== "all" ? ` from ${filter}` : ""}.</p>
+        <p className="h-empty">No notes{filter !== "all" ? ` from ${filter}` : ""}.</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
           {filtered.map((note) => (

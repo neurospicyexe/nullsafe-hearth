@@ -11,9 +11,9 @@ export default function LoginPage() {
       padding: "1.25rem",
     }}>
       <div style={{
-        background: "var(--surface)",
+        background: "var(--h-surface)",
         border: "1px solid var(--h-line)",
-        borderRadius: "var(--radius)",
+        borderRadius: "var(--h-radius)",
         padding: "2rem",
         width: "100%",
         maxWidth: "340px",

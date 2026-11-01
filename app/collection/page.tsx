@@ -24,7 +24,7 @@ function ForageRow({ item }: { item: CollectionForageItem }) {
         </span>
         <Sparkle weight={item.sparkle} />
       </div>
-      <div className="h-collection-meta">
+      <div className="h-meta">
         {item.domain}{item.consumed_at ? " · explored" : " · waiting"}
       </div>
     </li>

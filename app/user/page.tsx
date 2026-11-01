@@ -128,7 +128,7 @@ export default async function UserPage() {
       <section style={{ marginBottom: "2rem" }}>
         <h2 className="section-title">Biometric History (14 days)</h2>
         {bio.length === 0 ? (
-          <p className="empty">No biometric data yet.</p>
+          <p className="h-empty">No biometric data yet.</p>
         ) : (
           <div className="biometric-scroll">
             <div className="biometric-header">
@@ -171,7 +171,7 @@ export default async function UserPage() {
       <section>
         <h2 className="section-title">Your Notes</h2>
         {myNotes.length === 0 ? (
-          <p className="empty">No notes from you yet.</p>
+          <p className="h-empty">No notes from you yet.</p>
         ) : (
           <div className="full-notes-feed">
             {myNotes.map((n) => (

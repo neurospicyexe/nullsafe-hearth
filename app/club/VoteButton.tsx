@@ -81,7 +81,7 @@ export default function VoteButton({ roundId, recommendationId, voted }: {
   }
 
   if (closed) {
-    return <span className="h-club-vote" role="status"><span className="h-club-msg is-warn">Voting has closed.</span></span>;
+    return <span className="h-club-vote" role="status"><span className="h-msg is-warn">Voting has closed.</span></span>;
   }
 
   // Still this button's ask: a tap on another pick takes the confirmation away at once.
@@ -89,8 +89,8 @@ export default function VoteButton({ roundId, recommendationId, voted }: {
   if (inGrace && mineAsked) {
     return (
       <span className="h-club-vote" role="status">
-        <span className="h-club-msg">{tapped === "voted" ? "Voted" : "Vote removed"}</span>
-        <button type="button" className="h-club-btn" onClick={undo}>undo</button>
+        <span className="h-msg">{tapped === "voted" ? "Voted" : "Vote removed"}</span>
+        <button type="button" className="h-btn" onClick={undo}>undo</button>
       </span>
     );
   }
@@ -100,12 +100,12 @@ export default function VoteButton({ roundId, recommendationId, voted }: {
       {picks.pick === recommendationId ? (
         <>
           <span className="h-club-mine">Your vote</span>
-          <button type="button" className="h-club-btn" onClick={() => tap("removed")}>Remove vote</button>
+          <button type="button" className="h-btn" onClick={() => tap("removed")}>Remove vote</button>
         </>
       ) : (
-        <button type="button" className="h-club-btn is-lamp" onClick={() => tap("voted")}>Vote for this</button>
+        <button type="button" className="h-btn is-primary" onClick={() => tap("voted")}>Vote for this</button>
       )}
-      {note && <span className="h-club-msg is-warn" role="status">{note}</span>}
+      {note && <span className="h-msg is-warn" role="status">{note}</span>}
     </span>
   );
 }

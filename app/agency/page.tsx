@@ -52,7 +52,7 @@ function CompanionColumn({
   return (
     <section style={{
       border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px",
-      padding: "1.1rem", background: "var(--surface, #141414)",
+      padding: "1.1rem", background: "var(--h-surface)",
     }}>
       <h2 className="page-title" style={{ fontSize: "1.1rem", margin: "0 0 0.9rem", color }}>{name}</h2>
 

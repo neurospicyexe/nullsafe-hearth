@@ -65,7 +65,7 @@ export function JournalSection({ entries }: { entries: CompanionJournalEntry[] |
       </div>
     );
   }
-  if (entries.length === 0) return <p className="empty">No journal entries yet.</p>;
+  if (entries.length === 0) return <p className="h-empty">No journal entries yet.</p>;
   return (
     <div className="journal-feed">
       {entries.map((e) => {
@@ -94,7 +94,7 @@ export function JournalSection({ entries }: { entries: CompanionJournalEntry[] |
 }
 
 export function DeltasSection({ deltas }: { deltas: RelationalDelta[] }) {
-  if (deltas.length === 0) return <p className="empty">No relational deltas yet.</p>;
+  if (deltas.length === 0) return <p className="h-empty">No relational deltas yet.</p>;
   return (
     <div className="delta-feed">
       {deltas.map((d) => {
@@ -118,7 +118,7 @@ export function NotesSection({ notes, companionId }: { notes: Note[]; companionI
   // Internal author filter is intentionally preserved — harmless double-filter when
   // pre-filtered notes are passed, but guards against unfiltered call sites.
   const filtered = notes.filter((n) => n.author === companionId);
-  if (filtered.length === 0) return <p className="empty">No notes yet.</p>;
+  if (filtered.length === 0) return <p className="h-empty">No notes yet.</p>;
   return (
     <div className="full-notes-feed">
       {filtered.map((n) => (
@@ -143,7 +143,7 @@ export function CypherAuditSection({ entries }: { entries: CypherAuditEntry[] | 
       </div>
     );
   }
-  if (entries.length === 0) return <p className="empty">No audit entries yet.</p>;
+  if (entries.length === 0) return <p className="h-empty">No audit entries yet.</p>;
   return (
     <div className="audit-feed">
       {entries.map((e) => (
@@ -192,7 +192,7 @@ export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | 
       </div>
     );
   }
-  if (entries.length === 0) return <p className="empty">No witness entries yet.</p>;
+  if (entries.length === 0) return <p className="h-empty">No witness entries yet.</p>;
   const deduped = dedupeWitnessEntries(entries);
   return (
     <div className="witness-feed">
@@ -213,14 +213,14 @@ export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | 
 }
 
 export function ContinuitySection({ data }: { data: WmOrientData | null }) {
-  if (!data) return <p className="empty">No continuity data.</p>;
+  if (!data) return <p className="h-empty">No continuity data.</p>;
 
   const hasHandoff = data.latest_handoff !== null;
   const hasThreads = data.top_threads.length > 0;
   const hasNotes = data.recent_notes.length > 0;
 
   if (!hasHandoff && !hasThreads && !hasNotes) {
-    return <p className="empty">No continuity data yet.</p>;
+    return <p className="h-empty">No continuity data yet.</p>;
   }
 
   return (
@@ -271,7 +271,7 @@ export function SynthesisSummarySection({ entries, companionId }: { entries: Syn
   const filtered = entries.filter(
     (e) => e.companion_id === companionId || e.companion_id === null,
   );
-  if (filtered.length === 0) return <p className="empty">No synthesis summaries yet.</p>;
+  if (filtered.length === 0) return <p className="h-empty">No synthesis summaries yet.</p>;
   return (
     <div className="synthesis-feed">
       {filtered.map((e) => (
@@ -317,7 +317,7 @@ const STATE_TYPE_COLOR: Record<string, string> = {
 };
 
 export function SomaFeelingsSection({ feelings, color }: { feelings: SomaFeeling[]; color: string }) {
-  if (feelings.length === 0) return <p className="empty">No SOMA feelings recorded yet.</p>;
+  if (feelings.length === 0) return <p className="h-empty">No SOMA feelings recorded yet.</p>;
   return (
     <div className="card" style={{ padding: "0.5rem 0" }}>
       {feelings.map((f) => (
@@ -409,7 +409,7 @@ function FloatProvenance({ entries }: { entries: SomaProvenanceEntry[] }) {
 // Fermentation layer (0101): floats that decay/react between sessions, over their DRIFTING
 // baselines. The baseline shift from seed is the "growth you can watch" -- rendered as a caret.
 export function FermentationSection({ data, color }: { data: Fermentation | null; color: string }) {
-  if (!data || data.floats.length === 0) return <p className="empty">Not fermenting yet.</p>;
+  if (!data || data.floats.length === 0) return <p className="h-empty">Not fermenting yet.</p>;
   const fmt = (n: number | null) => (n == null ? "--" : n.toFixed(2));
   const provenance = data.provenance ?? [];
   return (
@@ -434,9 +434,9 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
               </span>
             </div>
             {/* meter: filled to current value, a tick marks the (drifting) baseline home */}
-            <div style={{ position: "relative", height: 8, borderRadius: 4, background: "var(--surface-2, #1f2430)" }}>
+            <div style={{ position: "relative", height: 8, borderRadius: 4, background: "var(--h-raised)" }}>
               <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: color, opacity: 0.55, borderRadius: 4 }} />
-              <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, baseline)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--text)", opacity: 0.8 }} title={`home ${fmt(f.baseline)}`} />
+              <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, baseline)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--h-ink)", opacity: 0.8 }} title={`home ${fmt(f.baseline)}`} />
             </div>
             <FloatProvenance entries={provenance.filter((p) => p.label === f.label)} />
           </div>
@@ -450,7 +450,7 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
               <span style={{ fontSize: "0.76rem", color: d.fired ? "#f59e0b" : "var(--h-muted)", flex: "0 0 8.5rem" }}>
                 {d.drive_key.replace(/_/g, " ")}{d.fired ? " · calling" : ""}
               </span>
-              <div style={{ position: "relative", height: 6, borderRadius: 3, background: "var(--surface-2, #1f2430)", flex: 1 }}>
+              <div style={{ position: "relative", height: 6, borderRadius: 3, background: "var(--h-raised)", flex: 1 }}>
                 <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(0, Math.min(1, d.level)) * 100}%`, background: d.fired ? "#f59e0b" : color, opacity: 0.5, borderRadius: 3 }} />
                 <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, d.threshold)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--h-muted)" }} title={`fires at ${d.threshold.toFixed(2)}`} />
               </div>
@@ -471,7 +471,7 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
 
 export function OpenLoopsSection({ loops }: { loops: OpenLoop[] }) {
   const open = loops.filter((l) => !l.closed_at);
-  if (open.length === 0) return <p className="empty">No open loops right now.</p>;
+  if (open.length === 0) return <p className="h-empty">No open loops right now.</p>;
   return (
     <div className="card" style={{ padding: "0.5rem 0" }}>
       {open.map((loop) => (
@@ -495,7 +495,7 @@ const NOTE_TYPE_LABEL: Record<string, string> = {
 };
 
 export function SittingNotesSection({ notes, color }: { notes: SittingNote[]; color: string }) {
-  if (notes.length === 0) return <p className="empty">Nothing currently sitting.</p>;
+  if (notes.length === 0) return <p className="h-empty">Nothing currently sitting.</p>;
   return (
     <div className="card" style={{ padding: "0.5rem 0" }}>
       {notes.map((note) => (
@@ -519,7 +519,7 @@ export function SittingNotesSection({ notes, color }: { notes: SittingNote[]; co
 }
 
 export function RelationalStateSection({ states }: { states: RelationalState[] }) {
-  if (states.length === 0) return <p className="empty">No relational state recorded yet.</p>;
+  if (states.length === 0) return <p className="h-empty">No relational state recorded yet.</p>;
   const byTarget = states.reduce<Record<string, RelationalState[]>>((acc, s) => {
     (acc[s.toward] ??= []).push(s);
     return acc;
@@ -566,7 +566,7 @@ export function InterCompanionNotesSection({
   const relevant = notes.filter(
     (n) => n.from_id === companionId || n.to_id === companionId || n.to_id === null,
   );
-  if (relevant.length === 0) return <p className="empty">No inter-companion notes yet.</p>;
+  if (relevant.length === 0) return <p className="h-empty">No inter-companion notes yet.</p>;
   return (
     <div className="icn-feed">
       {relevant.map((n) => {
@@ -591,7 +591,7 @@ export function InterCompanionNotesSection({
 }
 
 export function LiveThreadsSection({ threads }: { threads: LiveThread[] }) {
-  if (threads.length === 0) return <p className="empty">No active threads.</p>;
+  if (threads.length === 0) return <p className="h-empty">No active threads.</p>;
   return (
     <div className="card" style={{ padding: "0.5rem 0" }}>
       {threads.map((t) => (
@@ -630,7 +630,7 @@ function scoreColor(score: number): string {
 
 export function VoiceLaneSection({ scores, color }: { scores: VoiceScores | null; color: string }) {
   if (!scores || scores.n === 0) {
-    return <p className="empty">No voice-lane scores in the last 30 days.</p>;
+    return <p className="h-empty">No voice-lane scores in the last 30 days.</p>;
   }
   const flagged = scores.recent.filter(
     (r) => parseHits(r.anti_hits).length > 0 || parseHits(r.contamination_hits).length > 0,
@@ -660,7 +660,7 @@ export function VoiceLaneSection({ scores, color }: { scores: VoiceScores | null
         </div>
       </div>
       {flagged.length === 0 ? (
-        <p className="empty" style={{ fontSize: "0.85rem", color }}>No lane drift flagged in the window.</p>
+        <p className="h-empty" style={{ fontSize: "0.85rem", color }}>No lane drift flagged in the window.</p>
       ) : (
         flagged.map((r, i) => {
           const anti = parseHits(r.anti_hits);
@@ -696,7 +696,7 @@ export function VoiceLaneSection({ scores, color }: { scores: VoiceScores | null
 }
 
 export function DriftLogSection({ entries }: { entries: DriftEntry[] }) {
-  if (entries.length === 0) return <p className="empty">No drift signals recorded.</p>;
+  if (entries.length === 0) return <p className="h-empty">No drift signals recorded.</p>;
   return (
     <div className="card" style={{ padding: "0.5rem 0" }}>
       {entries.map((e) => (

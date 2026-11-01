@@ -443,7 +443,7 @@ function CompanionPalette({
       </div>
 
       {actions.length === 0 ? (
-        <p className="empty" style={{ margin: 0, fontSize: "0.8rem" }}>
+        <p className="h-empty" style={{ margin: 0, fontSize: "0.8rem" }}>
           No actions configured
         </p>
       ) : (

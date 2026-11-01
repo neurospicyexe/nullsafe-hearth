@@ -40,7 +40,7 @@ export default async function CompanionBlocksPage({ params }: { params: Promise<
       </div>
       <div className="card" style={{ padding: "0.5rem 0", marginBottom: "2rem" }}>
         {personaBlocks.length === 0 && (
-          <p className="empty" style={{ padding: "1rem" }}>No persona blocks yet.</p>
+          <p className="h-empty" style={{ padding: "1rem" }}>No persona blocks yet.</p>
         )}
         {personaBlocks.map((b) => (
           <div key={b.id} className="journal-row" style={{ alignItems: "flex-start" }}>
@@ -61,7 +61,7 @@ export default async function CompanionBlocksPage({ params }: { params: Promise<
       </div>
       <div className="card" style={{ padding: "0.5rem 0" }}>
         {humanBlocks.length === 0 && (
-          <p className="empty" style={{ padding: "1rem" }}>No relational blocks yet.</p>
+          <p className="h-empty" style={{ padding: "1rem" }}>No relational blocks yet.</p>
         )}
         {humanBlocks.map((b) => (
           <div key={b.id} className="journal-row" style={{ alignItems: "flex-start" }}>

@@ -19,12 +19,12 @@ export default async function PeoplePage() {
         </p>
       </header>
       {people === null ? (
-        <p className="people-empty">Couldn&rsquo;t reach Halseth.</p>
+        <p className="h-empty">Couldn&rsquo;t reach Halseth.</p>
       ) : (
         <PeopleClient initial={people} />
       )}
       {keepOff === null ? (
-        <p className="people-empty">Couldn&rsquo;t load the keep-off list.</p>
+        <p className="h-empty">Couldn&rsquo;t load the keep-off list.</p>
       ) : (
         <KeepOffClient initial={keepOff} />
       )}

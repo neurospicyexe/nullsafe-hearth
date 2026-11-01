@@ -42,7 +42,7 @@ export default function HalsethRoom({ rooms, initialRoom }: Props) {
     }
   }
 
-  if (!active) return <p className="empty">No rooms configured.</p>;
+  if (!active) return <p className="h-empty">No rooms configured.</p>;
 
   return (
     <>

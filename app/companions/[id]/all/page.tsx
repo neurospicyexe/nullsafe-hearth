@@ -92,7 +92,7 @@ function LettersSection({
     <div className="letter-section-wrap">
       <LetterFormClient companionId={companionId} companionName={config.display} />
       {letters.length === 0 ? (
-        <p className="empty">
+        <p className="h-empty">
           No letters yet. Write something — {config.display} will find it next session.
         </p>
       ) : (
@@ -523,7 +523,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           <h2 className="section-title section-title-flush">Memory Blocks</h2>
           <Link href={`/companions/${id}/blocks`} className="home-section-link">view →</Link>
         </div>
-        <p className="empty" style={{ fontSize: "0.85rem" }}>
+        <p className="h-empty" style={{ fontSize: "0.85rem" }}>
           Full context blocks live on the sub-page.
         </p>
       </section>

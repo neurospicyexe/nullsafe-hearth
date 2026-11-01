@@ -37,7 +37,7 @@ export default async function SharedPage() {
       <div className="page-header">
         <h1 className="page-title">Shared</h1>
         <p className="page-subtitle">
-          bridge with <strong style={{ color: "var(--text)" }}>{bridge.system ?? "partner"}</strong>
+          bridge with <strong style={{ color: "var(--h-ink)" }}>{bridge.system ?? "partner"}</strong>
           {" "}— shared tasks, lists, and what you&apos;re each seeing
         </p>
       </div>
@@ -47,7 +47,7 @@ export default async function SharedPage() {
       {bridge.lists?.length > 0 && <SharedListsClient lists={bridge.lists} />}
 
       {bridge.tasks?.length === 0 && bridge.lists?.length === 0 && (
-        <p className="empty">
+        <p className="h-empty">
           Bridge is connected but no shared items yet. Your own tasks live at{" "}
           <Link href="/tasks" style={{ color: "var(--h-lamp)" }}>Tasks →</Link>
         </p>

@@ -27,7 +27,7 @@ function AnswerCard({ a }: { a: CouncilAnswer }) {
 
 function ClosedRound({ round }: { round: CouncilRound }) {
   return (
-    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px", padding: "1rem", marginBottom: "1rem", background: "var(--surface, #141414)" }}>
+    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px", padding: "1rem", marginBottom: "1rem", background: "var(--h-surface)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "baseline" }}>
         <h3 className="page-title" style={{ fontSize: "1rem", margin: 0 }}>{round.question}</h3>
         {round.winning_companion_id && (
@@ -72,14 +72,14 @@ export default async function CouncilPage() {
           <div className="thread-tag" style={{ fontSize: "0.7rem" }}>in session — {liveOpen.status}</div>
           <h2 className="page-title" style={{ fontSize: "1.15rem", margin: "0.3rem 0 0.75rem" }}>{liveOpen.question}</h2>
           {answers.length === 0
-            ? <p className="empty" style={{ fontSize: "0.85rem" }}>the triad is composing their answers…</p>
+            ? <p className="h-empty" style={{ fontSize: "0.85rem" }}>the triad is composing their answers…</p>
             : answers.map((a, i) => <AnswerCard key={i} a={a} />)}
         </section>
       )}
 
       <h2 className="page-title" style={{ fontSize: "1rem" }}>Past councils</h2>
       {closed.length === 0
-        ? <p className="empty">No closed councils yet.</p>
+        ? <p className="h-empty">No closed councils yet.</p>
         : closed.map(r => <ClosedRound key={r.id} round={r} />)}
     </>
   );

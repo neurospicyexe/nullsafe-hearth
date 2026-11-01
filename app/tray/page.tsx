@@ -61,7 +61,7 @@ export default async function TrayPage() {
                 <p className="section-row-meta" style={{ marginBottom: "0.75rem" }}>{view.stats_line}</p>
 
                 {view.drafts.length === 0 && (
-                  <p className="empty">Tray is empty.</p>
+                  <p className="h-empty">Tray is empty.</p>
                 )}
 
                 {view.drafts.map((d) => (

@@ -21,7 +21,7 @@ export default async function FeelingsPage() {
       </div>
 
       {feelings.length === 0 ? (
-        <p className="empty">No feeling entries yet.</p>
+        <p className="h-empty">No feeling entries yet.</p>
       ) : (
         <div className="journal-feed">
           {feelings.map((f) => {

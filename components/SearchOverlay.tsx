@@ -237,7 +237,7 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
           )}
 
           {!loading && error !== null && (
-            <div className="search-empty">{error}</div>
+            <div className="h-empty is-block">{error}</div>
           )}
 
           {!loading && error === null && results !== null && GROUP_ORDER.map((key) => {
@@ -280,7 +280,7 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
           })}
 
           {showEmpty && (
-            <div className="search-empty">No results</div>
+            <div className="h-empty is-block">No results</div>
           )}
         </div>
       </div>

@@ -124,7 +124,7 @@ export default async function GrowthPage({
       <section className="page-section">
         <h2 className="section-title">Patterns</h2>
         {patterns.length === 0 ? (
-          <p className="empty">No patterns recorded yet</p>
+          <p className="h-empty">No patterns recorded yet</p>
         ) : (
           <div className="section-list">
             {patterns.map((p) => {

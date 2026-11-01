@@ -273,7 +273,7 @@ export default async function AutonomousPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No runs yet</p>
+                  <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>No runs yet</p>
                 )}
               </div>
 
@@ -283,7 +283,7 @@ export default async function AutonomousPage() {
                   Recent Journal
                 </span>
                 {sortedJournal.length === 0 ? (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No journal entries</p>
+                  <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>No journal entries</p>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     {sortedJournal.map((entry, i) => {
@@ -319,7 +319,7 @@ export default async function AutonomousPage() {
                   Top Patterns
                 </span>
                 {topPatterns.length === 0 ? (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No patterns</p>
+                  <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>No patterns</p>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                     {topPatterns.map((p, i) => (
@@ -362,7 +362,7 @@ export default async function AutonomousPage() {
                   )}
                 </span>
                 {seeds.length === 0 ? (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No seeds queued</p>
+                  <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>No seeds queued</p>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     {seeds.slice(0, 3).map((s) => {
@@ -396,7 +396,7 @@ export default async function AutonomousPage() {
                   Recent Reflections
                 </span>
                 {recentReflections.length === 0 ? (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No reflections yet</p>
+                  <p className="h-empty" style={{ margin: 0, fontSize: "0.82rem" }}>No reflections yet</p>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                     {recentReflections.map((r) => (
