@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { HomeRow } from "@/lib/home-model";
 import { Bars } from "@/components/kit/Bars";
-import { tint } from "@/lib/domain-colors";
+import { PresenceRing } from "@/components/kit/PresenceRing";
 
 export default function WhoIsHome({ rows }: { rows: HomeRow[] }) {
   return (
@@ -11,8 +11,8 @@ export default function WhoIsHome({ rows }: { rows: HomeRow[] }) {
         {rows.map((r) => (
           <Link key={r.id} href={`/companions/${r.id}`} className="h-home-row">
             <div className="h-home-row-top">
-              <div className="h-home-who">
-                <span aria-hidden="true" className="h-dot has-c" style={tint(r.colorVar)} />
+              <div className="h-home-who" data-mood={r.mood}>
+                <PresenceRing id={r.id} fresh={r.fresh} />
                 <span className="h-home-name">{r.name}</span>
                 {r.status && (
                   <span className="h-home-status">

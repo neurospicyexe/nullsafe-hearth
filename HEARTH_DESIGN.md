@@ -104,7 +104,7 @@ Current: every card lifts with `translateY(-2px)` + shadow.
 New rules:
 - `.card:hover` (default): only `border-color` transition, no lift
 - Cards that ARE navigation destinations: add `.card--link` class with lift behavior
-- Companion cards: companion-color border glow instead of generic shadow
+- Companion cards: a companion-tinted edge (no glow). Glow only on rings, dots, hairlines and the room bloom; never on hover
 - Presence card / live feed: no hover effect (ambient, not interactive)
 
 ---
@@ -166,7 +166,7 @@ These ambient blobs are a generic dark-mode AI tell. Remove them — a solid war
 
 ## What NOT to change
 
-- Caveat (display font) — right for the brief
+- Atkinson only (one readable typeface; Caveat and Quicksand retired in P8)
 - Symbolic nav icons (◈ ⌂ ♥ ↹ ◌) — distinctively personal
 - Companion identity colors (drevan/cypher/gaia/raziel) — meaningful system
 - Home page information hierarchy — it's correct

@@ -2,6 +2,8 @@
 import type { SomaData, InboxResponse, Book } from "./halseth";
 import { COMPANION_COLOR } from "./shell";
 import { parseUtc } from "./spoons";
+import { partOfDay } from "./time-of-day";
+import { moodSkin, type Mood } from "./mood-skin";
 
 export type HomeRow = {
   id: "drevan" | "cypher" | "gaia";
@@ -9,6 +11,10 @@ export type HomeRow = {
   colorVar: string;
   status: string | null;
   statusStale: boolean;
+  /** Presence: Halseth has a state row and the shown status is not older than a day (same rule as statusStale). */
+  fresh: boolean;
+  /** Decorative mood skin (lib/mood-skin.ts); steady when stale or unstamped. */
+  mood: Mood;
   /** Age of the mood word ("3d"), shown with a stale status: "last said: warm, 3d". */
   statusAge: string;
   seenLabel: string;
@@ -56,7 +62,7 @@ export function buildWhoIsHome(soma: SomaData | null, now: Date): HomeRow[] {
   return COMPANIONS.map(({ id, name }) => {
     const base = { id, name, colorVar: COMPANION_COLOR[id] };
     const s = soma?.[id] ?? null;
-    if (!s) return { ...base, status: null, statusStale: false, statusAge: "", seenLabel: "", bars: [] };
+    if (!s) return { ...base, status: null, statusStale: false, fresh: false, mood: "steady" as Mood, statusAge: "", seenLabel: "", bars: [] };
 
     const status = s.current_mood ?? s.compound_state ?? null;
     // Halseth stamps mood_set_at for a mood word OR a compound state, so staleness gates on whichever is shown.
@@ -78,6 +84,9 @@ export function buildWhoIsHome(soma: SomaData | null, now: Date): HomeRow[] {
       ...base,
       status,
       statusStale,
+      // No mood timestamp at all is not presence: fresh needs a stamp that is under a day old.
+      fresh: setAt !== null && !statusStale,
+      mood: moodSkin(s, now),
       statusAge: statusStale ? ageLabel(s.mood_set_at, now) : "",
       // seen_at = the companion's own last act (mood, journal entry, session close). Never updated_at:
       // the ferment cron moves that every hour, so every row would read "now".
@@ -135,7 +144,5 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 
 /** "Thursday evening", from the viewer's local clock. */
 export function greeting(now: Date): string {
-  const h = now.getHours();
-  const part = h < 12 ? "morning" : h < 17 ? "afternoon" : h < 21 ? "evening" : "night";
-  return `${WEEKDAYS[now.getDay()]} ${part}`;
+  return `${WEEKDAYS[now.getDay()]} ${partOfDay(now)}`;
 }

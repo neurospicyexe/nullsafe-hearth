@@ -1,24 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible, Caveat, Quicksand } from "next/font/google";
+import { Atkinson_Hyperlegible } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/shell/AppShell";
 import { WriteQueueProvider } from "@/components/shell/WriteQueueProvider";
 import ScrollToTop from "@/components/ScrollToTop";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
+import Atmosphere from "@/components/shell/Atmosphere";
+import { STILL_KEY } from "@/lib/still";
+import { TIME_BOOT } from "@/lib/time-of-day";
 
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const quicksand = Quicksand({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-body",
-  display: "swap",
-});
+// Runs before first paint so a device set to Still never flashes motion. Same key as lib/still.ts.
+const STILL_BOOT = `try{if(localStorage.getItem(${JSON.stringify(STILL_KEY)})==="1")document.documentElement.setAttribute("data-still","")}catch(e){}`;
+// Same idea for the room tint: data-time is set before paint so a hard load does not crossfade from the default.
+// Cutoffs come from lib/time-of-day.ts (TIME_BOOT); Atmosphere keeps it current afterwards.
 
 const atkinson = Atkinson_Hyperlegible({
   subsets: ["latin"],
@@ -52,8 +46,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${caveat.variable} ${quicksand.variable} ${atkinson.variable}`}>
+    <html lang="en" className={`${atkinson.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: STILL_BOOT + TIME_BOOT }} />
+      </head>
       <body>
+        <Atmosphere />
         <div className="app-layout">
           <ScrollToTop />
           <RegisterServiceWorker />

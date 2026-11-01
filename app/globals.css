@@ -18,7 +18,7 @@
 body {
   background-color: var(--h-ground);
   color: var(--h-ink);
-  font-family: var(--font-body, 'Quicksand', -apple-system, BlinkMacSystemFont, sans-serif);
+  font-family: var(--h-font, system-ui, -apple-system, BlinkMacSystemFont, sans-serif);
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -47,10 +47,12 @@ input, select, textarea { font-family: inherit; }
   animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .page-title {
-  font-family: var(--font-display, 'Caveat', cursive);
-  font-size: 2.6rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-family: var(--h-font, system-ui, sans-serif);
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
   margin-bottom: 0.25rem;
   color: var(--h-ink);
 }
@@ -60,12 +62,14 @@ input, select, textarea { font-family: inherit; }
   font-weight: 400;
 }
 .section-title {
-  font-family: var(--font-display, 'Caveat', cursive);
-  font-size: 1.35rem;
-  font-weight: 600;
+  font-family: var(--h-font, system-ui, sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
   margin-bottom: 1.25rem;
   color: var(--h-ink);
-  letter-spacing: 0.01em;
+  letter-spacing: 0.015em;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -577,7 +581,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 
 .home-section { margin-bottom: 3rem; }
 .home-section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--h-line); padding-bottom: 0.5rem; }
-.home-section-title { font-family: var(--font-display, 'Caveat', cursive); font-size: 1.45rem; font-weight: 600; color: var(--h-ink); letter-spacing: 0.01em; }
+.home-section-title { font-family: var(--h-font, system-ui, sans-serif); font-size: 1.3rem; font-weight: 700; color: var(--h-ink); letter-spacing: 0.015em; overflow-wrap: anywhere; }
 .home-section-link { font-size: 0.85rem; color: var(--h-lamp); text-decoration: none; font-weight: 500; }
 
 .bridge-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--h-muted); }
@@ -743,6 +747,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 @keyframes breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.85); } }
+@keyframes ringBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 @keyframes checkPop { 0% { opacity: 0.4; } 100% { opacity: 1; } }
 
 /* ── Tasks Page ──────────────────────────────────────────────────────────── */
@@ -1214,6 +1219,14 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+/* Manual Still switch (Under the hood): the same rules as reduced motion, set per device. */
+html[data-still] *,
+html[data-still] *::before,
+html[data-still] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }
 
 /* ── Presence enhancements ───────────────────────────────────────────────── */
@@ -1687,12 +1700,45 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   --h-radius: 14px;
   --h-tap: 44px;
   --h-tabbar-h: 76px;
+  /* The room's top bloom: ambient lamplight, opaque (mixed over ground), never above 12% lamp (evening 7% keeps faint text >= 4.5:1 over a dot). */
+  --h-edge: var(--h-line);
+  --h-room-top: color-mix(in srgb, var(--h-lamp) 7%, var(--h-ground));
+  /* Night room: a neutral cool (ink over ground), never a companion hue. */
+  --h-room-night: color-mix(in srgb, var(--h-ink) 4%, var(--h-ground));
+}
+html[data-time="morning"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 6%, var(--h-ground)); }
+html[data-time="afternoon"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 3%, var(--h-ground)); }
+html[data-time="evening"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 7%, var(--h-ground)); }
+html[data-time="night"] { --h-room-top: var(--h-room-night); }
+
+/* Registered so a change of time crossfades. Browsers without @property snap to the new tint. */
+@property --h-room-top {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+/* The room: fixed, behind everything, below the spoons strip (90) and tab bar (100). Panels are opaque and
+   page text sits where the tint is at most 10% lamp, so no text contrast changes. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, color-mix(in srgb, var(--h-ink) 3%, transparent) 1px, transparent 1.5px) 0 0 / 22px 22px,
+    linear-gradient(to bottom, var(--h-room-top), var(--h-ground) 45vh);
+  transition: --h-room-top 400ms ease;
+}
+body:has(.h-reader)::before {
+  display: none;
 }
 
 /* Hearth v2 shell */
 .h-shell {
   min-height: 100vh;
-  background: var(--h-ground);
+  background: transparent;
   padding-bottom: calc(var(--h-tabbar-h) + env(safe-area-inset-bottom));
   font-family: var(--h-font, system-ui, sans-serif);
 }
@@ -1740,6 +1786,8 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-btn.is-quiet { color: var(--h-faint); border-color: transparent; }
 .h-btn.is-danger { color: var(--h-warn); border-color: var(--h-warn); }
 .h-btn:disabled { opacity: 0.45; cursor: default; }
+.h-still { margin-bottom: 1.25rem; }
+.h-still-note { margin-top: 6px; font-size: 0.875rem; color: var(--h-muted); }
 .h-input {
   min-height: var(--h-tap);
   padding: 8px 12px;
@@ -2407,7 +2455,7 @@ body:has(.h-reader) { min-height: 0; }
 .h-phx-tab.is-on { color: var(--h-ink); font-weight: 600; border-bottom-color: var(--h-lamp); }
 .h-phx-tab:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: -2px; }
 .h-phx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; align-items: start; }
-.h-phx-col { display: flex; flex-direction: column; gap: 1rem; border-color: color-mix(in srgb, var(--c, var(--h-line)) 25%, var(--h-line)); }
+.h-phx-col { display: flex; flex-direction: column; gap: 1rem; }
 .h-phx-name { color: var(--c, var(--h-ink)); font-weight: 700; font-size: 1rem; }
 .home-section-title.h-phx-label { display: block; margin-bottom: 0.5rem; }
 .home-section-title.h-phx-label.is-roomy { margin-bottom: 0.75rem; }
@@ -2789,3 +2837,82 @@ body:has(.h-reader) { min-height: 0; }
 .author-btn.h-bg-drevan { background: var(--h-drevan); }
 .author-btn.h-bg-cypher { background: var(--h-cypher); }
 .author-btn.h-bg-gaia { background: var(--h-gaia); }
+
+/* P8 card silhouette: one signature shape. 10px chamfer on the top-right corner, a 2px top hairline
+   fading to nothing, and a 1px diagonal drawn as a background layer (clip-path would otherwise leave
+   the cut without a line). Edge tint is --h-edge: --h-line by default, the companion hue at 35% inside
+   a companion context. Decoration lives on the card edge only; the fill stays flat --h-surface. */
+[data-companion],
+[style*="--c:"] { --h-edge: color-mix(in srgb, var(--c, var(--h-line)) 35%, var(--h-line)); }
+.h-phx-col { --h-edge: color-mix(in srgb, var(--c, var(--h-line)) 25%, var(--h-line)); }
+.h-panel.is-live { --h-edge: var(--h-lamp); }
+.card,
+.h-panel:not(.is-answer),
+.h-hood-card,
+.h-home-card,
+.h-door {
+  border-color: var(--h-edge);
+  border-top-color: transparent; /* the 2px hairline layer is the top edge, so its fade shows */
+  border-top-right-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  background-origin: border-box;
+  background-repeat: no-repeat;
+  background-position: top left, top right;
+  background-size: 100% 2px, 10px 10px;
+  background-image:
+    linear-gradient(to right, var(--h-edge), transparent),
+    linear-gradient(to top right, transparent calc(50% - 1.5px), var(--h-edge) calc(50% - 1.5px), var(--h-edge) 50%, transparent 50%);
+}
+/* clip-path clips outlines: keep focus rings inside the box. */
+.card:focus-visible,
+.h-panel:not(.is-answer):focus-visible,
+.h-hood-card:focus-visible,
+.h-home-card:focus-visible,
+.h-door:focus-visible { outline-offset: -3px; }
+/* Hover keeps the companion edge and the faded top hairline; no transform, no glow. */
+.card:hover {
+  border-color: color-mix(in srgb, var(--h-edge) 70%, var(--h-line-strong));
+  border-top-color: transparent;
+}
+/* ...and children flush to a clipped card's edge (zero-padding cards like .h-cmp-card). */
+:is(.card, .h-panel:not(.is-answer), .h-hood-card, .h-home-card, .h-door) :focus-visible { outline-offset: -2px; }
+
+/* P8 presence ring. Decoration on the ring only: interior is flat --h-raised so the sym (in --c) keeps
+   >= 5.0:1 (drevan 5.01, cypher 9.33, gaia 6.98). Glow is box-shadow on the ring, never on text. */
+.h-ring {
+  --ring-size: 44px;
+  display: inline-flex; flex: none; align-items: center; justify-content: center;
+  width: var(--ring-size); height: var(--ring-size); border-radius: 50%;
+  background: var(--h-raised);
+  border: 2px solid color-mix(in srgb, var(--c, var(--h-muted)) 90%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c, var(--h-muted)) var(--ring-glow, 35%), transparent);
+  color: var(--c, var(--h-muted));
+  font-family: var(--h-font);
+  font-size: calc(var(--ring-size) * 0.45); line-height: 1;
+}
+.h-ring-sm { --ring-size: 44px; }
+.h-ring-lg { --ring-size: 64px; }
+.h-ring.is-fresh { animation: ringBreath 3.5s ease-in-out infinite; }
+.h-ring.is-stale {
+  border-color: color-mix(in srgb, var(--c, var(--h-muted)) 40%, transparent);
+  box-shadow: none;
+}
+.h-companion-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.h-companion-id-text { display: flex; flex-direction: column; min-width: 0; }
+.h-companion-status { font-size: 0.9375rem; color: var(--h-muted); }
+
+/* P8 mood skin (lib/mood-skin.ts). A mood swaps ONLY decorative properties, scoped to the element
+   carrying data-mood: ring glow strength, ring breath speed, and (on the companion page) the room's top
+   tint. Never color, background or font; "still" is zero motion. Blooms stay at or under the 12% lamp
+   ceiling (written as the ground share so the room-top count test keeps its meaning). */
+[data-mood="bright"] { --ring-glow: 55%; }
+[data-mood="warm"] { --ring-glow: 40%; }
+[data-mood="heavy"] { --ring-glow: 18%; }
+[data-mood="still"] { --ring-glow: 25%; }
+[data-mood="bright"] .h-ring.is-fresh { animation-duration: 3s; }
+[data-mood="heavy"] .h-ring.is-fresh { animation-duration: 5s; }
+[data-mood="still"] .h-ring { animation: none; }
+html:has(.h-companion[data-mood="bright"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 93%); }
+html:has(.h-companion[data-mood="warm"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 94%); }
+html:has(.h-companion[data-mood="heavy"]) { --h-room-top: color-mix(in srgb, var(--h-ink), var(--h-ground) 96%); }
+html:has(.h-companion[data-mood="still"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 97%); }
