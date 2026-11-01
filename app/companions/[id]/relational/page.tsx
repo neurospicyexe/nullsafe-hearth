@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { parseCompanionId } from "@/lib/companion-page";
 import { fetchRelationalHistory, type RelationalState } from "@/lib/halseth";
 import { COMPANION_CONFIG } from "../sections";
+import { stateTypeColor } from "../domain-colors";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
@@ -15,23 +16,10 @@ function fmtTime(iso: string) {
   });
 }
 
-const STATE_TYPE_COLOR: Record<string, string> = {
-  feeling: "var(--accent)",
-  witness: "#4ade80",
-  held:    "#a78bfa",
-};
-
 function WeightDot({ value }: { value: number }) {
   const size = 6 + Math.round(value * 8);
   return (
-    <div style={{
-      width: `${size}px`,
-      height: `${size}px`,
-      borderRadius: "50%",
-      background: "var(--border)",
-      flexShrink: 0,
-      alignSelf: "center",
-    }} />
+    <div className="h-cmp-dot" style={{ "--s": `${size}px` } as React.CSSProperties} />
   );
 }
 
@@ -51,7 +39,7 @@ export default async function CompanionRelationalPage({ params }: { params: Prom
   }, {});
 
   return (
-    <div>
+    <div data-companion={id}>
       <div className="page-header">
         <h1 className="page-title">{config.display} · Relational State</h1>
         <p className="page-subtitle">what {config.display} is holding toward each relationship</p>
@@ -69,36 +57,28 @@ export default async function CompanionRelationalPage({ params }: { params: Prom
         return (
           <section key={toward} className="page-section">
             <div className="section-header">
-              <h2 className="section-title section-title-flush" style={{ color: config.color }}>
+              <h2 className="section-title section-title-flush h-cmp-tint">
                 → {toward}
               </h2>
-              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+              <span className="section-row-meta h-cmp-sm">
                 {entries.length} {entries.length === 1 ? "entry" : "entries"}
               </span>
             </div>
 
-            <div className="card" style={{ padding: "0.5rem 0" }}>
+            <div className="card h-cmp-card">
               {entries.map((s, i) => (
                 <div
                   key={s.id}
-                  className="journal-row"
-                  style={{
-                    alignItems: "flex-start",
-                    gap: "0.6rem",
-                    opacity: i === 0 ? 1 : 0.65,
-                  }}
+                  className={`journal-row h-cmp-start${i === 0 ? "" : " h-cmp-older"}`}
                 >
                   <WeightDot value={s.weight} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="h-cmp-grow">
                     <div className="journal-text">{s.state_text}</div>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.2rem", flexShrink: 0 }}>
+                  <div className="h-cmp-col-end">
                     <span
-                      className="note-type-badge"
-                      style={{
-                        borderColor: STATE_TYPE_COLOR[s.state_type] ?? "var(--border-subtle)",
-                        color: STATE_TYPE_COLOR[s.state_type] ?? "var(--text-muted)",
-                      }}
+                      className="note-type-badge h-cmp-tint h-cmp-edge"
+                      style={{ "--c": stateTypeColor(s.state_type) } as React.CSSProperties}
                     >
                       {s.state_type}
                     </span>

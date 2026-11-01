@@ -1,14 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import { toneOf } from "@/lib/tone";
 import { fetchOrientDebug, fetchSbSearchLog, type OrientDebug, type SbSearchLog } from "@/lib/halseth";
 
 const COMPANIONS = ["cypher", "drevan", "gaia"] as const;
-
-const COMPANION_COLOR: Record<string, string> = {
-  cypher: "#e2e8f0",
-  drevan: "var(--accent)",
-  gaia:   "#4ade80",
-};
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -22,29 +17,19 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 function HitRatePip({ hit }: { hit: boolean }) {
   return (
     <span
-      style={{
-        display: "inline-block",
-        width: "8px",
-        height: "8px",
-        borderRadius: "50%",
-        background: hit ? "#4ade80" : "#334155",
-        flexShrink: 0,
-      }}
+      className={`h-pip${hit ? " is-hit" : ""}`}
       title={hit ? "hit" : "miss"}
     />
   );
 }
 
 function CompanionCard({ id, debug, log }: { id: string; debug: OrientDebug | null; log: SbSearchLog | null }) {
-  const color = COMPANION_COLOR[id] ?? "#64748b";
-
   return (
     <div
-      className="full-note-entry"
-      style={{ borderLeft: `3px solid ${color}`, marginBottom: "1rem" }}
+      className="full-note-entry h-note-card"
     >
       <div className="note-header">
-        <span className="note-author" style={{ color }}>{id}</span>
+        <span className={`note-author ${toneOf(id)}`}>{id}</span>
         {debug ? (
           <span style={{ fontSize: "0.72rem", opacity: 0.4 }}>
             {new Date(debug.assembled_at).toLocaleString()}

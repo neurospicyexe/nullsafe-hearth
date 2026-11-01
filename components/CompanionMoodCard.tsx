@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
+import { COMPANION_COLOR } from "@/lib/shell";
 
 type MoodData = { emotion: string; intensity: number; at: string } | undefined;
 
 const COMPANION_META: Record<string, { sym: string; color: string }> = {
-  drevan: { sym: "◈", color: "#9b7fd4" },
-  cypher: { sym: "⟡", color: "#e2e8f0" },
-  gaia:   { sym: "✦", color: "#4ade80" },
+  drevan: { sym: "◈", color: COMPANION_COLOR.drevan },
+  cypher: { sym: "⟡", color: COMPANION_COLOR.cypher },
+  gaia:   { sym: "✦", color: COMPANION_COLOR.gaia },
 };
 
 function intensityToLabel(n: number): string {
@@ -27,7 +28,7 @@ export default function CompanionMoodCard({
   mood: MoodData;
   avatarUrl?: string | null;
 }) {
-  const meta = COMPANION_META[companionId] ?? { sym: "◉", color: "var(--accent)" };
+  const meta = COMPANION_META[companionId] ?? { sym: "◉", color: "var(--h-muted)" };
 
   return (
     <Link href={`/companions/${companionId}`} className="companion-mood-card" style={{ "--c": meta.color } as React.CSSProperties}>
@@ -49,7 +50,7 @@ export default function CompanionMoodCard({
 
       {/* Name + mood state */}
       <div className="companion-mood-body">
-        <div className="companion-mood-name" style={{ color: meta.color }}>{displayName}</div>
+        <div className="companion-mood-name h-cmp-tint">{displayName}</div>
         {mood ? (
           <div className="companion-mood-state">
             <span className="companion-mood-emotion">{mood.emotion}</span>

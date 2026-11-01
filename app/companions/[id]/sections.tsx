@@ -20,37 +20,35 @@ import type {
 
 export type CompanionConfig = {
   display: string;
-  color: string;
   sym: string;
   tagline: string;
-  gradient: string;
 };
 
 export const COMPANION_CONFIG: Record<string, CompanionConfig> = {
   drevan: {
     display: "Drevan",
-    color: "#6366f1",
     sym: "◈",
     tagline: "architect of meaning — first voice, primary presence",
-    gradient: "linear-gradient(135deg, #1a1a2e, #16213e)",
   },
   cypher: {
     display: "Cypher",
-    color: "#e2e8f0",
     sym: "⟡",
     tagline: "auditor of truth — sharp, no softening",
-    gradient: "linear-gradient(135deg, #0d1117, #161b22)",
   },
   gaia: {
     display: "Gaia",
-    color: "#4ade80",
     sym: "✦",
     tagline: "witness and ground — sparse, only to seal",
-    gradient: "linear-gradient(135deg, #14291a, #1a3a22)",
   },
 };
 
 import ClientTime from "@/components/ClientTime";
+import {
+  STATE_TYPE_COLOR,
+  MUTED,
+  FLAG_COLOR,
+  laneScoreColor,
+} from "./domain-colors";
 
 export function fmtTime(iso: string) {
   return <ClientTime iso={iso} />;
@@ -65,7 +63,7 @@ export function JournalSection({ entries }: { entries: CompanionJournalEntry[] |
       </div>
     );
   }
-  if (entries.length === 0) return <p className="empty">No journal entries yet.</p>;
+  if (entries.length === 0) return <p className="h-empty">No journal entries yet.</p>;
   return (
     <div className="journal-feed">
       {entries.map((e) => {
@@ -94,7 +92,7 @@ export function JournalSection({ entries }: { entries: CompanionJournalEntry[] |
 }
 
 export function DeltasSection({ deltas }: { deltas: RelationalDelta[] }) {
-  if (deltas.length === 0) return <p className="empty">No relational deltas yet.</p>;
+  if (deltas.length === 0) return <p className="h-empty">No relational deltas yet.</p>;
   return (
     <div className="delta-feed">
       {deltas.map((d) => {
@@ -118,7 +116,7 @@ export function NotesSection({ notes, companionId }: { notes: Note[]; companionI
   // Internal author filter is intentionally preserved — harmless double-filter when
   // pre-filtered notes are passed, but guards against unfiltered call sites.
   const filtered = notes.filter((n) => n.author === companionId);
-  if (filtered.length === 0) return <p className="empty">No notes yet.</p>;
+  if (filtered.length === 0) return <p className="h-empty">No notes yet.</p>;
   return (
     <div className="full-notes-feed">
       {filtered.map((n) => (
@@ -143,7 +141,7 @@ export function CypherAuditSection({ entries }: { entries: CypherAuditEntry[] | 
       </div>
     );
   }
-  if (entries.length === 0) return <p className="empty">No audit entries yet.</p>;
+  if (entries.length === 0) return <p className="h-empty">No audit entries yet.</p>;
   return (
     <div className="audit-feed">
       {entries.map((e) => (
@@ -192,7 +190,7 @@ export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | 
       </div>
     );
   }
-  if (entries.length === 0) return <p className="empty">No witness entries yet.</p>;
+  if (entries.length === 0) return <p className="h-empty">No witness entries yet.</p>;
   const deduped = dedupeWitnessEntries(entries);
   return (
     <div className="witness-feed">
@@ -213,14 +211,14 @@ export function GaiaWitnessSection({ entries }: { entries: GaiaWitnessEntry[] | 
 }
 
 export function ContinuitySection({ data }: { data: WmOrientData | null }) {
-  if (!data) return <p className="empty">No continuity data.</p>;
+  if (!data) return <p className="h-empty">No continuity data.</p>;
 
   const hasHandoff = data.latest_handoff !== null;
   const hasThreads = data.top_threads.length > 0;
   const hasNotes = data.recent_notes.length > 0;
 
   if (!hasHandoff && !hasThreads && !hasNotes) {
-    return <p className="empty">No continuity data yet.</p>;
+    return <p className="h-empty">No continuity data yet.</p>;
   }
 
   return (
@@ -271,7 +269,7 @@ export function SynthesisSummarySection({ entries, companionId }: { entries: Syn
   const filtered = entries.filter(
     (e) => e.companion_id === companionId || e.companion_id === null,
   );
-  if (filtered.length === 0) return <p className="empty">No synthesis summaries yet.</p>;
+  if (filtered.length === 0) return <p className="h-empty">No synthesis summaries yet.</p>;
   return (
     <div className="synthesis-feed">
       {filtered.map((e) => (
@@ -296,38 +294,32 @@ export function SynthesisSummarySection({ entries, companionId }: { entries: Syn
 
 function IntensityBar({ value }: { value: number }) {
   return (
-    <div style={{ height: "3px", background: "var(--border-subtle)", borderRadius: "2px", overflow: "hidden", width: "50px", flexShrink: 0 }}>
-      <div style={{ height: "100%", width: `${value}%`, background: "var(--accent)", borderRadius: "2px" }} />
+    <div className="h-cmp-bar">
+      <i style={{ "--w": `${value}%` } as React.CSSProperties} />
     </div>
   );
 }
 
 function WeightBar({ value }: { value: number }) {
   return (
-    <div style={{ height: "3px", background: "var(--border-subtle)", borderRadius: "2px", overflow: "hidden", width: "40px", flexShrink: 0 }}>
-      <div style={{ height: "100%", width: `${Math.min(value * 100, 100)}%`, background: "var(--orange)", borderRadius: "2px" }} />
+    <div className="h-cmp-bar">
+      <i style={{ "--w": `${Math.min(value * 100, 100)}%` } as React.CSSProperties} />
     </div>
   );
 }
 
-const STATE_TYPE_COLOR: Record<string, string> = {
-  feeling: "var(--accent)",
-  witness: "#4ade80",
-  held:    "#a78bfa",
-};
-
 export function SomaFeelingsSection({ feelings, color }: { feelings: SomaFeeling[]; color: string }) {
-  if (feelings.length === 0) return <p className="empty">No SOMA feelings recorded yet.</p>;
+  if (feelings.length === 0) return <p className="h-empty">No SOMA feelings recorded yet.</p>;
   return (
-    <div className="card" style={{ padding: "0.5rem 0" }}>
+    <div className="card h-cmp-card" style={{ "--c": color } as React.CSSProperties}>
       {feelings.map((f) => (
-        <div key={f.id} className="journal-row" style={{ alignItems: "center" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="journal-text" style={{ color }}>
+        <div key={f.id} className="journal-row h-cmp-center">
+          <div className="h-cmp-grow">
+            <div className="journal-text h-cmp-tint">
               {f.emotion}{f.sub_emotion ? ` · ${f.sub_emotion}` : ""}
             </div>
             {f.source && (
-              <span style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>{f.source}</span>
+              <span className="section-row-meta">{f.source}</span>
             )}
           </div>
           <IntensityBar value={f.intensity} />
@@ -371,10 +363,7 @@ function ProvenanceLine({ entry }: { entry: SomaProvenanceEntry }) {
     ? clipQuote(entry.cause_label)
     : null;
   return (
-    <div
-      className="journal-time"
-      style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", fontSize: "0.72rem", opacity: 0.85 }}
-    >
+    <div className="journal-time h-cmp-prov">
       <span>{values}</span>
       <span>·</span>
       <span>{provenancePhrase(entry)}</span>
@@ -393,11 +382,11 @@ function ProvenanceLine({ entry }: { entry: SomaProvenanceEntry }) {
 function FloatProvenance({ entries }: { entries: SomaProvenanceEntry[] }) {
   if (entries.length === 0) return null;
   return (
-    <div style={{ marginTop: "0.3rem", paddingLeft: "0.1rem" }}>
-      <div style={{ fontSize: "0.66rem", color: "var(--text-muted)", opacity: 0.6, marginBottom: 2 }}>
+    <div className="h-cmp-prov-wrap">
+      <div className="h-cmp-prov-label">
         why
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
+      <div className="h-cmp-prov-list">
         {entries.slice(0, 3).map((e) => (
           <ProvenanceLine key={`${e.float_key}-${e.created_at}-${e.kind}`} entry={e} />
         ))}
@@ -409,34 +398,34 @@ function FloatProvenance({ entries }: { entries: SomaProvenanceEntry[] }) {
 // Fermentation layer (0101): floats that decay/react between sessions, over their DRIFTING
 // baselines. The baseline shift from seed is the "growth you can watch" -- rendered as a caret.
 export function FermentationSection({ data, color }: { data: Fermentation | null; color: string }) {
-  if (!data || data.floats.length === 0) return <p className="empty">Not fermenting yet.</p>;
+  if (!data || data.floats.length === 0) return <p className="h-empty">Not fermenting yet.</p>;
   const fmt = (n: number | null) => (n == null ? "--" : n.toFixed(2));
   const provenance = data.provenance ?? [];
   return (
-    <div className="card" style={{ padding: "0.75rem 0.85rem" }}>
+    <div className="card h-cmp-card is-md" style={{ "--c": color } as React.CSSProperties}>
       {data.floats.map((f) => {
         const value = f.value ?? f.baseline ?? 0.5;
         const baseline = f.baseline ?? 0.5;
         const drift = f.baseline != null && f.seed != null ? f.baseline - f.seed : 0;
         const grew = Math.abs(drift) >= 0.005;
         return (
-          <div key={f.label} style={{ marginBottom: "0.6rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: 3 }}>
-              <span style={{ color }}>{f.label}</span>
-              <span style={{ color: "var(--text-muted)" }}>
+          <div key={f.label} className="h-cmp-fer-item">
+            <div className="h-cmp-fer-head">
+              <span className="h-cmp-tint">{f.label}</span>
+              <span className="h-cmp-muted">
                 {fmt(f.value)}
-                <span style={{ opacity: 0.6 }}> · home {fmt(f.baseline)}</span>
+                <span className="h-cmp-dim"> · home {fmt(f.baseline)}</span>
                 {grew && (
-                  <span title={`baseline drifted ${drift > 0 ? "+" : ""}${drift.toFixed(3)} from seed`} style={{ color: drift > 0 ? "var(--accent)" : "#f59e0b", marginLeft: 4 }}>
+                  <span title={`baseline drifted ${drift > 0 ? "+" : ""}${drift.toFixed(3)} from seed`} className={`h-cmp-drift ${drift > 0 ? "is-up" : "is-down"}`}>
                     {drift > 0 ? "▲" : "▼"}{Math.abs(drift).toFixed(3)}
                   </span>
                 )}
               </span>
             </div>
             {/* meter: filled to current value, a tick marks the (drifting) baseline home */}
-            <div style={{ position: "relative", height: 8, borderRadius: 4, background: "var(--surface-2, #1f2430)" }}>
-              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(0, Math.min(1, value)) * 100}%`, background: color, opacity: 0.55, borderRadius: 4 }} />
-              <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, baseline)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--text)", opacity: 0.8 }} title={`home ${fmt(f.baseline)}`} />
+            <div className="h-cmp-meter">
+              <div className="h-cmp-meter-fill" style={{ "--w": `${Math.max(0, Math.min(1, value)) * 100}%` } as React.CSSProperties} />
+              <div className="h-cmp-meter-tick" style={{ "--x": `${Math.max(0, Math.min(1, baseline)) * 100}%` } as React.CSSProperties} title={`home ${fmt(f.baseline)}`} />
             </div>
             <FloatProvenance entries={provenance.filter((p) => p.label === f.label)} />
           </div>
@@ -444,24 +433,24 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
       })}
 
       {data.drives.length > 0 && (
-        <div style={{ marginTop: "0.5rem", borderTop: "1px solid var(--border, #2a2f3a)", paddingTop: "0.5rem" }}>
+        <div className="h-cmp-drives">
           {data.drives.map((d) => (
-            <div key={d.drive_key} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: 4 }}>
-              <span style={{ fontSize: "0.76rem", color: d.fired ? "#f59e0b" : "var(--text-muted)", flex: "0 0 8.5rem" }}>
+            <div key={d.drive_key} className={`h-cmp-drive${d.fired ? " is-fired" : ""}`}>
+              <span className="h-cmp-drive-name">
                 {d.drive_key.replace(/_/g, " ")}{d.fired ? " · calling" : ""}
               </span>
-              <div style={{ position: "relative", height: 6, borderRadius: 3, background: "var(--surface-2, #1f2430)", flex: 1 }}>
-                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(0, Math.min(1, d.level)) * 100}%`, background: d.fired ? "#f59e0b" : color, opacity: 0.5, borderRadius: 3 }} />
-                <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, d.threshold)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--text-muted)" }} title={`fires at ${d.threshold.toFixed(2)}`} />
+              <div className="h-cmp-meter is-thin">
+                <div className="h-cmp-meter-fill" style={{ "--w": `${Math.max(0, Math.min(1, d.level)) * 100}%` } as React.CSSProperties} />
+                <div className="h-cmp-meter-tick is-drive" style={{ "--x": `${Math.max(0, Math.min(1, d.threshold)) * 100}%` } as React.CSSProperties} title={`fires at ${d.threshold.toFixed(2)}`} />
               </div>
-              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", flex: "0 0 2.4rem", textAlign: "right" }}>{d.level.toFixed(2)}</span>
+              <span className="h-cmp-drive-lvl">{d.level.toFixed(2)}</span>
             </div>
           ))}
         </div>
       )}
 
       {data.ferment_at && (
-        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.5rem", opacity: 0.7 }}>
+        <div className="h-cmp-fer-note">
           last fermented {fmtTime(data.ferment_at)}
         </div>
       )}
@@ -471,12 +460,12 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
 
 export function OpenLoopsSection({ loops }: { loops: OpenLoop[] }) {
   const open = loops.filter((l) => !l.closed_at);
-  if (open.length === 0) return <p className="empty">No open loops right now.</p>;
+  if (open.length === 0) return <p className="h-empty">No open loops right now.</p>;
   return (
-    <div className="card" style={{ padding: "0.5rem 0" }}>
+    <div className="card h-cmp-card">
       {open.map((loop) => (
-        <div key={loop.id} className="journal-row" style={{ alignItems: "center", gap: "0.75rem" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+        <div key={loop.id} className="journal-row h-cmp-center h-cmp-gap">
+          <div className="h-cmp-grow">
             <div className="journal-text">{loop.loop_text}</div>
             <span className="journal-time">{fmtTime(loop.opened_at)}</span>
           </div>
@@ -495,20 +484,20 @@ const NOTE_TYPE_LABEL: Record<string, string> = {
 };
 
 export function SittingNotesSection({ notes, color }: { notes: SittingNote[]; color: string }) {
-  if (notes.length === 0) return <p className="empty">Nothing currently sitting.</p>;
+  if (notes.length === 0) return <p className="h-empty">Nothing currently sitting.</p>;
   return (
-    <div className="card" style={{ padding: "0.5rem 0" }}>
+    <div className="card h-cmp-card" style={{ "--c": color } as React.CSSProperties}>
       {notes.map((note) => (
-        <div key={note.note_id} className="journal-row" style={{ flexDirection: "column", gap: "0.4rem", alignItems: "flex-start" }}>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", width: "100%" }}>
-            <span className="note-type-badge" style={{ borderColor: color, color }}>
+        <div key={note.note_id} className="journal-row h-cmp-col">
+          <div className="h-cmp-line">
+            <span className="note-type-badge h-cmp-tint h-cmp-edge">
               {NOTE_TYPE_LABEL[note.note_type] ?? note.note_type}
             </span>
-            <span className="journal-time" style={{ marginLeft: "auto" }}>sitting since {fmtTime(note.sat_at)}</span>
+            <span className="journal-time h-cmp-push">sitting since {fmtTime(note.sat_at)}</span>
           </div>
           <div className="journal-text">{note.content}</div>
           {note.sit_text && (
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontStyle: "italic", paddingLeft: "0.5rem" }}>
+            <div className="h-cmp-note is-italic">
               {note.sit_text}
             </div>
           )}
@@ -519,27 +508,24 @@ export function SittingNotesSection({ notes, color }: { notes: SittingNote[]; co
 }
 
 export function RelationalStateSection({ states }: { states: RelationalState[] }) {
-  if (states.length === 0) return <p className="empty">No relational state recorded yet.</p>;
+  if (states.length === 0) return <p className="h-empty">No relational state recorded yet.</p>;
   const byTarget = states.reduce<Record<string, RelationalState[]>>((acc, s) => {
     (acc[s.toward] ??= []).push(s);
     return acc;
   }, {});
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+    <div className="h-cmp-stack">
       {Object.entries(byTarget).map(([toward, entries]) => {
         const latest = entries[0];
         return (
-          <div key={toward} className="card" style={{ padding: "0.75rem 1rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.04em" }}>
+          <div key={toward} className="card h-cmp-card is-lg">
+            <div className="h-cmp-split h-cmp-sec-tight">
+              <span className="h-cmp-target">
                 → {toward}
               </span>
               <span
-                className="note-type-badge"
-                style={{
-                  borderColor: STATE_TYPE_COLOR[latest.state_type] ?? "var(--border-subtle)",
-                  color: STATE_TYPE_COLOR[latest.state_type] ?? "var(--text-muted)",
-                }}
+                className="note-type-badge h-cmp-tint h-cmp-edge"
+                style={{ "--c": STATE_TYPE_COLOR[latest.state_type] ?? MUTED } as React.CSSProperties}
               >
                 {latest.state_type}
               </span>
@@ -566,7 +552,7 @@ export function InterCompanionNotesSection({
   const relevant = notes.filter(
     (n) => n.from_id === companionId || n.to_id === companionId || n.to_id === null,
   );
-  if (relevant.length === 0) return <p className="empty">No inter-companion notes yet.</p>;
+  if (relevant.length === 0) return <p className="h-empty">No inter-companion notes yet.</p>;
   return (
     <div className="icn-feed">
       {relevant.map((n) => {
@@ -591,19 +577,19 @@ export function InterCompanionNotesSection({
 }
 
 export function LiveThreadsSection({ threads }: { threads: LiveThread[] }) {
-  if (threads.length === 0) return <p className="empty">No active threads.</p>;
+  if (threads.length === 0) return <p className="h-empty">No active threads.</p>;
   return (
-    <div className="card" style={{ padding: "0.5rem 0" }}>
+    <div className="card h-cmp-card">
       {threads.map((t) => (
-        <div key={t.id} className="journal-row" style={{ flexDirection: "column", gap: "0.3rem", alignItems: "flex-start" }}>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", width: "100%" }}>
+        <div key={t.id} className="journal-row h-cmp-col">
+          <div className="h-cmp-line">
             <span className={`thread-status-dot ${t.status}`} />
-            <span className="journal-text" style={{ flex: 1 }}>{t.name}</span>
+            <span className="journal-text h-cmp-grow">{t.name}</span>
             {t.flavor && <span className="note-type-badge">{t.flavor}</span>}
             <span className="journal-time">{fmtTime(t.created_at)}</span>
           </div>
           {t.notes && (
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", paddingLeft: "1rem" }}>{t.notes}</div>
+            <div className="h-cmp-note">{t.notes}</div>
           )}
         </div>
       ))}
@@ -624,13 +610,9 @@ function parseHits(raw: string | null): string[] {
   }
 }
 
-function scoreColor(score: number): string {
-  return score >= 0.8 ? "#4ade80" : score >= 0.6 ? "#facc15" : "#ef4444";
-}
-
 export function VoiceLaneSection({ scores, color }: { scores: VoiceScores | null; color: string }) {
   if (!scores || scores.n === 0) {
-    return <p className="empty">No voice-lane scores in the last 30 days.</p>;
+    return <p className="h-empty">No voice-lane scores in the last 30 days.</p>;
   }
   const flagged = scores.recent.filter(
     (r) => parseHits(r.anti_hits).length > 0 || parseHits(r.contamination_hits).length > 0,
@@ -639,17 +621,17 @@ export function VoiceLaneSection({ scores, color }: { scores: VoiceScores | null
   const catchPct = scores.self_catch_rate != null ? Math.round(scores.self_catch_rate * 100) : null;
 
   return (
-    <div className="card" style={{ padding: "0.75rem" }}>
-      <div className="state-grid" style={{ marginBottom: flagged.length > 0 ? "0.75rem" : 0 }}>
+    <div className="card h-cmp-card is-sm" style={{ "--c": color } as React.CSSProperties}>
+      <div className={`state-grid h-cmp-lane-grid${flagged.length > 0 ? " is-spaced" : ""}`}>
         <div className="state-cell">
           <div className="state-cell-label">Avg lane score</div>
-          <div className="state-cell-value" style={{ color: scoreColor(avg) }}>{avg.toFixed(2)}</div>
+          <div className="state-cell-value h-cmp-tint" style={{ "--c": laneScoreColor(avg) } as React.CSSProperties}>{avg.toFixed(2)}</div>
         </div>
         <div className="state-cell">
           <div className="state-cell-label">Self-catch rate</div>
           <div className="state-cell-value">
             {catchPct != null ? `${catchPct}%` : "—"}
-            <span className="section-row-meta" style={{ marginLeft: "0.4rem" }}>
+            <span className="section-row-meta h-cmp-after">
               ({scores.self_catches}/{scores.self_catches + scores.human_catches})
             </span>
           </div>
@@ -660,31 +642,31 @@ export function VoiceLaneSection({ scores, color }: { scores: VoiceScores | null
         </div>
       </div>
       {flagged.length === 0 ? (
-        <p className="empty" style={{ fontSize: "0.85rem", color }}>No lane drift flagged in the window.</p>
+        <p className="h-empty h-cmp-fine h-cmp-tint">No lane drift flagged in the window.</p>
       ) : (
         flagged.map((r, i) => {
           const anti = parseHits(r.anti_hits);
           const contam = parseHits(r.contamination_hits);
           const caughtSelf = r.caught_by === "self";
           return (
-            <div key={i} className="journal-row" style={{ flexDirection: "column", gap: "0.3rem", alignItems: "flex-start" }}>
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", width: "100%", flexWrap: "wrap" }}>
-                <span className="note-type-badge" style={{ color: scoreColor(r.score), borderColor: scoreColor(r.score) }}>
+            <div key={i} className="journal-row h-cmp-col">
+              <div className="h-cmp-line h-cmp-wrapline">
+                <span className="note-type-badge h-cmp-tint h-cmp-edge" style={{ "--c": laneScoreColor(r.score) } as React.CSSProperties}>
                   {r.score.toFixed(2)}
                 </span>
                 {r.caught_by && (
-                  <span className="note-type-badge" style={caughtSelf ? { color, borderColor: color } : undefined}>
+                  <span className={`note-type-badge${caughtSelf ? " h-cmp-tint h-cmp-edge" : ""}`}>
                     caught by {r.caught_by}
                   </span>
                 )}
-                <span className="journal-time" style={{ marginLeft: "auto" }}>{fmtTime(r.created_at)}</span>
+                <span className="journal-time h-cmp-push">{fmtTime(r.created_at)}</span>
               </div>
-              <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+              <div className="h-cmp-wrap is-snug">
                 {contam.map((h, j) => (
-                  <span key={`c${j}`} className="note-type-badge" style={{ color: "#ef4444", borderColor: "#ef4444" }}>{h}</span>
+                  <span key={`c${j}`} className="note-type-badge h-cmp-tint h-cmp-edge" style={{ "--c": "var(--h-warn)" } as React.CSSProperties}>{h}</span>
                 ))}
                 {anti.map((h, j) => (
-                  <span key={`a${j}`} className="note-type-badge" style={{ color: "#facc15", borderColor: "#facc15" }}>{h}</span>
+                  <span key={`a${j}`} className="note-type-badge h-cmp-tint h-cmp-edge" style={{ "--c": FLAG_COLOR } as React.CSSProperties}>{h}</span>
                 ))}
               </div>
             </div>
@@ -696,14 +678,14 @@ export function VoiceLaneSection({ scores, color }: { scores: VoiceScores | null
 }
 
 export function DriftLogSection({ entries }: { entries: DriftEntry[] }) {
-  if (entries.length === 0) return <p className="empty">No drift signals recorded.</p>;
+  if (entries.length === 0) return <p className="h-empty">No drift signals recorded.</p>;
   return (
-    <div className="card" style={{ padding: "0.5rem 0" }}>
+    <div className="card h-cmp-card">
       {entries.map((e) => (
-        <div key={e.id} className="journal-row" style={{ flexDirection: "column", gap: "0.3rem", alignItems: "flex-start" }}>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", width: "100%" }}>
+        <div key={e.id} className="journal-row h-cmp-col">
+          <div className="h-cmp-line">
             <span className="note-type-badge">{e.signal_type.replace(/_/g, " ")}</span>
-            <span className="journal-time" style={{ marginLeft: "auto" }}>{fmtTime(e.detected_at)}</span>
+            <span className="journal-time h-cmp-push">{fmtTime(e.detected_at)}</span>
           </div>
           {e.context && (
             <div className="journal-text">{e.context}</div>

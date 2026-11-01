@@ -11,9 +11,9 @@ export default function LoginPage() {
       padding: "1.25rem",
     }}>
       <div style={{
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius)",
+        background: "var(--h-surface)",
+        border: "1px solid var(--h-line)",
+        borderRadius: "var(--h-radius)",
         padding: "2rem",
         width: "100%",
         maxWidth: "340px",
@@ -23,7 +23,7 @@ export default function LoginPage() {
       }}>
         <div>
           <h1 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.3rem" }}>Hearth</h1>
-          <p style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Enter your passphrase to continue.</p>
+          <p style={{ color: "var(--h-muted)", fontSize: "0.85rem" }}>Enter your passphrase to continue.</p>
         </div>
         <Suspense>
           <LoginForm />

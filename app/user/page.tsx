@@ -10,10 +10,10 @@ function fmtDate(iso: string) {
 function sleepBar(hours: number | null) {
   if (hours === null) return null;
   const pct = Math.min((hours / 9) * 100, 100);
-  const color = hours >= 7 ? "#4ade80" : hours >= 5 ? "#facc15" : "#ef4444";
+  const tone = hours >= 7 ? "is-ok" : hours >= 5 ? "is-mid" : "is-low";
   return (
-    <div style={{ height: "4px", background: "var(--border)", borderRadius: "2px", overflow: "hidden", marginTop: "0.25rem" }}>
-      <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: "2px" }} />
+    <div className="h-sleep-track">
+      <div className={`h-sleep-fill ${tone}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -76,7 +76,7 @@ export default async function UserPage() {
           ) : (
             <div className="state-cell" style={{ gridColumn: "1 / -1" }}>
               <div className="state-cell-label">Status</div>
-              <div className="state-cell-value" style={{ color: "var(--muted)", fontSize: "0.88rem" }}>No open session</div>
+              <div className="state-cell-value" style={{ color: "var(--h-muted)", fontSize: "0.88rem" }}>No open session</div>
             </div>
           )}
 
@@ -128,7 +128,7 @@ export default async function UserPage() {
       <section style={{ marginBottom: "2rem" }}>
         <h2 className="section-title">Biometric History (14 days)</h2>
         {bio.length === 0 ? (
-          <p className="empty">No biometric data yet.</p>
+          <p className="h-empty">No biometric data yet.</p>
         ) : (
           <div className="biometric-scroll">
             <div className="biometric-header">
@@ -171,7 +171,7 @@ export default async function UserPage() {
       <section>
         <h2 className="section-title">Your Notes</h2>
         {myNotes.length === 0 ? (
-          <p className="empty">No notes from you yet.</p>
+          <p className="h-empty">No notes from you yet.</p>
         ) : (
           <div className="full-notes-feed">
             {myNotes.map((n) => (

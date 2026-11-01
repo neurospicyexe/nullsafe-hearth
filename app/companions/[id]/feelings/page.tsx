@@ -17,21 +17,8 @@ function fmtTime(iso: string) {
 
 function IntensityBar({ value }: { value: number }) {
   return (
-    <div style={{
-      height: "3px",
-      background: "var(--border-subtle)",
-      borderRadius: "2px",
-      overflow: "hidden",
-      width: "60px",
-      flexShrink: 0,
-    }}>
-      <div style={{
-        height: "100%",
-        width: `${value}%`,
-        background: "var(--accent)",
-        borderRadius: "2px",
-        transition: "width 0.3s var(--ease-out)",
-      }} />
+    <div className="h-cmp-bar is-wide">
+      <i style={{ "--w": `${value}%` } as React.CSSProperties} />
     </div>
   );
 }
@@ -59,15 +46,15 @@ export default async function CompanionFeelingsPage({ params }: { params: Promis
         </div>
       )}
 
-      <div className="card" style={{ padding: "0.5rem 0" }}>
+      <div className="card h-cmp-card">
         {feelings.map((f) => (
-          <div key={f.id} className="journal-row" style={{ alignItems: "center" }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div key={f.id} className="journal-row h-cmp-center">
+            <div className="h-cmp-grow">
               <div className="journal-text">
                 {f.emotion}{f.sub_emotion ? ` · ${f.sub_emotion}` : ""}
               </div>
               {f.source && (
-                <span className="page-subtitle" style={{ fontSize: "0.78rem" }}>
+                <span className="page-subtitle h-cmp-sm">
                   {f.source}
                 </span>
               )}

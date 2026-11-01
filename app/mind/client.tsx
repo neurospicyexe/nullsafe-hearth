@@ -32,7 +32,7 @@ export function CompanionNotesFeedClient({ initialNotes }: { initialNotes: Compa
         ))}
       </div>
       {filtered.length === 0 ? (
-        <p className="empty">No notes{filter !== "all" ? ` from ${filter}` : ""}.</p>
+        <p className="h-empty">No notes{filter !== "all" ? ` from ${filter}` : ""}.</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
           {filtered.map((note) => (
@@ -92,8 +92,7 @@ export function CompanionNoteFormClient() {
               <button
                 key={a}
                 type="button"
-                className={`author-btn${agent === a ? " active" : ""}`}
-                style={agent === a ? { background: `var(--${a})` } : {}}
+                className={`author-btn${agent === a ? ` active h-bg-${a}` : ""}`}
                 onClick={() => setAgent(a)}
               >
                 {a}
@@ -126,7 +125,7 @@ export function CompanionNoteFormClient() {
           {status === "saving" ? "Saving…" : status === "done" ? "Saved ✓" : "Save Note"}
         </button>
         {status === "error" && (
-          <p style={{ color: "var(--red)", fontSize: "0.82rem" }}>Failed to save. Try again.</p>
+          <p style={{ color: "var(--h-warn)", fontSize: "0.82rem" }}>Failed to save. Try again.</p>
         )}
       </form>
     </div>

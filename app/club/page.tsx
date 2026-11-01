@@ -74,7 +74,7 @@ function WinnerBanner({ round }: { round: ClubRoundDetail }) {
           ? <a href={winner.url} target="_blank" rel="noopener noreferrer"><strong>{winner.title}</strong></a>
           : <strong>{winner.title}</strong>}
         {winner.creator ? `, ${winner.creator}` : ""}{" "}
-        <span className="h-club-meta">(<Member name={winner.recommended_by} />&apos;s rec)</span>
+        <span className="h-meta h-club-meta">(<Member name={winner.recommended_by} />&apos;s rec)</span>
       </p>
     );
   }
@@ -86,7 +86,7 @@ function WinnerBanner({ round }: { round: ClubRoundDetail }) {
     );
   }
   if (round.winning_recommendation_id) {
-    return <p className="h-club-meta">★ a pick was chosen (recommendation data not loaded)</p>;
+    return <p className="h-meta h-club-meta">★ a pick was chosen (recommendation data not loaded)</p>;
   }
   return null;
 }
@@ -186,7 +186,7 @@ function DiscussionThread({ discussions, commons, roundId, postable, status, com
         </ul>
       )}
       {!commonsLoaded && (
-        <p className="h-club-meta">discussion not loaded for rounds this far back</p>
+        <p className="h-meta h-club-meta">discussion not loaded for rounds this far back</p>
       )}
       {postable && (
         <div className="h-club-post-box">
@@ -229,7 +229,7 @@ function RoundCard({ round, heading, commons = [], commonsLoaded = true }: {
         status={round.status}
       />
       {(round.abstentions ?? []).length > 0 && (
-        <p className="h-club-meta">
+        <p className="h-meta h-club-meta">
           abstained:{" "}
           {(round.abstentions ?? []).map((a, i) => (
             <span key={a.voter}>

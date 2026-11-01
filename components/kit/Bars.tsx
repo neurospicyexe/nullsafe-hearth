@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { traceValid } from "@/lib/companion-page";
 
 export type Bar = { label: string; pct: number; trace?: number[] };
@@ -34,7 +35,7 @@ export function Bars({ color, bars, name }: { color: string; bars: Bar[]; name?:
             aria-valuemax={100}
             aria-valuenow={b.pct}
           >
-            <span className="h-bars-fill" style={{ width: `${b.pct}%`, background: color }} />
+            <span className="h-bars-fill" style={{ width: `${b.pct}%`, "--bar-c": color } as CSSProperties} />
           </span>
           {b.trace && traceValid(b.trace) && (
             <svg

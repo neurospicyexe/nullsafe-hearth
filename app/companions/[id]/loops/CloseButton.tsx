@@ -33,22 +33,13 @@ export function CloseLoopButton({
     }
   }
 
-  if (status === "done") return <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>closed</span>;
+  if (status === "done") return <span className="h-cmp-done">closed</span>;
 
   return (
     <button
       onClick={close}
       disabled={status === "closing"}
-      style={{
-        fontSize: "0.72rem",
-        padding: "0.15rem 0.55rem",
-        background: "transparent",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: "4px",
-        color: status === "error" ? "var(--red)" : "var(--text-muted)",
-        cursor: "pointer",
-        flexShrink: 0,
-      }}
+      className={`h-cmp-quiet-btn${status === "error" ? " is-error" : ""}`}
     >
       {status === "closing" ? "…" : status === "error" ? "failed" : "close"}
     </button>

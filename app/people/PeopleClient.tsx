@@ -128,10 +128,10 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
 
       <h2 className="people-heading">Names that are you</h2>
       <p className="people-hint">A line that names one of these links to you, with that name kept as who was fronting. Never a separate person.</p>
-      {selves.length === 0 ? <p className="people-empty">None yet.</p> : <ul className="people-list">{selves.map(row)}</ul>}
+      {selves.length === 0 ? <p className="h-empty">None yet.</p> : <ul className="people-list">{selves.map(row)}</ul>}
 
       <h2 className="people-heading">People and pets</h2>
-      {others.length === 0 ? <p className="people-empty">Nobody yet.</p> : <ul className="people-list">{others.map(row)}</ul>}
+      {others.length === 0 ? <p className="h-empty">Nobody yet.</p> : <ul className="people-list">{others.map(row)}</ul>}
     </section>
   );
 }

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { fetchSessions, fetchBiometrics } from "@/lib/halseth";
 import WellnessClient from "./WellnessClient";
+import { OK, WARN, MUTED } from "@/lib/domain-colors";
 
 const STOP_WORDS = new Set([
   "a","an","the","and","or","but","in","on","at","to","for","of","with",
@@ -40,9 +41,9 @@ export default async function WellnessPage() {
     });
     hrvBiometrics = {
       counts: [
-        { name: "low",  count: bands.low,  color: "#f87171" },
-        { name: "mid",  count: bands.mid,  color: "#fbbf24" },
-        { name: "high", count: bands.high, color: "#4ade80" },
+        { name: "low",  count: bands.low,  color: WARN },
+        { name: "mid",  count: bands.mid,  color: MUTED },
+        { name: "high", count: bands.high, color: OK },
       ],
       latestValue: hrvSnapshots[0].hrv_resting,
       latestDate: hrvSnapshots[0].recorded_at,
@@ -57,9 +58,9 @@ export default async function WellnessPage() {
     else if (s.hrv_range === "high") hrv.high++;
   });
   const hrvCounts: HrvCounts = [
-    { name: "low",  count: hrv.low,  color: "#f87171" },
-    { name: "mid",  count: hrv.mid,  color: "#fbbf24" },
-    { name: "high", count: hrv.high, color: "#4ade80" },
+    { name: "low",  count: hrv.low,  color: WARN },
+    { name: "mid",  count: hrv.mid,  color: MUTED },
+    { name: "high", count: hrv.high, color: OK },
   ];
 
   // ── Depth distribution ────────────────────────────────────────────────────

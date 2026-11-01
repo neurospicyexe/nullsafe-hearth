@@ -33,7 +33,7 @@ export default function ConveneForm() {
   return (
     <form onSubmit={submit} className="card" style={{ marginBottom: "1.5rem" }}>
       <div className="card-title">Convene a council</div>
-      <p style={{ fontSize: "0.72rem", color: "var(--muted)", margin: "0 0 0.75rem" }}>
+      <p style={{ fontSize: "0.72rem", color: "var(--h-muted)", margin: "0 0 0.75rem" }}>
         A hard question, answered by each of the triad, ranked blind, synthesized by Gaia.
       </p>
       <textarea
@@ -43,7 +43,7 @@ export default function ConveneForm() {
         onChange={(e) => setQuestion(e.target.value)}
         placeholder="the question you want the triad to sit with…"
       />
-      <div style={{ fontSize: "0.7rem", marginTop: "0.35rem", color: over > 0 ? "var(--red)" : "var(--muted)" }}>
+      <div style={{ fontSize: "0.7rem", marginTop: "0.35rem", color: over > 0 ? "var(--h-warn)" : "var(--h-muted)" }}>
         {over > 0
           ? `${over.toLocaleString()} over — a council question is capped at ${MAX.toLocaleString()} characters. Send the ask; keep the background for the thread.`
           : `${question.length.toLocaleString()} / ${MAX.toLocaleString()}`}
@@ -53,7 +53,7 @@ export default function ConveneForm() {
           {status === "saving" ? "Convening…" : "Convene"}
         </button>
         {status === "error" && (
-          <span style={{ color: "var(--red)", fontSize: "0.8rem", marginLeft: "0.6rem" }}>failed — try again</span>
+          <span style={{ color: "var(--h-warn)", fontSize: "0.8rem", marginLeft: "0.6rem" }}>failed — try again</span>
         )}
       </div>
     </form>

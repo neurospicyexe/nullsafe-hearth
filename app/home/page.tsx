@@ -109,8 +109,8 @@ function Readings({ companions, basins }: { companions: HomePresence[]; basins: 
             <li key={id} className="h-rooms-reading">
               <div className="h-rooms-reading-top">
                 <span className={`h-rooms-who is-${id}`}>{meta.label}</span>
-                {presence && <span className="h-rooms-meta">{presence.current_room} · {presence.activity}</span>}
-                {basin?.recorded_at && <span className="h-rooms-meta is-right">{timeAgo(basin.recorded_at)}</span>}
+                {presence && <span className="h-meta">{presence.current_room} · {presence.activity}</span>}
+                {basin?.recorded_at && <span className="h-meta is-right">{timeAgo(basin.recorded_at)}</span>}
               </div>
               {basin ? (
                 <div className="h-rooms-reading-bottom">
@@ -119,7 +119,7 @@ function Readings({ companions, basins }: { companions: HomePresence[]; basins: 
                   {basin.worst_basin && <span className="h-rooms-worst">↑ {basin.worst_basin}</span>}
                 </div>
               ) : (
-                <span className="h-rooms-meta">no reading</span>
+                <span className="h-meta">no reading</span>
               )}
             </li>
           );

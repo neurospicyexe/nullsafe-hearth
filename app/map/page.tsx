@@ -45,10 +45,10 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
         map.nodes.length > 0 ? (
           <MapClient map={map} reader={reader} />
         ) : (
-          <p className="empty">Nothing connected here yet.</p>
+          <p className="h-empty">Nothing connected here yet.</p>
         )
       ) : (
-        <p className="empty">The map couldn&apos;t load from Halseth (the Worker may not have the map yet).</p>
+        <p className="h-empty">The map couldn&apos;t load from Halseth (the Worker may not have the map yet).</p>
       )}
     </main>
   );

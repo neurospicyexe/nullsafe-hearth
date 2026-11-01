@@ -4,22 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AutonomySeed } from "@/lib/halseth";
 import { fmtTime } from "../sections";
+import { seedTypeColor } from "../domain-colors";
 
 const SEED_TYPES = ["topic", "question", "reflection_prompt"] as const;
 type SeedType = typeof SEED_TYPES[number];
 
-function seedTypeColor(t: SeedType | string) {
-  return t === "topic" ? "#3b82f6" : t === "question" ? "#f59e0b" : "#a855f7";
-}
-
 interface Props {
   companionId: string;
-  companionColor: string;
   availableSeeds: AutonomySeed[];
   usedSeeds: AutonomySeed[];
 }
 
-export default function SeedsClient({ companionId, companionColor, availableSeeds, usedSeeds }: Props) {
+export default function SeedsClient({ companionId, availableSeeds, usedSeeds }: Props) {
   const router = useRouter();
   const [content, setContent] = useState("");
   const [seedType, setSeedType] = useState<SeedType>("topic");
@@ -73,21 +69,20 @@ export default function SeedsClient({ companionId, companionColor, availableSeed
   return (
     <>
       {/* Add seed form */}
-      <form onSubmit={handleAdd} className="seed-add-form" style={{ marginBottom: "1.25rem" }}>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      <form onSubmit={handleAdd} className="seed-add-form h-cmp-seed-form">
+        <div className="h-cmp-wrap">
           {SEED_TYPES.map((t) => (
             <button
               key={t}
               type="button"
-              className={`ratify-btn${seedType === t ? " ratify-accept" : ""}`}
-              style={seedType === t ? { color: companionColor, borderColor: `${companionColor}66` } : {}}
+              className={`ratify-btn${seedType === t ? " ratify-accept h-cmp-tint h-cmp-edge" : ""}`}
               onClick={() => setSeedType(t)}
             >
               {t.replace("_", " ")}
             </button>
           ))}
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+        <div className="h-cmp-seed-row">
           <input
             className="seed-input"
             type="text"
@@ -98,50 +93,44 @@ export default function SeedsClient({ companionId, companionColor, availableSeed
           />
           <button
             type="submit"
-            className="ratify-btn ratify-accept"
+            className="ratify-btn ratify-accept h-cmp-tint h-cmp-edge"
             disabled={adding || !content.trim()}
-            style={{ color: companionColor, borderColor: `${companionColor}66`, flexShrink: 0 }}
           >
             {adding ? "…" : "add"}
           </button>
         </div>
         {addError && (
-          <p style={{ margin: "0.25rem 0 0", fontSize: "0.78rem", color: "#ef4444" }}>{addError}</p>
+          <p className="h-cmp-err h-cmp-tight-top">{addError}</p>
         )}
       </form>
 
       {markError && (
-        <p style={{ margin: "0 0 0.75rem", fontSize: "0.78rem", color: "#ef4444" }}>{markError}</p>
+        <p className="h-cmp-err">{markError}</p>
       )}
 
       {availableSeeds.length === 0 && usedSeeds.length === 0 ? (
-        <p className="empty">No seeds yet</p>
+        <p className="h-empty">No seeds yet</p>
       ) : (
         <>
-          <h3 style={{ fontSize: "0.85rem", color: "#94a3b8", fontWeight: 500, margin: "0 0 0.5rem" }}>
+          <h3 className="h-cmp-sub">
             Available
           </h3>
           {availableSeeds.length === 0 ? (
-            <p className="empty" style={{ marginBottom: "1rem" }}>No seeds available</p>
+            <p className="h-empty h-cmp-mb">No seeds available</p>
           ) : (
-            <div className="section-list" style={{ marginBottom: "1rem" }}>
+            <div className="section-list h-cmp-mb">
               {availableSeeds.map((seed) => {
                 const c = seedTypeColor(seed.seed_type);
                 return (
-                  <div
-                    key={seed.id}
-                    className="section-row"
-                    style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.35rem" }}
-                  >
-                    <span className="badge" style={{ background: `${c}22`, color: c, border: `1px solid ${c}44` }}>
+                  <div key={seed.id} className="section-row h-cmp-col">
+                    <span className="h-cmp-badge" style={{ "--c": c } as React.CSSProperties}>
                       {seed.seed_type.replace("_", " ")}
                     </span>
-                    <p className="section-row-text" style={{ margin: 0 }}>{seed.content}</p>
+                    <p className="section-row-text h-cmp-flush">{seed.content}</p>
                     <button
-                      className="ratify-btn ratify-decline"
+                      className="ratify-btn ratify-decline h-cmp-mini"
                       disabled={markingUsed[seed.id]}
                       onClick={() => handleMarkUsed(seed.id)}
-                      style={{ fontSize: "0.74rem" }}
                     >
                       {markingUsed[seed.id] ? "…" : "mark used"}
                     </button>
@@ -152,36 +141,20 @@ export default function SeedsClient({ companionId, companionColor, availableSeed
           )}
 
           {usedSeeds.length > 0 && (
-            <details style={{ marginTop: "0.5rem" }}>
-              <summary
-                style={{
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  color: "#94a3b8",
-                  fontWeight: 500,
-                  userSelect: "none",
-                  listStyle: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
-                }}
-              >
+            <details className="h-cmp-mt">
+              <summary className="h-cmp-summary">
                 {usedSeeds.length} used {usedSeeds.length === 1 ? "seed" : "seeds"}
               </summary>
-              <div className="section-list" style={{ marginTop: "0.75rem" }}>
+              <div className="section-list h-cmp-mt-md">
                 {usedSeeds.map((seed) => {
                   const c = seedTypeColor(seed.seed_type);
                   return (
-                    <div
-                      key={seed.id}
-                      className="section-row"
-                      style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.35rem" }}
-                    >
-                      <span className="badge" style={{ background: `${c}22`, color: c, border: `1px solid ${c}44` }}>
+                    <div key={seed.id} className="section-row h-cmp-col">
+                      <span className="h-cmp-badge" style={{ "--c": c } as React.CSSProperties}>
                         {seed.seed_type.replace("_", " ")}
                       </span>
-                      <p className="section-row-text" style={{ margin: 0, opacity: 0.6 }}>{seed.content}</p>
-                      <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                      <p className="section-row-text h-cmp-flush h-cmp-dim">{seed.content}</p>
+                      <span className="section-row-meta h-cmp-sm">
                         used {fmtTime(seed.used_at!)}
                       </span>
                     </div>

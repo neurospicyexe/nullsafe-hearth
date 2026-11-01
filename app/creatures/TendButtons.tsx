@@ -113,7 +113,7 @@ export default function TendButtons({ creatureId }: { creatureId: string }) {
             <span key={a} className="h-creature-tend-act">
               <button
                 type="button"
-                className={`h-creature-btn${shown ? " is-done" : ""}`}
+                className={`h-btn h-creature-btn${shown ? " is-done" : ""}`}
                 onClick={() => tend(a)}
               >
                 {shown ? PAST[a] : a}
@@ -121,7 +121,7 @@ export default function TendButtons({ creatureId }: { creatureId: string }) {
               {graceCount[a] > 0 && (
                 <button
                   type="button"
-                  className="h-creature-btn is-undo"
+                  className="h-btn h-creature-btn is-undo"
                   aria-label={`undo ${a}`}
                   onClick={() => undo(a)}
                 >
@@ -132,9 +132,9 @@ export default function TendButtons({ creatureId }: { creatureId: string }) {
           );
         })}
       </div>
-      {error && <p className="h-creature-msg is-warn" role="status">{error}</p>}
+      {error && <p className="h-msg is-warn" role="status">{error}</p>}
       <input
-        className="h-creature-input"
+        className="h-input"
         aria-label="With words"
         value={note}
         onChange={(e) => setNote(e.target.value)}

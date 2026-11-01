@@ -21,13 +21,12 @@ export default function RetireAllButton() {
         type="button"
         onClick={run}
         disabled={busy}
-        className="thread-tag"
-        style={{ cursor: busy ? "wait" : "pointer", background: "transparent", border: "1px solid #ef4444", color: "#ef4444", padding: "0.35rem 0.8rem", fontSize: "0.8rem" }}
+        className="h-btn is-sm is-danger"
       >
         {busy ? "retiring…" : "Retire all older than 30 days"}
       </button>
       {flash && (
-        <span className="section-row-meta" style={{ color: flash.ok ? "#4ade80" : "#ef4444" }}>
+        <span className={`h-msg is-sm ${flash.ok ? "is-ok" : "is-warn"}`}>
           {flash.message}
         </span>
       )}

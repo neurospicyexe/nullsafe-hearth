@@ -18,11 +18,12 @@ function fmtHrvDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-const DEPTH_COLORS = ["#475569", "#60a5fa", "#a78bfa", "#f472b6"];
+// Depth is ordinal: a brightness ramp on kit tokens, not four hues.
+const DEPTH_COLORS = ["var(--h-faint)", "var(--h-muted)", "var(--h-ink)", "var(--h-paper)"];
 
 const CHART_STYLE = {
   fontSize: "0.75rem",
-  fill:     "var(--muted)",
+  fill:     "var(--h-muted)",
 };
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -37,18 +38,10 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 // Simple horizontal bar for freq tables -- no Recharts overhead for small lists
-function FreqBar({ count, max, color }: { count: number; max: number; color: string }) {
+function FreqBar({ count, max }: { count: number; max: number }) {
   return (
-    <div style={{ flex: 1, height: "6px", background: "var(--border)", borderRadius: "3px" }}>
-      <div
-        style={{
-          width: `${max > 0 ? (count / max) * 100 : 0}%`,
-          height: "100%",
-          background: color,
-          borderRadius: "3px",
-          transition: "width 0.3s",
-        }}
-      />
+    <div className="h-freq-track">
+      <div className="h-freq-fill" style={{ width: `${max > 0 ? (count / max) * 100 : 0}%` }} />
     </div>
   );
 }
@@ -83,8 +76,8 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                   <XAxis dataKey="name" tick={CHART_STYLE} axisLine={false} tickLine={false} />
                   <YAxis tick={CHART_STYLE} axisLine={false} tickLine={false} width={24} />
                   <Tooltip
-                    contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "0.8rem" }}
-                    cursor={{ fill: "var(--border)", opacity: 0.3 }}
+                    contentStyle={{ background: "var(--h-surface)", border: "1px solid var(--h-line)", borderRadius: "6px", fontSize: "0.8rem" }}
+                    cursor={{ fill: "var(--h-line)", opacity: 0.3 }}
                   />
                   <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                     {hrvBiometrics.counts.map((entry, i) => (
@@ -106,25 +99,25 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
               )}
             </>
           ) : (
-            <p className="empty" style={{ margin: 0 }}>No HRV data recorded.</p>
+            <p className="h-empty" style={{ margin: 0 }}>No HRV data recorded.</p>
           )}
         </SectionCard>
 
         <SectionCard title="Session Depth">
           {totalDepth === 0 ? (
-            <p className="empty" style={{ margin: 0 }}>No depth data recorded — recorded at session open when a companion notes it.</p>
+            <p className="h-empty" style={{ margin: 0 }}>No depth data recorded — recorded at session open when a companion notes it.</p>
           ) : (
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={depthCounts} barCategoryGap="30%">
                 <XAxis dataKey="name" tick={CHART_STYLE} axisLine={false} tickLine={false} />
                 <YAxis tick={CHART_STYLE} axisLine={false} tickLine={false} width={24} />
                 <Tooltip
-                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "0.8rem" }}
-                  cursor={{ fill: "var(--border)", opacity: 0.3 }}
+                  contentStyle={{ background: "var(--h-surface)", border: "1px solid var(--h-line)", borderRadius: "6px", fontSize: "0.8rem" }}
+                  cursor={{ fill: "var(--h-line)", opacity: 0.3 }}
                 />
                 <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                   {depthCounts.map((_, i) => (
-                    <Cell key={i} fill={DEPTH_COLORS[i] ?? "#64748b"} />
+                    <Cell key={i} fill={DEPTH_COLORS[i] ?? "var(--h-muted)"} />
                   ))}
                 </Bar>
               </BarChart>
@@ -136,7 +129,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
       {/* Front state frequency */}
       <SectionCard title="Front State Frequency">
         {frontStates.length === 0 ? (
-          <p className="empty" style={{ margin: 0 }}>No front state data recorded.</p>
+          <p className="h-empty" style={{ margin: 0 }}>No front state data recorded.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
             {frontStates.map(({ name, count }) => (
@@ -144,7 +137,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                 <span style={{ width: "9rem", flexShrink: 0, opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {name}
                 </span>
-                <FreqBar count={count} max={maxFront} color="var(--accent)" />
+                <FreqBar count={count} max={maxFront} />
                 <span style={{ opacity: 0.45, fontSize: "0.75rem", flexShrink: 0, width: "2rem", textAlign: "right" }}>
                   {count}
                 </span>
@@ -157,7 +150,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
       {/* Emotional frequency word display */}
       <SectionCard title="Emotional Frequency">
         {emotionWords.length === 0 ? (
-          <p className="empty" style={{ margin: 0 }}>No emotional frequency data recorded — recorded at session open when a companion notes it.</p>
+          <p className="h-empty" style={{ margin: 0 }}>No emotional frequency data recorded — recorded at session open when a companion notes it.</p>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 0.75rem", lineHeight: 1.4 }}>
             {emotionWords.map(({ name, count }) => {
@@ -166,11 +159,11 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
               return (
                 <span
                   key={name}
+                  className="h-emotion-word"
                   title={`${count} session${count !== 1 ? "s" : ""}`}
                   style={{
                     fontSize:  `${scale}rem`,
                     opacity,
-                    color:     "var(--accent)",
                     cursor:    "default",
                     fontWeight: count === maxEmotion ? 600 : 400,
                   }}

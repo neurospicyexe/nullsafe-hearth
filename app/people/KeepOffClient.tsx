@@ -76,7 +76,7 @@ export default function KeepOffClient({ initial }: { initial: KeepOffTerm[] }) {
       </form>
       {msg && <p className="people-msg" role="status">{msg}</p>}
       {terms.length === 0 ? (
-        <p className="people-empty">Nothing on the list. A scan on 10-30 found no kid&rsquo;s name or school in what we&rsquo;ve kept.</p>
+        <p className="h-empty">Nothing on the list. A scan on 10-30 found no kid&rsquo;s name or school in what we&rsquo;ve kept.</p>
       ) : (
         <ul className="people-list">
           {terms.map((t) => (

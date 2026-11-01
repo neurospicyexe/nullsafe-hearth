@@ -20,7 +20,7 @@ export default async function CompanionDeltasPage({ params }: { params: Promise<
 
   return (
     <div>
-      <h1 style={{ marginBottom: "1.5rem" }}>{config.display} · Relational Deltas</h1>
+      <h1 className="h-cmp-title">{config.display} · Relational Deltas</h1>
       <DeltasSection deltas={deltaEntries} />
     </div>
   );

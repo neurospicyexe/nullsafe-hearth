@@ -4,26 +4,25 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { GrowthJournalEntry } from "@/lib/halseth";
 import { fmtTime } from "../sections";
+import { entryTypeColor, sourceColor, reviewStatusColor } from "../domain-colors";
 
-function colorBadge(color: string): React.CSSProperties {
-  return { background: `${color}22`, color, border: `1px solid ${color}44` };
+function tone(color: string): React.CSSProperties {
+  return { "--c": color } as React.CSSProperties;
 }
 
 function ReviewBadge({ status }: { status?: "pending" | "accepted" | "declined" }) {
   if (!status || status === "pending") return null;
-  const color = status === "accepted" ? "#22c55e" : "#ef4444";
-  return <span className="badge" style={colorBadge(color)}>{status}</span>;
+  return <span className="h-cmp-badge" style={tone(reviewStatusColor(status))}>{status}</span>;
 }
 
 interface Props {
   entries: GrowthJournalEntry[];
   companionId: string;
-  companionColor: string;
   /** Shown when there is nothing to list. In the queue view "nothing left to ratify" is a win, not a void. */
   emptyText?: string;
 }
 
-export default function JournalClient({ entries, companionId, companionColor, emptyText }: Props) {
+export default function JournalClient({ entries, companionId, emptyText }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const [localStatus, setLocalStatus] = useState<Record<string, "pending" | "accepted" | "declined">>({});
@@ -65,26 +64,18 @@ export default function JournalClient({ entries, companionId, companionColor, em
   }
 
   if (entries.length === 0) {
-    return <p className="empty">{emptyText ?? "No journal entries yet"}</p>;
+    return <p className="h-empty">{emptyText ?? "No journal entries yet"}</p>;
   }
 
   return (
     <>
       {actionError && (
-        <p style={{ margin: "0 0 0.5rem", fontSize: "0.78rem", color: "#ef4444" }}>{actionError}</p>
+        <p className="h-cmp-err">{actionError}</p>
       )}
       <div className="section-list">
         {entries.map((entry) => {
-          const typeBadgeColor =
-            entry.entry_type === "learning"   ? "#3b82f6" :
-            entry.entry_type === "insight"    ? "#a855f7" :
-            entry.entry_type === "connection" ? "#22c55e" :
-            entry.entry_type === "question"   ? "#f59e0b" : "#6b7280";
-
-          const sourceBadgeColor =
-            entry.source === "autonomous"   ? "#6b7280" :
-            entry.source === "conversation" ? "#f97316" :
-            entry.source === "reflection"   ? "#14b8a6" : null;
+          const typeBadgeColor = entryTypeColor(entry.entry_type);
+          const sourceBadgeColor = sourceColor(entry.source);
 
           let tags: string[] = [];
           try {
@@ -97,27 +88,14 @@ export default function JournalClient({ entries, companionId, companionColor, em
           const isBusy = busy[entry.id] ?? false;
 
           return (
-            <div
-              key={entry.id}
-              className="section-row"
-              style={{
-                flexDirection: "column",
-                alignItems: "flex-start",
-                gap: "0.4rem",
-                borderLeft: `3px solid ${
-                  status === "accepted" ? "#22c55e" :
-                  status === "declined" ? "#ef444455" :
-                  `${companionColor}44`
-                }`,
-              }}
-            >
-              {/* Badges row */}
-              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
-                <span className="badge" style={colorBadge(typeBadgeColor)}>
+            <div key={entry.id} className="section-row h-cmp-col">
+              {/* Badges row: review state is carried by its badge, not an edge accent */}
+              <div className="h-cmp-wrap">
+                <span className="h-cmp-badge" style={tone(typeBadgeColor)}>
                   {entry.entry_type}
                 </span>
                 {entry.source && sourceBadgeColor && (
-                  <span className="badge" style={colorBadge(sourceBadgeColor)}>
+                  <span className="h-cmp-badge" style={tone(sourceBadgeColor)}>
                     {entry.source}
                   </span>
                 )}
@@ -125,25 +103,15 @@ export default function JournalClient({ entries, companionId, companionColor, em
               </div>
 
               {/* Content */}
-              <p className="section-row-text" style={{ margin: 0, lineHeight: 1.5 }}>
+              <p className="section-row-text h-cmp-body">
                 {entry.content}
               </p>
 
               {/* Tags */}
               {tags.length > 0 && (
-                <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                <div className="h-cmp-wrap is-snug">
                   {tags.map((tag, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        fontSize: "0.72rem",
-                        padding: "0.1rem 0.45rem",
-                        background: "#ffffff0d",
-                        border: "1px solid #ffffff18",
-                        borderRadius: "3px",
-                        color: "#94a3b8",
-                      }}
-                    >
+                    <span key={i} className="h-cmp-tag">
                       {tag}
                     </span>
                   ))}
@@ -151,18 +119,17 @@ export default function JournalClient({ entries, companionId, companionColor, em
               )}
 
               {/* Bottom row: timestamp + ratification buttons */}
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", width: "100%" }}>
-                <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+              <div className="h-cmp-wrap h-cmp-act">
+                <span className="section-row-meta h-cmp-sm">
                   {fmtTime(entry.created_at)}
                 </span>
 
                 {isPending && (
                   <div className="ratify-actions">
                     <button
-                      className="ratify-btn ratify-accept"
+                      className="ratify-btn ratify-accept h-cmp-tint h-cmp-edge"
                       disabled={isBusy}
                       onClick={() => handleAction(entry.id, "accept")}
-                      style={{ color: companionColor, borderColor: `${companionColor}66` }}
                     >
                       {isBusy ? "…" : "accept"}
                     </button>

@@ -13,11 +13,9 @@ import PostBox from "./PostBox";
 export default function ReplyToggle({
   postId,
   author,
-  accent,
 }: {
   postId: string;
   author: string;
-  accent: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -26,11 +24,7 @@ export default function ReplyToggle({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="thread-tag"
-        style={{
-          cursor: "pointer", background: "transparent", border: `1px solid ${accent}`,
-          color: accent, padding: "0.15rem 0.6rem", marginTop: "0.4rem", opacity: 0.8,
-        }}
+        className="h-btn is-sm is-outlined h-reply-btn"
       >
         reply
       </button>
@@ -49,8 +43,7 @@ export default function ReplyToggle({
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="thread-tag"
-        style={{ cursor: "pointer", background: "transparent", border: "1px solid #6b7280", color: "#9ca3af" }}
+        className="h-btn is-sm is-quiet"
       >
         cancel
       </button>

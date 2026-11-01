@@ -122,7 +122,7 @@ function MilestoneSection({ milestones, next, trust }: { milestones: CreatureMil
           </span>
         ))}
         {next && (
-          <span className="h-creature-meta">
+          <span className="h-meta">
             next: {MILESTONE_LABEL[next.id] ?? next.id} at trust {next.threshold.toFixed(2)} (now {trust.toFixed(2)})
           </span>
         )}
@@ -146,15 +146,15 @@ function CreatureCard({ creature, detail }: { creature: Creature; detail: Creatu
           )}
           <h2 className="h-creature-name">{creature.name}</h2>
         </div>
-        <span className="h-creature-meta">{isPet ? "system pet" : "real animal"}</span>
+        <span className="h-meta">{isPet ? "system pet" : "real animal"}</span>
       </div>
 
-      {creature.species && <p className="h-creature-meta">{creature.species}</p>}
+      {creature.species && <p className="h-meta">{creature.species}</p>}
       <div className="h-creature-state">
         {mood && <span>mood: <strong>{mood}</strong></span>}
         {creature.disposition && <span>disposition: <strong>{creature.disposition}</strong></span>}
         {creature.state && creature.state !== "content" && <span>right now: <strong>{creature.state}</strong></span>}
-        {creature.tier && <span className="h-creature-meta">{creature.tier}</span>}
+        {creature.tier && <span className="h-meta">{creature.tier}</span>}
       </div>
 
       {creature.bio && <p className="h-creature-bio">{creature.bio}</p>}
@@ -163,7 +163,7 @@ function CreatureCard({ creature, detail }: { creature: Creature; detail: Creatu
       <DriveBars creature={creature} />
 
       {knownBest && (
-        <p className="h-creature-meta">knows {knownBest.actor} best ({knownBest.tendings} tendings)</p>
+        <p className="h-meta">knows {knownBest.actor} best ({knownBest.tendings} tendings)</p>
       )}
 
       {/* Tend in place: feed/play/talk/give as raziel */}

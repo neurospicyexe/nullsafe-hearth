@@ -74,7 +74,7 @@ POST /companions/:id/deltas  -- append delta
 
 Endpoints using `hGetSafe` (graceful null on failure):
 - `GET /wounds`, `GET /deltas?limit=N`, `GET /handovers?limit=N`
-- `GET /routines`, `GET /companion-notes`, `GET /companion-journal`
+- `GET /companion-notes`, `GET /companion-journal`
 - `GET /tasks`, `GET /events`, `GET /lists`
 - `GET /feelings`, `GET /dreams`, `GET /dream-seeds`
 - `GET /cypher-audit`, `GET /gaia-witness`
@@ -120,8 +120,10 @@ Auth flow: `DASHBOARD_SECRET` env var → user visits `/login` → enters passph
 
 ## Companion Pages
 
-- Shared section components + `COMPANION_CONFIG` (colors, display names) live in `app/companions/[id]/sections.tsx`
-- Companion colors: drevan=`var(--accent)`, cypher=`#e2e8f0`, gaia=`#4ade80`, Raziel=`#f59e0b` -- use these everywhere
+- Shared section components + `COMPANION_CONFIG` (`display`, `sym`, `tagline`; no colors) live in `app/companions/[id]/sections.tsx`. Member (non-companion) tone classes come from `memberToneOf` in `lib/tone.ts`
+- Colors are kit tokens in `app/globals.css`: `--h-drevan`, `--h-cypher`, `--h-gaia`; Raziel and primary actions = `--h-lamp`; error/urgent = `--h-warn`; positive = `--h-gaia`. One source: `lib/shell.ts` `COMPANION_COLOR` (returns `var(--h-*)`) and `lib/tone.ts` `toneOf` (`h-tone-<id>` classes). Never a local color map.
+- Color-meaning rule: companion hues mean identity only; `--h-lamp` means Raziel's things, primary actions, or a map's single "needs attention" state, never a category; categorical maps use `--h-ink`/`--h-muted`/`--h-faint`, with `--h-warn` for negative kinds.
+- Guards: `lib/__tests__/no-inline-color.test.ts` (no hex in TSX; `style={{}}` color props only `var(--h-*)`; allowlist: `app/manifest.ts`, `app/layout.tsx`, `app/library/[id]/highlight.ts`) and `lib/__tests__/no-css-color.test.ts` (no literals in `globals.css` outside `:root`, except the photo overlays `.room-overlay/.room-name/.room-desc/.live-feed-label` and black-alpha shadows). No gradient cards, left-border accents, hover glow or hover scale.
 - Sub-pages exist at `/companions/[id]/journal`, `/deltas`, `/notes`, `/letters`, `/companions/cypher/audit`, `/companions/gaia/witness`, `/companions/[id]/growth`, `/companions/[id]/autonomy`
 - `fetchCompanionJournal(undefined, 200)` -- pass `undefined` as agent to fetch all companions' entries
 - 5-item clip pattern: fetch 6, `.slice(0, 5)` display, `"see more →"` Link with `className="home-section-link"` if `count > 5`

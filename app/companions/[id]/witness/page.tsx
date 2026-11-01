@@ -18,7 +18,7 @@ export default async function CompanionWitnessPage({ params }: { params: Promise
 
   return (
     <div>
-      <h1 style={{ marginBottom: "1.5rem" }}>Gaia · Witness Log</h1>
+      <h1 className="h-cmp-title">Gaia · Witness Log</h1>
       <GaiaWitnessSection entries={witnessEntries ?? []} />
     </div>
   );

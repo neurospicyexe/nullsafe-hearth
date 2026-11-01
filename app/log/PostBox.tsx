@@ -95,8 +95,8 @@ export default function PostBox({
   if (phase === "waiting") {
     return (
       <div className={`${wrap} h-post-line`} role="status">
-        <span className="h-post-msg">Posted</span>
-        {inGrace && <button type="button" className="h-post-btn" onClick={undo}>undo</button>}
+        <span className="h-msg">Posted</span>
+        {inGrace && <button type="button" className="h-btn" onClick={undo}>undo</button>}
       </div>
     );
   }
@@ -104,7 +104,7 @@ export default function PostBox({
   return (
     <div className={wrap}>
       <textarea
-        className="h-post-input"
+        className="h-input is-area h-post-input"
         aria-label="Your thought"
         value={body}
         onChange={(e) => { setBody(e.target.value); setPosted(false); }}
@@ -113,12 +113,12 @@ export default function PostBox({
         onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") submit(); }}
       />
       <div className="h-post-line">
-        <button type="button" className="h-post-btn is-lamp" onClick={submit} disabled={!body.trim()}>
+        <button type="button" className="h-btn is-primary" onClick={submit} disabled={!body.trim()}>
           {replyTo ? "reply" : "post"}
         </button>
         <span className="h-post-hint">⌘/Ctrl+Enter</span>
-        {error && <span className="h-post-msg is-warn" role="status">{error}</span>}
-        {!error && posted && <span className="h-post-msg" role="status">Posted</span>}
+        {error && <span className="h-msg is-warn" role="status">{error}</span>}
+        {!error && posted && <span className="h-msg" role="status">Posted</span>}
       </div>
     </div>
   );

@@ -64,15 +64,15 @@ export default function ArchiveButton({ id }: { id: string }) {
   if (phase === "waiting") {
     return (
       <span className="h-shelf-line" role="status">
-        <span className="h-shelf-msg">Archived</span>
-        {inGrace && <button type="button" className="h-shelf-btn" onClick={undo}>undo</button>}
+        <span className="h-msg">Archived</span>
+        {inGrace && <button type="button" className="h-btn" onClick={undo}>undo</button>}
       </span>
     );
   }
   return (
     <span className="h-shelf-line">
-      <button type="button" className="h-shelf-btn" onClick={archive}>archive</button>
-      {error && <span className="h-shelf-msg is-warn" role="status">{error}</span>}
+      <button type="button" className="h-btn" onClick={archive}>archive</button>
+      {error && <span className="h-msg is-warn" role="status">{error}</span>}
     </span>
   );
 }

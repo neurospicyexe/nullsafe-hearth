@@ -86,8 +86,8 @@ export default function AddBox() {
   if (phase === "waiting") {
     return (
       <div className="h-shelf-add h-shelf-line" role="status">
-        <span className="h-shelf-msg">Added</span>
-        {inGrace && <button type="button" className="h-shelf-btn" onClick={undo}>undo</button>}
+        <span className="h-msg">Added</span>
+        {inGrace && <button type="button" className="h-btn" onClick={undo}>undo</button>}
       </div>
     );
   }
@@ -96,27 +96,27 @@ export default function AddBox() {
     <form className="h-shelf-add" onSubmit={add}>
       <div className="h-shelf-form-row">
         <input
-          className="h-shelf-input is-grow"
+          className="h-input is-grow"
           aria-label="What you're into"
           value={title}
           onChange={(e) => { setTitle(e.target.value); setAdded(false); }}
           placeholder="what are you into right now?"
         />
-        <select className="h-shelf-input" aria-label="Kind" value={kind} onChange={(e) => setKind(e.target.value)}>
+        <select className="h-input" aria-label="Kind" value={kind} onChange={(e) => setKind(e.target.value)}>
           {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
         </select>
       </div>
       <input
-        className="h-shelf-input"
+        className="h-input"
         aria-label="Note"
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="a note on why / what (optional)"
       />
       <div className="h-shelf-line">
-        <button type="submit" className="h-shelf-btn is-lamp" disabled={!title.trim()}>add to shelf</button>
-        {error && <span className="h-shelf-msg is-warn" role="status">{error}</span>}
-        {!error && added && <span className="h-shelf-msg" role="status">Added</span>}
+        <button type="submit" className="h-btn is-primary" disabled={!title.trim()}>add to shelf</button>
+        {error && <span className="h-msg is-warn" role="status">{error}</span>}
+        {!error && added && <span className="h-msg" role="status">Added</span>}
       </div>
     </form>
   );

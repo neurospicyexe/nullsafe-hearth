@@ -55,7 +55,7 @@ function EmotionalLandscape({ deltas }: { deltas: Delta[] }) {
   const max = Math.max(...Object.values(counts), 1);
 
   return (
-    <div className="card card-accent">
+    <div className="card">
       <div className="card-title">Emotional Landscape</div>
       <div className="valence-bars">
         {order.map((v) => {
@@ -85,7 +85,7 @@ function RecentDeltas({ deltas }: { deltas: Delta[] }) {
     return (
       <div className="card">
         <div className="card-title">Recent Moments</div>
-        <p className="empty">No relational moments logged yet.</p>
+        <p className="h-empty">No relational moments logged yet.</p>
       </div>
     );
   }
@@ -146,7 +146,6 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
             <div
               key={n.id}
               className="companion-note-card"
-              style={{ background: "#0d0d10", borderColor: "#2a2a36" }}
             >
               <div className="companion-note-text">{n.note_text}</div>
               <div className="companion-note-meta">
@@ -163,7 +162,7 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
       )}
 
       {wounds.length === 0 && notes.length === 0 && (
-        <p className="empty">Gaia has not written here.</p>
+        <p className="h-empty">Gaia has not written here.</p>
       )}
     </div>
   );

@@ -37,9 +37,9 @@ export default async function JournalPage() {
               <header className="h-journal-head">
                 <b className={toneOf(e.agent)}>{agentDisplayName(e.agent)}</b>
                 {e.review_state && e.review_state !== "kept" && (
-                  <span className="h-journal-meta">{e.review_state}</span>
+                  <span className="h-meta">{e.review_state}</span>
                 )}
-                <span className="h-journal-meta"><ClientTime iso={e.created_at} /></span>
+                <span className="h-meta"><ClientTime iso={e.created_at} /></span>
               </header>
               <p className="h-journal-text">{e.note_text}</p>
             </article>
@@ -59,11 +59,11 @@ export default async function JournalPage() {
             <article key={e.id} className="h-journal-entry">
               <header className="h-journal-head">
                 {e.emotion_tag && (
-                  <span className="h-journal-meta">
+                  <span className="h-meta">
                     {e.emotion_tag}{e.sub_emotion ? ` · ${e.sub_emotion}` : ""}
                   </span>
                 )}
-                <span className="h-journal-meta"><ClientTime iso={e.created_at} /></span>
+                <span className="h-meta"><ClientTime iso={e.created_at} /></span>
               </header>
               <p className="h-journal-text">{e.entry_text}</p>
             </article>

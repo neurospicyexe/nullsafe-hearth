@@ -41,10 +41,10 @@ export default async function SessionsPage() {
                   <article key={s.id} className="h-session">
                     <header className="h-session-head">
                       <b className={toneOf(s.companion)}>{s.companion ?? "unattributed"}</b>
-                      {s.sessionType && <span className="h-session-meta">{s.sessionType}</span>}
-                      {s.facet && <span className="h-session-meta">{s.facet}</span>}
-                      {motion && <span className="h-session-meta">{motion}</span>}
-                      <span className="h-session-meta h-session-when">
+                      {s.sessionType && <span className="h-meta">{s.sessionType}</span>}
+                      {s.facet && <span className="h-meta">{s.facet}</span>}
+                      {motion && <span className="h-meta">{motion}</span>}
+                      <span className="h-meta h-session-when">
                         <ClientTime iso={s.at} />
                       </span>
                     </header>
@@ -63,7 +63,7 @@ export default async function SessionsPage() {
                               ))}
                             </div>
                           )}
-                          {s.body.anchor && <p className="h-session-meta">anchor: {s.body.anchor}</p>}
+                          {s.body.anchor && <p className="h-meta">anchor: {s.body.anchor}</p>}
                         </div>
                       </details>
                     )}
@@ -87,14 +87,14 @@ export default async function SessionsPage() {
               <article key={h.id} className="h-session">
                 <header className="h-session-head">
                   <b className={toneOf(h.agent_id)}>{h.agent_id}</b>
-                  <span className="h-session-meta h-session-when">
+                  <span className="h-meta h-session-when">
                     <ClientTime iso={h.created_at} />
                   </span>
                 </header>
                 {h.title && <p className="h-session-spine">{h.title}</p>}
                 {h.summary && <p className="h-session-last-full">{h.summary}</p>}
-                {h.next_steps && <p className="h-session-meta">next: {h.next_steps}</p>}
-                {h.state_hint && <p className="h-session-meta">{h.state_hint}</p>}
+                {h.next_steps && <p className="h-meta">next: {h.next_steps}</p>}
+                {h.state_hint && <p className="h-meta">{h.state_hint}</p>}
               </article>
             ))}
           </div>

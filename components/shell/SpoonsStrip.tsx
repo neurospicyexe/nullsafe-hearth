@@ -147,27 +147,27 @@ export default function SpoonsStrip() {
       </div>
       {(phase === "failed" || phase === "dropped") && picked !== null ? (
         <div className="h-spoons-line" role="status">
-          <span className="h-spoons-msg is-warn">
+          <span className="h-msg is-warn">
             {phase === "failed" ? "Didn’t save. I’ll retry next time Hearth opens." : "Didn’t save."}
           </span>
           <span className="h-spoons-actions">
-            <button type="button" className="h-spoons-btn" onClick={undo}>
+            <button type="button" className="h-btn" onClick={undo}>
               undo
             </button>
           </span>
         </div>
       ) : picked !== null ? (
         <div className="h-spoons-line" role="status">
-          <span className={wordState === "failed" || wordState === "dropped" ? "h-spoons-msg is-warn" : "h-spoons-msg"}>
+          <span className={wordState === "failed" || wordState === "dropped" ? "h-msg is-warn" : "h-msg"}>
             {wordLine(confirmLine(picked), wordState)}
           </span>
           <span className="h-spoons-actions">
             {!wordOpen && (
-              <button type="button" className="h-spoons-btn is-lamp" onClick={() => setWordOpen(true)}>
+              <button type="button" className="h-btn is-primary" onClick={() => setWordOpen(true)}>
                 add a word
               </button>
             )}
-            <button type="button" className="h-spoons-btn" onClick={undo}>
+            <button type="button" className="h-btn" onClick={undo}>
               undo
             </button>
           </span>
@@ -180,7 +180,7 @@ export default function SpoonsStrip() {
       {picked !== null && wordOpen && (
         <div className="h-spoons-word">
           <input
-            className="h-spoons-input"
+            className="h-input"
             type="text"
             value={mood}
             maxLength={80}
@@ -203,10 +203,10 @@ export default function SpoonsStrip() {
             ))}
           </div>
           <span className="h-spoons-actions">
-            <button type="button" className="h-spoons-btn is-lamp" onClick={saveWord}>
+            <button type="button" className="h-btn is-primary" onClick={saveWord}>
               save
             </button>
-            <button type="button" className="h-spoons-btn" onClick={() => setWordOpen(false)}>
+            <button type="button" className="h-btn" onClick={() => setWordOpen(false)}>
               cancel
             </button>
           </span>

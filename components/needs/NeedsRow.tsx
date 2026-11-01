@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { NeedsItem } from "@/lib/halseth";
 import type { Pending } from "@/lib/write-queue";
 import { COMPANION_COLOR } from "@/lib/shell";
+import { tint } from "@/lib/domain-colors";
 import { ageLabel } from "@/lib/home-model";
 import {
   buttons, canSend, doneLine, kindLabel, outcomeLine, resolveWrite, rowState, titleText, whoLabel,
@@ -92,7 +93,7 @@ export default function NeedsRow({
   return (
     <li className={settled ? "h-needs-row is-done" : "h-needs-row"}>
       <div className="h-needs-head">
-        {dot && <span aria-hidden="true" className="h-dot h-needs-dot" style={{ background: dot }} />}
+        {dot && <span aria-hidden="true" className="h-dot has-c h-needs-dot" style={tint(dot)} />}
         <b>{who}</b>
         <span className="h-needs-meta">
           {kindLabel(item.kind)}
@@ -109,7 +110,7 @@ export default function NeedsRow({
             <button
               key={b.verb}
               type="button"
-              className={i === 0 ? "h-needs-btn is-lamp" : "h-needs-btn"}
+              className={i === 0 ? "h-btn is-primary" : "h-btn"}
               onClick={() => (b.verb === "answer" ? setSt((s) => rowState(s, "open-answer")) : submit(b.verb))}
             >
               {b.label}
@@ -121,7 +122,7 @@ export default function NeedsRow({
       {st === "answering" && (
         <div className="h-needs-answer">
           <textarea
-            className="h-needs-input"
+            className="h-input is-area"
             value={answer}
             maxLength={MAX_ANSWER}
             rows={3}
@@ -130,10 +131,10 @@ export default function NeedsRow({
             onChange={(e) => setAnswer(e.target.value)}
           />
           <div className="h-needs-actions">
-            <button type="button" className="h-needs-btn is-lamp" disabled={!canSend(answer)} onClick={() => submit("answer")}>
+            <button type="button" className="h-btn is-primary" disabled={!canSend(answer)} onClick={() => submit("answer")}>
               Send
             </button>
-            <button type="button" className="h-needs-btn" onClick={() => setSt((s) => rowState(s, "cancel"))}>
+            <button type="button" className="h-btn" onClick={() => setSt((s) => rowState(s, "cancel"))}>
               Cancel
             </button>
           </div>
@@ -142,9 +143,9 @@ export default function NeedsRow({
 
       {(st === "pending" || st === "saved") && action && (
         <div className="h-needs-line" role="status">
-          <span className="h-needs-msg">{doneLine(action)}</span>
+          <span className="h-msg">{doneLine(action)}</span>
           {st === "pending" && inGrace && (
-            <button type="button" className="h-needs-btn" onClick={undo}>
+            <button type="button" className="h-btn" onClick={undo}>
               undo
             </button>
           )}
@@ -153,13 +154,13 @@ export default function NeedsRow({
 
       {st === "already" && (
         <div className="h-needs-line" role="status">
-          <span className="h-needs-msg">Already handled.</span>
+          <span className="h-msg">Already handled.</span>
         </div>
       )}
 
       {st === "failed" && (
         <div className="h-needs-line" role="status">
-          <span className="h-needs-msg is-warn">
+          <span className="h-msg is-warn">
             {dropped ? "Didn’t save." : "Didn’t save. I’ll retry next time Hearth opens."}
           </span>
         </div>

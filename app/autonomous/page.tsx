@@ -17,23 +17,12 @@ import type {
 } from "@/lib/halseth";
 import { COMPANION_CONFIG } from "@/app/companions/[id]/sections";
 import ClientTime from "@/components/ClientTime";
+import { toneOf } from "@/lib/tone";
+import { MUTED, tint } from "@/lib/domain-colors";
+import { entryTypeColor, runStatusColor, seedTypeColor } from "@/app/companions/[id]/domain-colors";
 
 const COMPANIONS = ["drevan", "cypher", "gaia"] as const;
 type CompanionId = typeof COMPANIONS[number];
-
-const STATUS_COLOR: Record<string, string> = {
-  running:   "#eab308",
-  completed: "#22c55e",
-  failed:    "#ef4444",
-  pending:   "#6b7280",
-};
-
-const ENTRY_TYPE_COLOR: Record<string, string> = {
-  learning:   "#60a5fa",
-  insight:    "#a78bfa",
-  connection: "#4ade80",
-  question:   "#fbbf24",
-};
 
 function todayUtcMs() {
   const now = new Date();
@@ -99,12 +88,6 @@ export default async function AutonomousPage() {
 
   const hasRunning = allRuns.some(r => r.status === "running");
 
-  const SEED_TYPE_COLOR: Record<string, string> = {
-    topic:              "#60a5fa",
-    question:           "#fbbf24",
-    reflection_prompt:  "#a78bfa",
-  };
-
   const perCompanion: Record<CompanionId, {
     runs: AutonomyRun[];
     journal: GrowthJournalEntry[];
@@ -127,35 +110,26 @@ export default async function AutonomousPage() {
       </header>
 
       {/* Summary bar */}
-      <div className="home-section-card" style={{ marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", alignItems: "center" }}>
+      <div className="home-section-card h-hood-mb-lg">
+        <div className="h-hood-row is-center is-wide-gap">
           {/* Runs today */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+          <div className="h-hood-col">
             <span className="state-cell-label">Runs today</span>
-            <span className="state-cell-value" style={{ color: "var(--accent)" }}>{todayCount}</span>
+            <span className="state-cell-value">{todayCount}</span>
           </div>
 
           {/* Most recent */}
           {mostRecentRun && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+            <div className="h-hood-col">
               <span className="state-cell-label">Most recent</span>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span
-                  style={{
-                    width: "0.55rem",
-                    height: "0.55rem",
-                    borderRadius: "50%",
-                    background: COMPANION_CONFIG[mostRecentRun.companion]?.color ?? "#6b7280",
-                    flexShrink: 0,
-                    display: "inline-block",
-                  }}
-                />
-                <span style={{ fontSize: "0.88rem", color: "#e2e8f0" }}>
+              <div className="h-hood-row is-center">
+                <span className={`h-tone-dot ${toneOf(mostRecentRun.companion)}`} />
+                <span className="h-hood-ink">
                   {COMPANION_CONFIG[mostRecentRun.companion]?.display ?? mostRecentRun.companion}
                   {" · "}
                   {mostRecentRun.run_type}
                 </span>
-                <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                <span className="section-row-meta h-hood-small">
                   {mostRecentRun.created_at ? <ClientTime iso={mostRecentRun.created_at} /> : "—"}
                 </span>
               </div>
@@ -164,23 +138,16 @@ export default async function AutonomousPage() {
 
           {/* Live indicator */}
           {hasRunning && (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginLeft: "auto" }}>
+            <div className="h-hood-row is-center is-push">
               <span className="live-dot" />
-              <span style={{ fontSize: "0.82rem", color: "#eab308" }}>actively running</span>
+              <span className="h-hood-live">actively running</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Three-column grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "1rem",
-          alignItems: "start",
-        }}
-      >
+      <div className="h-hood-cols is-start">
         {COMPANIONS.map((id) => {
           const config = COMPANION_CONFIG[id];
           const { runs, journal, patterns, reflections, seeds } = perCompanion[id];
@@ -202,134 +169,77 @@ export default async function AutonomousPage() {
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           ).slice(0, 3);
 
-          const statusColor = lastRun ? (STATUS_COLOR[lastRun.status] ?? "#6b7280") : "#6b7280";
+          const statusColor = lastRun ? runStatusColor(lastRun.status) : MUTED;
 
           return (
-            <div
-              key={id}
-              className="card"
-              style={{
-                border: `1px solid ${config.color}33`,
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-              }}
-            >
+            <div key={id} className="card h-hood-card is-stack">
               {/* Companion name header */}
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ color: config.color, fontWeight: 700, fontSize: "1rem" }}>
+              <div className="h-hood-row is-center">
+                <span className={`h-hood-who ${toneOf(id)}`}>
                   {config.sym} {config.display}
                 </span>
               </div>
 
               {/* Last run card */}
               <div>
-                <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
-                  Last Run
-                </span>
+                <span className="home-section-title h-hood-label">Last Run</span>
                 {lastRun ? (
-                  <div
-                    className="section-row"
-                    style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.35rem" }}
-                  >
-                    <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
-                      <span
-                        className="badge"
-                        style={{
-                          background: "#6366f122",
-                          color: "#818cf8",
-                          border: "1px solid #6366f144",
-                        }}
-                      >
-                        {lastRun.run_type}
-                      </span>
-                      <span
-                        className="badge"
-                        style={{
-                          background: `${statusColor}22`,
-                          color: statusColor,
-                          border: `1px solid ${statusColor}44`,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.3rem",
-                        }}
-                      >
-                        {lastRun.status === "running" && (
-                          <span className="live-dot" style={{ background: statusColor }} />
-                        )}
+                  <div className="section-row h-hood-lastrun">
+                    <div className="h-hood-row is-center">
+                      <span className="h-cmp-badge">{lastRun.run_type}</span>
+                      <span className="h-cmp-badge" style={tint(statusColor)}>
+                        {lastRun.status === "running" && <span className="live-dot" />}
                         {lastRun.status}
                       </span>
                     </div>
-                    <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                    <span className="section-row-meta h-hood-small">
                       {lastRun.started_at ? <ClientTime iso={lastRun.started_at} /> : "not started"}
                     </span>
-                    <div style={{ display: "flex", gap: "0.75rem" }}>
-                      <span className="section-row-meta" style={{ fontSize: "0.76rem" }}>
-                        tokens: {lastRun.tokens_used ?? 0}
-                      </span>
-                      <span className="section-row-meta" style={{ fontSize: "0.76rem" }}>
-                        artifacts: {lastRun.artifacts_created ?? 0}
-                      </span>
+                    <div className="h-hood-row">
+                      <span className="section-row-meta h-hood-small">tokens: {lastRun.tokens_used ?? 0}</span>
+                      <span className="section-row-meta h-hood-small">artifacts: {lastRun.artifacts_created ?? 0}</span>
                     </div>
                   </div>
                 ) : (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No runs yet</p>
+                  <p className="h-empty h-hood-flat">No runs yet</p>
                 )}
               </div>
 
               {/* Recent journal */}
               <div>
-                <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
-                  Recent Journal
-                </span>
+                <span className="home-section-title h-hood-label">Recent Journal</span>
                 {sortedJournal.length === 0 ? (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No journal entries</p>
+                  <p className="h-empty h-hood-flat">No journal entries</p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                    {sortedJournal.map((entry, i) => {
-                      const typeColor = ENTRY_TYPE_COLOR[entry.entry_type] ?? "#64748b";
-                      return (
-                        <div key={entry.id} className="journal-row" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
-                          <span
-                            className="presence-badge"
-                            style={{
-                              background: `${typeColor}22`,
-                              color: typeColor,
-                              flexShrink: 0,
-                              fontSize: "0.7rem",
-                            }}
-                          >
-                            {entry.entry_type}
-                          </span>
-                          <span className="journal-text" style={{ flex: 1, fontSize: "0.82rem" }}>
-                            {entry.content.length > 100
-                              ? entry.content.slice(0, 100) + "…"
-                              : entry.content}
-                          </span>
-                        </div>
-                      );
-                    })}
+                  <div className="h-hood-list">
+                    {sortedJournal.map((entry) => (
+                      <div key={entry.id} className="journal-row h-hood-top-row">
+                        <span className="h-cmp-badge h-hood-fixed" style={tint(entryTypeColor(entry.entry_type))}>
+                          {entry.entry_type}
+                        </span>
+                        <span className="journal-text h-hood-grow h-hood-small">
+                          {entry.content.length > 100
+                            ? entry.content.slice(0, 100) + "…"
+                            : entry.content}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
               {/* Top patterns */}
               <div>
-                <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
-                  Top Patterns
-                </span>
+                <span className="home-section-title h-hood-label">Top Patterns</span>
                 {topPatterns.length === 0 ? (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No patterns</p>
+                  <p className="h-empty h-hood-flat">No patterns</p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                    {topPatterns.map((p, i) => (
+                  <div className="h-hood-list is-tight">
+                    {topPatterns.map((p) => (
                       <span
                         key={p.id}
-                        className="journal-text"
-                        style={{
-                          fontSize: "0.82rem",
-                          opacity: 0.5 + (p.strength / 10) * 0.5,
-                        }}
+                        className="journal-text h-hood-small h-hood-faded"
+                        style={{ "--o": 0.5 + (p.strength / 10) * 0.5 } as React.CSSProperties}
                       >
                         {p.pattern_text.length > 80
                           ? p.pattern_text.slice(0, 80) + "…"
@@ -342,10 +252,10 @@ export default async function AutonomousPage() {
 
               {/* Queued seeds */}
               <div>
-                <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
+                <span className="home-section-title h-hood-label">
                   Queued Seeds
                   {seeds.length > 0 && (
-                    <span className="section-row-meta" style={{ marginLeft: "0.4rem", fontSize: "0.74rem" }}>
+                    <span className="section-row-meta h-hood-inline-note">
                       ({seeds.length} available)
                     </span>
                   )}
@@ -354,59 +264,45 @@ export default async function AutonomousPage() {
                   {seeds.length > 3 && (
                     <Link
                       href={`/companions/${id}/autonomy`}
-                      className="home-section-link"
-                      style={{ marginLeft: "0.5rem", fontSize: "0.74rem" }}
+                      className="home-section-link h-hood-inline-note"
                     >
                       see all →
                     </Link>
                   )}
                 </span>
                 {seeds.length === 0 ? (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No seeds queued</p>
+                  <p className="h-empty h-hood-flat">No seeds queued</p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                    {seeds.slice(0, 3).map((s) => {
-                      const seedColor = SEED_TYPE_COLOR[s.seed_type] ?? "#64748b";
-                      return (
-                        <div key={s.id} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
-                          <span
-                            className="presence-badge"
-                            style={{
-                              background: `${seedColor}22`,
-                              color: seedColor,
-                              flexShrink: 0,
-                              fontSize: "0.7rem",
-                            }}
-                          >
-                            {s.seed_type.replace("_", " ")}
-                          </span>
-                          <span className="journal-text" style={{ flex: 1, fontSize: "0.82rem" }}>
-                            {s.content.length > 90 ? s.content.slice(0, 90) + "…" : s.content}
-                          </span>
-                        </div>
-                      );
-                    })}
+                  <div className="h-hood-list">
+                    {seeds.slice(0, 3).map((s) => (
+                      <div key={s.id} className="h-hood-top-row">
+                        <span className="h-cmp-badge h-hood-fixed" style={tint(seedTypeColor(s.seed_type))}>
+                          {s.seed_type.replace("_", " ")}
+                        </span>
+                        <span className="journal-text h-hood-grow h-hood-small">
+                          {s.content.length > 90 ? s.content.slice(0, 90) + "…" : s.content}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
               {/* Recent reflections */}
               <div>
-                <span className="home-section-title" style={{ display: "block", marginBottom: "0.5rem" }}>
-                  Recent Reflections
-                </span>
+                <span className="home-section-title h-hood-label">Recent Reflections</span>
                 {recentReflections.length === 0 ? (
-                  <p className="empty" style={{ margin: 0, fontSize: "0.82rem" }}>No reflections yet</p>
+                  <p className="h-empty h-hood-flat">No reflections yet</p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <div className="h-hood-list is-roomy">
                     {recentReflections.map((r) => (
-                      <div key={r.id} style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-                        <span className="journal-text" style={{ fontSize: "0.82rem", lineHeight: 1.45 }}>
+                      <div key={r.id} className="h-hood-col is-tight">
+                        <span className="journal-text h-hood-small h-hood-leading">
                           {r.reflection_text.length > 140
                             ? r.reflection_text.slice(0, 140) + "…"
                             : r.reflection_text}
                         </span>
-                        <span className="section-row-meta" style={{ fontSize: "0.74rem" }}>
+                        <span className="section-row-meta h-hood-small">
                           <ClientTime iso={r.created_at} />
                         </span>
                       </div>
@@ -416,7 +312,7 @@ export default async function AutonomousPage() {
               </div>
 
               {/* Footer links */}
-              <div style={{ display: "flex", gap: "1rem", marginTop: "auto", paddingTop: "0.25rem" }}>
+              <div className="h-hood-row is-foot">
                 <Link href={`/companions/${id}/autonomy`} className="home-section-link">
                   → runs
                 </Link>

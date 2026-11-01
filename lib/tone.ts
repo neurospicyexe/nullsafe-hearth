@@ -8,3 +8,8 @@ export function isCompanionKey(id: string | null | undefined): id is keyof typeo
 export function toneOf(id: string | null | undefined): string {
   return isCompanionKey(id) ? `h-tone-${id}` : "h-tone-none";
 }
+
+/** Like toneOf, but Raziel (a commons/log member, not a companion) gets the lamp. */
+export function memberToneOf(id: string | null | undefined): string {
+  return id === "raziel" ? "h-tone-raziel" : toneOf(id);
+}

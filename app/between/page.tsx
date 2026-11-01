@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from "next/link";
 import { fetchInterCompanionNotes } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
+import { isCompanionKey, toneOf } from "@/lib/tone";
 
 // Inter-companion notes had no full-list surface at all. /us showed 5 of 10 fetched and
 // /companions/[id] showed 5 of 30 (filtered AFTER the clip, so often fewer), and there was nowhere
@@ -13,12 +14,6 @@ import ClientTime from "@/components/ClientTime";
 // Halseth's /ingest/inter-companion-notes caps limit at 500 and takes no offset, so this page is
 // honest about being a most-recent window rather than claiming to be everything.
 const PAGE_LIMIT = 200;
-
-const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-};
 
 const FILTERS = [
   { key: "", label: "all" },
@@ -34,7 +29,7 @@ export default async function BetweenPage({
 }) {
   const { companion: rawCompanion } = await searchParams;
   const companion =
-    rawCompanion && COMPANION_COLOR[rawCompanion.toLowerCase()]
+    rawCompanion && isCompanionKey(rawCompanion.toLowerCase())
       ? rawCompanion.toLowerCase()
       : null;
 
@@ -55,23 +50,14 @@ export default async function BetweenPage({
       </div>
 
       {/* Filter strip */}
-      <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+      <div className="h-pill-row">
         {FILTERS.map((f) => {
           const active = (f.key || null) === companion;
-          const color = f.key ? COMPANION_COLOR[f.key] : "#94a3b8";
           return (
             <Link
               key={f.key || "all"}
               href={f.key ? `/between?companion=${f.key}` : "/between"}
-              style={{
-                fontSize: "0.8rem",
-                textDecoration: "none",
-                padding: "0.2rem 0.7rem",
-                borderRadius: "999px",
-                border: `1px solid ${active ? color : "#ffffff22"}`,
-                background: active ? `${color}1a` : "transparent",
-                color: active ? color : "var(--text-muted)",
-              }}
+              className={`h-pill${active ? ` is-active ${f.key ? toneOf(f.key) : "is-all"}` : ""}`}
             >
               {f.label}
             </Link>
@@ -80,7 +66,7 @@ export default async function BetweenPage({
       </div>
 
       {notes.length === 0 ? (
-        <p className="empty">
+        <p className="h-empty">
           {companion ? `No notes involving ${companion} in this window.` : "No inter-companion notes yet."}
         </p>
       ) : (
@@ -102,11 +88,11 @@ export default async function BetweenPage({
                   className={`icn-entry ${isBroadcast ? "icn-broadcast" : "icn-outgoing"}`}
                 >
                   <div className="icn-header">
-                    <span className="icn-from" style={{ color: COMPANION_COLOR[n.from_id] ?? undefined }}>
+                    <span className={`icn-from ${toneOf(n.from_id)}`}>
                       {n.from_id}
                     </span>
                     <span className="icn-arrow">→</span>
-                    <span className="icn-to" style={{ color: n.to_id ? COMPANION_COLOR[n.to_id] : undefined }}>
+                    <span className={`icn-to ${toneOf(n.to_id)}`}>
                       {n.to_id ?? "all"}
                     </span>
                   </div>

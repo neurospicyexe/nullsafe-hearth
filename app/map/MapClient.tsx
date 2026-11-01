@@ -15,7 +15,9 @@ import PinButton from "@/components/PinButton";
 
 const OWNERS = ["raziel", "cypher", "drevan", "gaia"] as const;
 const OWNER_NAME: Record<string, string> = { raziel: "Raziel", cypher: "Cypher", drevan: "Drevan", gaia: "Gaia", system: "the house" };
-const FALLBACK: Record<string, string> = { raziel: "#f59e0b", cypher: "#e2e8f0", drevan: "#8b7cf6", gaia: "#4ade80", system: "#64748b" };
+// Canvas cannot read var(); readColors resolves the kit tokens at draw time. The browser always has
+// them, so the fallback only guards a missing stylesheet.
+const FALLBACK = "gray";
 
 type GNode = MapNode & { x?: number; y?: number; degree: number };
 type GLink = { source: string; target: string; type: string; writer: string; why: string | null };
@@ -44,13 +46,15 @@ function saveLinkFrom(v: LinkFrom | null) {
 }
 
 function readColors(): Record<string, string> {
-  if (typeof window === "undefined") return FALLBACK;
-  const css = getComputedStyle(document.documentElement);
-  const pick = (v: string, k: string) => css.getPropertyValue(v).trim() || FALLBACK[k]!;
-  return { raziel: pick("--raziel", "raziel"), cypher: pick("--cypher", "cypher"), drevan: pick("--drevan", "drevan"), gaia: pick("--gaia", "gaia"), system: FALLBACK.system! };
+  const css = typeof window === "undefined" ? null : getComputedStyle(document.documentElement);
+  const pick = (v: string) => css?.getPropertyValue(v).trim() || FALLBACK;
+  return {
+    raziel: pick("--h-lamp"), cypher: pick("--h-cypher"), drevan: pick("--h-drevan"), gaia: pick("--h-gaia"),
+    system: pick("--h-faint"), pinned: pick("--h-lamp"), label: pick("--h-ink"),
+  };
 }
 
-// The theme colours are not all hex (--drevan is hsl()), and hex-alpha appended to hsl() is an
+// The theme colours are not all hex (the old violet was hsl()), and hex-alpha appended to hsl() is an
 // invalid colour that canvas draws as black: every Drevan edge drew black until 10-29.
 function withAlpha(c: string, a: number): string {
   const hsl = /^hsla?\(([^)]+)\)$/i.exec(c);
@@ -139,7 +143,7 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
       const colors = readColors();
       const color = (who: string | null | undefined) => colors[who ?? "system"] ?? colors.system!;
       const g = new ForceGraph(box.current)
-        .backgroundColor("rgba(0,0,0,0)")
+        .backgroundColor("transparent")
         .nodeId("key")
         .linkSource("source")
         .linkTarget("target")
@@ -161,7 +165,7 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
           ctx.fill();
           if (n.pinned) {
             ctx.lineWidth = 1.5 / scale;
-            ctx.strokeStyle = "#fbbf24";
+            ctx.strokeStyle = colors.pinned!;
             ctx.beginPath();
             ctx.arc(n.x, n.y, r + 2.5, 0, 2 * Math.PI);
             ctx.stroke();
@@ -169,7 +173,7 @@ export default function MapClient({ map, reader }: { map: MemoryMap; reader: Map
           if (scale > 1.8 || n.degree >= 3) {
             const t = n.label.length > 28 ? n.label.slice(0, 27) + "…" : n.label;
             ctx.font = `${10 / scale}px sans-serif`;
-            ctx.fillStyle = "rgba(226,232,240,0.85)";
+            ctx.fillStyle = withAlpha(colors.label!, 0.85);
             ctx.textAlign = "center";
             ctx.fillText(t, n.x, n.y + r + 9 / scale);
           }

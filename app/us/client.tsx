@@ -53,7 +53,7 @@ export function SharedGoalsClient({ tasks }: { tasks: BridgeData["tasks"] }) {
       </div>
       <div className="tp-content">
         {tasks.length === 0 ? (
-          <div className="tp-empty">no shared tasks from partner yet</div>
+          <div className="h-empty is-block">no shared tasks from partner yet</div>
         ) : (
           tasks.map((t, i) => (
             <div
@@ -118,7 +118,7 @@ export function SharedListsClient({ lists }: { lists: BridgeData["lists"] }) {
       </div>
       <div className="tp-content" style={{ padding: "0.25rem 0" }}>
         {lists.length === 0 ? (
-          <div className="tp-empty">no shared lists from partner yet</div>
+          <div className="h-empty is-block">no shared lists from partner yet</div>
         ) : (
           Object.entries(grouped).map(([listName, items]) => (
             <div key={listName}>

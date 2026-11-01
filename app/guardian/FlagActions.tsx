@@ -24,22 +24,17 @@ export default function FlagActions({ id, status }: { id: string; status: string
     router.refresh();
   }
 
-  const btn: React.CSSProperties = {
-    background: "none", border: "1px solid var(--border)", borderRadius: "6px",
-    color: "var(--muted)", fontSize: "0.72rem", padding: "0.2rem 0.55rem", cursor: "pointer",
-  };
-
   return (
     <span style={{ display: "inline-flex", gap: "0.4rem", whiteSpace: "nowrap" }}>
       {status !== "acknowledged" && (
-        <button style={btn} disabled={busy !== null} onClick={() => act("acknowledged")}>
+        <button className="h-tray-btn" disabled={busy !== null} onClick={() => act("acknowledged")}>
           {busy === "acknowledged" ? "…" : "ack"}
         </button>
       )}
-      <button style={btn} disabled={busy !== null} onClick={() => act("resolved")}>
+      <button className="h-tray-btn" disabled={busy !== null} onClick={() => act("resolved")}>
         {busy === "resolved" ? "…" : "resolve"}
       </button>
-      {error && <span style={{ color: "var(--red)", fontSize: "0.72rem" }}>failed</span>}
+      {error && <span className="h-msg is-warn h-tray-err">failed</span>}
     </span>
   );
 }

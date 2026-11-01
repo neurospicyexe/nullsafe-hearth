@@ -19,20 +19,8 @@ function fmtTime(iso: string) {
 function WeightBar({ value }: { value: number }) {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
-    <div style={{
-      height: "3px",
-      background: "var(--border-subtle)",
-      borderRadius: "2px",
-      overflow: "hidden",
-      width: "48px",
-      flexShrink: 0,
-    }}>
-      <div style={{
-        height: "100%",
-        width: `${pct}%`,
-        background: "var(--accent)",
-        borderRadius: "2px",
-      }} />
+    <div className="h-cmp-bar">
+      <i style={{ "--w": `${pct}%` } as React.CSSProperties} />
     </div>
   );
 }
@@ -63,10 +51,10 @@ export default async function CompanionLoopsPage({ params }: { params: Promise<{
       )}
 
       {open.length > 0 && (
-        <div className="card" style={{ padding: "0.5rem 0" }}>
+        <div className="card h-cmp-card">
           {open.map((loop) => (
-            <div key={loop.id} className="journal-row" style={{ alignItems: "center", gap: "0.75rem" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+            <div key={loop.id} className="journal-row h-cmp-center h-cmp-gap">
+              <div className="h-cmp-grow">
                 <div className="journal-text">{loop.loop_text}</div>
                 <span className="journal-time">{fmtTime(loop.opened_at)}</span>
               </div>
@@ -79,17 +67,17 @@ export default async function CompanionLoopsPage({ params }: { params: Promise<{
 
       {closed.length > 0 && (
         <>
-          <h2 className="section-title" style={{ marginTop: "2rem" }}>
+          <h2 className="section-title h-cmp-mt-lg">
             Closed ({closed.length})
           </h2>
           {/* No clip. This IS the loops page -- the header already names the real count, and
               hiding rows behind it left nothing to click to reach them. On a dedicated full-list
               page the fetch limit is the only cap, and it is stated once rather than twice. */}
-          <div className="card" style={{ padding: "0.5rem 0", opacity: 0.6 }}>
+          <div className="card h-cmp-card is-closed">
             {closed.map((loop) => (
               <div key={loop.id} className="journal-row">
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="journal-text" style={{ textDecoration: "line-through" }}>
+                <div className="h-cmp-grow">
+                  <div className="journal-text h-cmp-strike">
                     {loop.loop_text}
                   </div>
                   <span className="journal-time">{fmtTime(loop.closed_at!)}</span>

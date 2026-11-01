@@ -80,7 +80,7 @@ function TaskSection({ tasks }: { tasks: Task[] }) {
             </button>
           </div>
         )}
-        <div className="tp-empty">all clear</div>
+        <div className="h-empty is-block">all clear</div>
       </>
     );
   }
@@ -178,7 +178,7 @@ function EventSection({ events }: { events: CalendarEvent[] }) {
             </button>
           </div>
         )}
-        <div className="tp-empty">no upcoming events</div>
+        <div className="h-empty is-block">no upcoming events</div>
       </>
     );
   }
@@ -251,7 +251,7 @@ function ListSection({ listItems }: { listItems: ListItem[] }) {
   }
 
   if (listNames.length === 0) {
-    return <div className="tp-empty">no lists yet</div>;
+    return <div className="h-empty is-block">no lists yet</div>;
   }
 
   return (
@@ -275,12 +275,12 @@ function ListSection({ listItems }: { listItems: ListItem[] }) {
           <div key={name}>
             <div className="tp-list-header">
               <span>{name}</span>
-              <span style={{ fontWeight: 400, letterSpacing: 0, color: "var(--border)" }}>
+              <span style={{ fontWeight: 400, letterSpacing: 0, color: "var(--h-line)" }}>
                 {remaining} left
               </span>
             </div>
             {visible.length === 0 ? (
-              <div className="tp-empty" style={{ padding: "0.75rem 1rem" }}>
+              <div className="h-empty is-block" style={{ padding: "0.75rem 1rem" }}>
                 done!
               </div>
             ) : (

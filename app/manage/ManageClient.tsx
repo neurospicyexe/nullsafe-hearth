@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { COMPANION_COLOR } from "@/lib/shell";
+import { OK, WARN, ATTN, QUIET, tint } from "@/lib/domain-colors";
 import type { MetronomeAction, AutonomySeed, GrowthJournalEntry } from "@/lib/halseth";
 
 export type CompanionBundle = {
@@ -11,11 +13,6 @@ export type CompanionBundle = {
   journal: GrowthJournalEntry[];
 };
 
-const COMPANION_COLOR: Record<string, string> = {
-  cypher: "#e2e8f0",
-  drevan: "#6366f1",
-  gaia: "#4ade80",
-};
 const COMPANION_LABEL: Record<string, string> = { cypher: "Cypher", drevan: "Drevan", gaia: "Gaia" };
 
 const ACTION_TYPES = [
@@ -36,7 +33,6 @@ export default function ManageClient({ bundles }: { bundles: CompanionBundle[] }
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const bundle = bundles.find((b) => b.id === companion) ?? bundles[0];
-  const color = COMPANION_COLOR[companion] ?? "#e2e8f0";
 
   // Single mutation path: call a proxy, surface errors, refresh server data on success.
   async function mut(url: string, method: string, body?: unknown): Promise<boolean> {
@@ -66,20 +62,16 @@ export default function ManageClient({ bundles }: { bundles: CompanionBundle[] }
   return (
     <div data-companion={companion}>
       {/* Companion selector */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+      <div className="h-hood-row is-tabs h-hood-mb">
         {bundles.map((b) => {
           const active = b.id === companion;
-          const c = COMPANION_COLOR[b.id];
+          const c = COMPANION_COLOR[b.id as keyof typeof COMPANION_COLOR];
           return (
             <button
               key={b.id}
               onClick={() => { setCompanion(b.id); setMsg(null); }}
-              className="manage-pill"
-              style={{
-                borderColor: active ? c : "var(--border)",
-                color: active ? c : "var(--text-muted)",
-                background: active ? `${c}1a` : "transparent",
-              }}
+              className={`manage-pill${active ? " is-on" : ""}`}
+              style={c ? ({ "--c": c } as React.CSSProperties) : undefined}
             >
               {COMPANION_LABEL[b.id] ?? b.id}
             </button>
@@ -94,7 +86,6 @@ export default function ManageClient({ bundles }: { bundles: CompanionBundle[] }
             key={t}
             onClick={() => { setTab(t); setMsg(null); }}
             className={`manage-tab ${tab === t ? "active" : ""}`}
-            style={tab === t ? { borderColor: color, color } : undefined}
           >
             {t === "metronome" ? "Metronome" : t === "seeds" ? "Seeds" : "Journal"}
           </button>
@@ -102,13 +93,13 @@ export default function ManageClient({ bundles }: { bundles: CompanionBundle[] }
       </div>
 
       {msg && (
-        <div className={`manage-msg ${msg.kind}`} role="status">{msg.text}</div>
+        <div className={`h-msg is-box ${msg.kind === "ok" ? "is-ok" : "is-warn"}`} role="status">{msg.text}</div>
       )}
 
-      <div style={{ marginTop: "1rem" }}>
-        {tab === "metronome" && <MetronomeTab bundle={bundle} color={color} busy={busy} mut={mut} />}
-        {tab === "seeds" && <SeedsTab bundle={bundle} color={color} busy={busy} mut={mut} />}
-        {tab === "journal" && <JournalTab bundle={bundle} color={color} busy={busy} mut={mut} />}
+      <div className="h-hood-mt">
+        {tab === "metronome" && <MetronomeTab bundle={bundle} busy={busy} mut={mut} />}
+        {tab === "seeds" && <SeedsTab bundle={bundle} busy={busy} mut={mut} />}
+        {tab === "journal" && <JournalTab bundle={bundle} busy={busy} mut={mut} />}
       </div>
     </div>
   );
@@ -118,7 +109,7 @@ type MutFn = (url: string, method: string, body?: unknown) => Promise<boolean>;
 
 // ── Metronome ─────────────────────────────────────────────────────────────────
 
-function MetronomeTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color: string; busy: boolean; mut: MutFn }) {
+function MetronomeTab({ bundle, busy, mut }: { bundle: CompanionBundle; busy: boolean; mut: MutFn }) {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
@@ -139,18 +130,18 @@ function MetronomeTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; c
       )}
 
       {bundle.actions.length === 0 ? (
-        <p className="empty">No metronome actions. Add one above.</p>
+        <p className="h-empty">No metronome actions. Add one above.</p>
       ) : (
         <div className="section-list">
           {bundle.actions.map((a) => (
-            <div key={a.id} className="card" style={{ padding: "0.6rem 0.75rem" }}>
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-                <span className="note-type-badge" style={{ color, borderColor: color }}>{a.action_type.replace(/_/g, " ")}</span>
-                <strong style={{ fontSize: "0.92rem" }}>{a.name}</strong>
-                <span className="badge" style={badgeStyle(a.status === "on" ? "#4ade80" : "#6b7280")}>{a.status}</span>
+            <div key={a.id} className="card h-hood-item">
+              <div className="h-hood-row is-center">
+                <span className="h-cmp-badge">{a.action_type.replace(/_/g, " ")}</span>
+                <strong className="h-hood-name">{a.name}</strong>
+                <span className="h-cmp-badge" style={tint(a.status === "on" ? OK : QUIET)}>{a.status}</span>
                 {a.quiet_hours_allowed ? <span className="section-row-meta">quiet-ok</span> : null}
                 {a.max_per_day != null ? <span className="section-row-meta">≤{a.max_per_day}/day</span> : null}
-                <span style={{ marginLeft: "auto", display: "flex", gap: "0.4rem" }}>
+                <span className="h-hood-row is-end">
                   <button className="manage-btn" disabled={busy}
                     onClick={() => mut(`/api/metronome/${a.id}`, "PATCH", { companion_id: bundle.id, status: a.status === "on" ? "off" : "on" })}>
                     {a.status === "on" ? "turn off" : "turn on"}
@@ -162,7 +153,7 @@ function MetronomeTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; c
                   </button>
                 </span>
               </div>
-              {a.prompt && editId !== a.id && <div className="journal-text" style={{ marginTop: "0.4rem" }}>{a.prompt}</div>}
+              {a.prompt && editId !== a.id && <div className="journal-text h-hood-mt-sm">{a.prompt}</div>}
               {editId === a.id && (
                 <ActionForm
                   companion={bundle.id}
@@ -219,7 +210,7 @@ function ActionForm({
         <input type="checkbox" checked={quiet} onChange={(e) => setQuiet(e.target.checked)} /> allow during quiet hours
       </label>
       <input className="manage-input" type="number" min={0} placeholder="max per day (blank = unlimited)" value={maxPerDay} onChange={(e) => setMaxPerDay(e.target.value)} />
-      <div style={{ display: "flex", gap: "0.5rem" }}>
+      <div className="h-hood-row">
         <button className="manage-btn primary" disabled={busy || !name.trim()} onClick={submit}>{existing ? "save" : "create"}</button>
         <button className="manage-btn" disabled={busy} onClick={onDone}>cancel</button>
       </div>
@@ -229,7 +220,7 @@ function ActionForm({
 
 // ── Seeds ─────────────────────────────────────────────────────────────────────
 
-function SeedsTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color: string; busy: boolean; mut: MutFn }) {
+function SeedsTab({ bundle, busy, mut }: { bundle: CompanionBundle; busy: boolean; mut: MutFn }) {
   const [content, setContent] = useState("");
   const [seedType, setSeedType] = useState<string>("topic");
 
@@ -243,8 +234,8 @@ function SeedsTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color
     <section>
       <div className="manage-form">
         <textarea className="manage-input" placeholder="new seed — a topic, question, or reflection prompt" rows={2} value={content} onChange={(e) => setContent(e.target.value)} />
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-          <select className="manage-input" style={{ flex: "0 0 auto" }} value={seedType} onChange={(e) => setSeedType(e.target.value)}>
+        <div className="h-hood-row is-center">
+          <select className="manage-input h-hood-auto" value={seedType} onChange={(e) => setSeedType(e.target.value)}>
             {SEED_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
           </select>
           <button className="manage-btn primary" disabled={busy || !content.trim()} onClick={add}>add seed</button>
@@ -252,18 +243,18 @@ function SeedsTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color
       </div>
 
       {bundle.seeds.length === 0 ? (
-        <p className="empty">No seeds.</p>
+        <p className="h-empty">No seeds.</p>
       ) : (
         <div className="section-list">
           {bundle.seeds.map((s) => {
             const used = s.used_at != null;
             return (
-              <div key={s.id} className="card" style={{ padding: "0.55rem 0.75rem" }}>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-                  <span className="note-type-badge" style={{ color, borderColor: color }}>{s.seed_type.replace(/_/g, " ")}</span>
+              <div key={s.id} className="card h-hood-item">
+                <div className="h-hood-row is-center">
+                  <span className="h-cmp-badge">{s.seed_type.replace(/_/g, " ")}</span>
                   <span className="section-row-meta">p{s.priority}</span>
-                  <span className="badge" style={badgeStyle(used ? "#6b7280" : "#4ade80")}>{used ? "used" : "active"}</span>
-                  <span style={{ marginLeft: "auto", display: "flex", gap: "0.4rem" }}>
+                  <span className="h-cmp-badge" style={tint(used ? QUIET : OK)}>{used ? "used" : "active"}</span>
+                  <span className="h-hood-row is-end">
                     {used && (
                       <button className="manage-btn" disabled={busy}
                         onClick={() => mut(`/api/mind/autonomy/seeds/${s.id}`, "PATCH", { action: "reenable" })}>
@@ -276,7 +267,7 @@ function SeedsTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color
                     </button>
                   </span>
                 </div>
-                <div className="journal-text" style={{ marginTop: "0.35rem" }}>{s.content}</div>
+                <div className="journal-text h-hood-mt-sm">{s.content}</div>
               </div>
             );
           })}
@@ -288,24 +279,25 @@ function SeedsTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color
 
 // ── Journal ───────────────────────────────────────────────────────────────────
 
-function JournalTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; color: string; busy: boolean; mut: MutFn }) {
-  if (bundle.journal.length === 0) return <p className="empty">No journal entries.</p>;
+function JournalTab({ bundle, busy, mut }: { bundle: CompanionBundle; busy: boolean; mut: MutFn }) {
+  if (bundle.journal.length === 0) return <p className="h-empty">No journal entries.</p>;
   return (
     <section className="section-list">
       {bundle.journal.map((e) => {
         const status = e.review_status ?? "pending";
-        const statusColor = status === "accepted" ? "#4ade80" : status === "declined" ? "#ef4444" : "#facc15";
+        // accepted = ok, declined = warn, pending = the one attention state (lamp).
+        const statusColor = status === "accepted" ? OK : status === "declined" ? WARN : ATTN;
         const canon = status === "accepted";
         return (
-          <div key={e.id} className="card" style={{ padding: "0.6rem 0.75rem" }}>
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-              <span className="note-type-badge" style={{ color, borderColor: color }}>{e.entry_type}</span>
+          <div key={e.id} className="card h-hood-item">
+            <div className="h-hood-row is-center">
+              <span className="h-cmp-badge">{e.entry_type}</span>
               {e.source && <span className="section-row-meta">{e.source}</span>}
-              <span className="badge" style={badgeStyle(statusColor)}>{canon ? "canon" : status}</span>
-              <span className="journal-time" style={{ marginLeft: "auto" }}>{new Date(e.created_at).toLocaleDateString()}</span>
+              <span className="h-cmp-badge" style={tint(statusColor)}>{canon ? "canon" : status}</span>
+              <span className="journal-time h-hood-push">{new Date(e.created_at).toLocaleDateString()}</span>
             </div>
-            <div className="journal-text" style={{ marginTop: "0.4rem" }}>{e.content}</div>
-            <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.5rem" }}>
+            <div className="journal-text h-hood-mt-sm">{e.content}</div>
+            <div className="h-hood-row is-gap-sm h-hood-mt-sm">
               {status === "pending" && (
                 <>
                   <button className="manage-btn" disabled={busy}
@@ -315,7 +307,7 @@ function JournalTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; col
                 </>
               )}
               {canon ? (
-                <span className="section-row-meta" style={{ alignSelf: "center" }}>accepted canon — supersede, don&apos;t delete</span>
+                <span className="section-row-meta h-hood-self-center">accepted canon — supersede, don&apos;t delete</span>
               ) : (
                 <button className="manage-btn danger" disabled={busy}
                   onClick={() => { if (confirm("Permanently delete this entry?")) mut(`/api/mind/growth/journal/${e.id}?companion_id=${bundle.id}`, "DELETE"); }}>
@@ -328,8 +320,4 @@ function JournalTab({ bundle, color, busy, mut }: { bundle: CompanionBundle; col
       })}
     </section>
   );
-}
-
-function badgeStyle(c: string): React.CSSProperties {
-  return { background: `${c}22`, color: c, border: `1px solid ${c}44` };
 }

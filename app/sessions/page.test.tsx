@@ -39,8 +39,8 @@ describe("/sessions", () => {
     m.fetchSessionsOrNull.mockResolvedValue([session("a", { facet: "FACET-SESS" })]);
     m.fetchHandovers.mockResolvedValue([{ ...handover("gone"), facet: "FACET-ORPHAN" }]);
     const html = renderToStaticMarkup(await Page());
-    expect(html).toContain('<span class="h-session-meta">FACET-SESS</span>');
-    expect(html).toContain('<span class="h-session-meta">FACET-ORPHAN</span>');
+    expect(html).toContain('<span class="h-meta">FACET-SESS</span>');
+    expect(html).toContain('<span class="h-meta">FACET-ORPHAN</span>');
   });
   it("sessions null renders the down line and no session blocks", async () => {
     m.fetchSessionsOrNull.mockResolvedValue(null);

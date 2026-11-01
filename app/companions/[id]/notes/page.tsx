@@ -23,7 +23,7 @@ export default async function CompanionNotesPage({ params }: { params: Promise<{
 
   return (
     <div>
-      <h1 style={{ marginBottom: "1.5rem" }}>{config.display} · Notes</h1>
+      <h1 className="h-cmp-title">{config.display} · Notes</h1>
       <NotesSection notes={filteredNotes} companionId={id} />
     </div>
   );

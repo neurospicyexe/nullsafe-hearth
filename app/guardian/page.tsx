@@ -4,18 +4,19 @@ import { fetchGuardianFlags } from "@/lib/halseth";
 import type { GuardianFlag } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
 import FlagActions from "./FlagActions";
+import { tint, WARN, ATTN, INK, MUTED, QUIET } from "@/lib/domain-colors";
 
 const SEVERITY_COLOR: Record<GuardianFlag["severity"], string> = {
-  red:     "#ef4444",
-  warning: "#eab308",
-  notice:  "#60a5fa",
+  red:     WARN,
+  warning: ATTN,
+  notice:  MUTED,
 };
 
 const STATUS_COLOR: Record<GuardianFlag["status"], string> = {
-  open:         "#ef4444",
-  surfaced:     "#eab308",
-  acknowledged: "#60a5fa",
-  resolved:     "#6b7280",
+  open:         WARN,
+  surfaced:     ATTN,
+  acknowledged: INK,
+  resolved:     QUIET,
 };
 
 const SEVERITY_ORDER: GuardianFlag["severity"][] = ["red", "warning", "notice"];
@@ -53,8 +54,8 @@ export default async function GuardianPage() {
       {bySeverity.map(({ sev, flags }) => (
         <div key={sev} className="home-section-card" style={{ marginBottom: "1.5rem" }}>
           <span
-            className="home-section-title"
-            style={{ display: "block", marginBottom: "0.5rem", color: SEVERITY_COLOR[sev] }}
+            className="home-section-title h-cmp-tint"
+            style={{ display: "block", marginBottom: "0.5rem", ...tint(SEVERITY_COLOR[sev]) }}
           >
             {sev} ({flags.length})
           </span>
@@ -70,8 +71,8 @@ export default async function GuardianPage() {
                 </span>
               </div>
               <span
-                className="section-row-meta"
-                style={{ color: STATUS_COLOR[f.status], fontSize: "0.78rem", whiteSpace: "nowrap", marginRight: "0.6rem" }}
+                className="section-row-meta h-cmp-tint"
+                style={{ fontSize: "0.78rem", whiteSpace: "nowrap", marginRight: "0.6rem", ...tint(STATUS_COLOR[f.status]) }}
               >
                 {f.status}
               </span>

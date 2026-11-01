@@ -10,13 +10,11 @@ export default function FactActions({
   fact,
   category,
   status,
-  accent,
 }: {
   id: string;
   fact: string;
   category: string;
   status: "active" | "open";
-  accent: string;
 }) {
   const [busy, setBusy] = useState<null | "confirm" | "retire" | "fix">(null);
   const [flash, setFlash] = useState<ActionResult | null>(null);
@@ -52,8 +50,7 @@ export default function FactActions({
             type="button"
             onClick={() => run("confirm", () => confirmFact(id))}
             disabled={busy !== null}
-            className="thread-tag"
-            style={{ cursor: busy ? "wait" : "pointer", background: "transparent", border: `1px solid ${accent}`, color: accent }}
+            className="h-btn is-sm is-outlined is-primary"
           >
             {busy === "confirm" ? "confirming…" : "confirm"}
           </button>
@@ -62,8 +59,7 @@ export default function FactActions({
           type="button"
           onClick={() => run("retire", () => retireFact(id))}
           disabled={busy !== null}
-          className="thread-tag"
-          style={{ cursor: busy ? "wait" : "pointer", background: "transparent", border: "1px solid #ef4444", color: "#ef4444" }}
+          className="h-btn is-sm is-danger"
         >
           {busy === "retire" ? "retiring…" : "retire"}
         </button>
@@ -71,13 +67,12 @@ export default function FactActions({
           type="button"
           onClick={() => { setFixing((v) => !v); setFlash(null); }}
           disabled={busy !== null}
-          className="thread-tag"
-          style={{ cursor: busy ? "wait" : "pointer", background: "transparent", border: "1px solid #6b7280", color: "#9ca3af" }}
+          className="h-btn is-sm is-quiet"
         >
           {fixing ? "cancel" : "fix"}
         </button>
         {flash && (
-          <span className="thread-tag" style={{ color: flash.ok ? "#4ade80" : "#ef4444", background: "transparent", border: "none" }}>
+          <span className={`h-msg is-sm ${flash.ok ? "is-ok" : "is-warn"}`}>
             {flash.message}
           </span>
         )}
@@ -90,25 +85,14 @@ export default function FactActions({
             onChange={(e) => setDraft(e.target.value)}
             rows={3}
             disabled={busy !== null}
-            style={{
-              width: "100%",
-              background: "rgba(0,0,0,0.25)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "0.4rem",
-              color: "inherit",
-              padding: "0.5rem 0.6rem",
-              fontSize: "0.85rem",
-              fontFamily: "inherit",
-              resize: "vertical",
-            }}
+            className="h-input is-area is-full"
           />
           <div style={{ marginTop: "0.4rem" }}>
             <button
               type="button"
               onClick={submitFix}
               disabled={busy !== null}
-              className="thread-tag"
-              style={{ cursor: busy ? "wait" : "pointer", background: "transparent", border: `1px solid ${accent}`, color: accent }}
+              className="h-btn is-sm is-outlined is-primary"
             >
               {busy === "fix" ? "saving…" : "save correction (supersedes this fact)"}
             </button>

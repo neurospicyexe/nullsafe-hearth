@@ -83,9 +83,9 @@ export default function RecommendForm({ roundId }: { roundId: string }) {
   if (phase !== "editing") {
     return (
       <div className="h-club-line" role="status">
-        <span className="h-club-msg">Recommended</span>
+        <span className="h-msg">Recommended</span>
         {phase === "waiting" && inGrace && (
-          <button type="button" className="h-club-btn" onClick={undo}>undo</button>
+          <button type="button" className="h-btn" onClick={undo}>undo</button>
         )}
       </div>
     );
@@ -96,20 +96,20 @@ export default function RecommendForm({ roundId }: { roundId: string }) {
       <div className="h-club-form-row">
         <input
           type="text"
-          className="h-club-input is-grow"
+          className="h-input is-grow"
           placeholder="title *"
           aria-label="Title"
           value={title}
           onChange={e => setTitle(e.target.value)}
           required
         />
-        <select className="h-club-input" aria-label="Kind" value={kind} onChange={e => setKind(e.target.value)}>
+        <select className="h-input" aria-label="Kind" value={kind} onChange={e => setKind(e.target.value)}>
           {KINDS.map(k => <option key={k} value={k}>{k}</option>)}
         </select>
       </div>
       <input
         type="text"
-        className="h-club-input"
+        className="h-input"
         placeholder="creator (optional)"
         aria-label="Creator"
         value={creator}
@@ -117,14 +117,14 @@ export default function RecommendForm({ roundId }: { roundId: string }) {
       />
       <input
         type="text"
-        className="h-club-input"
+        className="h-input"
         placeholder="url (optional)"
         aria-label="Link"
         value={url}
         onChange={e => setUrl(e.target.value)}
       />
       <textarea
-        className="h-club-input is-area"
+        className="h-input is-area"
         placeholder="why this? (optional)"
         aria-label="Why this"
         value={pitch}
@@ -132,10 +132,10 @@ export default function RecommendForm({ roundId }: { roundId: string }) {
         rows={2}
       />
       <div className="h-club-line">
-        <button type="submit" className="h-club-btn is-lamp" disabled={!title.trim()}>
+        <button type="submit" className="h-btn is-primary" disabled={!title.trim()}>
           Recommend
         </button>
-        {error && <span className="h-club-msg is-warn" role="status">{error}</span>}
+        {error && <span className="h-msg is-warn" role="status">{error}</span>}
       </div>
     </form>
   );

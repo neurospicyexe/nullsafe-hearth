@@ -33,7 +33,7 @@ export default async function CompanionSittingPage({ params }: { params: Promise
   const notes = await fetchSittingNotes(id).catch(() => []);
 
   return (
-    <div>
+    <div data-companion={id}>
       <div className="page-header">
         <h1 className="page-title">{config.display} · Sitting Notes</h1>
         <p className="page-subtitle">
@@ -49,19 +49,12 @@ export default async function CompanionSittingPage({ params }: { params: Promise
       )}
 
       {notes.length > 0 && (
-        <div className="card" style={{ padding: "0.5rem 0" }}>
+        <div className="card h-cmp-card">
           {notes.map((note) => (
-            <div
-              key={note.note_id}
-              className="journal-row"
-              style={{ alignItems: "flex-start", gap: "0.75rem", flexDirection: "column" }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-                  <span
-                    className="note-type-badge"
-                    style={{ borderColor: config.color, color: config.color }}
-                  >
+            <div key={note.note_id} className="journal-row h-cmp-col h-cmp-gap">
+              <div className="h-cmp-split h-cmp-sit">
+                <div className="h-cmp-wrap">
+                  <span className="note-type-badge h-cmp-tint h-cmp-edge">
                     {NOTE_TYPE_LABEL[note.note_type] ?? note.note_type}
                   </span>
                   <span className="journal-time">sitting since {fmtTime(note.sat_at)}</span>
@@ -70,15 +63,7 @@ export default async function CompanionSittingPage({ params }: { params: Promise
               </div>
               <div className="journal-text">{note.content}</div>
               {note.sit_text && (
-                <div
-                  style={{
-                    fontSize: "0.82rem",
-                    color: "var(--text-muted)",
-                    fontStyle: "italic",
-                    paddingLeft: "0.75rem",
-                    borderLeft: `2px solid ${config.color}`,
-                  }}
-                >
+                <div className="h-cmp-note is-italic">
                   {note.sit_text}
                 </div>
               )}
