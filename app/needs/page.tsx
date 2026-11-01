@@ -3,6 +3,7 @@ import NeedsList from "@/components/needs/NeedsList";
 import { fetchCompanionQuestions, fetchNeeds, type CompanionQuestion } from "@/lib/halseth";
 import { COMPANION_COLOR, HUBS } from "@/lib/shell";
 import { recentAnswered } from "@/lib/needs";
+import { tint } from "@/lib/domain-colors";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Needs you | Hearth" };
@@ -36,7 +37,7 @@ export default async function Page() {
             {answered.map((q) => (
               <li key={q.id} className="h-needs-answered-item">
                 <span className="h-needs-head">
-                  <span aria-hidden="true" className="h-dot h-needs-dot" style={{ background: COMPANION_COLOR[q.companion_id] ?? "var(--h-muted)" }} />
+                  <span aria-hidden="true" className="h-dot has-c h-needs-dot" style={tint(COMPANION_COLOR[q.companion_id] ?? "var(--h-muted)")} />
                   <b>{NAME[q.companion_id] ?? q.companion_id}</b>
                 </span>
                 <p className="h-needs-title">{q.question}</p>

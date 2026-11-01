@@ -2004,7 +2004,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-bars-row { display: flex; align-items: center; gap: 10px; }
 .h-bars-label { width: 74px; flex: none; font-size: 0.8125rem; color: var(--h-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .h-bars-track { flex: 1; height: 8px; border-radius: 4px; background: var(--h-line); display: flex; }
-.h-bars-fill { height: 8px; border-radius: 4px; }
+.h-bars-fill { height: 8px; border-radius: 4px; background: var(--bar-c, var(--h-muted)); }
 .h-trace { flex: none; display: block; }
 .h-home-left { display: flex; flex-direction: column; gap: 8px; }
 .h-home-item { display: flex; gap: 12px; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); color: var(--h-ink); text-decoration: none; }
@@ -2834,3 +2834,48 @@ body:has(.h-reader) { min-height: 0; }
 .manage-pill { color: var(--h-muted); }
 .manage-pill.is-on { border-color: var(--c, var(--h-line-strong)); color: var(--c, var(--h-ink)); background: color-mix(in srgb, var(--c, var(--h-ink)) 10%, transparent); }
 .manage-tab.active { border-color: var(--c, var(--h-line-strong)); color: var(--c, var(--h-ink)); }
+
+/* ---- P7 task 6: shared small controls, pills, left-border-free cards ---- */
+.h-btn.is-sm { min-height: 0; min-width: 0; padding: 0.25rem 0.7rem; font-size: 0.8rem; }
+.h-msg.is-sm { font-size: 0.8rem; }
+.h-input.is-full { width: 100%; box-sizing: border-box; }
+.h-pill-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.h-pill { font-size: 0.8rem; text-decoration: none; padding: 0.2rem 0.7rem; border-radius: 999px; border: 1px solid var(--h-line); background: transparent; color: var(--h-muted); }
+.h-pill.is-active { border-color: currentColor; background: color-mix(in srgb, currentColor 12%, transparent); }
+.h-pill.is-active.is-all { color: var(--h-ink); }
+.h-fact-group { font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem; }
+.h-panel { border: 1px solid var(--h-line); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; background: var(--h-surface); }
+.h-panel.is-pad-lg { padding: 1.25rem; border-radius: 12px; text-align: center; margin-bottom: 0; }
+.h-name-tone { font-size: 0.8rem; margin-bottom: 0.2rem; }
+.h-reply-indent { margin: 0.6rem 0 0 1rem; padding-left: 0.8rem; border: 0; }
+.h-nowrap-sm { font-size: 0.78rem; white-space: nowrap; }
+.h-pip { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--h-line); flex-shrink: 0; }
+.h-pip.is-hit { background: var(--h-gaia); }
+.h-note-card { border: 1px solid var(--h-line); margin-bottom: 1rem; }
+.h-author-chip { font-size: 0.72rem; font-weight: 600; border: 1px solid currentColor; border-radius: 999px; padding: 0.05rem 0.5rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.h-valence { color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.h-warn-cell { border: 1px solid var(--h-warn); }
+.h-warn-text { color: var(--h-warn); }
+.h-tone-raziel { color: var(--h-lamp); }
+.h-dim-note { opacity: 0.5; font-weight: normal; }
+.h-dim-note.is-more { opacity: 0.55; }
+.h-panel.is-live { border-color: var(--h-lamp); margin-bottom: 1.5rem; }
+.h-panel.is-answer { padding: 0.75rem; margin-bottom: 0.75rem; background: transparent; }
+.h-reply-btn { margin-top: 0.4rem; }
+.h-panel.is-col { padding: 1.1rem; margin-bottom: 0; }
+.h-freq-track { flex: 1; height: 6px; background: var(--h-line); border-radius: 3px; }
+.h-freq-fill { height: 100%; background: var(--h-muted); border-radius: 3px; transition: width 0.3s; }
+.h-emotion-word { color: var(--h-ink); }
+.h-sleep-track { height: 4px; background: var(--h-line); border-radius: 2px; overflow: hidden; margin-top: 0.25rem; }
+.h-sleep-fill { height: 100%; border-radius: 2px; background: var(--h-muted); }
+.h-sleep-fill.is-ok { background: var(--h-gaia); }
+.h-sleep-fill.is-mid { background: var(--h-lamp); }
+.h-sleep-fill.is-low { background: var(--h-warn); }
+.h-tray-btn { background: none; border: 1px solid var(--h-line); border-radius: 6px; color: var(--h-muted); font-size: 0.72rem; padding: 0.2rem 0.55rem; cursor: pointer; }
+.h-tray-btn.is-keep { color: var(--h-gaia); }
+.h-tray-btn:disabled { opacity: 0.45; cursor: default; }
+.h-tray-err { font-size: 0.72rem; }
+.h-dot.has-c { background: var(--c, var(--h-muted)); }
+.author-btn.h-bg-drevan { background: var(--h-drevan); }
+.author-btn.h-bg-cypher { background: var(--h-cypher); }
+.author-btn.h-bg-gaia { background: var(--h-gaia); }

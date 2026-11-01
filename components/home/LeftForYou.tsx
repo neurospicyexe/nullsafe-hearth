@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LeftItem } from "@/lib/home-model";
+import { tint } from "@/lib/domain-colors";
 
 export default function LeftForYou({ items }: { items: LeftItem[] }) {
   return (
@@ -16,8 +17,8 @@ export default function LeftForYou({ items }: { items: LeftItem[] }) {
             <Link key={n.id} href={n.href} className="h-home-item">
               <span
                 aria-hidden="true"
-                className="h-dot h-home-item-dot"
-                style={{ background: n.colorVar ?? "var(--h-muted)", opacity: n.unread ? 1 : 0.35 }}
+                className="h-dot has-c h-home-item-dot"
+                style={{ ...tint(n.colorVar ?? "var(--h-muted)"), opacity: n.unread ? 1 : 0.35 }}
               />
               <span className="h-home-item-body">
                 <span className="h-home-item-head">

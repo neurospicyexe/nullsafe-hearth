@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { NeedsItem } from "@/lib/halseth";
 import type { Pending } from "@/lib/write-queue";
 import { COMPANION_COLOR } from "@/lib/shell";
+import { tint } from "@/lib/domain-colors";
 import { ageLabel } from "@/lib/home-model";
 import {
   buttons, canSend, doneLine, kindLabel, outcomeLine, resolveWrite, rowState, titleText, whoLabel,
@@ -92,7 +93,7 @@ export default function NeedsRow({
   return (
     <li className={settled ? "h-needs-row is-done" : "h-needs-row"}>
       <div className="h-needs-head">
-        {dot && <span aria-hidden="true" className="h-dot h-needs-dot" style={{ background: dot }} />}
+        {dot && <span aria-hidden="true" className="h-dot has-c h-needs-dot" style={tint(dot)} />}
         <b>{who}</b>
         <span className="h-needs-meta">
           {kindLabel(item.kind)}

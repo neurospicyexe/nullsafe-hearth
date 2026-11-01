@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { HomeRow } from "@/lib/home-model";
 import { Bars } from "@/components/kit/Bars";
+import { tint } from "@/lib/domain-colors";
 
 export default function WhoIsHome({ rows }: { rows: HomeRow[] }) {
   return (
@@ -11,7 +12,7 @@ export default function WhoIsHome({ rows }: { rows: HomeRow[] }) {
           <Link key={r.id} href={`/companions/${r.id}`} className="h-home-row">
             <div className="h-home-row-top">
               <div className="h-home-who">
-                <span aria-hidden="true" className="h-dot" style={{ background: r.colorVar }} />
+                <span aria-hidden="true" className="h-dot has-c" style={tint(r.colorVar)} />
                 <span className="h-home-name">{r.name}</span>
                 {r.status && (
                   <span className="h-home-status">

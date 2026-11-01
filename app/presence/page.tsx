@@ -1,13 +1,9 @@
 import { fetchSomaStates } from "@/lib/halseth";
 import type { CompanionSomaState } from "@/lib/halseth";
+import { toneOf } from "@/lib/tone";
 
 export const dynamic = "force-dynamic";
 
-const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--h-lamp)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-};
 const COMPANIONS = ["cypher", "drevan", "gaia"] as const;
 
 const clamp01 = (n: number | null | undefined) => Math.min(1, Math.max(0, Number.isFinite(n) ? (n as number) : 0.5));
@@ -33,7 +29,6 @@ function moodValence(...texts: Array<string | null | undefined>): number {
 // float2 ~ presence/reach/density -> arousal (pupil + brow)
 // mouth curve -> felt valence from mood words (per-companion-safe)
 function Avatar({ soma, companion }: { soma: CompanionSomaState; companion: string }) {
-  const color = MEMBER_COLOR[companion] ?? "#888";
   const f1 = clamp01(soma?.soma_float_1);
   const f2 = clamp01(soma?.soma_float_2);
   const arousal = (f1 + f2) / 2;
@@ -47,36 +42,35 @@ function Avatar({ soma, companion }: { soma: CompanionSomaState; companion: stri
   const browY = 30 - f2 * 4;                  // higher arousal -> raised brow
 
   return (
-    <svg viewBox="0 0 100 100" width="120" height="120" aria-label={`${companion} presence`}>
-      <circle cx="50" cy="50" r="40" fill={`${color}22`} stroke={color} strokeWidth="2" />
+    <svg className={toneOf(companion)} viewBox="0 0 100 100" width="120" height="120" aria-label={`${companion} presence`}>
+      <circle cx="50" cy="50" r="40" fill="currentColor" fillOpacity="0.13" stroke="currentColor" strokeWidth="2" />
       {/* eyes */}
-      <ellipse cx="36" cy="44" rx="6" ry={eyeOpen} fill="#0d0d0d" />
-      <ellipse cx="64" cy="44" rx="6" ry={eyeOpen} fill="#0d0d0d" />
-      <circle cx="36" cy="44" r={pupil} fill={color} />
-      <circle cx="64" cy="44" r={pupil} fill={color} />
+      <ellipse cx="36" cy="44" rx="6" ry={eyeOpen} fill="var(--h-ground)" />
+      <ellipse cx="64" cy="44" rx="6" ry={eyeOpen} fill="var(--h-ground)" />
+      <circle cx="36" cy="44" r={pupil} fill="currentColor" />
+      <circle cx="64" cy="44" r={pupil} fill="currentColor" />
       {/* brows */}
-      <line x1="30" y1={browY} x2="42" y2={browY - 1} stroke={color} strokeWidth="1.6" />
-      <line x1="58" y1={browY - 1} x2="70" y2={browY} stroke={color} strokeWidth="1.6" />
+      <line x1="30" y1={browY} x2="42" y2={browY - 1} stroke="currentColor" strokeWidth="1.6" />
+      <line x1="58" y1={browY - 1} x2="70" y2={browY} stroke="currentColor" strokeWidth="1.6" />
       {/* mouth */}
       <path
         d={`M ${50 - mouthW / 2} 66 Q 50 ${66 + curve} ${50 + mouthW / 2} 66`}
-        fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round"
+        fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"
       />
     </svg>
   );
 }
 
 function PresenceCard({ companion, soma }: { companion: string; soma: CompanionSomaState }) {
-  const color = MEMBER_COLOR[companion] ?? "#888";
   const floats: Array<[string | null, number | null]> = [
     [soma?.float_1_label ?? null, soma?.soma_float_1 ?? null],
     [soma?.float_2_label ?? null, soma?.soma_float_2 ?? null],
     [soma?.float_3_label ?? null, soma?.soma_float_3 ?? null],
   ];
   return (
-    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "12px", padding: "1.25rem", textAlign: "center", background: "var(--h-surface)" }}>
+    <section className="h-panel is-pad-lg">
       <Avatar soma={soma} companion={companion} />
-      <h2 className="page-title" style={{ fontSize: "1.1rem", color, margin: "0.4rem 0 0.1rem" }}>{companion}</h2>
+      <h2 className={`page-title ${toneOf(companion)}`} style={{ fontSize: "1.1rem", margin: "0.4rem 0 0.1rem" }}>{companion}</h2>
       {soma?.current_mood && <p className="page-subtitle" style={{ fontSize: "0.85rem", margin: 0 }}>{soma.current_mood}</p>}
       {soma?.compound_state && <p className="handover-last-real" style={{ fontSize: "0.78rem", marginTop: "0.3rem" }}>{soma.compound_state}</p>}
       <div style={{ marginTop: "0.6rem", fontSize: "0.72rem", opacity: 0.75, display: "flex", flexDirection: "column", gap: "0.1rem" }}>

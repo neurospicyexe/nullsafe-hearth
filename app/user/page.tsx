@@ -10,10 +10,10 @@ function fmtDate(iso: string) {
 function sleepBar(hours: number | null) {
   if (hours === null) return null;
   const pct = Math.min((hours / 9) * 100, 100);
-  const color = hours >= 7 ? "#4ade80" : hours >= 5 ? "#facc15" : "#ef4444";
+  const tone = hours >= 7 ? "is-ok" : hours >= 5 ? "is-mid" : "is-low";
   return (
-    <div style={{ height: "4px", background: "var(--h-line)", borderRadius: "2px", overflow: "hidden", marginTop: "0.25rem" }}>
-      <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: "2px" }} />
+    <div className="h-sleep-track">
+      <div className={`h-sleep-fill ${tone}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }

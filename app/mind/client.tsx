@@ -92,8 +92,7 @@ export function CompanionNoteFormClient() {
               <button
                 key={a}
                 type="button"
-                className={`author-btn${agent === a ? " active" : ""}`}
-                style={agent === a ? { background: `var(--${a})` } : {}}
+                className={`author-btn${agent === a ? ` active h-bg-${a}` : ""}`}
                 onClick={() => setAgent(a)}
               >
                 {a}

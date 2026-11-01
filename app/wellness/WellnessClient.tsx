@@ -18,7 +18,8 @@ function fmtHrvDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-const DEPTH_COLORS = ["#475569", "#60a5fa", "#a78bfa", "#f472b6"];
+// Depth is ordinal: a brightness ramp on kit tokens, not four hues.
+const DEPTH_COLORS = ["var(--h-faint)", "var(--h-muted)", "var(--h-ink)", "var(--h-paper)"];
 
 const CHART_STYLE = {
   fontSize: "0.75rem",
@@ -37,18 +38,10 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 // Simple horizontal bar for freq tables -- no Recharts overhead for small lists
-function FreqBar({ count, max, color }: { count: number; max: number; color: string }) {
+function FreqBar({ count, max }: { count: number; max: number }) {
   return (
-    <div style={{ flex: 1, height: "6px", background: "var(--h-line)", borderRadius: "3px" }}>
-      <div
-        style={{
-          width: `${max > 0 ? (count / max) * 100 : 0}%`,
-          height: "100%",
-          background: color,
-          borderRadius: "3px",
-          transition: "width 0.3s",
-        }}
-      />
+    <div className="h-freq-track">
+      <div className="h-freq-fill" style={{ width: `${max > 0 ? (count / max) * 100 : 0}%` }} />
     </div>
   );
 }
@@ -124,7 +117,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                 />
                 <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                   {depthCounts.map((_, i) => (
-                    <Cell key={i} fill={DEPTH_COLORS[i] ?? "#64748b"} />
+                    <Cell key={i} fill={DEPTH_COLORS[i] ?? "var(--h-muted)"} />
                   ))}
                 </Bar>
               </BarChart>
@@ -144,7 +137,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                 <span style={{ width: "9rem", flexShrink: 0, opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {name}
                 </span>
-                <FreqBar count={count} max={maxFront} color="var(--h-lamp)" />
+                <FreqBar count={count} max={maxFront} />
                 <span style={{ opacity: 0.45, fontSize: "0.75rem", flexShrink: 0, width: "2rem", textAlign: "right" }}>
                   {count}
                 </span>
@@ -166,11 +159,11 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
               return (
                 <span
                   key={name}
+                  className="h-emotion-word"
                   title={`${count} session${count !== 1 ? "s" : ""}`}
                   style={{
                     fontSize:  `${scale}rem`,
                     opacity,
-                    color:     "var(--h-lamp)",
                     cursor:    "default",
                     fontWeight: count === maxEmotion ? 600 : 400,
                   }}

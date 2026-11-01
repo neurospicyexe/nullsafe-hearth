@@ -1,12 +1,13 @@
 import { fetchPreferences, fetchRefusals } from "@/lib/halseth";
 import type { CompanionPreference, CompanionRefusal } from "@/lib/halseth";
+import { toneOf } from "@/lib/tone";
 
 export const dynamic = "force-dynamic";
 
-const COMPANIONS: Array<{ id: string; name: string; color: string }> = [
-  { id: "cypher", name: "Cypher", color: "#e2e8f0" },
-  { id: "drevan", name: "Drevan", color: "var(--h-lamp)" },
-  { id: "gaia", name: "Gaia", color: "#4ade80" },
+const COMPANIONS: Array<{ id: string; name: string }> = [
+  { id: "cypher", name: "Cypher" },
+  { id: "drevan", name: "Drevan" },
+  { id: "gaia", name: "Gaia" },
 ];
 
 const STRENGTH_OPACITY: Record<string, number> = { high: 1, medium: 0.78, low: 0.55 };
@@ -47,14 +48,11 @@ function RefusalItem({ refusal }: { refusal: CompanionRefusal }) {
 }
 
 function CompanionColumn({
-  name, color, preferences, refusals,
-}: { name: string; color: string; preferences: CompanionPreference[]; refusals: CompanionRefusal[] }) {
+  id, name, preferences, refusals,
+}: { id: string; name: string; preferences: CompanionPreference[]; refusals: CompanionRefusal[] }) {
   return (
-    <section style={{
-      border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px",
-      padding: "1.1rem", background: "var(--h-surface)",
-    }}>
-      <h2 className="page-title" style={{ fontSize: "1.1rem", margin: "0 0 0.9rem", color }}>{name}</h2>
+    <section className="h-panel is-col">
+      <h2 className={`page-title ${toneOf(id)}`} style={{ fontSize: "1.1rem", margin: "0 0 0.9rem" }}>{name}</h2>
 
       <h3 style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.55, margin: "0 0 0.5rem" }}>
         Chosen preferences
@@ -99,7 +97,7 @@ export default async function AgencyPage() {
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
         {data.map((c) => (
-          <CompanionColumn key={c.id} name={c.name} color={c.color} preferences={c.preferences} refusals={c.refusals} />
+          <CompanionColumn key={c.id} id={c.id} name={c.name} preferences={c.preferences} refusals={c.refusals} />
         ))}
       </div>
     </main>

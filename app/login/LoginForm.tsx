@@ -70,7 +70,7 @@ export default function LoginForm() {
           background: "var(--h-lamp)",
           border: "none",
           borderRadius: "var(--radius-md)",
-          color: "#fff",
+          color: "var(--h-ground)",
           cursor: loading ? "default" : "pointer",
           fontSize: "0.9rem",
           fontWeight: 600,

@@ -26,20 +26,15 @@ export default function TrayActions({ agent, kind, id }: { agent: string; kind: 
     router.refresh();
   }
 
-  const btn: React.CSSProperties = {
-    background: "none", border: "1px solid var(--h-line)", borderRadius: "6px",
-    color: "var(--h-muted)", fontSize: "0.72rem", padding: "0.2rem 0.55rem", cursor: "pointer",
-  };
-
   return (
     <span style={{ display: "inline-flex", gap: "0.4rem", whiteSpace: "nowrap" }}>
-      <button style={{ ...btn, color: "#bbf7d0" }} disabled={busy !== null} onClick={() => act("kept")}>
+      <button className="h-tray-btn is-keep" disabled={busy !== null} onClick={() => act("kept")}>
         {busy === "kept" ? "…" : "keep"}
       </button>
-      <button style={btn} disabled={busy !== null} onClick={() => act("dropped")}>
+      <button className="h-tray-btn" disabled={busy !== null} onClick={() => act("dropped")}>
         {busy === "dropped" ? "…" : "drop"}
       </button>
-      {error && <span style={{ color: "var(--h-warn)", fontSize: "0.72rem" }}>failed</span>}
+      {error && <span className="h-msg is-warn h-tray-err">failed</span>}
     </span>
   );
 }

@@ -2,55 +2,38 @@ import { fetchPresence, fetchWounds, fetchCompanionJournal, fetchAllDeltas, fetc
 import Link from "next/link";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
 import ClientTime from "@/components/ClientTime";
+import { toneOf } from "@/lib/tone";
+import { tint, OK, WARN, INK, MUTED, QUIET } from "@/lib/domain-colors";
 
 export const dynamic = 'force-dynamic';
 
-// Canonical companion colors (hearth/CLAUDE.md) — pre-0019 sessions have null companion_id.
-const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--h-lamp)",
-  cypher: "#e2e8f0",
-  gaia:   "#4ade80",
-};
-
+// Companion hue = identity (lib/tone.ts) — pre-0019 sessions have null companion_id.
 function AuthorChip({ companionId }: { companionId: string | null | undefined }) {
   if (!companionId) {
     return <span style={{ fontSize: "0.72rem", opacity: 0.4, fontStyle: "italic" }}>unattributed</span>;
   }
-  const color = COMPANION_COLOR[companionId] ?? "#94a3b8";
   return (
-    <span
-      style={{
-        fontSize: "0.72rem",
-        fontWeight: 600,
-        color,
-        border: `1px solid ${color}`,
-        borderRadius: "999px",
-        padding: "0.05rem 0.5rem",
-        textTransform: "uppercase",
-        letterSpacing: "0.03em",
-      }}
-    >
+    <span className={`h-author-chip ${toneOf(companionId)}`}>
       {companionId}
     </span>
   );
 }
 
-// Soft canon (2026-07-21): the five canon valence words get distinct colors;
-// anything else (typos, future words) falls through to the plain/neutral chip.
-// Colors mirror the existing .valence-badge palette (globals.css) for visual
-// consistency with /threads, just applied inline to match this page's idiom.
-const VALENCE_COLOR: Record<string, { bg: string; fg: string }> = {
-  toward:  { bg: "color-mix(in srgb, var(--h-lamp) 15%, transparent)", fg: "var(--h-lamp)" }, // warm/amber
-  tender:  { bg: "rgba(244,114,182,0.15)", fg: "#fcc2d7" }, // soft pink/rose
-  repair:  { bg: "rgba(34,197,94,0.15)",   fg: "#bbf7d0" }, // green
-  rupture: { bg: "rgba(239,68,68,0.15)",   fg: "#fca5a5" }, // red
-  neutral: { bg: "rgba(255,255,255,0.07)", fg: "#94a3b8" }, // gray
+// Soft canon (2026-07-21): the five canon valence words keep distinct tones; anything else
+// (typos, future words) falls through to the plain chip. Kit tokens only: repair ok, rupture warn,
+// the rest neutral steps.
+const VALENCE_COLOR: Record<string, string> = {
+  toward: INK,
+  tender: MUTED,
+  repair: OK,
+  rupture: WARN,
+  neutral: QUIET,
 };
 
 function ValenceChip({ value }: { value: string }) {
   const canon = VALENCE_COLOR[value.trim().toLowerCase()];
   return (
-    <span className="delta-valence" style={canon ? { background: canon.bg, color: canon.fg } : undefined}>
+    <span className={canon ? "delta-valence h-valence" : "delta-valence"} style={canon ? tint(canon) : undefined}>
       {value}
     </span>
   );
@@ -117,9 +100,9 @@ export default async function UsPage() {
           </div>
         )}
         {woundsCount > 0 && (
-          <div className="state-cell" style={{ borderLeft: "3px solid var(--h-warn)" }}>
+          <div className="state-cell h-warn-cell">
             <div className="state-cell-label">Living Wounds</div>
-            <div className="state-cell-value" style={{ color: "var(--h-warn)" }}>{woundsCount}</div>
+            <div className="state-cell-value h-warn-text">{woundsCount}</div>
           </div>
         )}
       </div>

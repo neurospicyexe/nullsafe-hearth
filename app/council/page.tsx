@@ -1,14 +1,9 @@
 import { fetchCouncilCurrent, fetchCouncilRounds } from "@/lib/halseth";
 import type { CouncilRound, CouncilAnswer } from "@/lib/halseth";
 import ConveneForm from "./ConveneForm";
+import { toneOf } from "@/lib/tone";
 
 export const dynamic = "force-dynamic";
-
-const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--h-lamp)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-};
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -18,8 +13,8 @@ function formatTime(iso: string) {
 
 function AnswerCard({ a }: { a: CouncilAnswer }) {
   return (
-    <div style={{ borderLeft: `3px solid ${MEMBER_COLOR[a.companion_id] ?? "var(--h-line)"}`, paddingLeft: "0.75rem", marginBottom: "0.75rem" }}>
-      <div style={{ fontSize: "0.8rem", color: MEMBER_COLOR[a.companion_id] ?? "inherit", marginBottom: "0.2rem" }}>{a.companion_id}</div>
+    <div className="h-panel is-answer">
+      <div className={`h-name-tone ${toneOf(a.companion_id)}`}>{a.companion_id}</div>
       <div className="handover-last-real" style={{ fontSize: "0.9rem", whiteSpace: "pre-wrap" }}>{a.answer}</div>
     </div>
   );
@@ -27,11 +22,11 @@ function AnswerCard({ a }: { a: CouncilAnswer }) {
 
 function ClosedRound({ round }: { round: CouncilRound }) {
   return (
-    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px", padding: "1rem", marginBottom: "1rem", background: "var(--h-surface)" }}>
+    <section className="h-panel">
       <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "baseline" }}>
         <h3 className="page-title" style={{ fontSize: "1rem", margin: 0 }}>{round.question}</h3>
         {round.winning_companion_id && (
-          <span className="thread-tag" style={{ color: MEMBER_COLOR[round.winning_companion_id] ?? "inherit", fontSize: "0.72rem" }}>
+          <span className={`thread-tag ${toneOf(round.winning_companion_id)}`} style={{ fontSize: "0.72rem" }}>
             ▲ {round.winning_companion_id}
           </span>
         )}
@@ -68,7 +63,7 @@ export default async function CouncilPage() {
       {!liveOpen && <ConveneForm />}
 
       {liveOpen && (
-        <section style={{ border: "1px solid var(--h-lamp)", borderRadius: "10px", padding: "1rem", marginBottom: "1.5rem" }}>
+        <section className="h-panel is-live">
           <div className="thread-tag" style={{ fontSize: "0.7rem" }}>in session — {liveOpen.status}</div>
           <h2 className="page-title" style={{ fontSize: "1.15rem", margin: "0.3rem 0 0.75rem" }}>{liveOpen.question}</h2>
           {answers.length === 0

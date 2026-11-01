@@ -146,7 +146,6 @@ function GaiaPanel({ wounds, notes }: { wounds: Wound[]; notes: CompanionNote[] 
             <div
               key={n.id}
               className="companion-note-card"
-              style={{ background: "#0d0d10", borderColor: "#2a2a36" }}
             >
               <div className="companion-note-text">{n.note_text}</div>
               <div className="companion-note-meta">

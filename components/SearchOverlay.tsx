@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchSearch, searchErrorMessage } from "@/lib/search-client";
 import { matchPages } from "@/lib/page-index";
+import { isCompanionKey, toneOf } from "@/lib/tone";
 
 type ChipValue = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
 
@@ -48,12 +49,6 @@ const GROUP_LABELS: Record<keyof SearchResponse, string> = {
 };
 
 const GROUP_ORDER: (keyof SearchResponse)[] = ["tasks", "notes", "wounds", "journal", "feelings", "dreams", "handovers"];
-
-const AGENT_COLORS: Record<string, string> = {
-  drevan: "var(--h-drevan)",
-  cypher: "var(--h-cypher)",
-  gaia:   "var(--h-gaia)",
-};
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return "";
@@ -248,7 +243,7 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
                 <div className="search-result-group-label">{GROUP_LABELS[key]}</div>
                 {group.map((result) => {
                   const preview = getPreview(result.text, q);
-                  const agentColor = result.agent ? AGENT_COLORS[result.agent] : null;
+                  const agentTone = isCompanionKey(result.agent) ? toneOf(result.agent) : null;
                   return (
                     <div
                       key={result.id}
@@ -265,8 +260,8 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
                         }
                       </span>
                       <span className="search-result-meta-row">
-                        {agentColor && result.agent && (
-                          <span className="search-result-agent" style={{ color: agentColor }}>
+                        {agentTone && result.agent && (
+                          <span className={`search-result-agent ${agentTone}`}>
                             {result.agent}
                           </span>
                         )}

@@ -2,27 +2,18 @@ export const dynamic = "force-dynamic";
 
 import { fetchArchitectFacts, type ArchitectFact } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
+import { toneOf } from "@/lib/tone";
 import FactActions from "./FactActions";
 import RetireAllButton from "./RetireAllButton";
 
-// Companion colors per Hearth convention (app/companions/[id]/sections.tsx / app/questions/page.tsx).
-const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--h-lamp)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-};
 const COMPANION_NAME: Record<string, string> = {
   drevan: "Drevan",
   cypher: "Cypher",
   gaia: "Gaia",
 };
-const UNATTRIBUTED_COLOR = "#f59e0b"; // Raziel's own color elsewhere in Hearth; also legacy/unattributed rows
 
 function companionLabel(id: string | null): string {
   return id ? (COMPANION_NAME[id] ?? id) : "unattributed";
-}
-function companionColor(id: string | null): string {
-  return id ? (COMPANION_COLOR[id] ?? "#9ca3af") : UNATTRIBUTED_COLOR;
 }
 
 // Mirrors Halseth's CATEGORY_TITLES (halseth/src/handlers/architect-facts.ts) — same order,
@@ -109,8 +100,7 @@ export default async function FactsPage() {
             {openByCompanion.map(([companionId, rows]) => (
               <div key={companionId ?? "unattributed"} style={{ marginBottom: "1.5rem" }}>
                 <span
-                  className="section-row-meta"
-                  style={{ color: companionColor(companionId), fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "0.72rem" }}
+                  className={`section-row-meta h-fact-group ${toneOf(companionId)}`}
                 >
                   {companionLabel(companionId)} · {rows.length}
                 </span>
@@ -126,7 +116,6 @@ export default async function FactsPage() {
                       fact={f.fact}
                       category={f.category}
                       status="open"
-                      accent={companionColor(companionId)}
                     />
                   </div>
                 ))}
@@ -166,7 +155,6 @@ export default async function FactsPage() {
                     fact={f.fact}
                     category={f.category}
                     status="active"
-                    accent={companionColor(f.companion_id)}
                   />
                 </div>
               ))}

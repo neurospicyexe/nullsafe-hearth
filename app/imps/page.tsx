@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { fetchImpActivations } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
+import { toneOf } from "@/lib/tone";
 
 // Static registry of the 5 imps and their emotional/functional role.
 const IMP_REGISTRY: Record<string, { label: string; role: string }> = {
@@ -11,17 +12,6 @@ const IMP_REGISTRY: Record<string, { label: string; role: string }> = {
   mossling: { label: "Mossling", role: "caretaker" },
   rock:     { label: "Rock",     role: "punk-feral" },
 };
-
-// Companion color convention from Hearth design system.
-const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--h-lamp)",
-  cypher: "#e2e8f0",
-  gaia:   "#4ade80",
-};
-
-function companionColor(id: string): string {
-  return COMPANION_COLOR[id.toLowerCase()] ?? "#94a3b8";
-}
 
 export default async function ImpsPage() {
   const activations = await fetchImpActivations(30);
@@ -77,13 +67,7 @@ export default async function ImpsPage() {
                     <ClientTime iso={a.created_at} />
                   </span>
                 </div>
-                <span
-                  style={{
-                    color: companionColor(a.companion_id),
-                    fontSize: "0.78rem",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <span className={`h-nowrap-sm ${toneOf(a.companion_id.toLowerCase())}`}>
                   {a.companion_id}
                 </span>
               </div>

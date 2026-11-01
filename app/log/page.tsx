@@ -1,17 +1,10 @@
 import { fetchCommonsPosts } from "@/lib/halseth";
 import PostBox from "./PostBox";
 import ReplyToggle from "./ReplyToggle";
+import { memberToneOf } from "@/lib/tone";
 import { collectThread, groupReplies } from "./thread";
 
 export const dynamic = "force-dynamic";
-
-// Companion colors per repo convention (app/companions/[id]/sections.tsx).
-const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--h-lamp)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-  raziel: "#f59e0b",
-};
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -47,32 +40,30 @@ export default async function LogPage() {
             const thread = collectThread(post.id, repliesByParent, visited);
             return (
               <div key={post.id} className="handover-entry">
-                <p className="handover-spine" style={{ color: MEMBER_COLOR[post.author] ?? "inherit" }}>
+                <p className={`handover-spine ${memberToneOf(post.author)}`}>
                   {post.author}
-                  <span style={{ opacity: 0.5, fontWeight: "normal" }}> · {formatTime(post.created_at)}</span>
+                  <span className="h-dim-note"> · {formatTime(post.created_at)}</span>
                 </p>
                 <p className="handover-last-real" style={{ whiteSpace: "pre-wrap" }}>{post.body}</p>
                 <ReplyToggle
                   postId={post.id}
                   author={post.author}
-                  accent={MEMBER_COLOR[post.author] ?? "#9ca3af"}
                 />
                 {thread.length > 0 && (
-                  <div style={{ marginTop: "0.6rem", marginLeft: "1rem", borderLeft: "2px solid #333", paddingLeft: "0.8rem" }}>
+                  <div className="h-reply-indent">
                     {thread.map(({ post: r, answering }) => (
                       <div key={r.id} style={{ marginBottom: "0.75rem" }}>
-                        <p className="handover-spine" style={{ color: MEMBER_COLOR[r.author] ?? "inherit", fontSize: "0.9rem" }}>
+                        <p className={`handover-spine ${memberToneOf(r.author)}`} style={{ fontSize: "0.9rem" }}>
                           {r.author} replied
                           {answering && (
-                            <span style={{ opacity: 0.55, fontWeight: "normal" }}> to {answering}</span>
+                            <span className="h-dim-note is-more"> to {answering}</span>
                           )}
-                          <span style={{ opacity: 0.5, fontWeight: "normal" }}> · {formatTime(r.created_at)}</span>
+                          <span className="h-dim-note"> · {formatTime(r.created_at)}</span>
                         </p>
                         <p className="handover-last-real" style={{ whiteSpace: "pre-wrap" }}>{r.body}</p>
                         <ReplyToggle
                           postId={r.id}
                           author={r.author}
-                          accent={MEMBER_COLOR[r.author] ?? "#9ca3af"}
                         />
                       </div>
                     ))}
