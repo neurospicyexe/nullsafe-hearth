@@ -2874,7 +2874,7 @@ body:has(.h-reader) { min-height: 0; }
   width: var(--ring-size); height: var(--ring-size); border-radius: 50%;
   background: var(--h-raised);
   border: 2px solid color-mix(in srgb, var(--c, var(--h-muted)) 90%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--c, var(--h-muted)) 35%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c, var(--h-muted)) var(--ring-glow, 35%), transparent);
   color: var(--c, var(--h-muted));
   font-family: var(--h-font);
   font-size: calc(var(--ring-size) * 0.45); line-height: 1;
@@ -2889,3 +2889,19 @@ body:has(.h-reader) { min-height: 0; }
 .h-companion-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .h-companion-id-text { display: flex; flex-direction: column; min-width: 0; }
 .h-companion-status { font-size: 0.9375rem; color: var(--h-muted); }
+
+/* P8 mood skin (lib/mood-skin.ts). A mood swaps ONLY decorative properties, scoped to the element
+   carrying data-mood: ring glow strength, ring breath speed, and (on the companion page) the room's top
+   tint. Never color, background or font; "still" is zero motion. Blooms stay at or under the 12% lamp
+   ceiling (written as the ground share so the room-top count test keeps its meaning). */
+[data-mood="bright"] { --ring-glow: 55%; }
+[data-mood="warm"] { --ring-glow: 40%; }
+[data-mood="heavy"] { --ring-glow: 18%; }
+[data-mood="still"] { --ring-glow: 25%; }
+[data-mood="bright"] .h-ring.is-fresh { animation-duration: 3s; }
+[data-mood="heavy"] .h-ring.is-fresh { animation-duration: 5s; }
+[data-mood="still"] .h-ring { animation: none; }
+html:has(.h-companion[data-mood="bright"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 91%); }
+html:has(.h-companion[data-mood="warm"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 92%); }
+html:has(.h-companion[data-mood="heavy"]) { --h-room-top: color-mix(in srgb, var(--h-cypher), var(--h-ground) 94%); }
+html:has(.h-companion[data-mood="still"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 97%); }

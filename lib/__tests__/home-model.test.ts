@@ -42,6 +42,19 @@ describe("buildWhoIsHome", () => {
     expect(rows[0].statusStale).toBe(true);
     expect(rows[1].statusStale).toBe(false);
   });
+  it("fresh needs a mood timestamp under a day old; never-set is not fresh; mood skin follows", () => {
+    const rows = buildWhoIsHome(
+      soma(row({ current_mood: "tender", mood_set_at: "2026-10-29 18:00:00" }), row({ current_mood: "calm", mood_set_at: null }), row({ mood_set_at: "2026-10-28 18:00:00", current_mood: "warm" })),
+      now,
+    );
+    expect(rows[0].fresh).toBe(true);
+    expect(rows[0].mood).toBe("warm");
+    expect(rows[1].fresh).toBe(false);
+    expect(rows[1].statusStale).toBe(false);
+    expect(rows[1].mood).toBe("steady");
+    expect(rows[2].fresh).toBe(false);
+    expect(rows[2].mood).toBe("steady");
+  });
   it("bars clamp and use row labels", () => {
     const rows = buildWhoIsHome(soma(row({ soma_float_1: 1.4, soma_float_2: -1, float_1_label: "fire" })), now);
     expect(rows[0].bars[0]).toEqual({ label: "fire", pct: 100 });

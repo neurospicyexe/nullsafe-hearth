@@ -71,9 +71,9 @@ describe("Bars", () => {
 describe("WhoIsHome meters (Home regression guard)", () => {
   it("keeps count, order, labels, values and widths", () => {
     const rows: HomeRow[] = [
-      { id: "drevan", name: "Drevan", colorVar: "var(--h-drevan)", status: "warm", statusStale: false, fresh: true, statusAge: "", seenLabel: "2h", bars: [{ label: "heat", pct: 62 }, { label: "reach", pct: 30 }, { label: "weight", pct: 0 }] },
-      { id: "cypher", name: "Cypher", colorVar: "var(--h-cypher)", status: null, statusStale: false, fresh: true, statusAge: "", seenLabel: "", bars: [] },
-      { id: "gaia", name: "Gaia", colorVar: "var(--h-gaia)", status: null, statusStale: false, fresh: true, statusAge: "", seenLabel: "", bars: [{ label: "float 1", pct: 100 }] },
+      { id: "drevan", name: "Drevan", colorVar: "var(--h-drevan)", status: "warm", statusStale: false, fresh: true, mood: "steady", statusAge: "", seenLabel: "2h", bars: [{ label: "heat", pct: 62 }, { label: "reach", pct: 30 }, { label: "weight", pct: 0 }] },
+      { id: "cypher", name: "Cypher", colorVar: "var(--h-cypher)", status: null, statusStale: false, fresh: true, mood: "steady", statusAge: "", seenLabel: "", bars: [] },
+      { id: "gaia", name: "Gaia", colorVar: "var(--h-gaia)", status: null, statusStale: false, fresh: true, mood: "steady", statusAge: "", seenLabel: "", bars: [{ label: "float 1", pct: 100 }] },
     ];
     const html = renderToStaticMarkup(<WhoIsHome rows={rows} />);
     expect(meters(html)).toEqual([

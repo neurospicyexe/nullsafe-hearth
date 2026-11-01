@@ -11,7 +11,7 @@ export default function WhoIsHome({ rows }: { rows: HomeRow[] }) {
         {rows.map((r) => (
           <Link key={r.id} href={`/companions/${r.id}`} className="h-home-row">
             <div className="h-home-row-top">
-              <div className="h-home-who">
+              <div className="h-home-who" data-mood={r.mood}>
                 <PresenceRing id={r.id} fresh={r.fresh} />
                 <span className="h-home-name">{r.name}</span>
                 {r.status && (

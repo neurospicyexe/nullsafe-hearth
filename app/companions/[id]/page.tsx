@@ -32,7 +32,7 @@ export default async function CompanionOverview({ params }: { params: Promise<{ 
   const lastAge = last ? ageLabel(last.at, nowDate) : "";
 
   return (
-    <div className="h-companion" data-companion={id} style={{ "--c": COMPANION_COLOR[id] } as React.CSSProperties}>
+    <div className="h-companion" data-companion={id} data-mood={home?.mood ?? "steady"} style={{ "--c": COMPANION_COLOR[id] } as React.CSSProperties}>
       <header className="h-companion-head">
         <div className="h-companion-id">
           <PresenceRing id={id} fresh={home?.fresh ?? false} size="lg" />
