@@ -30,6 +30,9 @@ describe("moodSkin", () => {
     for (const w of ["restless", "unsettled", "slow", "not calm", "joyless", "closed off", "drawn", "lightly amused", "withheld"]) expect(m(w)).toBe("steady");
     expect(m("exhausted")).toBe("heavy");
     expect(m("energized")).toBe("bright");
+    expect(m("still raw")).toBe("heavy");
+    expect(m("still aching")).toBe("heavy");
+    expect(m("stillness")).toBe("still");
   });
   it("unknown words, empty, and null are steady", () => {
     expect(m("zxqv")).toBe("steady");
@@ -57,9 +60,11 @@ describe("[data-mood] css is decorative only", () => {
     for (const r of rules) for (const d of r.decls) expect(d).toMatch(ok);
   });
   it("room-top mixes keep >= 93% ground and no companion hue sits in a mood rule", () => {
-    for (const r of rules.filter((x) => x.sel.includes("data-mood"))) {
-      expect(r.decls.join(";")).not.toMatch(/--h-(drevan|cypher|gaia)/);
-    }
+    for (const r of rules) expect(r.decls.join(";")).not.toMatch(/--h-(drevan|cypher|gaia)/);
+    const timeRules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((r) => r[1].includes("data-time"));
+    expect(timeRules.length).toBe(4);
+    for (const r of timeRules) expect(r[2]).not.toMatch(/--h-(drevan|cypher|gaia)/);
+    expect(css).toMatch(/--h-room-night:\s*color-mix\(in srgb, var\(--h-ink\) 4%, var\(--h-ground\)\)/);
     const all = [...css.matchAll(/--h-room-top:\s*([^;]+);/g)].map((x) => x[1]);
     expect(all.length).toBeGreaterThan(5);
     for (const v of all) {
@@ -67,6 +72,7 @@ describe("[data-mood] css is decorative only", () => {
       const b = /color-mix\(in srgb, var\(--h-(lamp|ink|cypher)\) (\d+)%, var\(--h-ground\)\)/.exec(v);
       if (a) expect(+a[2]).toBeGreaterThanOrEqual(93);
       else if (b) expect(100 - +b[2]).toBeGreaterThanOrEqual(93);
+      else if (/^var\(--h-room-night\)$/.test(v.trim())) continue;
       else expect(v).toMatch(/var\(--h-ground\)\s*$/);
     }
   });

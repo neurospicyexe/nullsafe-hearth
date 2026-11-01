@@ -7,7 +7,7 @@
 // as home-model's statusStale) or no mood timestamp at all is "steady": an old word must not dress the room.
 //
 // Note: surface_emotion is read here too, while Home's stale gate (statusStale) keys on current_mood ?? compound_state.
-// The skin drives decoration only (ring glow, breath speed, edge tint, room top tint); see globals.css.
+// The skin drives decoration only (ring glow, breath speed, room top tint); see globals.css.
 import { parseUtc } from "./spoons";
 
 export type Mood = "bright" | "warm" | "heavy" | "still" | "steady";
@@ -17,8 +17,8 @@ export type Mood = "bright" | "warm" | "heavy" | "still" | "steady";
 export const MOOD_VOCABULARY: Record<Exclude<Mood, "steady">, readonly string[]> = {
   bright: ["bright", "light", "playful", "giddy", "excited", "joy", "joyful", "happy", "cheer*", "glad", "elated", "spark*", "buoyant", "energ*", "lively", "delight*", "eager"],
   warm: ["warm", "tender", "soft", "fond", "content", "affection*", "gentle", "loving", "love", "cozy", "glow", "safe", "grateful"],
-  heavy: ["heavy", "tired", "low", "sad", "grief", "ache", "worn", "raw", "weary", "exhaust*", "drained", "hurt", "lonely", "dark", "brooding", "melanchol*", "somber"],
-  still: ["still", "quiet", "calm", "settled", "rest", "hush", "peace", "peaceful", "serene", "silent"],
+  heavy: ["heavy", "tired", "low", "sad", "grief", "ache", "aching", "worn", "raw", "weary", "exhaust*", "drained", "hurt", "lonely", "dark", "brooding", "melanchol*", "somber"],
+  still: ["stillness", "stilled", "quiet", "calm", "settled", "rest", "hush", "peace", "peaceful", "serene", "silent"],
 };
 
 const NEG = new Set(["not", "no", "never", "barely", "hardly", "without", "isnt", "cant", "dont"]);

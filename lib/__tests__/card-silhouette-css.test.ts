@@ -69,3 +69,15 @@ describe("card silhouette", () => {
     expect(ruleFor(":is(.card, .h-panel:not(.is-answer), .h-hood-card, .h-home-card, .h-door) :focus-visible")).toBe("outline-offset: -2px;");
   });
 });
+
+describe("card hover keeps the companion edge", () => {
+  const css = readFileSync(join(process.cwd(), "app/globals.css"), "utf8").replace(/\r\n/g, "\n");
+  it("the P8 .card:hover mixes --h-edge, keeps the faded top hairline, no transform or glow", () => {
+    const rules = [...css.matchAll(/\.card:hover\s*\{([^{}]*)\}/g)].map((m) => m[1]);
+    const p8 = rules[rules.length - 1];
+    expect(p8).toContain("border-color: color-mix(in srgb, var(--h-edge) 70%, var(--h-line-strong))");
+    expect(p8).toContain("border-top-color: transparent");
+    expect(p8).not.toMatch(/transform|shadow|filter/);
+    expect(css.lastIndexOf(".card:hover")).toBeGreaterThan(css.indexOf("P8 card silhouette"));
+  });
+});

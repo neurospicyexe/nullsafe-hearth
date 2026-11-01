@@ -7,9 +7,12 @@ import ScrollToTop from "@/components/ScrollToTop";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 import Atmosphere from "@/components/shell/Atmosphere";
 import { STILL_KEY } from "@/lib/still";
+import { TIME_BOOT } from "@/lib/time-of-day";
 
 // Runs before first paint so a device set to Still never flashes motion. Same key as lib/still.ts.
 const STILL_BOOT = `try{if(localStorage.getItem(${JSON.stringify(STILL_KEY)})==="1")document.documentElement.setAttribute("data-still","")}catch(e){}`;
+// Same idea for the room tint: data-time is set before paint so a hard load does not crossfade from the default.
+// Cutoffs come from lib/time-of-day.ts (TIME_BOOT); Atmosphere keeps it current afterwards.
 
 const atkinson = Atkinson_Hyperlegible({
   subsets: ["latin"],
@@ -45,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${atkinson.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: STILL_BOOT }} />
+        <script dangerouslySetInnerHTML={{ __html: STILL_BOOT + TIME_BOOT }} />
       </head>
       <body>
         <Atmosphere />

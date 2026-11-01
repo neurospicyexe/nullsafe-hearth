@@ -1703,11 +1703,13 @@ html[data-still] *::after {
   /* The room's top bloom: ambient lamplight, opaque (mixed over ground), never above 12% lamp (evening 7% keeps faint text >= 4.5:1 over a dot). */
   --h-edge: var(--h-line);
   --h-room-top: color-mix(in srgb, var(--h-lamp) 7%, var(--h-ground));
+  /* Night room: a neutral cool (ink over ground), never a companion hue. */
+  --h-room-night: color-mix(in srgb, var(--h-ink) 4%, var(--h-ground));
 }
 html[data-time="morning"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 6%, var(--h-ground)); }
 html[data-time="afternoon"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 3%, var(--h-ground)); }
 html[data-time="evening"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 7%, var(--h-ground)); }
-html[data-time="night"] { --h-room-top: color-mix(in srgb, var(--h-cypher) 5%, var(--h-ground)); }
+html[data-time="night"] { --h-room-top: var(--h-room-night); }
 
 /* Registered so a change of time crossfades. Browsers without @property snap to the new tint. */
 @property --h-room-top {
@@ -2867,6 +2869,11 @@ body:has(.h-reader) { min-height: 0; }
 .h-hood-card:focus-visible,
 .h-home-card:focus-visible,
 .h-door:focus-visible { outline-offset: -3px; }
+/* Hover keeps the companion edge and the faded top hairline; no transform, no glow. */
+.card:hover {
+  border-color: color-mix(in srgb, var(--h-edge) 70%, var(--h-line-strong));
+  border-top-color: transparent;
+}
 /* ...and children flush to a clipped card's edge (zero-padding cards like .h-cmp-card). */
 :is(.card, .h-panel:not(.is-answer), .h-hood-card, .h-home-card, .h-door) :focus-visible { outline-offset: -2px; }
 
