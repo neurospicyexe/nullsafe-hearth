@@ -750,7 +750,12 @@ export type HumanJournalEntry = {
 };
 
 export async function fetchHumanJournal(limit = 50): Promise<HumanJournalEntry[]> {
-  return (await hGetSafe<HumanJournalEntry[]>(`/journal?limit=${limit}`)) ?? [];
+  return (await fetchHumanJournalOrNull(limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchHumanJournalOrNull(limit = 50): Promise<HumanJournalEntry[] | null> {
+  return hGetSafe<HumanJournalEntry[]>(`/journal?limit=${limit}`);
 }
 
 // ── SOMA Feelings ─────────────────────────────────────────────────────────────
