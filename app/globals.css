@@ -2652,3 +2652,11 @@ body:has(.h-reader) { min-height: 0; }
 .h-letters-filter { margin: 0 0 16px; }
 .h-letter-out { display: flex; flex-direction: column; gap: 6px; max-width: 68ch; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-left: 3px solid var(--h-lamp); border-radius: var(--h-radius); color: var(--h-ink); }
 .h-letter-out-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1rem; line-height: 1.6; }
+.h-tone-drevan { color: var(--h-drevan); }
+.h-tone-cypher { color: var(--h-cypher); }
+.h-tone-gaia { color: var(--h-gaia); }
+.h-tone-none { color: var(--h-muted); }
+.h-dot.h-tone-drevan { background: var(--h-drevan); }
+.h-dot.h-tone-cypher { background: var(--h-cypher); }
+.h-dot.h-tone-gaia { background: var(--h-gaia); }
+.h-dot.h-tone-none { background: var(--h-muted); }

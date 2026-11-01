@@ -19,6 +19,13 @@ describe("mergeLetters", () => {
     expect(rows[1]).toMatchObject({ dir: "in", href: "/letters/a", read: false, companion: "drevan", text: "p-a" });
     expect(rows[0]).toMatchObject({ dir: "out", href: null, read: null, companion: "drevan", text: "c-d" });
   });
+  it("sorts across space-form and ISO timestamps by real time", () => {
+    const rows = mergeLetters(
+      [inc("early", "drevan", "2026-10-31 09:00:00"), inc("late", "drevan", "2026-10-31 11:00:00")],
+      [out("mid", "letter:gaia", "2026-10-31T10:00:00.000Z")],
+    );
+    expect(rows.map((r) => r.key)).toEqual(["in:late", "out:mid", "in:early"]);
+  });
   it("collapses a duplicated incoming id", () => {
     const rows = mergeLetters([inc("a", "drevan", "2026-10-30 10:00:00"), inc("a", "drevan", "2026-10-30 10:00:00")], []);
     expect(rows).toHaveLength(1);

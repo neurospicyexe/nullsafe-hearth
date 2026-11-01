@@ -50,15 +50,16 @@ export default async function LettersPage({ searchParams }: { searchParams: Prom
             <div className="h-letters">
               {rows.map((r) => {
                 const { who: name, colorVar } = agentIdentity(r.companion);
+                const tone = colorVar ? `h-tone-${r.companion}` : "h-tone-none";
                 const label = directionLabel(r, name);
                 const when = ageLabel(r.at, now);
                 if (r.dir === "in" && r.href) {
                   return (
                     <Link key={r.key} href={r.href} className={`h-letter-row${r.read ? " is-read" : ""}`}>
-                      <span aria-hidden="true" className="h-dot h-letter-dot" style={{ background: colorVar ?? "var(--h-muted)" }} />
+                      <span aria-hidden="true" className={`h-dot h-letter-dot ${tone}`} />
                       <span className="h-home-item-body">
                         <span className="h-home-item-head">
-                          <b style={{ color: colorVar ?? undefined }}>{label}</b>{" "}
+                          <b className={tone}>{label}</b>{" "}
                           <span className="h-home-item-meta">
                             {when}
                             {r.read ? " · read" : " · new"}
@@ -72,7 +73,7 @@ export default async function LettersPage({ searchParams }: { searchParams: Prom
                 return (
                   <div key={r.key} className="h-letter-out">
                     <span className="h-home-item-head">
-                      <b style={{ color: colorVar ?? undefined }}>{label}</b>{" "}
+                      <b className={tone}>{label}</b>{" "}
                       <span className="h-home-item-meta">{when}</span>
                     </span>
                     <p className="h-letter-out-text">{r.text}</p>
