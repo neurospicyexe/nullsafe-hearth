@@ -734,7 +734,12 @@ export async function fetchDreams(companionId?: string, limit = 20): Promise<Dre
 }
 
 export async function fetchDreamSeeds(): Promise<DreamSeed[]> {
-  return (await hGetSafe<DreamSeed[]>("/dream-seeds")) ?? [];
+  return (await fetchDreamSeedsOrNull()) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchDreamSeedsOrNull(): Promise<DreamSeed[] | null> {
+  return hGetSafe<DreamSeed[]>("/dream-seeds");
 }
 
 // ── Human Journal ─────────────────────────────────────────────────────────────
@@ -1171,6 +1176,11 @@ export async function fetchCompanionDreams(companionId?: string, limit = 30): Pr
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
   return (await hGetSafe<WmDream[]>(`/ingest/companion-dreams?${q}`)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchCompanionDreamsOrNull(limit = 100): Promise<WmDream[] | null> {
+  return hGetSafe<WmDream[]>(`/ingest/companion-dreams?${new URLSearchParams({ limit: String(limit) })}`);
 }
 
 export type CompanionTension = {
