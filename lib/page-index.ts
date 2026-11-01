@@ -20,8 +20,14 @@ function buildIndex(): PageEntry[] {
     ),
     ...HOOD_SECTIONS.flatMap((s) => s.doors.map((d) => ({ href: d.href, label: d.label, hint: d.hint, hub: "Under the hood" }))),
   ];
-  const seen = new Set<string>();
-  return all.filter((p) => (seen.has(p.href) ? false : (seen.add(p.href), true)));
+  // First entry wins (its hub label stays), but it borrows a later duplicate's hint when it has none.
+  const byHref = new Map<string, PageEntry>();
+  for (const p of all) {
+    const kept = byHref.get(p.href);
+    if (!kept) byHref.set(p.href, { ...p });
+    else if (!kept.hint && p.hint) kept.hint = p.hint;
+  }
+  return [...byHref.values()];
 }
 
 export const PAGE_INDEX: PageEntry[] = buildIndex();

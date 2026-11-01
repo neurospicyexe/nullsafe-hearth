@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { TABS, HUBS, activeTab, shellHidden, badgeText, COMPANION_COLOR, HOOD_SECTIONS, focusRefreshDue, FOCUS_REFRESH_MIN_MS, latestOnly } from "../shell";
 import nextConfig from "../../next.config";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { PAGE_INDEX } from "../page-index";
 
 /** Frozen copy of every href the retired sidebar Nav carried; each must stay reachable from the new tabs and hubs. */
 const NAV_HREFS: readonly string[] = Object.freeze([
@@ -55,7 +56,7 @@ describe("activeTab", () => {
     expect(activeTab("/")).toBe("Home");
     expect(activeTab("/needs")).toBe("Needs you");
     expect(activeTab("/club")).toBe("Together");
-    expect(activeTab("/handovers")).toBe("Archive");
+    expect(activeTab("/sessions")).toBe("Archive");
     expect(activeTab("/companions/cypher")).toBe("Home");
   });
   it("returns null for routes owned by no tab", () => {
@@ -226,6 +227,21 @@ describe("under the hood", () => {
     for (const h of ["/user", "/house", "/wellness", "/overview"]) {
       expect(hoodHrefs).toContain(h);
       expect(others).not.toContain(h);
+    }
+  });
+  it("care pages are indexed only as Under the hood, and no hub page links to them", () => {
+    const care = ["/user", "/house", "/wellness", "/overview"];
+    for (const h of care) {
+      const entries = PAGE_INDEX.filter((p) => p.href === h);
+      expect(entries.length, h).toBeGreaterThan(0);
+      for (const e of entries) expect(e.hub, h).toBe("Under the hood");
+    }
+    const root = join(__dirname, "..", "..");
+    for (const f of ["app/page.tsx", "app/needs/page.tsx", "app/together/page.tsx", "app/archive/page.tsx"]) {
+      const text = readFileSync(join(root, f), "utf8");
+      for (const h of care) {
+        expect(new RegExp(`["'\`]${h}(?![\\w/-])`).test(text), `${f} links ${h}`).toBe(false);
+      }
     }
   });
   it("hood pages light the right tab", () => {

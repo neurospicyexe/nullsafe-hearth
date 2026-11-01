@@ -7,7 +7,7 @@ export type Door = { href: string; label: string; hint?: string; count?: number 
 
 export const TABS: Tab[] = [
   { href: "/", label: "Home", match: ["/", "/companions"] },
-  { href: "/needs", label: "Needs you", match: ["/needs", "/questions", "/manage", "/guardian", "/basins"] },
+  { href: "/needs", label: "Needs you", match: ["/needs", "/manage", "/guardian", "/basins"] },
   {
     href: "/together",
     label: "Together",
@@ -16,7 +16,7 @@ export const TABS: Tab[] = [
   {
     href: "/archive",
     label: "Archive",
-    match: ["/archive", "/letters", "/handovers", "/sessions", "/dreams", "/memory", "/synthesis", "/journal", "/overview",
+    match: ["/archive", "/letters", "/sessions", "/dreams", "/memory", "/synthesis", "/journal", "/overview",
       "/hood",
       "/facts", "/tray", "/feelings", "/threads", "/drifts", "/agency", "/imps", "/orient", "/soma", "/presence",
       "/us", "/between", "/council", "/mind", "/log", "/shared",

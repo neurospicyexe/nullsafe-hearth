@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
       { source: "/deltas", destination: "/feelings", permanent: false },
       { source: "/phoenix/dreams", destination: "/dreams", permanent: false },
       { source: "/uplink", destination: "/", permanent: false },
+      // The old constellation page already redirected in-page; the redirect lives here now.
+      { source: "/graph", destination: "/map", permanent: false },
     ];
   },
   async headers() {

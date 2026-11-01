@@ -35,3 +35,13 @@ describe("matchPages", () => {
     expect(matchPages("a", 3).length).toBeLessThanOrEqual(3);
   });
 });
+
+describe("hints survive the dedupe", () => {
+  it("finds Guardian and Basins by their Under the hood hints", () => {
+    expect(matchPages("weekly letter").map((p) => p.href)).toContain("/guardian");
+    expect(matchPages("identity drift").map((p) => p.href)).toContain("/basins");
+  });
+  it("keeps the first hub label", () => {
+    expect(PAGE_INDEX.find((p) => p.href === "/guardian")?.hub).toBe("Needs you");
+  });
+});
