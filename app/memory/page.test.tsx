@@ -10,7 +10,7 @@ const m = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/halseth", () => m);
 
-import Page from "./page";
+import Page, { metadata } from "./page";
 import MemoryBrowserClient from "./MemoryBrowserClient";
 
 const note = (id: string, agent = "drevan") => ({
@@ -26,6 +26,11 @@ beforeEach(() => {
 });
 
 describe("/memory", () => {
+  it("title matches the door label", async () => {
+    const html = renderToStaticMarkup(await Page());
+    expect(html).toContain(">Memory and synthesis</h1>");
+    expect(metadata.title).toBe("Memory and synthesis | Hearth");
+  });
   it("links to /synthesis and reads notes via fetchCompanionJournal", async () => {
     const html = renderToStaticMarkup(await Page());
     expect(html).toContain('href="/synthesis"');

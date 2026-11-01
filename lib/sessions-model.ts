@@ -2,11 +2,13 @@ import type { SessionEntry, HandoverPacket } from "./halseth";
 import { newestFirst } from "./time-order";
 
 // Care and plural-state fields (hrv_range, emotional_frequency, front_state, notes, depth,
-// co_con) are deliberately not carried: the Archive does not show them.
+// co_con) are deliberately not carried: the Archive does not show them. facet is a companion
+// facet, not a care field, so it is carried.
 export type ArchiveSession = {
   id: string;
   companion: string | null;
   sessionType: string | null;
+  facet: string | null;
   at: string;
   motion: string | null;
   spine: string;
@@ -39,6 +41,7 @@ export function joinSessions(sessions: SessionEntry[], handovers: HandoverPacket
       id: s.id,
       companion: s.companion_id,
       sessionType: s.session_type,
+      facet: s.facet ?? h?.facet ?? null,
       at: s.created_at,
       motion: s.motion_state,
       spine: s.spine ?? "",
@@ -52,6 +55,7 @@ export function joinSessions(sessions: SessionEntry[], handovers: HandoverPacket
       id: sid || h.id,
       companion: h.companion_id ?? null,
       sessionType: h.session_type,
+      facet: h.facet ?? null,
       at: h.created_at,
       motion: h.motion_state,
       spine: h.spine,

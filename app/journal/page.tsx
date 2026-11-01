@@ -7,7 +7,7 @@ import { HALSETH_DOWN } from "@/lib/archive-copy";
 import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 
-export const metadata = { title: "Journal | Hearth" };
+export const metadata = { title: "Journals | Hearth" };
 
 function agentDisplayName(agent: string): string {
   return agent.charAt(0).toUpperCase() + agent.slice(1);
@@ -23,7 +23,7 @@ export default async function JournalPage() {
 
   return (
     <div className="h-reading">
-      <h1 className="h-page-title">Journal</h1>
+      <h1 className="h-page-title">Journals</h1>
 
       <section className="h-section">
         <h2 className="h-section-title">Companion journal</h2>

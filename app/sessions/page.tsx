@@ -6,7 +6,7 @@ import { HALSETH_DOWN } from "@/lib/archive-copy";
 import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 
-export const metadata = { title: "Sessions | Hearth" };
+export const metadata = { title: "Sessions and handovers | Hearth" };
 
 const MOTION_WORD: Record<string, string> = { in_motion: "in motion", at_rest: "at rest", floating: "floating" };
 
@@ -25,7 +25,7 @@ export default async function SessionsPage() {
 
   return (
     <div className="h-reading">
-      <h1 className="h-page-title">Sessions</h1>
+      <h1 className="h-page-title">Sessions and handovers</h1>
       {rows === null ? (
         <p className="h-home-quiet">{HALSETH_DOWN}</p>
       ) : (
@@ -42,6 +42,7 @@ export default async function SessionsPage() {
                     <header className="h-session-head">
                       <b className={toneOf(s.companion)}>{s.companion ?? "unattributed"}</b>
                       {s.sessionType && <span className="h-session-meta">{s.sessionType}</span>}
+                      {s.facet && <span className="h-session-meta">{s.facet}</span>}
                       {motion && <span className="h-session-meta">{motion}</span>}
                       <span className="h-session-meta h-session-when">
                         <ClientTime iso={s.at} />

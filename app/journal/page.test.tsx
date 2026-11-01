@@ -7,7 +7,7 @@ const m = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/halseth", () => m);
 
-import Page from "./page";
+import Page, { metadata } from "./page";
 
 const DOWN = "Can&#x27;t reach Halseth right now.";
 const row = (id: string, text: string, tags: string | null) => ({
@@ -21,6 +21,11 @@ beforeEach(() => {
 });
 
 describe("/journal", () => {
+  it("title matches the door label", async () => {
+    const html = renderToStaticMarkup(await Page());
+    expect(html).toContain(">Journals</h1>");
+    expect(metadata.title).toBe("Journals | Hearth");
+  });
   it("asks for the substantive lane", async () => {
     renderToStaticMarkup(await Page());
     expect(m.fetchCompanionJournal).toHaveBeenCalledWith(undefined, 200, { substantive: true });

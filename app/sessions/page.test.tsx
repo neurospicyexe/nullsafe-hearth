@@ -8,13 +8,13 @@ const m = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/halseth", () => m);
 
-import Page from "./page";
+import Page, { metadata } from "./page";
 
 const long = "L".repeat(200);
 const session = (id: string, extra: object = {}) => ({
   id, created_at: "2026-10-30 10:00:00", updated_at: null, companion_id: "drevan", session_type: "work",
-  spine: "spine " + id, last_real_thing: long, motion_state: "at_rest", front_state: null, co_con: null,
-  emotional_frequency: null, active_anchor: null, facet: null, hrv_range: "low", depth: null, notes: null, ...extra,
+  spine: "spine " + id, last_real_thing: long, motion_state: "at_rest", front_state: "front-sentinel", co_con: null,
+  emotional_frequency: "ef-sentinel", active_anchor: null, facet: null, hrv_range: "hrv-sentinel-low", depth: null, notes: null, ...extra,
 });
 const handover = (sid: string) => ({
   id: "h" + sid, session_id: sid, created_at: "2026-10-30 11:00:00", spine: "hspine", active_anchor: "the truck",
@@ -30,6 +30,18 @@ beforeEach(() => {
 });
 
 describe("/sessions", () => {
+  it("title matches the door label", async () => {
+    const html = renderToStaticMarkup(await Page());
+    expect(html).toContain(">Sessions and handovers</h1>");
+    expect(metadata.title).toBe("Sessions and handovers | Hearth");
+  });
+  it("shows the session facet as a quiet meta word, from the session or an orphan handover", async () => {
+    m.fetchSessionsOrNull.mockResolvedValue([session("a", { facet: "FACET-SESS" })]);
+    m.fetchHandovers.mockResolvedValue([{ ...handover("gone"), facet: "FACET-ORPHAN" }]);
+    const html = renderToStaticMarkup(await Page());
+    expect(html).toContain('<span class="h-session-meta">FACET-SESS</span>');
+    expect(html).toContain('<span class="h-session-meta">FACET-ORPHAN</span>');
+  });
   it("sessions null renders the down line and no session blocks", async () => {
     m.fetchSessionsOrNull.mockResolvedValue(null);
     const html = renderToStaticMarkup(await Page());
@@ -55,8 +67,7 @@ describe("/sessions", () => {
   it("never renders hrv_range values", async () => {
     m.fetchSessionsOrNull.mockResolvedValue([session("a")]);
     const html = renderToStaticMarkup(await Page());
-    expect(html).not.toContain("hrv");
-    expect(html).not.toMatch(/>low</);
+    for (const s of ["hrv-sentinel-low", "ef-sentinel", "front-sentinel"]) expect(html).not.toContain(s);
   });
   it("handovers null keeps sessions and says so", async () => {
     m.fetchSessionsOrNull.mockResolvedValue([session("a")]);

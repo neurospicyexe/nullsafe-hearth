@@ -11,6 +11,8 @@ import { newestFirst } from "@/lib/time-order";
 import { HALSETH_DOWN } from "@/lib/archive-copy";
 import MemoryBrowserClient, { type MemoryEntry } from "./MemoryBrowserClient";
 
+export const metadata = { title: "Memory and synthesis | Hearth" };
+
 export default async function MemoryPage() {
   const [notes, feelings, tensions, sitsC, sitsD, sitsG] =
     await Promise.allSettled([
@@ -95,7 +97,7 @@ export default async function MemoryPage() {
 
   return (
     <div className="h-reading">
-      <h1 className="h-page-title">Memory</h1>
+      <h1 className="h-page-title">Memory and synthesis</h1>
       <Link href="/synthesis" className="h-foot-link">Synthesis summaries</Link>
       {notesDown && <p className="h-home-quiet">{HALSETH_DOWN}</p>}
       {!(notesDown && entries.length === 0) && <MemoryBrowserClient entries={entries} />}
