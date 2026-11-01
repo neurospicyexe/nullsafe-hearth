@@ -38,9 +38,12 @@ export default async function JournalPage() {
           <p className="h-home-quiet">No companion entries yet.</p>
         ) : (
           companionEntries.map((e) => (
-            <article key={e.id} className="h-journal-entry h-reading">
+            <article key={e.id} className="h-journal-entry">
               <header className="h-journal-head">
                 <b className={toneOf(e.agent)}>{agentDisplayName(e.agent)}</b>
+                {e.review_state && e.review_state !== "kept" && (
+                  <span className="h-journal-meta">{e.review_state}</span>
+                )}
                 <span className="h-journal-meta"><ClientTime iso={e.created_at} /></span>
               </header>
               <p className="h-journal-text">{e.note_text}</p>
@@ -58,7 +61,7 @@ export default async function JournalPage() {
           <p className="h-home-quiet">No personal entries yet.</p>
         ) : (
           human.map((e) => (
-            <article key={e.id} className="h-journal-entry h-reading">
+            <article key={e.id} className="h-journal-entry">
               <header className="h-journal-head">
                 {e.emotion_tag && (
                   <span className="h-journal-meta">

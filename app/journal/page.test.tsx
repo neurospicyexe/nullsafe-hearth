@@ -54,6 +54,15 @@ describe("/journal", () => {
     expect(html).not.toContain("mood");
     expect(html).not.toContain("62");
   });
+  it("shows the review state word unless the row is kept", async () => {
+    m.fetchCompanionJournal.mockResolvedValue([
+      { ...row("1", "drafty text", '["journal"]'), review_state: "draft" },
+      { ...row("2", "kept text", '["journal"]'), review_state: "kept" },
+    ]);
+    const html = renderToStaticMarkup(await Page());
+    expect(html.split("draft</span>").length - 1).toBe(1);
+    expect(html).not.toContain("kept</span>");
+  });
   it("shows the quiet empty line when loaded and empty", async () => {
     const html = renderToStaticMarkup(await Page());
     expect(html).toContain("No companion entries yet");
