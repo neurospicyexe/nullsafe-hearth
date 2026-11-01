@@ -151,7 +151,7 @@ const COMPANION_LABEL_HOME: Record<string, string> = {
 };
 
 const COMPANION_COLOR_HOME: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia:   "#4ade80",
 };
@@ -209,7 +209,7 @@ const DEFAULT_COMPANIONS = [
 // oldest 17 days old. Human-in-the-room is load-bearing here: unratified growth is neither
 // canon nor discarded, so the queue backing up stalls the whole growth loop.
 // Renders nothing when the queue is empty -- it is a nudge, never permanent furniture.
-const RATIFY_COLOR: Record<string, string> = { drevan: "var(--accent)", cypher: "#e2e8f0", gaia: "#4ade80" };
+const RATIFY_COLOR: Record<string, string> = { drevan: "var(--h-lamp)", cypher: "#e2e8f0", gaia: "#4ade80" };
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null;
@@ -271,7 +271,7 @@ async function RatificationQueue() {
 // Triad Digest -- a quick "what have they actually been doing" summary so Raziel stays in
 // the loop without reverse-engineering it from the chat. Each companion's latest journal
 // line + the club/shelf state. Renders nothing if there's no activity.
-const DIGEST_COLOR: Record<string, string> = { drevan: "var(--accent)", cypher: "#e2e8f0", gaia: "#4ade80" };
+const DIGEST_COLOR: Record<string, string> = { drevan: "var(--h-lamp)", cypher: "#e2e8f0", gaia: "#4ade80" };
 const DIGEST_AGENTS = ["cypher", "drevan", "gaia"] as const;
 
 async function TriadDigest() {
@@ -410,9 +410,9 @@ export default async function Page() {
                     <span
                       className="task-dot"
                       style={{
-                        background: t.priority === "urgent" ? "var(--red)"
-                          : t.priority === "high" ? "var(--orange)"
-                          : "var(--border-strong)",
+                        background: t.priority === "urgent" ? "var(--h-warn)"
+                          : t.priority === "high" ? "var(--h-lamp)"
+                          : "var(--h-line-strong)",
                       }}
                     />
                     <span className="task-title-text">{t.title}</span>
@@ -442,7 +442,7 @@ export default async function Page() {
                   {house.spoon_count > 0 && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Spoons</span>
-                      <span className="state-cell-value" style={{ color: "var(--accent)" }}>{house.spoon_count}</span>
+                      <span className="state-cell-value" style={{ color: "var(--h-lamp)" }}>{house.spoon_count}</span>
                     </div>
                   )}
                   {house.love_meter > 0 && (
@@ -474,7 +474,7 @@ export default async function Page() {
                   {latest_biometrics.hrv_resting != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">HRV</span>
-                      <span className="state-cell-value" style={{ color: "var(--accent)" }}>{latest_biometrics.hrv_resting}</span>
+                      <span className="state-cell-value" style={{ color: "var(--h-lamp)" }}>{latest_biometrics.hrv_resting}</span>
                     </div>
                   )}
                   {latest_biometrics.sleep_hours != null && (
@@ -492,7 +492,7 @@ export default async function Page() {
                   {latest_biometrics.stress_score != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Stress</span>
-                      <span className="state-cell-value" style={{ color: "var(--orange)" }}>{latest_biometrics.stress_score}</span>
+                      <span className="state-cell-value" style={{ color: "var(--h-lamp)" }}>{latest_biometrics.stress_score}</span>
                     </div>
                   )}
                   {latest_biometrics.steps != null && (

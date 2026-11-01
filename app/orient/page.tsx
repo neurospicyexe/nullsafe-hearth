@@ -6,7 +6,7 @@ const COMPANIONS = ["cypher", "drevan", "gaia"] as const;
 
 const COMPANION_COLOR: Record<string, string> = {
   cypher: "#e2e8f0",
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   gaia:   "#4ade80",
 };
 

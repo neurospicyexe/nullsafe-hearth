@@ -113,7 +113,7 @@ export default async function HalsethPage() {
 
       <HalsethRoom rooms={roomsWithImages} initialRoom={currentRoom} />
 
-      <p style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--muted)" }}>
+      <p style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--h-muted)" }}>
         Room images can be uploaded to Halseth R2 at <code>{"rooms/{key}.jpg"}</code>.
         Gradient placeholders are shown until images exist.
       </p>

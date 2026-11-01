@@ -27,7 +27,7 @@ export default function CompanionMoodCard({
   mood: MoodData;
   avatarUrl?: string | null;
 }) {
-  const meta = COMPANION_META[companionId] ?? { sym: "◉", color: "var(--accent)" };
+  const meta = COMPANION_META[companionId] ?? { sym: "◉", color: "var(--h-lamp)" };
 
   return (
     <Link href={`/companions/${companionId}`} className="companion-mood-card" style={{ "--c": meta.color } as React.CSSProperties}>

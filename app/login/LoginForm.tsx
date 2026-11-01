@@ -40,7 +40,7 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <label htmlFor="secret" style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
+      <label htmlFor="secret" style={{ color: "var(--h-muted)", fontSize: "0.85rem" }}>
         Passphrase
       </label>
       <input
@@ -51,23 +51,23 @@ export default function LoginForm() {
         autoFocus
         autoComplete="current-password"
         style={{
-          background: "var(--bg-color)",
-          border: "1px solid var(--border-subtle)",
+          background: "var(--h-ground)",
+          border: "1px solid var(--h-line)",
           borderRadius: "var(--radius-md)",
-          color: "var(--text-main)",
+          color: "var(--h-ink)",
           padding: "0.6rem 0.875rem",
           fontSize: "1rem",
           width: "100%",
         }}
       />
       {error && (
-        <p style={{ color: "var(--red)", fontSize: "0.85rem", margin: 0 }}>{error}</p>
+        <p style={{ color: "var(--h-warn)", fontSize: "0.85rem", margin: 0 }}>{error}</p>
       )}
       <button
         type="submit"
         disabled={loading || !value}
         style={{
-          background: "var(--accent)",
+          background: "var(--h-lamp)",
           border: "none",
           borderRadius: "var(--radius-md)",
           color: "#fff",

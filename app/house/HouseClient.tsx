@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 const ROOMS = ["studio", "bedroom", "kitchen", "living room", "outside", "office", "bathroom"];
 
 const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia:   "#4ade80",
 };
@@ -55,7 +55,7 @@ export default function HouseClient({ house }: { house: HouseState }) {
     }
   }
 
-  const turnColor = house.autonomous_turn ? COMPANION_COLOR[house.autonomous_turn] : "var(--muted)";
+  const turnColor = house.autonomous_turn ? COMPANION_COLOR[house.autonomous_turn] : "var(--h-muted)";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
@@ -74,8 +74,8 @@ export default function HouseClient({ house }: { house: HouseState }) {
             ] as [string, string | number, string | undefined][]
           ).map(([label, val, color]) => (
             <div key={label} style={{
-              background: "var(--card-bg)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--h-surface)",
+              border: "1px solid var(--h-line)",
               borderRadius: "var(--radius-sm)",
               padding: "0.5rem 0.85rem",
               display: "flex",
@@ -83,8 +83,8 @@ export default function HouseClient({ house }: { house: HouseState }) {
               gap: "0.2rem",
               minWidth: "6rem",
             }}>
-              <span style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
-              <span style={{ fontSize: "1rem", fontWeight: 600, color: color ?? "var(--fg)" }}>{val}</span>
+              <span style={{ fontSize: "0.7rem", color: "var(--h-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
+              <span style={{ fontSize: "1rem", fontWeight: 600, color: color ?? "var(--h-ink)" }}>{val}</span>
             </div>
           ))}
         </div>
@@ -117,7 +117,7 @@ export default function HouseClient({ house }: { house: HouseState }) {
 
       {/* Spoons */}
       <section className="page-section" style={{ marginTop: 0 }}>
-        <h2 className="section-title">Spoon Count <span style={{ color: "var(--muted)", fontWeight: 400 }}>{spoons} / 20</span></h2>
+        <h2 className="section-title">Spoon Count <span style={{ color: "var(--h-muted)", fontWeight: 400 }}>{spoons} / 20</span></h2>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", maxWidth: "22rem" }}>
           <button
             className="btn"
@@ -141,7 +141,7 @@ export default function HouseClient({ house }: { house: HouseState }) {
 
       {/* Love meter */}
       <section className="page-section" style={{ marginTop: 0 }}>
-        <h2 className="section-title">Love Meter <span style={{ color: "var(--accent)", fontWeight: 400 }}>{love}</span></h2>
+        <h2 className="section-title">Love Meter <span style={{ color: "var(--h-lamp)", fontWeight: 400 }}>{love}</span></h2>
         <input
           type="range"
           min={0} max={100}

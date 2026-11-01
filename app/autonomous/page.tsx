@@ -132,7 +132,7 @@ export default async function AutonomousPage() {
           {/* Runs today */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
             <span className="state-cell-label">Runs today</span>
-            <span className="state-cell-value" style={{ color: "var(--accent)" }}>{todayCount}</span>
+            <span className="state-cell-value" style={{ color: "var(--h-lamp)" }}>{todayCount}</span>
           </div>
 
           {/* Most recent */}

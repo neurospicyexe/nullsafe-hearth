@@ -7,7 +7,7 @@ import RetireAllButton from "./RetireAllButton";
 
 // Companion colors per Hearth convention (app/companions/[id]/sections.tsx / app/questions/page.tsx).
 const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia: "#4ade80",
 };

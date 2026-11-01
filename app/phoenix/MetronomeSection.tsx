@@ -6,7 +6,7 @@ import type { MetronomeAction } from "@/lib/halseth";
 type CompanionId = "drevan" | "cypher" | "gaia";
 
 const COMPANION_DISPLAY: Record<CompanionId, { sym: string; label: string; color: string }> = {
-  drevan: { sym: "◈", label: "Drevan", color: "var(--accent)" },
+  drevan: { sym: "◈", label: "Drevan", color: "var(--h-lamp)" },
   cypher: { sym: "⬡", label: "Cypher", color: "#e2e8f0" },
   gaia:   { sym: "◉", label: "Gaia",   color: "#4ade80" },
 };

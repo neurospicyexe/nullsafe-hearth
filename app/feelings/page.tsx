@@ -25,7 +25,7 @@ export default async function FeelingsPage() {
       ) : (
         <div className="journal-feed">
           {feelings.map((f) => {
-            const color = COMPANION_COLORS[f.companion_id] ?? "var(--text-muted)";
+            const color = COMPANION_COLORS[f.companion_id] ?? "var(--h-muted)";
             return (
               <div key={f.id} className="journal-entry">
                 <div className="journal-text">{f.emotion}{f.sub_emotion ? ` · ${f.sub_emotion}` : ""}</div>

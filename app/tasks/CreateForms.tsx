@@ -56,7 +56,7 @@ export function AddTaskForm() {
       <button type="submit" className="submit-btn" disabled={status === "saving" || !title.trim()}>
         {status === "saving" ? "…" : "add"}
       </button>
-      {status === "error" && <span style={{ color: "var(--red)", fontSize: "0.8rem", alignSelf: "center" }}>failed</span>}
+      {status === "error" && <span style={{ color: "var(--h-warn)", fontSize: "0.8rem", alignSelf: "center" }}>failed</span>}
     </form>
   );
 }
@@ -101,7 +101,7 @@ export function AddEventForm() {
       <button type="submit" className="submit-btn" disabled={status === "saving" || !title.trim() || !start}>
         {status === "saving" ? "…" : "add"}
       </button>
-      {status === "error" && <span style={{ color: "var(--red)", fontSize: "0.8rem", alignSelf: "center" }}>failed</span>}
+      {status === "error" && <span style={{ color: "var(--h-warn)", fontSize: "0.8rem", alignSelf: "center" }}>failed</span>}
     </form>
   );
 }

@@ -12,7 +12,7 @@ import type { BasinHistory } from "@/lib/halseth";
 
 // Canonical Hearth companion colors (see hearth/CLAUDE.md) -- use these everywhere.
 const COMPANION_COLORS: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia: "#4ade80",
 };
@@ -115,15 +115,15 @@ function PressureRow({ r }: { r: BasinHistory }) {
       <span style={{ color: DRIFT_TYPE_COLOR["pressure"] }}>●</span>
       <span>{r.worst_basin ?? "drift"} · {score}{r.notes ? ` · ${r.notes.slice(0, 80)}` : ""} · {relativeTime(r.recorded_at)}</span>
       {state === "confirm" && <span style={{ color: DRIFT_TYPE_COLOR["growth"] }}>confirmed as growth ✓</span>}
-      {state === "dismiss" && <span style={{ color: "var(--text-muted, #888)" }}>dismissed as noise</span>}
+      {state === "dismiss" && <span style={{ color: "var(--h-muted, #888)" }}>dismissed as noise</span>}
       {state === "error" && <span style={{ color: "#f87171" }}>failed — try again</span>}
       {(state === "open" || state === "error") && (
         <span style={{ display: "inline-flex", gap: "0.4rem", marginLeft: "auto" }}>
           <button onClick={() => act("confirm")} style={btnStyle(DRIFT_TYPE_COLOR["growth"])}>confirm (growth)</button>
-          <button onClick={() => act("dismiss")} style={btnStyle("var(--text-muted, #888)")}>dismiss (noise)</button>
+          <button onClick={() => act("dismiss")} style={btnStyle("var(--h-muted, #888)")}>dismiss (noise)</button>
         </span>
       )}
-      {state === "busy" && <span style={{ marginLeft: "auto", color: "var(--text-muted, #888)" }}>…</span>}
+      {state === "busy" && <span style={{ marginLeft: "auto", color: "var(--h-muted, #888)" }}>…</span>}
     </li>
   );
 }
@@ -137,7 +137,7 @@ export default function BasinsClient({ byCompanion }: { byCompanion: Record<stri
   return (
     <main className="basins-page" style={{ maxWidth: 860, margin: "0 auto", padding: "1.5rem 1rem 3rem" }}>
       <h1 style={{ fontSize: "1.4rem", marginBottom: "0.25rem" }}>Basins</h1>
-      <p style={{ color: "var(--text-muted, #888)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+      <p style={{ color: "var(--h-muted, #888)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
         Identity attractor trajectories, last 90 days. Scores are per-companion calibrated distances --
         comparable within a lane, never across companions. <span style={{ color: DRIFT_TYPE_COLOR["stable"] }}>stable</span>{" · "}
         <span style={{ color: DRIFT_TYPE_COLOR["growth"] }}>growth</span> (ringed = caleth-confirmed){" · "}
@@ -151,18 +151,18 @@ export default function BasinsClient({ byCompanion }: { byCompanion: Record<stri
         const openPressure = rows.filter((r) => r.drift_type === "pressure" && !r.caleth_confirmed && !r.dismissed_at);
         const pressureOpen = openPressure.length;
         return (
-          <section key={id} style={{ marginBottom: "2rem", border: "1px solid var(--border-subtle, #2a2a2a)", borderRadius: 10, padding: "1rem" }}>
+          <section key={id} style={{ marginBottom: "2rem", border: "1px solid var(--h-line, #2a2a2a)", borderRadius: 10, padding: "1rem" }}>
             <header style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
               <h2 style={{ fontSize: "1.05rem", color: COMPANION_COLORS[id] ?? "inherit", textTransform: "capitalize", margin: 0 }}>{id}</h2>
               {latest ? (
-                <span style={{ fontSize: "0.8rem", color: "var(--text-muted, #888)" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--h-muted, #888)" }}>
                   latest: <span style={{ color: DRIFT_TYPE_COLOR[latest.drift_type] ?? "inherit" }}>{latest.drift_type}</span>
                   {" · "}score {Number.isFinite(latest.drift_score) ? (latest.drift_score * 100).toFixed(0) : "--"}
                   {latest.worst_basin ? ` · farthest: ${latest.worst_basin}` : ""}
                   {" · "}{relativeTime(latest.recorded_at)}
                 </span>
               ) : (
-                <span style={{ fontSize: "0.8rem", color: "var(--text-muted, #888)" }}>no readings</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--h-muted, #888)" }}>no readings</span>
               )}
               {pressureOpen > 0 && (
                 <span style={{ fontSize: "0.75rem", color: DRIFT_TYPE_COLOR["pressure"], border: `1px solid ${DRIFT_TYPE_COLOR["pressure"]}`, borderRadius: 6, padding: "0 0.4rem" }}>
@@ -174,8 +174,8 @@ export default function BasinsClient({ byCompanion }: { byCompanion: Record<stri
               <TrajectorySvg rows={rows} />
             </div>
             {openPressure.length > 0 && (
-              <div style={{ marginTop: "0.75rem", borderTop: "1px solid var(--border-subtle, #2a2a2a)", paddingTop: "0.5rem" }}>
-                <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #888)", marginBottom: "0.25rem" }}>
+              <div style={{ marginTop: "0.75rem", borderTop: "1px solid var(--h-line, #2a2a2a)", paddingTop: "0.5rem" }}>
+                <div style={{ fontSize: "0.72rem", color: "var(--h-muted, #888)", marginBottom: "0.25rem" }}>
                   open pressure readings — confirm what&apos;s real growth (re-baselines), dismiss what&apos;s noise:
                 </div>
                 <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -187,7 +187,7 @@ export default function BasinsClient({ byCompanion }: { byCompanion: Record<stri
         );
       })}
 
-      <p style={{ fontSize: "0.75rem", color: "var(--text-muted, #777)", lineHeight: 1.5 }}>
+      <p style={{ fontSize: "0.75rem", color: "var(--h-muted, #777)", lineHeight: 1.5 }}>
         Instrument notes: the evaluator samples every 6h against each companion&apos;s own baseline
         (z-calibrated 2026-06-01 -- earlier absolute thresholds produced seven weeks of false pressure).
         A single pressure point means &quot;look&quot;, not &quot;drift&quot;. Growth becomes canon only when

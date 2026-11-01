@@ -5,7 +5,7 @@ import ConveneForm from "./ConveneForm";
 export const dynamic = "force-dynamic";
 
 const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia: "#4ade80",
 };
@@ -18,7 +18,7 @@ function formatTime(iso: string) {
 
 function AnswerCard({ a }: { a: CouncilAnswer }) {
   return (
-    <div style={{ borderLeft: `3px solid ${MEMBER_COLOR[a.companion_id] ?? "var(--border)"}`, paddingLeft: "0.75rem", marginBottom: "0.75rem" }}>
+    <div style={{ borderLeft: `3px solid ${MEMBER_COLOR[a.companion_id] ?? "var(--h-line)"}`, paddingLeft: "0.75rem", marginBottom: "0.75rem" }}>
       <div style={{ fontSize: "0.8rem", color: MEMBER_COLOR[a.companion_id] ?? "inherit", marginBottom: "0.2rem" }}>{a.companion_id}</div>
       <div className="handover-last-real" style={{ fontSize: "0.9rem", whiteSpace: "pre-wrap" }}>{a.answer}</div>
     </div>
@@ -27,7 +27,7 @@ function AnswerCard({ a }: { a: CouncilAnswer }) {
 
 function ClosedRound({ round }: { round: CouncilRound }) {
   return (
-    <section style={{ border: "1px solid var(--border, #2a2a2a)", borderRadius: "10px", padding: "1rem", marginBottom: "1rem", background: "var(--surface, #141414)" }}>
+    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px", padding: "1rem", marginBottom: "1rem", background: "var(--surface, #141414)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "baseline" }}>
         <h3 className="page-title" style={{ fontSize: "1rem", margin: 0 }}>{round.question}</h3>
         {round.winning_companion_id && (
@@ -68,7 +68,7 @@ export default async function CouncilPage() {
       {!liveOpen && <ConveneForm />}
 
       {liveOpen && (
-        <section style={{ border: "1px solid var(--accent)", borderRadius: "10px", padding: "1rem", marginBottom: "1.5rem" }}>
+        <section style={{ border: "1px solid var(--h-lamp)", borderRadius: "10px", padding: "1rem", marginBottom: "1.5rem" }}>
           <div className="thread-tag" style={{ fontSize: "0.7rem" }}>in session — {liveOpen.status}</div>
           <h2 className="page-title" style={{ fontSize: "1.15rem", margin: "0.3rem 0 0.75rem" }}>{liveOpen.question}</h2>
           {answers.length === 0

@@ -50,9 +50,9 @@ const GROUP_LABELS: Record<keyof SearchResponse, string> = {
 const GROUP_ORDER: (keyof SearchResponse)[] = ["tasks", "notes", "wounds", "journal", "feelings", "dreams", "handovers"];
 
 const AGENT_COLORS: Record<string, string> = {
-  drevan: "var(--drevan)",
-  cypher: "var(--cypher)",
-  gaia:   "var(--gaia)",
+  drevan: "var(--h-drevan)",
+  cypher: "var(--h-cypher)",
+  gaia:   "var(--h-gaia)",
 };
 
 function formatDate(dateStr: string): string {

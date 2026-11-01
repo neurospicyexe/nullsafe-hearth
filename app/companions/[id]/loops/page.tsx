@@ -21,7 +21,7 @@ function WeightBar({ value }: { value: number }) {
   return (
     <div style={{
       height: "3px",
-      background: "var(--border-subtle)",
+      background: "var(--h-line)",
       borderRadius: "2px",
       overflow: "hidden",
       width: "48px",
@@ -30,7 +30,7 @@ function WeightBar({ value }: { value: number }) {
       <div style={{
         height: "100%",
         width: `${pct}%`,
-        background: "var(--accent)",
+        background: "var(--h-lamp)",
         borderRadius: "2px",
       }} />
     </div>

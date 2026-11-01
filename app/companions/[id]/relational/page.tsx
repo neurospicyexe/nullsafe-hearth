@@ -16,7 +16,7 @@ function fmtTime(iso: string) {
 }
 
 const STATE_TYPE_COLOR: Record<string, string> = {
-  feeling: "var(--accent)",
+  feeling: "var(--h-lamp)",
   witness: "#4ade80",
   held:    "#a78bfa",
 };
@@ -28,7 +28,7 @@ function WeightDot({ value }: { value: number }) {
       width: `${size}px`,
       height: `${size}px`,
       borderRadius: "50%",
-      background: "var(--border)",
+      background: "var(--h-line)",
       flexShrink: 0,
       alignSelf: "center",
     }} />
@@ -72,7 +72,7 @@ export default async function CompanionRelationalPage({ params }: { params: Prom
               <h2 className="section-title section-title-flush" style={{ color: config.color }}>
                 → {toward}
               </h2>
-              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+              <span style={{ fontSize: "0.78rem", color: "var(--h-muted)" }}>
                 {entries.length} {entries.length === 1 ? "entry" : "entries"}
               </span>
             </div>
@@ -96,8 +96,8 @@ export default async function CompanionRelationalPage({ params }: { params: Prom
                     <span
                       className="note-type-badge"
                       style={{
-                        borderColor: STATE_TYPE_COLOR[s.state_type] ?? "var(--border-subtle)",
-                        color: STATE_TYPE_COLOR[s.state_type] ?? "var(--text-muted)",
+                        borderColor: STATE_TYPE_COLOR[s.state_type] ?? "var(--h-line)",
+                        color: STATE_TYPE_COLOR[s.state_type] ?? "var(--h-muted)",
                       }}
                     >
                       {s.state_type}

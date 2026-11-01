@@ -296,22 +296,22 @@ export function SynthesisSummarySection({ entries, companionId }: { entries: Syn
 
 function IntensityBar({ value }: { value: number }) {
   return (
-    <div style={{ height: "3px", background: "var(--border-subtle)", borderRadius: "2px", overflow: "hidden", width: "50px", flexShrink: 0 }}>
-      <div style={{ height: "100%", width: `${value}%`, background: "var(--accent)", borderRadius: "2px" }} />
+    <div style={{ height: "3px", background: "var(--h-line)", borderRadius: "2px", overflow: "hidden", width: "50px", flexShrink: 0 }}>
+      <div style={{ height: "100%", width: `${value}%`, background: "var(--h-lamp)", borderRadius: "2px" }} />
     </div>
   );
 }
 
 function WeightBar({ value }: { value: number }) {
   return (
-    <div style={{ height: "3px", background: "var(--border-subtle)", borderRadius: "2px", overflow: "hidden", width: "40px", flexShrink: 0 }}>
-      <div style={{ height: "100%", width: `${Math.min(value * 100, 100)}%`, background: "var(--orange)", borderRadius: "2px" }} />
+    <div style={{ height: "3px", background: "var(--h-line)", borderRadius: "2px", overflow: "hidden", width: "40px", flexShrink: 0 }}>
+      <div style={{ height: "100%", width: `${Math.min(value * 100, 100)}%`, background: "var(--h-lamp)", borderRadius: "2px" }} />
     </div>
   );
 }
 
 const STATE_TYPE_COLOR: Record<string, string> = {
-  feeling: "var(--accent)",
+  feeling: "var(--h-lamp)",
   witness: "#4ade80",
   held:    "#a78bfa",
 };
@@ -327,7 +327,7 @@ export function SomaFeelingsSection({ feelings, color }: { feelings: SomaFeeling
               {f.emotion}{f.sub_emotion ? ` · ${f.sub_emotion}` : ""}
             </div>
             {f.source && (
-              <span style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>{f.source}</span>
+              <span style={{ fontSize: "0.76rem", color: "var(--h-muted)" }}>{f.source}</span>
             )}
           </div>
           <IntensityBar value={f.intensity} />
@@ -394,7 +394,7 @@ function FloatProvenance({ entries }: { entries: SomaProvenanceEntry[] }) {
   if (entries.length === 0) return null;
   return (
     <div style={{ marginTop: "0.3rem", paddingLeft: "0.1rem" }}>
-      <div style={{ fontSize: "0.66rem", color: "var(--text-muted)", opacity: 0.6, marginBottom: 2 }}>
+      <div style={{ fontSize: "0.66rem", color: "var(--h-muted)", opacity: 0.6, marginBottom: 2 }}>
         why
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
@@ -423,11 +423,11 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
           <div key={f.label} style={{ marginBottom: "0.6rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: 3 }}>
               <span style={{ color }}>{f.label}</span>
-              <span style={{ color: "var(--text-muted)" }}>
+              <span style={{ color: "var(--h-muted)" }}>
                 {fmt(f.value)}
                 <span style={{ opacity: 0.6 }}> · home {fmt(f.baseline)}</span>
                 {grew && (
-                  <span title={`baseline drifted ${drift > 0 ? "+" : ""}${drift.toFixed(3)} from seed`} style={{ color: drift > 0 ? "var(--accent)" : "#f59e0b", marginLeft: 4 }}>
+                  <span title={`baseline drifted ${drift > 0 ? "+" : ""}${drift.toFixed(3)} from seed`} style={{ color: drift > 0 ? "var(--h-lamp)" : "#f59e0b", marginLeft: 4 }}>
                     {drift > 0 ? "▲" : "▼"}{Math.abs(drift).toFixed(3)}
                   </span>
                 )}
@@ -444,24 +444,24 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
       })}
 
       {data.drives.length > 0 && (
-        <div style={{ marginTop: "0.5rem", borderTop: "1px solid var(--border, #2a2f3a)", paddingTop: "0.5rem" }}>
+        <div style={{ marginTop: "0.5rem", borderTop: "1px solid var(--h-line, #2a2f3a)", paddingTop: "0.5rem" }}>
           {data.drives.map((d) => (
             <div key={d.drive_key} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: 4 }}>
-              <span style={{ fontSize: "0.76rem", color: d.fired ? "#f59e0b" : "var(--text-muted)", flex: "0 0 8.5rem" }}>
+              <span style={{ fontSize: "0.76rem", color: d.fired ? "#f59e0b" : "var(--h-muted)", flex: "0 0 8.5rem" }}>
                 {d.drive_key.replace(/_/g, " ")}{d.fired ? " · calling" : ""}
               </span>
               <div style={{ position: "relative", height: 6, borderRadius: 3, background: "var(--surface-2, #1f2430)", flex: 1 }}>
                 <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(0, Math.min(1, d.level)) * 100}%`, background: d.fired ? "#f59e0b" : color, opacity: 0.5, borderRadius: 3 }} />
-                <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, d.threshold)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--text-muted)" }} title={`fires at ${d.threshold.toFixed(2)}`} />
+                <div style={{ position: "absolute", left: `${Math.max(0, Math.min(1, d.threshold)) * 100}%`, top: -2, bottom: -2, width: 2, background: "var(--h-muted)" }} title={`fires at ${d.threshold.toFixed(2)}`} />
               </div>
-              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", flex: "0 0 2.4rem", textAlign: "right" }}>{d.level.toFixed(2)}</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--h-muted)", flex: "0 0 2.4rem", textAlign: "right" }}>{d.level.toFixed(2)}</span>
             </div>
           ))}
         </div>
       )}
 
       {data.ferment_at && (
-        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.5rem", opacity: 0.7 }}>
+        <div style={{ fontSize: "0.7rem", color: "var(--h-muted)", marginTop: "0.5rem", opacity: 0.7 }}>
           last fermented {fmtTime(data.ferment_at)}
         </div>
       )}
@@ -508,7 +508,7 @@ export function SittingNotesSection({ notes, color }: { notes: SittingNote[]; co
           </div>
           <div className="journal-text">{note.content}</div>
           {note.sit_text && (
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontStyle: "italic", paddingLeft: "0.5rem" }}>
+            <div style={{ fontSize: "0.8rem", color: "var(--h-muted)", fontStyle: "italic", paddingLeft: "0.5rem" }}>
               {note.sit_text}
             </div>
           )}
@@ -531,14 +531,14 @@ export function RelationalStateSection({ states }: { states: RelationalState[] }
         return (
           <div key={toward} className="card" style={{ padding: "0.75rem 1rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.04em" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--h-muted)", letterSpacing: "0.04em" }}>
                 → {toward}
               </span>
               <span
                 className="note-type-badge"
                 style={{
-                  borderColor: STATE_TYPE_COLOR[latest.state_type] ?? "var(--border-subtle)",
-                  color: STATE_TYPE_COLOR[latest.state_type] ?? "var(--text-muted)",
+                  borderColor: STATE_TYPE_COLOR[latest.state_type] ?? "var(--h-line)",
+                  color: STATE_TYPE_COLOR[latest.state_type] ?? "var(--h-muted)",
                 }}
               >
                 {latest.state_type}
@@ -603,7 +603,7 @@ export function LiveThreadsSection({ threads }: { threads: LiveThread[] }) {
             <span className="journal-time">{fmtTime(t.created_at)}</span>
           </div>
           {t.notes && (
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", paddingLeft: "1rem" }}>{t.notes}</div>
+            <div style={{ fontSize: "0.8rem", color: "var(--h-muted)", paddingLeft: "1rem" }}>{t.notes}</div>
           )}
         </div>
       ))}

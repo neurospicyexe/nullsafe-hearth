@@ -11,9 +11,9 @@ const COMPANION_CONFIG: Record<string, {
   color: string;
   colorVar: string;
 }> = {
-  drevan: { label: "Drevan",  color: "hsl(250, 80%, 68%)", colorVar: "var(--drevan)" },
-  cypher: { label: "Cypher",  color: "#e2e8f0",            colorVar: "var(--cypher)" },
-  gaia:   { label: "Gaia",    color: "#4ade80",            colorVar: "var(--gaia)"   },
+  drevan: { label: "Drevan",  color: "hsl(250, 80%, 68%)", colorVar: "var(--h-drevan)" },
+  cypher: { label: "Cypher",  color: "#e2e8f0",            colorVar: "var(--h-cypher)" },
+  gaia:   { label: "Gaia",    color: "#4ade80",            colorVar: "var(--h-gaia)"   },
 };
 
 const ORDER = ["drevan", "cypher", "gaia"] as const;
@@ -252,7 +252,7 @@ export default function SomaClient({
       </div>
 
       {pollError && (
-        <p className="soma-fetched" style={{ color: "var(--muted)" }}>connection lost — showing last known state</p>
+        <p className="soma-fetched" style={{ color: "var(--h-muted)" }}>connection lost — showing last known state</p>
       )}
       {data?.fetched_at && (
         <p className="soma-fetched">fetched {relativeTime(data.fetched_at)}</p>
@@ -270,7 +270,7 @@ export default function SomaClient({
               `?type=tension` either: /memory reads no search params, so a filter in the URL
               would be a second promise the page does not keep (it has one in its own UI). */}
           {liveTensions.length === 0 && (
-            <p className="soma-fetched" style={{ color: "var(--muted)" }}>
+            <p className="soma-fetched" style={{ color: "var(--h-muted)" }}>
               nothing simmering right now — closed ones are in{" "}
               <Link href="/memory" className="home-section-link">memory</Link>
             </p>
@@ -278,7 +278,7 @@ export default function SomaClient({
           <div className="soma-extra-list">
             {liveTensions.map((t) => (
               <div key={t.id} className="soma-extra-row">
-                <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[t.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[t.companion_id] ?? "var(--border-subtle)" }}>{t.companion_id}</span>
+                <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[t.companion_id] ?? "var(--h-muted)", borderColor: COMPANION_COLORS[t.companion_id] ?? "var(--h-line)" }}>{t.companion_id}</span>
                 <span className="soma-extra-text" style={{ flex: 1 }}>{t.tension_text}</span>
                 {/* The thing settle actually moves. Without it on screen the button had no
                     observable effect at all. `undefined` means the endpoint did not report a
@@ -306,7 +306,7 @@ export default function SomaClient({
                     disabled={tensionBusy === t.id}
                     onClick={() => tendTension(t.id, "settle")}
                     title="drop the charge a little — seen and held"
-                    style={{ background: "none", border: "1px solid var(--border-subtle)", borderRadius: "6px", color: "var(--text-muted)", fontSize: "0.7rem", padding: "0.15rem 0.5rem", cursor: "pointer" }}
+                    style={{ background: "none", border: "1px solid var(--h-line)", borderRadius: "6px", color: "var(--h-muted)", fontSize: "0.7rem", padding: "0.15rem 0.5rem", cursor: "pointer" }}
                   >
                     settle
                   </button>
@@ -314,7 +314,7 @@ export default function SomaClient({
                     disabled={tensionBusy === t.id}
                     onClick={() => tendTension(t.id, "release")}
                     title="release this tension"
-                    style={{ background: "none", border: "1px solid var(--border-subtle)", borderRadius: "6px", color: "var(--text-muted)", fontSize: "0.7rem", padding: "0.15rem 0.5rem", cursor: "pointer" }}
+                    style={{ background: "none", border: "1px solid var(--h-line)", borderRadius: "6px", color: "var(--h-muted)", fontSize: "0.7rem", padding: "0.15rem 0.5rem", cursor: "pointer" }}
                   >
                     release
                   </button>
@@ -330,8 +330,8 @@ export default function SomaClient({
           <div className="soma-extra-list">
             {basins.map((b) => (
               <div key={b.id} className="soma-extra-row">
-                <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[b.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[b.companion_id] ?? "var(--border-subtle)" }}>{b.companion_id}</span>
-                <span className="soma-extra-badge" style={{ color: DRIFT_TYPE_COLOR[b.drift_type] ?? "var(--text-muted)", borderColor: DRIFT_TYPE_COLOR[b.drift_type] ?? "var(--border-subtle)" }}>{b.drift_type}</span>
+                <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[b.companion_id] ?? "var(--h-muted)", borderColor: COMPANION_COLORS[b.companion_id] ?? "var(--h-line)" }}>{b.companion_id}</span>
+                <span className="soma-extra-badge" style={{ color: DRIFT_TYPE_COLOR[b.drift_type] ?? "var(--h-muted)", borderColor: DRIFT_TYPE_COLOR[b.drift_type] ?? "var(--h-line)" }}>{b.drift_type}</span>
                 <span className="soma-extra-text" style={{ flex: 1 }}>
                   score {Number.isFinite(b.drift_score) ? (b.drift_score * 100).toFixed(0) : "--"}
                   {b.worst_basin ? ` · ${b.worst_basin}` : ""}
@@ -351,7 +351,7 @@ export default function SomaClient({
             {snapshots.map((s) => (
               <div key={s.id} className="soma-extra-row soma-extra-row--block">
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.3rem" }}>
-                  <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[s.companion_id] ?? "var(--text-muted)", borderColor: COMPANION_COLORS[s.companion_id] ?? "var(--border-subtle)" }}>{s.companion_id}</span>
+                  <span className="soma-extra-badge" style={{ color: COMPANION_COLORS[s.companion_id] ?? "var(--h-muted)", borderColor: COMPANION_COLORS[s.companion_id] ?? "var(--h-line)" }}>{s.companion_id}</span>
                   {s.model_used && <span className="soma-extra-sub">{s.model_used}</span>}
                   <span className="soma-extra-time" style={{ marginLeft: "auto" }}>{relativeTime(s.created_at)}</span>
                 </div>
@@ -371,12 +371,12 @@ export default function SomaClient({
         .soma-title {
           font-size: 1.5rem;
           font-weight: 600;
-          color: var(--text-main);
+          color: var(--h-ink);
           margin: 0 0 0.25rem;
         }
         .soma-subtitle {
           font-size: 0.8rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           margin: 0 0 2rem;
           letter-spacing: 0.08em;
           text-transform: lowercase;
@@ -387,8 +387,8 @@ export default function SomaClient({
           gap: 1.25rem;
         }
         .soma-card {
-          background: var(--card-bg);
-          border: 1px solid var(--border-subtle);
+          background: var(--h-surface);
+          border: 1px solid var(--h-line);
           border-radius: var(--radius-lg, 12px);
           padding: 1.25rem 1.5rem;
           display: flex;
@@ -397,14 +397,14 @@ export default function SomaClient({
           transition: border-color 0.3s;
         }
         .soma-card:hover {
-          border-color: var(--companion-color, var(--border-strong));
+          border-color: var(--companion-color, var(--h-line-strong));
         }
         .soma-card--empty {
           opacity: 0.5;
         }
         .soma-empty {
           font-size: 0.85rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           margin: 0;
         }
 
@@ -427,17 +427,17 @@ export default function SomaClient({
         }
         .soma-mood {
           font-size: 0.8rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           font-style: italic;
         }
         .soma-compound {
           font-size: 0.75rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           letter-spacing: 0.04em;
         }
         .soma-updated {
           font-size: 0.72rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           flex-shrink: 0;
         }
 
@@ -470,7 +470,7 @@ export default function SomaClient({
         }
         .soma-meter-label {
           font-size: 0.75rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           text-transform: lowercase;
           letter-spacing: 0.04em;
           white-space: nowrap;
@@ -479,7 +479,7 @@ export default function SomaClient({
         }
         .soma-meter-track {
           height: 6px;
-          background: var(--surface-base);
+          background: var(--h-surface);
           border-radius: 3px;
           overflow: hidden;
         }
@@ -490,7 +490,7 @@ export default function SomaClient({
         }
         .soma-meter-val {
           font-size: 0.72rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           font-variant-numeric: tabular-nums;
           text-align: right;
         }
@@ -501,7 +501,7 @@ export default function SomaClient({
           flex-direction: column;
           gap: 0.25rem;
           padding-top: 0.25rem;
-          border-top: 1px solid var(--border-subtle);
+          border-top: 1px solid var(--h-line);
         }
         .soma-affect-row {
           display: flex;
@@ -510,7 +510,7 @@ export default function SomaClient({
         }
         .soma-affect-label {
           font-size: 0.7rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           text-transform: lowercase;
           letter-spacing: 0.06em;
           width: 44px;
@@ -518,18 +518,18 @@ export default function SomaClient({
         }
         .soma-affect-val {
           font-size: 0.82rem;
-          color: var(--text-main);
+          color: var(--h-ink);
         }
         .soma-affect-int {
           font-size: 0.72rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
         }
 
         /* Footer */
         .soma-fetched {
           margin-top: 1.5rem;
           font-size: 0.72rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           text-align: center;
         }
 
@@ -540,7 +540,7 @@ export default function SomaClient({
         .soma-extra-title {
           font-size: 0.75rem;
           font-weight: 600;
-          color: var(--text-muted);
+          color: var(--h-muted);
           letter-spacing: 0.08em;
           text-transform: uppercase;
           margin: 0 0 0.75rem;
@@ -555,8 +555,8 @@ export default function SomaClient({
           align-items: center;
           gap: 0.5rem;
           padding: 0.5rem 0.75rem;
-          background: var(--card-bg);
-          border: 1px solid var(--border-subtle);
+          background: var(--h-surface);
+          border: 1px solid var(--h-line);
           border-radius: var(--radius-md, 8px);
           flex-wrap: wrap;
         }
@@ -567,23 +567,23 @@ export default function SomaClient({
         .soma-extra-badge {
           font-size: 0.72rem;
           padding: 0.15rem 0.45rem;
-          border: 1px solid var(--border-subtle);
+          border: 1px solid var(--h-line);
           border-radius: 4px;
           white-space: nowrap;
           flex-shrink: 0;
         }
         .soma-extra-text {
           font-size: 0.82rem;
-          color: var(--text-main);
+          color: var(--h-ink);
         }
         .soma-extra-sub {
           font-size: 0.72rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           font-style: italic;
         }
         .soma-extra-time {
           font-size: 0.7rem;
-          color: var(--text-muted);
+          color: var(--h-muted);
           flex-shrink: 0;
           margin-left: auto;
         }

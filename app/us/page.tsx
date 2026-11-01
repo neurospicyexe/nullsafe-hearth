@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 // Canonical companion colors (hearth/CLAUDE.md) — pre-0019 sessions have null companion_id.
 const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia:   "#4ade80",
 };
@@ -40,7 +40,7 @@ function AuthorChip({ companionId }: { companionId: string | null | undefined })
 // Colors mirror the existing .valence-badge palette (globals.css) for visual
 // consistency with /threads, just applied inline to match this page's idiom.
 const VALENCE_COLOR: Record<string, { bg: string; fg: string }> = {
-  toward:  { bg: "hsla(var(--accent-hue), 85%, 65%, 0.15)", fg: "var(--accent)" }, // warm/amber
+  toward:  { bg: "color-mix(in srgb, var(--h-lamp) 15%, transparent)", fg: "var(--h-lamp)" }, // warm/amber
   tender:  { bg: "rgba(244,114,182,0.15)", fg: "#fcc2d7" }, // soft pink/rose
   repair:  { bg: "rgba(34,197,94,0.15)",   fg: "#bbf7d0" }, // green
   rupture: { bg: "rgba(239,68,68,0.15)",   fg: "#fca5a5" }, // red
@@ -117,9 +117,9 @@ export default async function UsPage() {
           </div>
         )}
         {woundsCount > 0 && (
-          <div className="state-cell" style={{ borderLeft: "3px solid var(--red)" }}>
+          <div className="state-cell" style={{ borderLeft: "3px solid var(--h-warn)" }}>
             <div className="state-cell-label">Living Wounds</div>
-            <div className="state-cell-value" style={{ color: "var(--red)" }}>{woundsCount}</div>
+            <div className="state-cell-value" style={{ color: "var(--h-warn)" }}>{woundsCount}</div>
           </div>
         )}
       </div>

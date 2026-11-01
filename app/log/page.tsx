@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 // Companion colors per repo convention (app/companions/[id]/sections.tsx).
 const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia: "#4ade80",
   raziel: "#f59e0b",

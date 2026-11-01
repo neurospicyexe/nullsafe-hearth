@@ -14,7 +14,7 @@ const IMP_REGISTRY: Record<string, { label: string; role: string }> = {
 
 // Companion color convention from Hearth design system.
 const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia:   "#4ade80",
 };

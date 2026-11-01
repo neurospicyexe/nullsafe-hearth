@@ -19,7 +19,7 @@ export default function LiveFeedImage({ src: baseSrc, currentRoom }: { src: stri
   if (error) {
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem", fontStyle: "italic" }}>
+        <span style={{ color: "var(--h-muted)", fontSize: "0.9rem", fontStyle: "italic" }}>
           Awaiting feed for {currentRoom}...
         </span>
       </div>
@@ -33,7 +33,7 @@ export default function LiveFeedImage({ src: baseSrc, currentRoom }: { src: stri
       alt={`Current view of ${currentRoom}`}
       style={{
         width: "100%", height: "100%", position: "absolute", inset: 0, objectFit: "cover",
-        background: "var(--surface-base)", border: "none",
+        background: "var(--h-surface)", border: "none",
       }}
       onError={() => setError(true)}
     />

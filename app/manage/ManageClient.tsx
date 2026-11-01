@@ -76,8 +76,8 @@ export default function ManageClient({ bundles }: { bundles: CompanionBundle[] }
               onClick={() => { setCompanion(b.id); setMsg(null); }}
               className="manage-pill"
               style={{
-                borderColor: active ? c : "var(--border)",
-                color: active ? c : "var(--text-muted)",
+                borderColor: active ? c : "var(--h-line)",
+                color: active ? c : "var(--h-muted)",
                 background: active ? `${c}1a` : "transparent",
               }}
             >

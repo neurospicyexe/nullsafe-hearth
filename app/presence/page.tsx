@@ -4,7 +4,7 @@ import type { CompanionSomaState } from "@/lib/halseth";
 export const dynamic = "force-dynamic";
 
 const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia: "#4ade80",
 };
@@ -74,7 +74,7 @@ function PresenceCard({ companion, soma }: { companion: string; soma: CompanionS
     [soma?.float_3_label ?? null, soma?.soma_float_3 ?? null],
   ];
   return (
-    <section style={{ border: "1px solid var(--border, #2a2a2a)", borderRadius: "12px", padding: "1.25rem", textAlign: "center", background: "var(--surface, #141414)" }}>
+    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "12px", padding: "1.25rem", textAlign: "center", background: "var(--surface, #141414)" }}>
       <Avatar soma={soma} companion={companion} />
       <h2 className="page-title" style={{ fontSize: "1.1rem", color, margin: "0.4rem 0 0.1rem" }}>{companion}</h2>
       {soma?.current_mood && <p className="page-subtitle" style={{ fontSize: "0.85rem", margin: 0 }}>{soma.current_mood}</p>}

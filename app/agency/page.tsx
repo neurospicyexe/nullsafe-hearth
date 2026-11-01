@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 const COMPANIONS: Array<{ id: string; name: string; color: string }> = [
   { id: "cypher", name: "Cypher", color: "#e2e8f0" },
-  { id: "drevan", name: "Drevan", color: "var(--accent)" },
+  { id: "drevan", name: "Drevan", color: "var(--h-lamp)" },
   { id: "gaia", name: "Gaia", color: "#4ade80" },
 ];
 
@@ -51,7 +51,7 @@ function CompanionColumn({
 }: { name: string; color: string; preferences: CompanionPreference[]; refusals: CompanionRefusal[] }) {
   return (
     <section style={{
-      border: "1px solid var(--border, #2a2a2a)", borderRadius: "10px",
+      border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px",
       padding: "1.1rem", background: "var(--surface, #141414)",
     }}>
       <h2 className="page-title" style={{ fontSize: "1.1rem", margin: "0 0 0.9rem", color }}>{name}</h2>

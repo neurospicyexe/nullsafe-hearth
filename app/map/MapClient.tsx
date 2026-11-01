@@ -47,10 +47,10 @@ function readColors(): Record<string, string> {
   if (typeof window === "undefined") return FALLBACK;
   const css = getComputedStyle(document.documentElement);
   const pick = (v: string, k: string) => css.getPropertyValue(v).trim() || FALLBACK[k]!;
-  return { raziel: pick("--raziel", "raziel"), cypher: pick("--cypher", "cypher"), drevan: pick("--drevan", "drevan"), gaia: pick("--gaia", "gaia"), system: FALLBACK.system! };
+  return { raziel: pick("--h-lamp", "raziel"), cypher: pick("--h-cypher", "cypher"), drevan: pick("--h-drevan", "drevan"), gaia: pick("--h-gaia", "gaia"), system: FALLBACK.system! };
 }
 
-// The theme colours are not all hex (--drevan is hsl()), and hex-alpha appended to hsl() is an
+// The theme colours are not all hex (the old violet was hsl()), and hex-alpha appended to hsl() is an
 // invalid colour that canvas draws as black: every Drevan edge drew black until 10-29.
 function withAlpha(c: string, a: number): string {
   const hsl = /^hsla?\(([^)]+)\)$/i.exec(c);

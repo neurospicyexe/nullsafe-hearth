@@ -22,7 +22,7 @@ const DEPTH_COLORS = ["#475569", "#60a5fa", "#a78bfa", "#f472b6"];
 
 const CHART_STYLE = {
   fontSize: "0.75rem",
-  fill:     "var(--muted)",
+  fill:     "var(--h-muted)",
 };
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -39,7 +39,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 // Simple horizontal bar for freq tables -- no Recharts overhead for small lists
 function FreqBar({ count, max, color }: { count: number; max: number; color: string }) {
   return (
-    <div style={{ flex: 1, height: "6px", background: "var(--border)", borderRadius: "3px" }}>
+    <div style={{ flex: 1, height: "6px", background: "var(--h-line)", borderRadius: "3px" }}>
       <div
         style={{
           width: `${max > 0 ? (count / max) * 100 : 0}%`,
@@ -83,8 +83,8 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                   <XAxis dataKey="name" tick={CHART_STYLE} axisLine={false} tickLine={false} />
                   <YAxis tick={CHART_STYLE} axisLine={false} tickLine={false} width={24} />
                   <Tooltip
-                    contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "0.8rem" }}
-                    cursor={{ fill: "var(--border)", opacity: 0.3 }}
+                    contentStyle={{ background: "var(--surface)", border: "1px solid var(--h-line)", borderRadius: "6px", fontSize: "0.8rem" }}
+                    cursor={{ fill: "var(--h-line)", opacity: 0.3 }}
                   />
                   <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                     {hrvBiometrics.counts.map((entry, i) => (
@@ -119,8 +119,8 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                 <XAxis dataKey="name" tick={CHART_STYLE} axisLine={false} tickLine={false} />
                 <YAxis tick={CHART_STYLE} axisLine={false} tickLine={false} width={24} />
                 <Tooltip
-                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "0.8rem" }}
-                  cursor={{ fill: "var(--border)", opacity: 0.3 }}
+                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--h-line)", borderRadius: "6px", fontSize: "0.8rem" }}
+                  cursor={{ fill: "var(--h-line)", opacity: 0.3 }}
                 />
                 <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                   {depthCounts.map((_, i) => (
@@ -144,7 +144,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                 <span style={{ width: "9rem", flexShrink: 0, opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {name}
                 </span>
-                <FreqBar count={count} max={maxFront} color="var(--accent)" />
+                <FreqBar count={count} max={maxFront} color="var(--h-lamp)" />
                 <span style={{ opacity: 0.45, fontSize: "0.75rem", flexShrink: 0, width: "2rem", textAlign: "right" }}>
                   {count}
                 </span>
@@ -170,7 +170,7 @@ export default function WellnessClient({ sessionCount, hrvBiometrics, hrvCounts,
                   style={{
                     fontSize:  `${scale}rem`,
                     opacity,
-                    color:     "var(--accent)",
+                    color:     "var(--h-lamp)",
                     cursor:    "default",
                     fontWeight: count === maxEmotion ? 600 : 400,
                   }}

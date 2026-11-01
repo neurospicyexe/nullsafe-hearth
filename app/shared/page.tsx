@@ -18,9 +18,9 @@ export default async function SharedPage() {
           <div className="pending-dot" />
           Bridge not connected. Partner data will appear here when the bridge is active.
         </div>
-        <p style={{ marginTop: "1rem", fontSize: "0.78rem", color: "var(--muted)" }}>
+        <p style={{ marginTop: "1rem", fontSize: "0.78rem", color: "var(--h-muted)" }}>
           Your own tasks, events, and lists live at{" "}
-          <Link href="/tasks" style={{ color: "var(--accent)" }}>Tasks →</Link>
+          <Link href="/tasks" style={{ color: "var(--h-lamp)" }}>Tasks →</Link>
         </p>
       </>
     );
@@ -49,7 +49,7 @@ export default async function SharedPage() {
       {bridge.tasks?.length === 0 && bridge.lists?.length === 0 && (
         <p className="empty">
           Bridge is connected but no shared items yet. Your own tasks live at{" "}
-          <Link href="/tasks" style={{ color: "var(--accent)" }}>Tasks →</Link>
+          <Link href="/tasks" style={{ color: "var(--h-lamp)" }}>Tasks →</Link>
         </p>
       )}
     </>

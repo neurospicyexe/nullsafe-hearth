@@ -275,7 +275,7 @@ function ListSection({ listItems }: { listItems: ListItem[] }) {
           <div key={name}>
             <div className="tp-list-header">
               <span>{name}</span>
-              <span style={{ fontWeight: 400, letterSpacing: 0, color: "var(--border)" }}>
+              <span style={{ fontWeight: 400, letterSpacing: 0, color: "var(--h-line)" }}>
                 {remaining} left
               </span>
             </div>

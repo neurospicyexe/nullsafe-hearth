@@ -19,7 +19,7 @@ function IntensityBar({ value }: { value: number }) {
   return (
     <div style={{
       height: "3px",
-      background: "var(--border-subtle)",
+      background: "var(--h-line)",
       borderRadius: "2px",
       overflow: "hidden",
       width: "60px",
@@ -28,7 +28,7 @@ function IntensityBar({ value }: { value: number }) {
       <div style={{
         height: "100%",
         width: `${value}%`,
-        background: "var(--accent)",
+        background: "var(--h-lamp)",
         borderRadius: "2px",
         transition: "width 0.3s var(--ease-out)",
       }} />

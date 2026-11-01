@@ -15,7 +15,7 @@ import ClientTime from "@/components/ClientTime";
 const PAGE_LIMIT = 200;
 
 const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
+  drevan: "var(--h-lamp)",
   cypher: "#e2e8f0",
   gaia: "#4ade80",
 };
@@ -70,7 +70,7 @@ export default async function BetweenPage({
                 borderRadius: "999px",
                 border: `1px solid ${active ? color : "#ffffff22"}`,
                 background: active ? `${color}1a` : "transparent",
-                color: active ? color : "var(--text-muted)",
+                color: active ? color : "var(--h-muted)",
               }}
             >
               {f.label}

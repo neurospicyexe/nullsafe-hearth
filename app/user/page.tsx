@@ -12,7 +12,7 @@ function sleepBar(hours: number | null) {
   const pct = Math.min((hours / 9) * 100, 100);
   const color = hours >= 7 ? "#4ade80" : hours >= 5 ? "#facc15" : "#ef4444";
   return (
-    <div style={{ height: "4px", background: "var(--border)", borderRadius: "2px", overflow: "hidden", marginTop: "0.25rem" }}>
+    <div style={{ height: "4px", background: "var(--h-line)", borderRadius: "2px", overflow: "hidden", marginTop: "0.25rem" }}>
       <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: "2px" }} />
     </div>
   );
@@ -76,7 +76,7 @@ export default async function UserPage() {
           ) : (
             <div className="state-cell" style={{ gridColumn: "1 / -1" }}>
               <div className="state-cell-label">Status</div>
-              <div className="state-cell-value" style={{ color: "var(--muted)", fontSize: "0.88rem" }}>No open session</div>
+              <div className="state-cell-value" style={{ color: "var(--h-muted)", fontSize: "0.88rem" }}>No open session</div>
             </div>
           )}
 

@@ -73,7 +73,7 @@ export default async function CompanionSittingPage({ params }: { params: Promise
                 <div
                   style={{
                     fontSize: "0.82rem",
-                    color: "var(--text-muted)",
+                    color: "var(--h-muted)",
                     fontStyle: "italic",
                     paddingLeft: "0.75rem",
                     borderLeft: `2px solid ${config.color}`,
