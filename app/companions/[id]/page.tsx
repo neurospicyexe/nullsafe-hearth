@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { fetchCompanionRundown, fetchSomaStates } from "@/lib/halseth";
 import { COMPANION_COLOR } from "@/lib/shell";
-import { ageLabel } from "@/lib/home-model";
+import { ageLabel, buildWhoIsHome } from "@/lib/home-model";
+import { PresenceRing } from "@/components/kit/PresenceRing";
 import { COMPANION_NAME, companionBars, companionDoors, parseCompanionId, rundownLines } from "@/lib/companion-page";
 import { Bars } from "@/components/kit/Bars";
 import DoorList from "@/components/kit/DoorList";
@@ -22,6 +23,9 @@ export default async function CompanionOverview({ params }: { params: Promise<{ 
   const nowDate = new Date(now);
   const name = COMPANION_NAME[id];
   const row = soma?.[id] ?? null;
+  // Same builder and wording as Who's home, so the header and Home cannot disagree.
+  const home = buildWhoIsHome(soma, nowDate).find((r) => r.id === id);
+  const statusLine = home?.status ? (home.statusStale ? `last said: ${home.status}, ${home.statusAge}` : home.status) : "";
   const seen = ageLabel(row?.seen_at ?? null, nowDate);
   const bars = companionBars(row, rundown);
   const last = rundown?.last_real_thing ?? null;
@@ -30,7 +34,13 @@ export default async function CompanionOverview({ params }: { params: Promise<{ 
   return (
     <div className="h-companion" data-companion={id} style={{ "--c": COMPANION_COLOR[id] } as React.CSSProperties}>
       <header className="h-companion-head">
-        <h1 className="h-companion-name">{name}</h1>
+        <div className="h-companion-id">
+          <PresenceRing id={id} fresh={home?.fresh ?? false} size="lg" />
+          <div className="h-companion-id-text">
+            <h1 className="h-companion-name">{name}</h1>
+            {statusLine && <span className="h-companion-status">{statusLine}</span>}
+          </div>
+        </div>
         {seen && <span className="h-companion-seen">seen {seen}</span>}
       </header>
 

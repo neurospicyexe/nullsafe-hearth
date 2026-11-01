@@ -10,6 +10,8 @@ export type HomeRow = {
   colorVar: string;
   status: string | null;
   statusStale: boolean;
+  /** Presence: Halseth has a state row and the shown status is not older than a day (same rule as statusStale). */
+  fresh: boolean;
   /** Age of the mood word ("3d"), shown with a stale status: "last said: warm, 3d". */
   statusAge: string;
   seenLabel: string;
@@ -57,7 +59,7 @@ export function buildWhoIsHome(soma: SomaData | null, now: Date): HomeRow[] {
   return COMPANIONS.map(({ id, name }) => {
     const base = { id, name, colorVar: COMPANION_COLOR[id] };
     const s = soma?.[id] ?? null;
-    if (!s) return { ...base, status: null, statusStale: false, statusAge: "", seenLabel: "", bars: [] };
+    if (!s) return { ...base, status: null, statusStale: false, fresh: false, statusAge: "", seenLabel: "", bars: [] };
 
     const status = s.current_mood ?? s.compound_state ?? null;
     // Halseth stamps mood_set_at for a mood word OR a compound state, so staleness gates on whichever is shown.
@@ -79,6 +81,7 @@ export function buildWhoIsHome(soma: SomaData | null, now: Date): HomeRow[] {
       ...base,
       status,
       statusStale,
+      fresh: !statusStale,
       statusAge: statusStale ? ageLabel(s.mood_set_at, now) : "",
       // seen_at = the companion's own last act (mood, journal entry, session close). Never updated_at:
       // the ferment cron moves that every hour, so every row would read "now".

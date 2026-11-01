@@ -198,6 +198,20 @@ describe("overview", () => {
     expect(html).not.toMatch(/#[0-9a-fA-F]{3,6}\b/);
   });
 
+  it("header shows a ring and the same status wording as Who's home (fresh, then stale)", async () => {
+    const mk = (at: string) =>
+      ({ cypher: { current_mood: "steady", mood_set_at: at, seen_at: at } }) as unknown as SomaData;
+    overrides.fetchCompanionRundown = async () => rundown();
+    overrides.fetchSomaStates = async () => mk(new Date().toISOString().slice(0, 19).replace("T", " "));
+    let html = renderToStaticMarkup(await Overview(params("cypher")));
+    expect(html).toContain("h-ring h-ring-lg is-fresh");
+    expect(html).toContain('<span class="h-companion-status">steady</span>');
+    overrides.fetchSomaStates = async () => mk("2020-01-01 00:00:00");
+    html = renderToStaticMarkup(await Overview(params("cypher")));
+    expect(html).toContain("is-stale");
+    expect(html).toMatch(/h-companion-status">last said: steady, \d+d</);
+  });
+
   it("Halseth down: says so, keeps the doors without counts, does not record a look", async () => {
     overrides.fetchCompanionRundown = async () => null;
     overrides.fetchSomaStates = async () => null;

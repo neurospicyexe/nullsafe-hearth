@@ -743,6 +743,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 @keyframes breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.85); } }
+@keyframes ringBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 @keyframes checkPop { 0% { opacity: 0.4; } 100% { opacity: 1; } }
 
 /* ── Tasks Page ──────────────────────────────────────────────────────────── */
@@ -2864,3 +2865,27 @@ body:has(.h-reader) { min-height: 0; }
 .h-door:focus-visible { outline-offset: -3px; }
 /* ...and children flush to a clipped card's edge (zero-padding cards like .h-cmp-card). */
 :is(.card, .h-panel:not(.is-answer), .h-hood-card, .h-home-card, .h-door) :focus-visible { outline-offset: -2px; }
+
+/* P8 presence ring. Decoration on the ring only: interior is flat --h-raised so the sym (in --c) keeps
+   >= 5.0:1 (drevan 5.01, cypher 9.33, gaia 6.98). Glow is box-shadow on the ring, never on text. */
+.h-ring {
+  --ring-size: 44px;
+  display: inline-flex; flex: none; align-items: center; justify-content: center;
+  width: var(--ring-size); height: var(--ring-size); border-radius: 50%;
+  background: var(--h-raised);
+  border: 2px solid color-mix(in srgb, var(--c, var(--h-muted)) 90%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c, var(--h-muted)) 35%, transparent);
+  color: var(--c, var(--h-muted));
+  font-family: var(--h-font);
+  font-size: calc(var(--ring-size) * 0.45); line-height: 1;
+}
+.h-ring-sm { --ring-size: 44px; }
+.h-ring-lg { --ring-size: 64px; }
+.h-ring.is-fresh { animation: ringBreath 3.5s ease-in-out infinite; }
+.h-ring.is-stale {
+  border-color: color-mix(in srgb, var(--c, var(--h-muted)) 40%, transparent);
+  box-shadow: none;
+}
+.h-companion-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.h-companion-id-text { display: flex; flex-direction: column; min-width: 0; }
+.h-companion-status { font-size: 0.9375rem; color: var(--h-muted); }
