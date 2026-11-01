@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 import { fetchTray, type TrayView } from "@/lib/halseth";
 import ClientTime from "@/components/ClientTime";
 import { COMPANION_CONFIG } from "@/app/companions/[id]/sections";
+import { toneOf } from "@/lib/tone";
 import TrayActions from "./TrayActions";
 
 const COMPANIONS = ["cypher", "drevan", "gaia"] as const;
@@ -36,7 +37,7 @@ export default async function TrayPage() {
         return (
           <div key={id} className="home-section-card" style={{ marginBottom: "1.5rem" }}>
             <div className="home-section-header" style={{ marginBottom: "0.5rem" }}>
-              <span className="home-section-title" style={{ color: config.color }}>
+              <span className={`home-section-title ${toneOf(id)}`}>
                 {config.sym} {config.display}
               </span>
               {view && (

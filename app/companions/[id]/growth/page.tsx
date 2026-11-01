@@ -16,6 +16,7 @@ import type {
 } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
 import JournalClient from "./JournalClient";
+import { markerTypeColor } from "../domain-colors";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
@@ -107,15 +108,12 @@ export default async function GrowthPage({
   return (
     <div data-companion={id}>
       {/* Page title */}
-      <div
-        className="companion-header"
-        style={{ background: config.gradient, border: `1px solid ${config.color}33` }}
-      >
-        <div className={`companion-avatar companion-avatar--lg ${id}`} style={{ borderColor: config.color }}>
+      <div className="companion-header">
+        <div className={`companion-avatar companion-avatar--lg ${id}`}>
           {config.sym}
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 className="companion-header-name" style={{ color: config.color }}>Growth</h1>
+        <div className="h-cmp-grow">
+          <h1 className="companion-header-name">Growth</h1>
           <p className="companion-header-tagline">{config.display}</p>
         </div>
       </div>
@@ -137,34 +135,15 @@ export default async function GrowthPage({
               }
               const barWidth = `${Math.min((p.strength / 10) * 100, 100)}%`;
               return (
-                <div
-                  key={p.id}
-                  className="section-row"
-                  style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.5rem" }}
-                >
-                  <span className="section-row-text" style={{ fontWeight: 500 }}>
+                <div key={p.id} className="section-row h-cmp-pattern">
+                  <span className="section-row-text h-cmp-body is-bold">
                     {p.pattern_text}
                   </span>
-                  <div style={{ width: "100%", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                    <div
-                      style={{
-                        flex: 1,
-                        height: "6px",
-                        background: "#ffffff10",
-                        borderRadius: "3px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: barWidth,
-                          height: "100%",
-                          background: config.color,
-                          borderRadius: "3px",
-                        }}
-                      />
+                  <div className="h-cmp-pattern-bar">
+                    <div className="h-cmp-bar is-grow">
+                      <i style={{ "--w": barWidth } as React.CSSProperties} />
                     </div>
-                    <span className="section-row-meta" style={{ flexShrink: 0, fontSize: "0.78rem" }}>
+                    <span className="section-row-meta h-cmp-sm h-cmp-fixed">
                       {evidenceCount} {evidenceCount === 1 ? "piece" : "pieces"} of evidence
                     </span>
                   </div>
@@ -177,28 +156,27 @@ export default async function GrowthPage({
 
       {/* ── Section 2: Journal ── */}
       <section className="page-section">
-        <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", flexWrap: "wrap" }}>
-          <h2 className="section-title" style={{ marginBottom: 0 }}>
+        <div className="h-cmp-heading-row">
+          <h2 className="section-title">
             {view === "pending" ? "Ratification queue" : view === "all" ? "Journal — full" : "Journal"}
           </h2>
           {view !== "recent" && (
-            <Link href={`/companions/${id}/growth`} className="home-section-link" style={{ fontSize: "0.82rem" }}>
+            <Link href={`/companions/${id}/growth`} className="home-section-link h-cmp-sm">
               ← recent
             </Link>
           )}
         </div>
 
         {view === "pending" && (
-          <p className="section-row-meta" style={{ margin: "0.35rem 0 0.75rem", fontSize: "0.82rem" }}>
+          <p className="section-row-meta h-cmp-sub-meta">
             Oldest first. Accept or decline empties the queue; entries disappear from this view once reviewed.
           </p>
         )}
 
-        <div style={{ marginTop: "0.75rem" }}>
+        <div className="h-cmp-mt-md">
           <JournalClient
             entries={entries}
             companionId={id}
-            companionColor={config.color}
             emptyText={
               overshot
                 ? `Page ${page} is past the end — use “← newer” to go back.`
@@ -211,14 +189,14 @@ export default async function GrowthPage({
 
         {/* Footer links. The old copy here ("More entries available — view the full list") was a
             plain <p> with nothing to click, on a page whose whole point is draining a queue. */}
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
+        <div className="h-cmp-wrap is-wide h-cmp-mt-md">
           {pendingCount !== null && pendingCount > 0 && view !== "pending" && (
-            <Link href={`/companions/${id}/growth?view=pending`} className="home-section-link" style={{ fontSize: "0.85rem" }}>
+            <Link href={`/companions/${id}/growth?view=pending`} className="home-section-link h-cmp-fine">
               {pendingCount} awaiting ratification → ratify all
             </Link>
           )}
           {(moreThanShown || view === "pending") && (
-            <Link href={`/companions/${id}/growth?view=all`} className="home-section-link" style={{ fontSize: "0.85rem" }}>
+            <Link href={`/companions/${id}/growth?view=all`} className="home-section-link h-cmp-fine">
               view the full list →
             </Link>
           )}
@@ -227,24 +205,14 @@ export default async function GrowthPage({
         {/* Pager. Only on the paged views -- "recent" is a deliberate 20-row clip with its own
             pointer above, not page 1 of anything. */}
         {view !== "recent" && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              flexWrap: "wrap",
-              marginTop: "0.75rem",
-              paddingTop: "0.75rem",
-              borderTop: "1px solid #ffffff12",
-            }}
-          >
+          <div className="h-cmp-pager">
             {page > 1 ? (
-              <Link href={pageHref(page - 1)} className="home-section-link" style={{ fontSize: "0.85rem" }}>
+              <Link href={pageHref(page - 1)} className="home-section-link h-cmp-fine">
                 ← newer
               </Link>
             ) : null}
 
-            <span className="section-row-meta" style={{ fontSize: "0.82rem" }}>
+            <span className="section-row-meta h-cmp-sm">
               {entries.length === 0
                 ? /* No rows: a range would read "0-99800", which is a range of nothing dressed up
                      as a position in the data. */
@@ -257,7 +225,7 @@ export default async function GrowthPage({
             </span>
 
             {hasMorePages ? (
-              <Link href={pageHref(page + 1)} className="home-section-link" style={{ fontSize: "0.85rem" }}>
+              <Link href={pageHref(page + 1)} className="home-section-link h-cmp-fine">
                 older →
               </Link>
             ) : null}
@@ -269,33 +237,20 @@ export default async function GrowthPage({
       {allMarkers.length > 0 && (
         <section className="page-section">
           <h2 className="section-title">Markers</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div className="h-cmp-wrap">
             {allMarkers.map((m) => {
-              const markerColor =
-                m.marker_type === "milestone"   ? "#f59e0b" :
-                m.marker_type === "shift"       ? "#818cf8" :
-                m.marker_type === "realization" ? "#34d399" : "#6b7280";
-
               return (
                 <div
                   key={m.id}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                    padding: "0.3rem 0.7rem",
-                    background: `${markerColor}18`,
-                    border: `1px solid ${markerColor}44`,
-                    borderRadius: "6px",
-                    fontSize: "0.82rem",
-                  }}
+                  className="h-cmp-chip"
+                  style={{ "--c": markerTypeColor(m.marker_type) } as React.CSSProperties}
                 >
-                  <span style={{ color: markerColor, fontWeight: 600 }}>{m.marker_type}</span>
-                  <span style={{ color: "#cbd5e1" }}>{m.description}</span>
+                  <span className="h-cmp-chip-kind">{m.marker_type}</span>
+                  <span className="h-cmp-chip-text">{m.description}</span>
                   {m.related_pattern_id && (
-                    <span style={{ color: "#64748b", fontSize: "0.75rem" }}>(see pattern above)</span>
+                    <span className="h-cmp-chip-fine">(see pattern above)</span>
                   )}
-                  <span style={{ color: "#475569", fontSize: "0.75rem" }}>
+                  <span className="h-cmp-chip-fine">
                     {fmtTime(m.created_at)}
                   </span>
                 </div>

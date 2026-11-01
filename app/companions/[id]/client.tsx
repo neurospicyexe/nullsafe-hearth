@@ -59,7 +59,7 @@ export function LetterFormClient({
       />
       <div className="letter-form-actions">
         {status === "error" && (
-          <span style={{ fontSize: "0.72rem", color: "var(--h-warn)", marginRight: "auto" }}>
+          <span className="h-cmp-send-err">
             failed to send
           </span>
         )}

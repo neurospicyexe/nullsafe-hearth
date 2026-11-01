@@ -22,7 +22,7 @@ export default async function CompanionJournalPage({ params }: { params: Promise
 
   return (
     <div>
-      <h1 style={{ marginBottom: "1.5rem" }}>{config.display} · Identity Journal</h1>
+      <h1 className="h-cmp-title">{config.display} · Identity Journal</h1>
       <JournalSection entries={listed ?? []} />
     </div>
   );

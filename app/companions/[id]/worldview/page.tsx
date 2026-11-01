@@ -6,6 +6,7 @@ import { fetchConclusions } from "@/lib/halseth";
 import PinButton from "@/components/PinButton";
 import type { ConclusionRow } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
+import { confidenceColor, FLAG_COLOR } from "../domain-colors";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
@@ -19,13 +20,6 @@ const BELIEF_TYPE_LABELS: Record<string, string> = {
   observational: "Observational",
   systemic:      "Systemic",
 };
-
-// Confidence bar color: green at 1.0, amber at 0.5, muted below
-function confidenceColor(c: number): string {
-  if (c >= 0.8) return "#22c55e";
-  if (c >= 0.5) return "#eab308";
-  return "#6b7280";
-}
 
 export default async function WorldviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
@@ -56,15 +50,12 @@ export default async function WorldviewPage({ params }: { params: Promise<{ id: 
   return (
     <div data-companion={id}>
       {/* Header */}
-      <div
-        className="companion-header"
-        style={{ background: config.gradient, border: `1px solid ${config.color}33` }}
-      >
-        <div className={`companion-avatar companion-avatar--lg ${id}`} style={{ borderColor: config.color }}>
+      <div className="companion-header">
+        <div className={`companion-avatar companion-avatar--lg ${id}`}>
           {config.sym}
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 className="companion-header-name" style={{ color: config.color }}>Worldview</h1>
+        <div className="h-cmp-grow">
+          <h1 className="companion-header-name">Worldview</h1>
           <p className="companion-header-tagline">{config.display}</p>
         </div>
       </div>
@@ -88,39 +79,27 @@ export default async function WorldviewPage({ params }: { params: Promise<{ id: 
                 const flagged = c.contradiction_flagged === 1;
                 const cc = confidenceColor(c.confidence);
                 return (
-                  <div
-                    key={c.id}
-                    className="section-row"
-                    style={{
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      gap: "0.5rem",
-                      ...(flagged ? { borderLeft: "3px solid #eab308", paddingLeft: "0.75rem" } : {}),
-                    }}
-                  >
-                    {/* Conclusion text */}
-                    <span className="section-row-text" style={{ fontWeight: 500 }}>
+                  <div key={c.id} className="section-row h-cmp-col">
+                    {/* Conclusion text (a flagged one carries the [?] flagged badge, not an edge accent) */}
+                    <span className="section-row-text h-cmp-body is-bold">
                       {c.conclusion_text}
                     </span>
 
                     {/* Meta row */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                    <div className="h-cmp-wrap is-mid">
                       {/* Pin (mig 0148): keeps this belief in front of them at every boot */}
                       <PinButton companionId={id} kind="conclusion" id={c.id} pinned={!!c.pinned_at} compact />
                       {/* Confidence bar + value */}
                       <span
-                        className="badge"
-                        style={{ background: `${cc}22`, color: cc, border: `1px solid ${cc}44` }}
+                        className="h-cmp-badge"
+                        style={{ "--c": cc } as React.CSSProperties}
                       >
                         {Number.isFinite(c.confidence) ? c.confidence.toFixed(2) : "--"}
                       </span>
 
                       {/* Subject tag */}
                       {c.subject && (
-                        <span
-                          className="badge"
-                          style={{ background: `${config.color}18`, color: config.color, border: `1px solid ${config.color}44` }}
-                        >
+                        <span className="h-cmp-badge">
                           {c.subject}
                         </span>
                       )}
@@ -128,15 +107,15 @@ export default async function WorldviewPage({ params }: { params: Promise<{ id: 
                       {/* Contradiction flag */}
                       {flagged && (
                         <span
-                          className="badge"
-                          style={{ background: "#eab30822", color: "#eab308", border: "1px solid #eab30844" }}
+                          className="h-cmp-badge"
+                          style={{ "--c": FLAG_COLOR } as React.CSSProperties}
                         >
                           [?] flagged
                         </span>
                       )}
 
                       {/* Timestamp */}
-                      <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                      <span className="section-row-meta h-cmp-sm">
                         {fmtTime(c.created_at)}
                         {c.edited_at ? ` · edited ${fmtTime(c.edited_at)}` : ""}
                       </span>
@@ -144,7 +123,7 @@ export default async function WorldviewPage({ params }: { params: Promise<{ id: 
 
                     {/* Provenance */}
                     {c.provenance && (
-                      <span className="section-row-meta" style={{ fontSize: "0.78rem", fontStyle: "italic" }}>
+                      <span className="section-row-meta h-cmp-sm is-italic">
                         {c.provenance}
                       </span>
                     )}

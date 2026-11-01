@@ -18,7 +18,7 @@ export default async function CompanionAuditPage({ params }: { params: Promise<{
 
   return (
     <div>
-      <h1 style={{ marginBottom: "1.5rem" }}>Cypher · Audit Log</h1>
+      <h1 className="h-cmp-title">Cypher · Audit Log</h1>
       <CypherAuditSection entries={auditEntries ?? []} />
     </div>
   );

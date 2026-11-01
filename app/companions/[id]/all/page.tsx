@@ -63,14 +63,14 @@ import {
   VoiceLaneSection,
 } from "../sections";
 import { parseCompanionId } from "@/lib/companion-page";
+import { COMPANION_COLOR } from "@/lib/shell";
+import { entryTypeColor, runStatusColor, beliefTypeColor, FLAG_COLOR } from "../domain-colors";
 
 // ── Letters ───────────────────────────────────────────────────────────────────
 
 type LetterItem =
   | { kind: "incoming"; note: CompanionNote; at: string }
   | { kind: "outgoing"; note: Note;          at: string };
-
-const RAZIEL_COLOR = "#f59e0b";
 
 function LettersSection({
   incoming,
@@ -81,7 +81,7 @@ function LettersSection({
   incoming: CompanionNote[];
   outgoing: Note[];
   companionId: string;
-  config: { display: string; color: string };
+  config: { display: string };
 }) {
   const letters: LetterItem[] = [
     ...incoming.map((n): LetterItem => ({ kind: "incoming", note: n, at: n.created_at })),
@@ -103,7 +103,7 @@ function LettersSection({
                 <div key={item.note.id} className="letter-bubble incoming">
                   <div className="letter-body">{item.note.note_text}</div>
                   <div className="letter-meta">
-                    <span style={{ color: config.color, fontWeight: 600, flexShrink: 0 }}>{config.display}</span>
+                    <span className="h-cmp-who">{config.display}</span>
                     <span>·</span>
                     <span>{fmtTime(item.note.created_at)}</span>
                   </div>
@@ -200,20 +200,17 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   return (
     <div data-companion={id}>
       {/* Header */}
-      <div
-        className="companion-header"
-        style={{ background: config.gradient, border: `1px solid ${config.color}33` }}
-      >
-        <div className={`companion-avatar companion-avatar--lg ${id}`} style={{ borderColor: config.color }}>
+      <div className="companion-header">
+        <div className={`companion-avatar companion-avatar--lg ${id}`}>
           {config.sym}
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 className="companion-header-name" style={{ color: config.color }}>{config.display}</h1>
+        <div className="h-cmp-grow">
+          <h1 className="companion-header-name">{config.display}</h1>
           <p className="companion-header-tagline">{config.tagline}</p>
           {degradedSources.length > 0 && (
             // D11: a dead source must not pass for a quiet one. Sections fed by these sources
             // are MISSING below, not empty.
-            <p style={{ marginTop: 4, fontSize: 12, color: "#f87171" }}>
+            <p className="h-cmp-warn">
               ⚠ state load degraded: {degradedSources.join(", ")} — affected sections are missing, not empty
             </p>
           )}
@@ -252,7 +249,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
       {/* Fermentation — floats vs their drifting baselines + the new felt-needs (growth you can watch) */}
       <section className="page-section">
         <h2 className="section-title">Fermentation</h2>
-        <FermentationSection data={fermentData} color={config.color} />
+        <FermentationSection data={fermentData} color={COMPANION_COLOR[id]} />
       </section>
 
       {/* Letters — full thread, unchanged */}
@@ -362,7 +359,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           <h2 className="section-title section-title-flush">SOMA Feelings</h2>
           <Link href={`/companions/${id}/feelings`} className="home-section-link">all →</Link>
         </div>
-        <SomaFeelingsSection feelings={feelingEntries} color={config.color} />
+        <SomaFeelingsSection feelings={feelingEntries} color={COMPANION_COLOR[id]} />
       </section>
 
       {/* Open Loops */}
@@ -380,7 +377,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           <h2 className="section-title section-title-flush">Sitting Notes</h2>
           <Link href={`/companions/${id}/sitting`} className="home-section-link">all →</Link>
         </div>
-        <SittingNotesSection notes={sittingEntries} color={config.color} />
+        <SittingNotesSection notes={sittingEntries} color={COMPANION_COLOR[id]} />
       </section>
 
       {/* Relational State */}
@@ -411,7 +408,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
       {/* Voice Lane — lane-fidelity telemetry from bot replies */}
       <section className="page-section">
         <h2 className="section-title">Voice Lane</h2>
-        <VoiceLaneSection scores={voiceScores} color={config.color} />
+        <VoiceLaneSection scores={voiceScores} color={COMPANION_COLOR[id]} />
       </section>
 
       {/* Growth Preview */}
@@ -423,16 +420,11 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           </div>
           <div className="section-list">
             {growthJournalItems.map((entry) => {
-              const badgeColor =
-                entry.entry_type === "learning"   ? "#3b82f6" :
-                entry.entry_type === "insight"    ? "#a855f7" :
-                entry.entry_type === "connection" ? "#22c55e" :
-                entry.entry_type === "question"   ? "#f59e0b" : "#6b7280";
               return (
                 <div key={entry.id} className="section-row">
                   <span
-                    className="badge"
-                    style={{ background: `${badgeColor}22`, color: badgeColor, border: `1px solid ${badgeColor}44` }}
+                    className="h-cmp-badge"
+                    style={{ "--c": entryTypeColor(entry.entry_type) } as React.CSSProperties}
                   >
                     {entry.entry_type}
                   </span>
@@ -455,16 +447,12 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           </div>
           <div className="section-list">
             {autonomyRunItems.map((run) => {
-              const statusColor =
-                run.status === "running"   ? "#eab308" :
-                run.status === "completed" ? "#22c55e" :
-                run.status === "failed"    ? "#ef4444" : "#6b7280";
               return (
                 <div key={run.id} className="section-row">
                   <span className="section-row-label">{run.run_type}</span>
                   <span
-                    className="badge"
-                    style={{ background: `${statusColor}22`, color: statusColor, border: `1px solid ${statusColor}44` }}
+                    className="h-cmp-badge"
+                    style={{ "--c": runStatusColor(run.status) } as React.CSSProperties}
                   >
                     {run.status}
                   </span>
@@ -491,16 +479,11 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
               .slice(0, 3)
               .map((c) => {
                 const flagged = c.contradiction_flagged === 1;
-                const btColor =
-                  c.belief_type === "self"          ? "#a855f7" :
-                  c.belief_type === "relational"    ? "#3b82f6" :
-                  c.belief_type === "observational" ? "#22c55e" :
-                  c.belief_type === "systemic"      ? "#f59e0b" : "#6b7280";
                 return (
                   <div key={c.id} className="section-row">
                     <span
-                      className="badge"
-                      style={{ background: `${btColor}22`, color: btColor, border: `1px solid ${btColor}44` }}
+                      className="h-cmp-badge"
+                      style={{ "--c": beliefTypeColor(c.belief_type) } as React.CSSProperties}
                     >
                       {c.belief_type}
                     </span>
@@ -508,7 +491,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
                       {c.conclusion_text.length > 120 ? c.conclusion_text.slice(0, 120) + "…" : c.conclusion_text}
                     </span>
                     {flagged && (
-                      <span className="section-row-meta" style={{ color: "#eab308" }}>[?]</span>
+                      <span className="section-row-meta h-cmp-tint" style={{ "--c": FLAG_COLOR } as React.CSSProperties}>[?]</span>
                     )}
                   </div>
                 );
@@ -523,7 +506,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
           <h2 className="section-title section-title-flush">Memory Blocks</h2>
           <Link href={`/companions/${id}/blocks`} className="home-section-link">view →</Link>
         </div>
-        <p className="h-empty" style={{ fontSize: "0.85rem" }}>
+        <p className="h-empty h-cmp-fine">
           Full context blocks live on the sub-page.
         </p>
       </section>

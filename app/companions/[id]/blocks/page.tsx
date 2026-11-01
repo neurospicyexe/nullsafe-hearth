@@ -35,43 +35,43 @@ export default async function CompanionBlocksPage({ params }: { params: Promise<
       </div>
 
       {/* Persona Blocks — what this companion carries about itself */}
-      <div className="home-section-header" style={{ marginBottom: "0.75rem" }}>
+      <div className="home-section-header h-cmp-sec-tight">
         <span className="home-section-title">Persona</span>
       </div>
-      <div className="card" style={{ padding: "0.5rem 0", marginBottom: "2rem" }}>
+      <div className="card h-cmp-card is-gap">
         {personaBlocks.length === 0 && (
-          <p className="h-empty" style={{ padding: "1rem" }}>No persona blocks yet.</p>
+          <p className="h-empty h-cmp-pad">No persona blocks yet.</p>
         )}
         {personaBlocks.map((b) => (
-          <div key={b.id} className="journal-row" style={{ alignItems: "flex-start" }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div key={b.id} className="journal-row h-cmp-start">
+            <div className="h-cmp-grow">
               <div className="journal-text">{b.content}</div>
               {b.block_type && (
-                <span className="page-subtitle" style={{ fontSize: "0.78rem" }}>{b.block_type}</span>
+                <span className="page-subtitle h-cmp-sm">{b.block_type}</span>
               )}
             </div>
-            <span className="journal-time" style={{ flexShrink: 0 }}>{fmtTime(b.created_at)}</span>
+            <span className="journal-time h-cmp-fixed">{fmtTime(b.created_at)}</span>
           </div>
         ))}
       </div>
 
       {/* Human Blocks — what this companion carries about Raziel */}
-      <div className="home-section-header" style={{ marginBottom: "0.75rem" }}>
+      <div className="home-section-header h-cmp-sec-tight">
         <span className="home-section-title">About Raziel</span>
       </div>
-      <div className="card" style={{ padding: "0.5rem 0" }}>
+      <div className="card h-cmp-card">
         {humanBlocks.length === 0 && (
-          <p className="h-empty" style={{ padding: "1rem" }}>No relational blocks yet.</p>
+          <p className="h-empty h-cmp-pad">No relational blocks yet.</p>
         )}
         {humanBlocks.map((b) => (
-          <div key={b.id} className="journal-row" style={{ alignItems: "flex-start" }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div key={b.id} className="journal-row h-cmp-start">
+            <div className="h-cmp-grow">
               <div className="journal-text">{b.content}</div>
               {b.block_type && (
-                <span className="page-subtitle" style={{ fontSize: "0.78rem" }}>{b.block_type}</span>
+                <span className="page-subtitle h-cmp-sm">{b.block_type}</span>
               )}
             </div>
-            <span className="journal-time" style={{ flexShrink: 0 }}>{fmtTime(b.created_at)}</span>
+            <span className="journal-time h-cmp-fixed">{fmtTime(b.created_at)}</span>
           </div>
         ))}
       </div>

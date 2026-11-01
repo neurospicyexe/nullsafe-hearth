@@ -33,22 +33,13 @@ export function MetabolizeButton({
     }
   }
 
-  if (status === "done") return <span style={{ fontSize: "0.75rem", color: "var(--h-muted)" }}>metabolized</span>;
+  if (status === "done") return <span className="h-cmp-done">metabolized</span>;
 
   return (
     <button
       onClick={metabolize}
       disabled={status === "working"}
-      style={{
-        fontSize: "0.72rem",
-        padding: "0.15rem 0.55rem",
-        background: "transparent",
-        border: "1px solid var(--h-line)",
-        borderRadius: "4px",
-        color: status === "error" ? "var(--h-warn)" : "var(--h-muted)",
-        cursor: "pointer",
-        flexShrink: 0,
-      }}
+      className={`h-cmp-quiet-btn${status === "error" ? " is-error" : ""}`}
     >
       {status === "working" ? "…" : status === "error" ? "failed" : "metabolize"}
     </button>

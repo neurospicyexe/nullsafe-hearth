@@ -11,6 +11,7 @@ import type {
 } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
 import SeedsClient from "./SeedsClient";
+import { runStatusColor, runTypeColor } from "../domain-colors";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
@@ -52,15 +53,12 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
   return (
     <div data-companion={id}>
       {/* Page title */}
-      <div
-        className="companion-header"
-        style={{ background: config.gradient, border: `1px solid ${config.color}33` }}
-      >
-        <div className={`companion-avatar companion-avatar--lg ${id}`} style={{ borderColor: config.color }}>
+      <div className="companion-header">
+        <div className={`companion-avatar companion-avatar--lg ${id}`}>
           {config.sym}
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 className="companion-header-name" style={{ color: config.color }}>Autonomy</h1>
+        <div className="h-cmp-grow">
+          <h1 className="companion-header-name">Autonomy</h1>
           <p className="companion-header-tagline">{config.display}</p>
         </div>
       </div>
@@ -73,81 +71,49 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
         ) : (
           <div className="section-list">
             {sortedRuns.map((run) => {
-              const statusColor =
-                run.status === "running"   ? "#eab308" :
-                run.status === "completed" ? "#22c55e" :
-                run.status === "failed"    ? "#ef4444" : "#6b7280";
-
-              const runTypeBadgeColor =
-                run.run_type === "exploration" ? "#818cf8" :
-                run.run_type === "reflection"  ? "#14b8a6" :
-                run.run_type === "synthesis"   ? "#f97316" : "#6b7280";
-
               return (
-                <div
-                  key={run.id}
-                  className="section-row"
-                  style={{
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    gap: "0.4rem",
-                    borderLeft: `3px solid ${statusColor}`,
-                  }}
-                >
-                  {/* Type + status row */}
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div key={run.id} className="section-row h-cmp-col">
+                  {/* Type + status row: status is carried by its badge, not an edge accent */}
+                  <div className="h-cmp-wrap">
                     <span
-                      className="badge"
-                      style={{
-                        background: `${runTypeBadgeColor}22`,
-                        color: runTypeBadgeColor,
-                        border: `1px solid ${runTypeBadgeColor}44`,
-                      }}
+                      className="h-cmp-badge"
+                      style={{ "--c": runTypeColor(run.run_type) } as React.CSSProperties}
                     >
                       {run.run_type}
                     </span>
 
                     <span
-                      className="badge"
-                      style={{
-                        background: `${statusColor}22`,
-                        color: statusColor,
-                        border: `1px solid ${statusColor}44`,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.3rem",
-                      }}
+                      className="h-cmp-badge"
+                      style={{ "--c": runStatusColor(run.status) } as React.CSSProperties}
                     >
-                      {run.status === "running" && (
-                        <span className="live-dot" style={{ background: statusColor }} />
-                      )}
+                      {run.status === "running" && <span className="live-dot" />}
                       {run.status}
                     </span>
                   </div>
 
                   {/* Timestamps */}
-                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-                    <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                  <div className="h-cmp-wrap is-wide">
+                    <span className="section-row-meta h-cmp-sm">
                       started: {run.started_at ? fmtTime(run.started_at) : "—"}
                     </span>
-                    <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                    <span className="section-row-meta h-cmp-sm">
                       completed: {run.completed_at ? fmtTime(run.completed_at) : "—"}
                     </span>
                   </div>
 
                   {/* Stats */}
-                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-                    <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                  <div className="h-cmp-wrap is-wide">
+                    <span className="section-row-meta h-cmp-sm">
                       tokens: {run.tokens_used}
                     </span>
-                    <span className="section-row-meta" style={{ fontSize: "0.78rem" }}>
+                    <span className="section-row-meta h-cmp-sm">
                       artifacts: {run.artifacts_created}
                     </span>
                   </div>
 
                   {/* Error */}
                   {run.error_message && (
-                    <p style={{ margin: 0, fontSize: "0.78rem", color: "#ef4444" }}>
+                    <p className="h-cmp-err h-cmp-flush">
                       {run.error_message}
                     </p>
                   )}
@@ -163,7 +129,6 @@ export default async function AutonomyPage({ params }: { params: Promise<{ id: s
         <h2 className="section-title">Seeds</h2>
         <SeedsClient
           companionId={id}
-          companionColor={config.color}
           availableSeeds={availableSeeds}
           usedSeeds={usedSeeds}
         />

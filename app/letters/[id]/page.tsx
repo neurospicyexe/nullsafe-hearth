@@ -21,7 +21,7 @@ export default async function LetterPage({ params }: { params: Promise<{ id: str
     <article className="h-letter">
       <MarkRead id={item.id} />
       <Link href="/letters" className="h-home-link">All letters</Link>
-      <h1 className="h-letter-from" style={{ color: colorVar ?? "var(--h-muted)" }}>{who}</h1>
+      <h1 className="h-letter-from" style={{ "--c": colorVar ?? "var(--h-muted)" } as React.CSSProperties}>{who}</h1>
       {when && (
         <p className="h-letter-when"><ClientTime iso={when.toISOString()} /></p>
       )}

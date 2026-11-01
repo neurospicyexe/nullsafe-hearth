@@ -17,6 +17,7 @@ import type {
 } from "@/lib/halseth";
 import { COMPANION_CONFIG } from "@/app/companions/[id]/sections";
 import ClientTime from "@/components/ClientTime";
+import { COMPANION_COLOR } from "@/lib/shell";
 
 const COMPANIONS = ["drevan", "cypher", "gaia"] as const;
 type CompanionId = typeof COMPANIONS[number];
@@ -145,7 +146,7 @@ export default async function AutonomousPage() {
                     width: "0.55rem",
                     height: "0.55rem",
                     borderRadius: "50%",
-                    background: COMPANION_CONFIG[mostRecentRun.companion]?.color ?? "#6b7280",
+                    background: COMPANION_COLOR[mostRecentRun.companion] ?? "var(--h-muted)",
                     flexShrink: 0,
                     display: "inline-block",
                   }}
@@ -209,7 +210,7 @@ export default async function AutonomousPage() {
               key={id}
               className="card"
               style={{
-                border: `1px solid ${config.color}33`,
+                border: "1px solid var(--h-line)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "1rem",
@@ -217,7 +218,7 @@ export default async function AutonomousPage() {
             >
               {/* Companion name header */}
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ color: config.color, fontWeight: 700, fontSize: "1rem" }}>
+                <span style={{ color: COMPANION_COLOR[id], fontWeight: 700, fontSize: "1rem" }}>
                   {config.sym} {config.display}
                 </span>
               </div>

@@ -14,8 +14,6 @@ export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
 }
 
-const RAZIEL_COLOR = "var(--h-lamp)";
-
 type LetterItem =
   | { kind: "incoming"; note: InboxItem;     at: string }
   | { kind: "outgoing"; note: Note;          at: string };
@@ -50,15 +48,15 @@ export default async function CompanionLettersPage({ params }: { params: Promise
   ].sort((a, b) => ms(a.at) - ms(b.at));
 
   return (
-    <>
-      <div className="page-header" style={{ marginBottom: "2rem" }}>
-        <h1 className="page-title" style={{ marginTop: "0.4rem" }}>Letters</h1>
+    <div data-companion={id}>
+      <div className="page-header h-cmp-page-head">
+        <h1 className="page-title h-cmp-page-title">Letters</h1>
         <p className="page-subtitle">
           full thread · {letters.length} {letters.length === 1 ? "letter" : "letters"}
         </p>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div className="h-cmp-stack">
         <LetterFormClient companionId={id} companionName={config.display} />
 
         {inbox === null && outRows === null && <p className="h-empty">{HALSETH_DOWN}</p>}
@@ -80,32 +78,27 @@ export default async function CompanionLettersPage({ params }: { params: Promise
                     key={item.note.id}
                     href={`/letters/${item.note.id}`}
                     className={`letter-bubble incoming${item.note.read ? "" : " is-unread"}`}
-                    style={{ borderLeftColor: config.color }}
                   >
                     <div className="letter-body">{item.note.preview}</div>
                     <div className="letter-meta">
-                      <span style={{ color: config.color, fontWeight: 600 }}>{config.display}</span>
+                      <span className="h-cmp-who">{config.display}</span>
                       <span>·</span>
                       <span>{fmtTime(item.note.created_at)}</span>
                       <span>·</span>
                       {item.note.read ? (
                         <span>read</span>
                       ) : (
-                        <span className="letter-new" style={{ color: config.color }}>new</span>
+                        <span className="letter-new h-cmp-tint">new</span>
                       )}
                     </div>
                   </Link>
                 );
               }
               return (
-                <div
-                  key={item.note.id}
-                  className="letter-bubble outgoing"
-                  style={{ borderLeftColor: RAZIEL_COLOR }}
-                >
+                <div key={item.note.id} className="letter-bubble outgoing">
                   <div className="letter-body">{item.note.content}</div>
                   <div className="letter-meta">
-                    <span style={{ color: RAZIEL_COLOR, fontWeight: 600 }}>Raziel</span>
+                    <span className="h-cmp-who is-raziel">Raziel</span>
                     <span>·</span>
                     <span>{fmtTime(item.note.created_at)}</span>
                   </div>
@@ -115,6 +108,6 @@ export default async function CompanionLettersPage({ params }: { params: Promise
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
