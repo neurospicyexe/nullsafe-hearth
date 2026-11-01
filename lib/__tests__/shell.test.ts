@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { TABS, HUBS, activeTab, shellHidden, badgeText, COMPANION_COLOR, focusRefreshDue, FOCUS_REFRESH_MIN_MS, latestOnly } from "../shell";
+import { TABS, HUBS, activeTab, shellHidden, badgeText, COMPANION_COLOR, HOOD_SECTIONS, focusRefreshDue, FOCUS_REFRESH_MIN_MS, latestOnly } from "../shell";
 import nextConfig from "../../next.config";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
 /** Frozen copy of every href the retired sidebar Nav carried; each must stay reachable from the new tabs and hubs. */
 const NAV_HREFS: readonly string[] = Object.freeze([
@@ -57,7 +59,7 @@ describe("activeTab", () => {
     expect(activeTab("/companions/cypher")).toBe("Home");
   });
   it("returns null for routes owned by no tab", () => {
-    expect(activeTab("/soma")).toBeNull();
+    expect(activeTab("/login")).toBeNull();
   });
   it("matches on a segment boundary", () => {
     expect(activeTab("/clubhouse")).toBeNull();
@@ -152,7 +154,7 @@ describe("archive hub", () => {
     for (const h of ["/handovers", "/synthesis", "/overview", "/hood"]) expect(hrefs).not.toContain(h);
   });
   it("keeps Old home under the hood", () => {
-    expect(HUBS.hood).toContainEqual({ href: "/overview", label: "Old home" });
+    expect(HUBS.hood).toContainEqual(expect.objectContaining({ href: "/overview", label: "Old home" }));
   });
 });
 
@@ -201,5 +203,35 @@ describe("latestOnly", () => {
     const c = seq.start();
     expect(seq.isLatest(b)).toBe(false);
     expect(seq.isLatest(c)).toBe(true);
+  });
+});
+
+describe("under the hood", () => {
+  const hoodHrefs = HUBS.hood.map((d) => d.href);
+  it("HUBS.hood is the flattened sections", () => {
+    expect(HUBS.hood).toEqual(HOOD_SECTIONS.flatMap((s) => s.doors));
+  });
+  it("has a door for every spec item", () => {
+    const labels = ["Facts", "Tray", "Guardian", "Autonomous", "Council", "Drift", "Basins", "Agency", "Map", "People", "Growth journal", "House", "Phoenix", "Imps", "Orient", "Presence", "Soma", "Wellness", "Tasks", "Shared"];
+    const have = HUBS.hood.map((d) => d.label);
+    for (const l of labels) expect(have).toContain(l);
+  });
+  it("every door href has a page file on disk", () => {
+    for (const href of hoodHrefs) {
+      expect(existsSync(join(__dirname, "..", "..", "app", href, "page.tsx")), href).toBe(true);
+    }
+  });
+  it("care pages appear in no hub but hood", () => {
+    const others = [...HUBS.needs, ...HUBS.together, ...HUBS.archive].map((d) => d.href);
+    for (const h of ["/user", "/house", "/wellness", "/overview"]) {
+      expect(hoodHrefs).toContain(h);
+      expect(others).not.toContain(h);
+    }
+  });
+  it("hood pages light the right tab", () => {
+    expect(activeTab("/facts")).toBe("Archive");
+    expect(activeTab("/guardian")).toBe("Needs you");
+    expect(activeTab("/phoenix/chat")).toBe("Together");
+    for (const h of hoodHrefs) expect(activeTab(h), h).not.toBeNull();
   });
 });
