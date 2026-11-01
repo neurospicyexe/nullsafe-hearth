@@ -44,6 +44,7 @@ import {
   FermentationSection, VoiceLaneSection, SomaFeelingsSection, RelationalStateSection,
   LiveThreadsSection, DriftLogSection, SittingNotesSection, OpenLoopsSection, COMPANION_CONFIG,
 } from "./sections";
+import * as DC from "./domain-colors";
 import { STATE_TYPE_COLOR } from "./domain-colors";
 
 const T = "2026-11-01T00:00:00Z";
@@ -114,6 +115,19 @@ describe("companion config", () => {
       expect(Object.keys(c).sort()).toEqual(["display", "sym", "tagline"]);
     }
   });
+  it("categorical maps are neutral: no companion hue, no lamp", () => {
+    const cats = [DC.ENTRY_TYPE_COLOR, DC.BELIEF_TYPE_COLOR, DC.SEED_TYPE_COLOR, DC.RUN_TYPE_COLOR, DC.MARKER_TYPE_COLOR, DC.SOURCE_COLOR];
+    for (const map of cats) {
+      for (const v of Object.values(map)) expect(v).toMatch(/^var\(--h-(ink|muted|faint)\)$/);
+    }
+    // semantic maps: only ok/bad/neutral, lamp only for the single attention state
+    expect(DC.STATE_TYPE_COLOR).toEqual({ feeling: "var(--h-ink)", witness: "var(--h-gaia)", held: "var(--h-faint)" });
+    expect(DC.RUN_STATUS_COLOR.running).toBe("var(--h-lamp)");
+    for (const v of Object.values(DC.RUN_STATUS_COLOR).concat(Object.values(DC.REVIEW_STATUS_COLOR))) {
+      expect(v).not.toMatch(/drevan|cypher/);
+    }
+    expect(DC.seedTypeColor("unknown")).toBe("var(--h-faint)");
+  });
   it("state-type map is kit tokens", () => {
     for (const v of Object.values(STATE_TYPE_COLOR)) expect(v).toMatch(/^var\(--h-[a-z]+\)$/);
   });
@@ -124,7 +138,7 @@ describe("companion pages carry no color literals", () => {
     const html = renderToStaticMarkup(await GrowthPage({ ...params("gaia"), searchParams: Promise.resolve({}) }));
     expectKitOnly(html);
     expect(html).toContain('data-companion="gaia"');
-    expect(html).toContain("--c:var(--h-drevan)"); // insight
+    expect(html).toContain("--c:var(--h-muted)"); // insight (neutral)
     expect(html).toContain("--c:var(--h-gaia)"); // accepted
     expect(html).toContain("--c:var(--h-warn)"); // declined
   });

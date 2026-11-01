@@ -416,7 +416,7 @@ export function FermentationSection({ data, color }: { data: Fermentation | null
                 {fmt(f.value)}
                 <span className="h-cmp-dim"> · home {fmt(f.baseline)}</span>
                 {grew && (
-                  <span title={`baseline drifted ${drift > 0 ? "+" : ""}${drift.toFixed(3)} from seed`} className="h-cmp-drift">
+                  <span title={`baseline drifted ${drift > 0 ? "+" : ""}${drift.toFixed(3)} from seed`} className={`h-cmp-drift ${drift > 0 ? "is-up" : "is-down"}`}>
                     {drift > 0 ? "▲" : "▼"}{Math.abs(drift).toFixed(3)}
                   </span>
                 )}

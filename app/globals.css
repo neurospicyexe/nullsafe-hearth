@@ -2650,7 +2650,8 @@ body:has(.h-reader) { min-height: 0; }
 .h-cmp-fer-item { margin-bottom: 0.6rem; }
 .h-cmp-fer-head { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; }
 .h-cmp-dim { opacity: 0.6; }
-.h-cmp-drift { margin-left: 4px; color: var(--h-lamp); }
+.h-cmp-drift { margin-left: 4px; color: var(--h-ink); }
+.h-cmp-drift.is-down { color: var(--h-warn); }
 .h-cmp-drives { margin-top: 0.5rem; border-top: 1px solid var(--h-line); padding-top: 0.5rem; }
 .h-cmp-drive { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 4px; }
 .h-cmp-drive.is-fired { --c: var(--h-lamp); }
