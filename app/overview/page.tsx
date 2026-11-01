@@ -83,7 +83,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
           )}
           <span className="presence-detail-sep ml-auto">·</span>
           <span style={{ opacity: 0.5 }}><ClientTime iso={last_handover.created_at} /></span>
-          <Link href="/handovers" className="home-section-link" style={{ marginLeft: "0.5rem" }}>all →</Link>
+          <Link href="/sessions" className="home-section-link" style={{ marginLeft: "0.5rem" }}>all →</Link>
         </div>
       </div>
     );

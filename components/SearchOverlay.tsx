@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchSearch, searchErrorMessage } from "@/lib/search-client";
+import { matchPages } from "@/lib/page-index";
 
 type ChipValue = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
 
@@ -156,7 +157,15 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
     results !== null &&
     GROUP_ORDER.some((key) => results && results[key] && results[key].length > 0);
 
-  const showEmpty = q.trim() !== "" && !loading && error === null && results !== null && !hasResults;
+  // Pages come from the query alone (no fetch), so they show while loading and when Halseth is down.
+  const pages = matchPages(q);
+
+  const showEmpty = q.trim() !== "" && !loading && error === null && results !== null && !hasResults && pages.length === 0;
+
+  const goTo = (url: string) => {
+    router.push(url);
+    onClose();
+  };
 
   return (
     <div
@@ -197,6 +206,32 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
         </span>
 
         <div className="search-results">
+          {pages.length > 0 && (
+            <div className="search-result-group">
+              <div className="search-result-group-label">PAGES</div>
+              {pages.map((p) => (
+                <div
+                  key={p.href}
+                  className="search-result-row"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => goTo(p.href)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") goTo(p.href);
+                  }}
+                >
+                  <span className="search-result-text">{p.label}</span>
+                  {(p.hub || p.hint) && (
+                    <span className="search-result-meta-row">
+                      {p.hub && <span className="search-result-agent">{p.hub}</span>}
+                      {p.hint && <span className="search-result-meta">{p.hint}</span>}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {loading && (
             <div className="search-loading">searching…</div>
           )}

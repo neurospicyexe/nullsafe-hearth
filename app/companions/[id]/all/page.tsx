@@ -64,10 +64,6 @@ import {
 } from "../sections";
 import { parseCompanionId } from "@/lib/companion-page";
 
-export function generateStaticParams() {
-  return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
-}
-
 // ── Letters ───────────────────────────────────────────────────────────────────
 
 type LetterItem =
@@ -138,7 +134,7 @@ export default async function CompanionPage({ params }: { params: Promise<{ id: 
   if (!config) notFound();
 
   const [journal, deltas, notes, companionNotes, audit, witness, synthesis, icNotes, soma, feelings, loops, sitting, relational, liveThreads, driftLog, growthJournal, autonomyRuns, conclusionsRes, voiceScoresRes, fermentRes, mindStateRes] = await Promise.allSettled([
-    fetchCompanionJournal(id, 6),
+    fetchCompanionJournal(id, 6, { substantive: true }),
     fetchCompanionDeltas(id, 6),
     fetchNotes(100),
     fetchCompanionNotesByAgent(id, 50),

@@ -17,6 +17,12 @@ const nextConfig: NextConfig = {
       { source: "/questions", destination: "/needs", permanent: false },
       // Handovers are listed with sessions now.
       { source: "/handovers", destination: "/sessions", permanent: false },
+      // Duplicates and shadowed pages (P6): one source each.
+      { source: "/deltas", destination: "/feelings", permanent: false },
+      { source: "/phoenix/dreams", destination: "/dreams", permanent: false },
+      { source: "/uplink", destination: "/", permanent: false },
+      // The old constellation page already redirected in-page; the redirect lives here now.
+      { source: "/graph", destination: "/map", permanent: false },
     ];
   },
   async headers() {

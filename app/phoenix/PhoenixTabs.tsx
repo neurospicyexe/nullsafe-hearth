@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/phoenix", label: "Overview", exact: true },
-  { href: "/phoenix/dreams", label: "Dreams", exact: false },
   { href: "/phoenix/chat", label: "Chat", exact: false },
   // Runs/Seeds tabs intentionally omitted: autonomy runs/seeds are surfaced at /autonomous
   // and /companions/[id]/autonomy. The old Phoenix WebMind surface they'd have shown is archived
