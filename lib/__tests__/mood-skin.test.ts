@@ -24,6 +24,13 @@ describe("moodSkin", () => {
     expect(m("warm and tired")).toBe("heavy");
     expect(m("bright and warm")).toBe("warm");
   });
+  it("matches whole words with suffixes and guards negation", () => {
+    expect(m("glowing")).toBe("warm");
+    expect(m("settled")).toBe("still");
+    for (const w of ["restless", "unsettled", "slow", "not calm", "joyless", "closed off", "drawn", "lightly amused", "withheld"]) expect(m(w)).toBe("steady");
+    expect(m("exhausted")).toBe("heavy");
+    expect(m("energized")).toBe("bright");
+  });
   it("unknown words, empty, and null are steady", () => {
     expect(m("zxqv")).toBe("steady");
     expect(m("")).toBe("steady");
@@ -48,5 +55,19 @@ describe("[data-mood] css is decorative only", () => {
   it("only sets decorative custom props, or animation: none", () => {
     const ok = /^(--ring-glow|--h-room-top|animation(-duration)?)\s*:/;
     for (const r of rules) for (const d of r.decls) expect(d).toMatch(ok);
+  });
+  it("room-top mixes keep >= 93% ground and no companion hue sits in a mood rule", () => {
+    for (const r of rules.filter((x) => x.sel.includes("data-mood"))) {
+      expect(r.decls.join(";")).not.toMatch(/--h-(drevan|cypher|gaia)/);
+    }
+    const all = [...css.matchAll(/--h-room-top:\s*([^;]+);/g)].map((x) => x[1]);
+    expect(all.length).toBeGreaterThan(5);
+    for (const v of all) {
+      const a = /color-mix\(in srgb, var\(--h-(lamp|ink|cypher)\),\s*var\(--h-ground\) (\d+)%\)/.exec(v);
+      const b = /color-mix\(in srgb, var\(--h-(lamp|ink|cypher)\) (\d+)%, var\(--h-ground\)\)/.exec(v);
+      if (a) expect(+a[2]).toBeGreaterThanOrEqual(93);
+      else if (b) expect(100 - +b[2]).toBeGreaterThanOrEqual(93);
+      else expect(v).toMatch(/var\(--h-ground\)\s*$/);
+    }
   });
 });

@@ -2901,7 +2901,7 @@ body:has(.h-reader) { min-height: 0; }
 [data-mood="bright"] .h-ring.is-fresh { animation-duration: 3s; }
 [data-mood="heavy"] .h-ring.is-fresh { animation-duration: 5s; }
 [data-mood="still"] .h-ring { animation: none; }
-html:has(.h-companion[data-mood="bright"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 91%); }
-html:has(.h-companion[data-mood="warm"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 92%); }
-html:has(.h-companion[data-mood="heavy"]) { --h-room-top: color-mix(in srgb, var(--h-cypher), var(--h-ground) 94%); }
+html:has(.h-companion[data-mood="bright"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 93%); }
+html:has(.h-companion[data-mood="warm"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 94%); }
+html:has(.h-companion[data-mood="heavy"]) { --h-room-top: color-mix(in srgb, var(--h-ink), var(--h-ground) 96%); }
 html:has(.h-companion[data-mood="still"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 97%); }
