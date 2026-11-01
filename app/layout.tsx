@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible, Caveat, Quicksand } from "next/font/google";
+import { Atkinson_Hyperlegible } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/shell/AppShell";
 import { WriteQueueProvider } from "@/components/shell/WriteQueueProvider";
@@ -10,20 +10,6 @@ import { STILL_KEY } from "@/lib/still";
 
 // Runs before first paint so a device set to Still never flashes motion. Same key as lib/still.ts.
 const STILL_BOOT = `try{if(localStorage.getItem(${JSON.stringify(STILL_KEY)})==="1")document.documentElement.setAttribute("data-still","")}catch(e){}`;
-
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const quicksand = Quicksand({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-body",
-  display: "swap",
-});
 
 const atkinson = Atkinson_Hyperlegible({
   subsets: ["latin"],
@@ -57,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${caveat.variable} ${quicksand.variable} ${atkinson.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${atkinson.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: STILL_BOOT }} />
       </head>
