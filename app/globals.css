@@ -2448,7 +2448,7 @@ body:has(.h-reader) { min-height: 0; }
 .h-phx-tab.is-on { color: var(--h-ink); font-weight: 600; border-bottom-color: var(--h-lamp); }
 .h-phx-tab:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: -2px; }
 .h-phx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; align-items: start; }
-.h-phx-col { display: flex; flex-direction: column; gap: 1rem; border-color: color-mix(in srgb, var(--c, var(--h-line)) 25%, var(--h-line)); }
+.h-phx-col { display: flex; flex-direction: column; gap: 1rem; }
 .h-phx-name { color: var(--c, var(--h-ink)); font-weight: 700; font-size: 1rem; }
 .home-section-title.h-phx-label { display: block; margin-bottom: 0.5rem; }
 .home-section-title.h-phx-label.is-roomy { margin-bottom: 0.75rem; }
@@ -2835,7 +2835,9 @@ body:has(.h-reader) { min-height: 0; }
    fading to nothing, and a 1px diagonal drawn as a background layer (clip-path would otherwise leave
    the cut without a line). Edge tint is --h-edge: --h-line by default, the companion hue at 35% inside
    a companion context. Decoration lives on the card edge only; the fill stays flat --h-surface. */
-[data-companion] { --h-edge: color-mix(in srgb, var(--c, var(--h-line)) 35%, var(--h-line)); }
+[data-companion],
+[style*="--c:"] { --h-edge: color-mix(in srgb, var(--c, var(--h-line)) 35%, var(--h-line)); }
+.h-phx-col { --h-edge: color-mix(in srgb, var(--c, var(--h-line)) 25%, var(--h-line)); }
 .h-panel.is-live { --h-edge: var(--h-lamp); }
 .card,
 .h-panel:not(.is-answer),
@@ -2843,6 +2845,7 @@ body:has(.h-reader) { min-height: 0; }
 .h-home-card,
 .h-door {
   border-color: var(--h-edge);
+  border-top-color: transparent; /* the 2px hairline layer is the top edge, so its fade shows */
   border-top-right-radius: 0;
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
   background-origin: border-box;
@@ -2859,3 +2862,5 @@ body:has(.h-reader) { min-height: 0; }
 .h-hood-card:focus-visible,
 .h-home-card:focus-visible,
 .h-door:focus-visible { outline-offset: -3px; }
+/* ...and children flush to a clipped card's edge (zero-padding cards like .h-cmp-card). */
+:is(.card, .h-panel:not(.is-answer), .h-hood-card, .h-home-card, .h-door) :focus-visible { outline-offset: -2px; }

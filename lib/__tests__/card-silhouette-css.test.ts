@@ -3,6 +3,8 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { createElement, type CSSProperties } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 const css = readFileSync(join(process.cwd(), "app/globals.css"), "utf8").replace(/\r\n/g, "\n");
 const norm = (s: string) => s.replace(/\s+/g, " ").trim();
@@ -40,10 +42,30 @@ describe("card silhouette", () => {
   });
   it("--h-edge defaults to --h-line and tints from --c with a safe fallback", () => {
     expect(css).toMatch(/--h-edge: var\(--h-line\);/);
-    expect(ruleFor("[data-companion] { --h-edge")).toBe("--h-edge: color-mix(in srgb, var(--c, var(--h-line)) 35%, var(--h-line));".replace("--h-edge: ", "--h-edge: "));
+    expect(ruleFor("[style*=\"--c:\"] { --h-edge")).toBe("--h-edge: color-mix(in srgb, var(--c, var(--h-line)) 35%, var(--h-line));".replace("--h-edge: ", "--h-edge: "));
   });
   it("edge rules set no text color", () => {
     expect(shape).not.toMatch(/(^|[; ])color:/);
     expect(css).not.toMatch(/\[data-companion\] \{ --h-edge[^}]*[^-]color:/);
+  });
+
+  it("top border is transparent so the hairline fade shows", () => {
+    expect(shape).toContain("border-top-color: transparent");
+    expect(shape.indexOf("border-color: var(--h-edge)")).toBeLessThan(shape.indexOf("border-top-color: transparent"));
+  });
+  it("the --c case: inline custom property renders as style=\"--c:...\" and the selector matches it", () => {
+    const html = renderToStaticMarkup(createElement("div", { className: "card h-cmp-card", style: { "--c": "var(--h-cypher)" } as CSSProperties }));
+    expect(html).toContain('style="--c:var(--h-cypher)"');
+    expect(css).toContain("[data-companion],\n[style*=\"--c:\"] { --h-edge:");
+  });
+  it(".h-phx-col tints through --h-edge and sets no border-color of its own", () => {
+    expect(ruleFor(".h-phx-col {")).not.toContain("border-color");
+    const tint = ruleFor(".h-phx-col { --h-edge");
+    expect(tint).toContain("--h-edge: color-mix(in srgb, var(--c, var(--h-line)) 25%, var(--h-line))");
+  });
+  it("focusable descendants of clipped cards get an inset ring", () => {
+    const i = css.indexOf(":is(.card, .h-panel:not(.is-answer), .h-hood-card, .h-home-card, .h-door) :focus-visible");
+    expect(i).toBeGreaterThan(0);
+    expect(ruleFor(":is(.card, .h-panel:not(.is-answer), .h-hood-card, .h-home-card, .h-door) :focus-visible")).toBe("outline-offset: -2px;");
   });
 });
