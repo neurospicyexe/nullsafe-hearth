@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { shellHidden } from "@/lib/shell";
+import { SEARCH_EVENT, searchDetail } from "@/lib/search-handoff";
 import Header from "./Header";
 import TabBar from "./TabBar";
 import SpoonsStrip from "./SpoonsStrip";
@@ -18,6 +19,7 @@ const SearchOverlay = dynamic(() => import("../SearchOverlay"), { ssr: false });
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const [searchOpen, setSearchOpen] = useState(false);
+  const [initialQuery, setInitialQuery] = useState("");
   const closeSearch = useCallback(() => setSearchOpen(false), []);
   const hidden = shellHidden(pathname);
 
@@ -26,22 +28,31 @@ export default function AppShell({ children }: { children: ReactNode }) {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        setInitialQuery("");
         setSearchOpen((o) => !o);
       }
     };
+    const onSearch = (e: Event) => {
+      setInitialQuery(searchDetail(e));
+      setSearchOpen(true);
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(SEARCH_EVENT, onSearch);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(SEARCH_EVENT, onSearch);
+    };
   }, [hidden]);
 
   if (hidden) return <main className="app-main">{children}</main>;
 
   return (
     <div className="h-shell">
-      <Header onSearch={() => setSearchOpen(true)}>{pathname === "/" ? <GreetingTitle /> : undefined}</Header>
+      <Header onSearch={() => { setInitialQuery(""); setSearchOpen(true); }}>{pathname === "/" ? <GreetingTitle /> : undefined}</Header>
       <main className="app-main h-main">{children}</main>
       <SpoonsStrip />
       <TabBar />
-      <SearchOverlay open={searchOpen} onClose={closeSearch} />
+      <SearchOverlay open={searchOpen} onClose={closeSearch} initialQuery={initialQuery} />
     </div>
   );
 }

@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
       { source: "/checkin", destination: "/", permanent: false },
       // Questions are one kind of "needs you" now.
       { source: "/questions", destination: "/needs", permanent: false },
+      // Handovers are listed with sessions now.
+      { source: "/handovers", destination: "/sessions", permanent: false },
     ];
   },
   async headers() {

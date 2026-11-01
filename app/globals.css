@@ -2588,3 +2588,62 @@ body:has(.h-reader) { min-height: 0; }
 .h-post-msg { font-size: 0.9375rem; color: var(--h-ink); }
 .h-post-hint { font-size: 0.8125rem; color: var(--h-faint); }
 .h-post-btn:focus-visible, .h-post-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+
+/* Archive kit (P5) */
+.h-reading { max-width: 68ch; }
+.h-section { display: grid; gap: 8px; margin-top: 1.5rem; }
+.h-section-title { font-size: 1.0625rem; font-weight: 700; color: var(--h-ink); font-family: var(--h-font, system-ui, sans-serif); }
+.h-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.h-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--h-tap);
+  padding: 0 14px;
+  background: var(--h-surface);
+  border: 1px solid var(--h-line);
+  border-radius: var(--h-radius);
+  color: var(--h-muted);
+  font-family: var(--h-font, system-ui, sans-serif);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.h-chip.is-on { color: var(--h-ground); background: var(--h-lamp); border-color: var(--h-lamp); }
+.h-chip:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-foot-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--h-tap);
+  margin-top: 1rem;
+  color: var(--h-muted);
+  font-family: var(--h-font, system-ui, sans-serif);
+  font-size: 0.9375rem;
+}
+.h-archive-search { display: grid; gap: 6px; margin-bottom: 1rem; }
+.h-archive-search-row { display: flex; gap: 8px; }
+.h-archive-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--h-tap);
+  padding: 0 14px;
+  background: var(--h-surface);
+  border: 1px solid var(--h-line);
+  border-radius: var(--h-radius);
+  color: var(--h-ink);
+  font-family: var(--h-font, system-ui, sans-serif);
+  font-size: 1rem;
+}
+.h-archive-search button {
+  min-height: var(--h-tap);
+  min-width: var(--h-tap);
+  padding: 0 16px;
+  background: var(--h-lamp);
+  border: 0;
+  border-radius: var(--h-radius);
+  color: var(--h-ground);
+  font-family: var(--h-font, system-ui, sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.h-archive-search input:focus-visible, .h-archive-search button:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-archive-search-note { font-size: 0.875rem; color: var(--h-faint); }

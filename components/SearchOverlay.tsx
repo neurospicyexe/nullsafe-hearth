@@ -82,9 +82,10 @@ function getPreview(text: string, q: string): Preview {
 interface SearchOverlayProps {
   open: boolean;
   onClose: () => void;
+  initialQuery?: string;
 }
 
-export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
+export default function SearchOverlay({ open, onClose, initialQuery }: SearchOverlayProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -96,7 +97,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
   // Reset state and autofocus when open changes
   useEffect(() => {
-    setQ("");
+    setQ(initialQuery ?? "");
     setResults(null);
     setLoading(false);
     setActiveChip("all");
