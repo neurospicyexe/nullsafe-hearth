@@ -1215,6 +1215,14 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
     transition-duration: 0.01ms !important;
   }
 }
+/* Manual Still switch (Under the hood): the same rules as reduced motion, set per device. */
+html[data-still] *,
+html[data-still] *::before,
+html[data-still] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
 
 /* ── Presence enhancements ───────────────────────────────────────────────── */
 .presence-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
@@ -1687,12 +1695,42 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   --h-radius: 14px;
   --h-tap: 44px;
   --h-tabbar-h: 76px;
+  /* The room's top bloom: ambient lamplight, opaque (mixed over ground), never above 12% lamp (evening 7% keeps faint text >= 4.5:1 over a dot). */
+  --h-room-top: color-mix(in srgb, var(--h-lamp) 7%, var(--h-ground));
+}
+html[data-time="morning"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 6%, var(--h-ground)); }
+html[data-time="afternoon"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 3%, var(--h-ground)); }
+html[data-time="evening"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 7%, var(--h-ground)); }
+html[data-time="night"] { --h-room-top: color-mix(in srgb, var(--h-cypher) 5%, var(--h-ground)); }
+
+/* Registered so a change of time crossfades. Browsers without @property snap to the new tint. */
+@property --h-room-top {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+/* The room: fixed, behind everything, below the spoons strip (90) and tab bar (100). Panels are opaque and
+   page text sits where the tint is at most 10% lamp, so no text contrast changes. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, color-mix(in srgb, var(--h-ink) 3%, transparent) 1px, transparent 1.5px) 0 0 / 22px 22px,
+    linear-gradient(to bottom, var(--h-room-top), var(--h-ground) 45vh);
+  transition: --h-room-top 400ms ease;
+}
+body:has(.h-reader)::before {
+  display: none;
 }
 
 /* Hearth v2 shell */
 .h-shell {
   min-height: 100vh;
-  background: var(--h-ground);
+  background: transparent;
   padding-bottom: calc(var(--h-tabbar-h) + env(safe-area-inset-bottom));
   font-family: var(--h-font, system-ui, sans-serif);
 }
@@ -1740,6 +1778,8 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-btn.is-quiet { color: var(--h-faint); border-color: transparent; }
 .h-btn.is-danger { color: var(--h-warn); border-color: var(--h-warn); }
 .h-btn:disabled { opacity: 0.45; cursor: default; }
+.h-still { margin-bottom: 1.25rem; }
+.h-still-note { margin-top: 6px; font-size: 0.875rem; color: var(--h-muted); }
 .h-input {
   min-height: var(--h-tap);
   padding: 8px 12px;

@@ -2,6 +2,7 @@
 import type { SomaData, InboxResponse, Book } from "./halseth";
 import { COMPANION_COLOR } from "./shell";
 import { parseUtc } from "./spoons";
+import { partOfDay } from "./time-of-day";
 
 export type HomeRow = {
   id: "drevan" | "cypher" | "gaia";
@@ -135,7 +136,5 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 
 /** "Thursday evening", from the viewer's local clock. */
 export function greeting(now: Date): string {
-  const h = now.getHours();
-  const part = h < 12 ? "morning" : h < 17 ? "afternoon" : h < 21 ? "evening" : "night";
-  return `${WEEKDAYS[now.getDay()]} ${part}`;
+  return `${WEEKDAYS[now.getDay()]} ${partOfDay(now)}`;
 }

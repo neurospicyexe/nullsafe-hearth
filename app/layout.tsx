@@ -5,6 +5,11 @@ import AppShell from "@/components/shell/AppShell";
 import { WriteQueueProvider } from "@/components/shell/WriteQueueProvider";
 import ScrollToTop from "@/components/ScrollToTop";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
+import Atmosphere from "@/components/shell/Atmosphere";
+import { STILL_KEY } from "@/lib/still";
+
+// Runs before first paint so a device set to Still never flashes motion. Same key as lib/still.ts.
+const STILL_BOOT = `try{if(localStorage.getItem(${JSON.stringify(STILL_KEY)})==="1")document.documentElement.setAttribute("data-still","")}catch(e){}`;
 
 const caveat = Caveat({
   subsets: ["latin"],
@@ -52,8 +57,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${caveat.variable} ${quicksand.variable} ${atkinson.variable}`}>
+    <html lang="en" className={`${caveat.variable} ${quicksand.variable} ${atkinson.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: STILL_BOOT }} />
+      </head>
       <body>
+        <Atmosphere />
         <div className="app-layout">
           <ScrollToTop />
           <RegisterServiceWorker />
