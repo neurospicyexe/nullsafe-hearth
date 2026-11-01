@@ -1696,6 +1696,7 @@ html[data-still] *::after {
   --h-tap: 44px;
   --h-tabbar-h: 76px;
   /* The room's top bloom: ambient lamplight, opaque (mixed over ground), never above 12% lamp (evening 7% keeps faint text >= 4.5:1 over a dot). */
+  --h-edge: var(--h-line);
   --h-room-top: color-mix(in srgb, var(--h-lamp) 7%, var(--h-ground));
 }
 html[data-time="morning"] { --h-room-top: color-mix(in srgb, var(--h-lamp) 6%, var(--h-ground)); }
@@ -2829,3 +2830,32 @@ body:has(.h-reader) { min-height: 0; }
 .author-btn.h-bg-drevan { background: var(--h-drevan); }
 .author-btn.h-bg-cypher { background: var(--h-cypher); }
 .author-btn.h-bg-gaia { background: var(--h-gaia); }
+
+/* P8 card silhouette: one signature shape. 10px chamfer on the top-right corner, a 2px top hairline
+   fading to nothing, and a 1px diagonal drawn as a background layer (clip-path would otherwise leave
+   the cut without a line). Edge tint is --h-edge: --h-line by default, the companion hue at 35% inside
+   a companion context. Decoration lives on the card edge only; the fill stays flat --h-surface. */
+[data-companion] { --h-edge: color-mix(in srgb, var(--c, var(--h-line)) 35%, var(--h-line)); }
+.h-panel.is-live { --h-edge: var(--h-lamp); }
+.card,
+.h-panel:not(.is-answer),
+.h-hood-card,
+.h-home-card,
+.h-door {
+  border-color: var(--h-edge);
+  border-top-right-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  background-origin: border-box;
+  background-repeat: no-repeat;
+  background-position: top left, top right;
+  background-size: 100% 2px, 10px 10px;
+  background-image:
+    linear-gradient(to right, var(--h-edge), transparent),
+    linear-gradient(to top right, transparent calc(50% - 1.5px), var(--h-edge) calc(50% - 1.5px), var(--h-edge) 50%, transparent 50%);
+}
+/* clip-path clips outlines: keep focus rings inside the box. */
+.card:focus-visible,
+.h-panel:not(.is-answer):focus-visible,
+.h-hood-card:focus-visible,
+.h-home-card:focus-visible,
+.h-door:focus-visible { outline-offset: -3px; }

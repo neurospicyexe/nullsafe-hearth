@@ -28,7 +28,7 @@ export default async function CompanionOverview({ params }: { params: Promise<{ 
   const lastAge = last ? ageLabel(last.at, nowDate) : "";
 
   return (
-    <div className="h-companion" style={{ "--c": COMPANION_COLOR[id] } as React.CSSProperties}>
+    <div className="h-companion" data-companion={id} style={{ "--c": COMPANION_COLOR[id] } as React.CSSProperties}>
       <header className="h-companion-head">
         <h1 className="h-companion-name">{name}</h1>
         {seen && <span className="h-companion-seen">seen {seen}</span>}
