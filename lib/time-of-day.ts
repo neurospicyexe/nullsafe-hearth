@@ -10,4 +10,4 @@ export function partOfDay(date: Date): PartOfDay {
 }
 
 /** Inline head script text: sets html[data-time] before first paint with the same cutoffs as partOfDay. */
-export const TIME_BOOT = `try{var h=new Date().getHours();document.documentElement.setAttribute("data-time",h<${TIME_CUTOFFS.morning}?"morning":h<${TIME_CUTOFFS.afternoon}?"afternoon":h<${TIME_CUTOFFS.evening}?"evening":"night")}catch(e){}`;
+export const TIME_BOOT = `(function(){try{var h=new Date().getHours();document.documentElement.setAttribute("data-time",h<${TIME_CUTOFFS.morning}?"morning":h<${TIME_CUTOFFS.afternoon}?"afternoon":h<${TIME_CUTOFFS.evening}?"evening":"night")}catch(e){}})();`;
