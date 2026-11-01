@@ -4,18 +4,13 @@ import Link from "next/link";
 import { fetchCompanionJournal, fetchHumanJournalOrNull } from "@/lib/halseth";
 import { isLetterRow } from "@/lib/journal-model";
 import { HALSETH_DOWN } from "@/lib/archive-copy";
+import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 
 export const metadata = { title: "Journal | Hearth" };
 
-const TONES = ["drevan", "cypher", "gaia"];
-
 function agentDisplayName(agent: string): string {
   return agent.charAt(0).toUpperCase() + agent.slice(1);
-}
-
-function toneOf(agent: string): string {
-  return TONES.includes(agent) ? `h-tone-${agent}` : "h-tone-none";
 }
 
 export default async function JournalPage() {

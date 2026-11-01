@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
 import { fetchSynthesisSummariesOrNull } from "@/lib/halseth";
-import { COMPANION_COLOR } from "@/lib/shell";
+import { isCompanionKey, toneOf } from "@/lib/tone";
 import { HALSETH_DOWN } from "@/lib/archive-copy";
 import ClientTime from "@/components/ClientTime";
 
@@ -13,10 +13,6 @@ import ClientTime from "@/components/ClientTime";
 // /ingest/synthesis-summaries caps limit at 500 and takes no offset, so this page names what it
 // fetched rather than implying it holds everything.
 const PAGE_LIMIT = 200;
-
-function toneOf(id: string | null): string {
-  return id && id in COMPANION_COLOR ? `h-tone-${id}` : "h-tone-none";
-}
 
 const FILTERS = [
   { key: "", label: "all" },
@@ -44,7 +40,7 @@ export default async function SynthesisPage({
 }) {
   const { companion: rawCompanion } = await searchParams;
   const raw = rawCompanion?.toLowerCase();
-  const companion = raw && (raw in COMPANION_COLOR || raw === "cross") ? raw : null;
+  const companion = raw && (isCompanionKey(raw) || raw === "cross") ? raw : null;
 
   const all = await fetchSynthesisSummariesOrNull(PAGE_LIMIT);
 

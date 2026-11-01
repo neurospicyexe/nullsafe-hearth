@@ -1,17 +1,14 @@
 import { fetchCompanionDreamsOrNull, fetchDreamSeedsOrNull } from "@/lib/halseth";
 import { HALSETH_DOWN } from "@/lib/archive-copy";
+import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 import SeedForm from "./SeedForm";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Dreams | Hearth" };
 
-const TONES = ["drevan", "cypher", "gaia"];
 const LIMIT = 100;
 
-function toneOf(id: string | null): string {
-  return id && TONES.includes(id) ? `h-tone-${id}` : "h-tone-none";
-}
 
 // One source: /ingest/companion-dreams. The /dreams endpoint reads the same table, so showing both
 // doubled every dream.

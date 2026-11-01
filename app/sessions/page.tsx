@@ -3,19 +3,15 @@ export const dynamic = "force-dynamic";
 import { fetchSessionsOrNull, fetchHandovers, fetchMindHandoffsOrNull } from "@/lib/halseth";
 import { joinSessions } from "@/lib/sessions-model";
 import { HALSETH_DOWN } from "@/lib/archive-copy";
+import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 
 export const metadata = { title: "Sessions | Hearth" };
 
 const MOTION_WORD: Record<string, string> = { in_motion: "in motion", at_rest: "at rest", floating: "floating" };
-const TONES = ["drevan", "cypher", "gaia"];
 
 function clip(text: string, n: number): string {
   return text.length > n ? `${text.slice(0, n)}…` : text;
-}
-
-function toneOf(id: string | null): string {
-  return id && TONES.includes(id) ? `h-tone-${id}` : "h-tone-none";
 }
 
 export default async function SessionsPage() {

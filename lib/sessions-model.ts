@@ -1,5 +1,5 @@
 import type { SessionEntry, HandoverPacket } from "./halseth";
-import { ms } from "./letters-model";
+import { newestFirst } from "./time-order";
 
 // Care and plural-state fields (hrv_range, emotional_frequency, front_state, notes, depth,
 // co_con) are deliberately not carried: the Archive does not show them.
@@ -59,5 +59,5 @@ export function joinSessions(sessions: SessionEntry[], handovers: HandoverPacket
       body: bodyOf(h),
     });
   }
-  return rows.sort((a, b) => ms(b.at) - ms(a.at));
+  return rows.sort(newestFirst((r) => r.at));
 }

@@ -1,4 +1,5 @@
 import { parseUtc } from "@/lib/spoons";
+import { newestFirst } from "@/lib/time-order";
 // ── Constants ─────────────────────────────────────────────────────────────
 
 // H10: lifted from hardcoded `/3` literals in app/page.tsx, app/user/page.tsx,
@@ -516,7 +517,7 @@ export async function fetchLettersOut(limit = 100, companion?: CompanionId): Pro
   if (!Array.isArray(rows)) return null;
   return rows
     .filter((n) => n.author === "raziel" && typeof n.note_type === "string" && n.note_type.startsWith("letter:"))
-    .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
+    .sort(newestFirst((n) => n.created_at));
 }
 
 export async function fetchNotes(limit = 30): Promise<Note[]> {

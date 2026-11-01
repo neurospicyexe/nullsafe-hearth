@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 
 export type MemoryEntry = {
@@ -24,10 +25,6 @@ const TYPE_LABEL: Record<string, string> = {
   sit:            "sit",
 };
 
-const TONES = ["drevan", "cypher", "gaia"];
-function toneOf(id: string): string {
-  return TONES.includes(id) ? `h-tone-${id}` : "h-tone-none";
-}
 
 const PAGE_SIZE = 30;
 

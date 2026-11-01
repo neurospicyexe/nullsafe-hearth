@@ -20,6 +20,12 @@ const run = async (companion?: string) =>
 beforeEach(() => vi.clearAllMocks());
 
 describe("/synthesis", () => {
+  it("a prototype key is not a companion filter", async () => {
+    m.fetchSynthesisSummariesOrNull.mockResolvedValue([sum("a")]);
+    const html = await run("constructor");
+    expect(html).toContain("subj a");
+    expect(html).not.toContain("No synthesis for constructor");
+  });
   it("null renders the down line, not an empty list", async () => {
     m.fetchSynthesisSummariesOrNull.mockResolvedValue(null);
     const html = await run();

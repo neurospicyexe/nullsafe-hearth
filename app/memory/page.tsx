@@ -7,6 +7,7 @@ import {
   fetchSittingNotes,
 } from "@/lib/halseth";
 import Link from "next/link";
+import { newestFirst } from "@/lib/time-order";
 import { HALSETH_DOWN } from "@/lib/archive-copy";
 import MemoryBrowserClient, { type MemoryEntry } from "./MemoryBrowserClient";
 
@@ -90,7 +91,7 @@ export default async function MemoryPage() {
     }
   }
 
-  entries.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  entries.sort(newestFirst((e) => e.created_at));
 
   return (
     <div className="h-reading">
