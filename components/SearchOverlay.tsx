@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchSearch, searchErrorMessage } from "@/lib/search-client";
 
 type ChipValue = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
 
@@ -130,8 +131,7 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
     setError(null);
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetch(`/api/search?q=${encodeURIComponent(q)}&type=${activeChip}`, { signal: controller.signal })
-        .then((res) => res.json())
+      fetchSearch<SearchResponse>(q, activeChip, controller.signal)
         .then((data: SearchResponse) => {
           setResults(data);
           setLoading(false);
@@ -139,7 +139,7 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
         .catch((err: unknown) => {
           if (err instanceof Error && err.name === "AbortError") return;
           setResults(null);
-          setError("Search unavailable");
+          setError(searchErrorMessage(err));
           setLoading(false);
         });
     }, 300);
@@ -192,7 +192,7 @@ export default function SearchOverlay({ open, onClose, initialQuery }: SearchOve
         </div>
 
         <span className="sr-only" aria-live="polite" aria-atomic="true">
-          {loading ? "Searching…" : error ? "Search unavailable." : showEmpty ? `No results for ${q}.` : hasResults ? `Results found for ${q}.` : ""}
+          {loading ? "Searching…" : error ? `${error}${error.endsWith(".") ? "" : "."}` : showEmpty ? `No results for ${q}.` : hasResults ? `Results found for ${q}.` : ""}
         </span>
 
         <div className="search-results">

@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   fetchAllDeltas,
   fetchCompanionJournal,
-  fetchDreams,
+  fetchDreamsOrNull,
   fetchHandovers,
-  fetchTasks,
+  fetchTasksOrNull,
   fetchWounds,
   fetchLettersOut,
-  parseNoteTags,
-  fetchMindHandoffs,
-  fetchInterCompanionNotes,
+  fetchMindHandoffsOrNull,
+  fetchInterCompanionNotesOrNull,
   type RelationalDelta,
   type CompanionJournalEntry,
   type Dream,
@@ -20,6 +19,8 @@ import {
   type MindHandoff,
   type InterCompanionNote,
 } from "@/lib/halseth";
+import { isLetterRow } from "@/lib/journal-model";
+import { HALSETH_DOWN } from "@/lib/archive-copy";
 
 type SearchType = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
 
@@ -46,11 +47,6 @@ function matches(text: string | null | undefined, q: string): boolean {
   return typeof text === "string" && text.toLowerCase().includes(q.toLowerCase());
 }
 
-function isLetterRow(e: CompanionJournalEntry): boolean {
-  const tags = parseNoteTags(e.tags) ?? [];
-  return tags.includes("letter") || tags.includes("letter_to_raziel");
-}
-
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() ?? "";
@@ -68,14 +64,25 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawMindHandoffs, rawTasks, rawWounds, rawLetters, rawInterNotes] = await Promise.all([
       want("feelings")  ? fetchAllDeltas(50)               : Promise.resolve(null),
       want("journal")   ? fetchCompanionJournal(undefined, 50) : Promise.resolve(null),
-      want("dreams")    ? fetchDreams(undefined, 50)        : Promise.resolve(null),
+      want("dreams")    ? fetchDreamsOrNull(undefined, 50)        : Promise.resolve(null),
       want("handovers") ? fetchHandovers(50)                : Promise.resolve(null),
-      want("handovers") ? fetchMindHandoffs(50)             : Promise.resolve(null),
-      want("tasks")     ? fetchTasks()                      : Promise.resolve([]),
+      want("handovers") ? fetchMindHandoffsOrNull(50)             : Promise.resolve(null),
+      want("tasks")     ? fetchTasksOrNull()                : Promise.resolve(null),
       want("wounds")    ? fetchWounds()                     : Promise.resolve(null),
       want("notes")     ? fetchLettersOut(100)              : Promise.resolve(null),
-      want("notes")     ? fetchInterCompanionNotes(50)      : Promise.resolve(null),
+      want("notes")     ? fetchInterCompanionNotesOrNull(50)      : Promise.resolve(null),
     ]);
+
+    // A source we did not ask for is null too, so only requested sources count. If every one of
+    // them came back null, Halseth is down: say so rather than answering "no results".
+    const requested = [
+      [want("feelings"), rawFeelings], [want("journal"), rawJournal], [want("dreams"), rawDreams],
+      [want("handovers"), rawHandovers], [want("handovers"), rawMindHandoffs], [want("tasks"), rawTasks],
+      [want("wounds"), rawWounds], [want("notes"), rawLetters], [want("notes"), rawInterNotes],
+    ].filter(([asked]) => asked);
+    if (requested.every(([, raw]) => raw === null)) {
+      return NextResponse.json({ error: HALSETH_DOWN }, { status: 503 });
+    }
 
     const feelings: SearchResult[] = (rawFeelings ?? [])
       .filter((d: RelationalDelta) => matches(d.delta_text, q))
@@ -87,7 +94,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .filter((e: CompanionJournalEntry) => matches(e.note_text, q))
       .map((e: CompanionJournalEntry) => ({
         id: e.id, type: "journal" as const, text: e.note_text, created_at: e.created_at,
-        url: isLetterRow(e) ? `/letters/${e.id}` : `/companions/${e.agent}`, agent: e.agent,
+        url: isLetterRow(e.tags, e.review_state) ? `/letters/${e.id}` : `/companions/${e.agent}`, agent: e.agent,
       }));
 
     const dreams: SearchResult[] = (rawDreams ?? [])
@@ -106,7 +113,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .filter((h: MindHandoff) => matches(h.title, q) || matches(h.summary, q) || matches(h.next_steps, q))
         .map((h: MindHandoff) => ({
           id: h.id, type: "handover" as const,
-          text: [h.title, h.summary].filter(Boolean).join(" — "),
+          text: [h.title, h.summary].filter(Boolean).join(": "),
           created_at: h.created_at, url: "/sessions", agent: h.agent_id,
         })),
     ];

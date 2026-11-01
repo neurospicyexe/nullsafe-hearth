@@ -19,7 +19,7 @@ export default async function JournalPage() {
     fetchHumanJournalOrNull(100),
   ]);
 
-  const companionEntries = companion ? companion.filter((e) => !isLetterRow(e.tags)) : null;
+  const companionEntries = companion ? companion.filter((e) => !isLetterRow(e.tags, e.review_state)) : null;
 
   return (
     <div className="h-reading">

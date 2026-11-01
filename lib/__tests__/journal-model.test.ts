@@ -13,4 +13,10 @@ describe("isLetterRow", () => {
     expect(isLetterRow(undefined)).toBe(false);
     expect(isLetterRow("not json")).toBe(false);
   });
+  it("a dropped row is not a letter row, whatever its tags", () => {
+    expect(isLetterRow('["letter"]', "dropped")).toBe(false);
+    expect(isLetterRow('["letter_to_raziel"]', "dropped")).toBe(false);
+    expect(isLetterRow('["letter"]', "kept")).toBe(true);
+    expect(isLetterRow('["letter"]', null)).toBe(true);
+  });
 });

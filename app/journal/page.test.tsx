@@ -36,6 +36,14 @@ describe("/journal", () => {
     expect(html).toContain('href="/letters"');
     expect(html).toContain("Letters are in their own door");
   });
+  it("keeps a dropped letter-tagged row on the journal with its dropped badge", async () => {
+    m.fetchCompanionJournal.mockResolvedValue([
+      { ...row("1", "dropped letter body", '["letter"]'), review_state: "dropped" },
+    ]);
+    const html = renderToStaticMarkup(await Page());
+    expect(html).toContain("dropped letter body");
+    expect(html).toContain("dropped</span>");
+  });
   it("says Halseth is down for each null source, not empty", async () => {
     m.fetchCompanionJournal.mockResolvedValue(null);
     m.fetchHumanJournalOrNull.mockResolvedValue(null);

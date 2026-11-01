@@ -86,8 +86,8 @@ export default async function SynthesisPage({
       ) : (
         <>
           <p className="h-synth-meta">
-            {summaries.length} summar{summaries.length === 1 ? "y" : "ies"} — most recent {PAGE_LIMIT} fetched
-            {all.length >= PAGE_LIMIT ? ", older ones exist beyond this window" : ""}
+            {summaries.length} summar{summaries.length === 1 ? "y" : "ies"} (most recent {PAGE_LIMIT} fetched
+            {all.length >= PAGE_LIMIT ? "; older ones exist beyond this window" : ""})
           </p>
 
           <div className="h-synth-feed">

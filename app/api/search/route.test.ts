@@ -4,13 +4,13 @@ import { NextRequest } from "next/server";
 const h = vi.hoisted(() => ({
   fetchAllDeltas: vi.fn(),
   fetchCompanionJournal: vi.fn(),
-  fetchDreams: vi.fn(),
+  fetchDreamsOrNull: vi.fn(),
   fetchHandovers: vi.fn(),
-  fetchTasks: vi.fn(),
+  fetchTasksOrNull: vi.fn(),
   fetchWounds: vi.fn(),
   fetchAllCompanionNotes: vi.fn(),
-  fetchMindHandoffs: vi.fn(),
-  fetchInterCompanionNotes: vi.fn(),
+  fetchMindHandoffsOrNull: vi.fn(),
+  fetchInterCompanionNotesOrNull: vi.fn(),
   fetchLettersOut: vi.fn(),
 }));
 vi.mock("@/lib/halseth", async (orig) => ({ ...(await orig<object>()), ...h }));
@@ -26,13 +26,13 @@ beforeEach(() => {
   Object.values(h).forEach((f) => f.mockReset());
   h.fetchAllDeltas.mockResolvedValue([]);
   h.fetchCompanionJournal.mockResolvedValue([{ id: "j1", agent: "gaia", note_text: "moss", tags: null, created_at: "2026-01-01" }]);
-  h.fetchDreams.mockResolvedValue([]);
+  h.fetchDreamsOrNull.mockResolvedValue([]);
   h.fetchHandovers.mockResolvedValue([]);
-  h.fetchTasks.mockResolvedValue([]);
+  h.fetchTasksOrNull.mockResolvedValue([]);
   h.fetchWounds.mockResolvedValue([]);
   h.fetchAllCompanionNotes.mockResolvedValue([]);
-  h.fetchMindHandoffs.mockResolvedValue([]);
-  h.fetchInterCompanionNotes.mockResolvedValue([]);
+  h.fetchMindHandoffsOrNull.mockResolvedValue([]);
+  h.fetchInterCompanionNotesOrNull.mockResolvedValue([]);
   h.fetchLettersOut.mockResolvedValue([]);
 });
 
@@ -74,15 +74,41 @@ describe("search route", () => {
   });
   it("handovers link to /sessions", async () => {
     h.fetchHandovers.mockResolvedValue([{ id: "h1", spine: "moss", last_real_thing: "", created_at: "2026-01-01" }]);
-    h.fetchMindHandoffs.mockResolvedValue([{ id: "m1", title: "moss", summary: "", next_steps: "", created_at: "2026-01-01", agent_id: "cypher" }]);
+    h.fetchMindHandoffsOrNull.mockResolvedValue([{ id: "m1", title: "moss", summary: "", next_steps: "", created_at: "2026-01-01", agent_id: "cypher" }]);
     const { body } = await run("handovers");
     expect(body.handovers.map((r: { url: string }) => r.url)).toEqual(["/sessions", "/sessions"]);
   });
-  it("a null source gives an empty group, not a 500", async () => {
+  it("one null source still answers 200 with what loaded", async () => {
     h.fetchLettersOut.mockResolvedValue(null);
-    h.fetchInterCompanionNotes.mockResolvedValue(null);
+    h.fetchInterCompanionNotesOrNull.mockResolvedValue([
+      { id: "x1", from_id: "gaia", content: "moss between us", created_at: "2026-01-01" },
+    ]);
     const { status, body } = await run("notes");
     expect(status).toBe(200);
-    expect(body.notes).toEqual([]);
+    expect(body.notes.map((r: { id: string }) => r.id)).toEqual(["x1"]);
+  });
+  it("every requested source null is a 503, not an empty result", async () => {
+    h.fetchLettersOut.mockResolvedValue(null);
+    h.fetchInterCompanionNotesOrNull.mockResolvedValue(null);
+    const { status, body } = await run("notes");
+    expect(status).toBe(503);
+    expect(body).toEqual({ error: "Can't reach Halseth right now." });
+  });
+  it("all types down is a 503", async () => {
+    for (const f of Object.values(h)) f.mockResolvedValue(null);
+    const { status } = await run();
+    expect(status).toBe(503);
+  });
+  it("a dropped letter-tagged row stays a journal row and links to the companion", async () => {
+    h.fetchCompanionJournal.mockResolvedValue([
+      { id: "j9", agent: "gaia", note_text: "moss", tags: '["letter"]', review_state: "dropped", created_at: "2026-01-01" },
+    ]);
+    const { body } = await run("journal");
+    expect(body.journal[0].url).toBe("/companions/gaia");
+  });
+  it("handover text joins title and summary without an em dash", async () => {
+    h.fetchMindHandoffsOrNull.mockResolvedValue([{ id: "m1", title: "moss", summary: "sum", next_steps: "", created_at: "2026-01-01", agent_id: "cypher" }]);
+    const { body } = await run("handovers");
+    expect(body.handovers[0].text).toBe("moss: sum");
   });
 });

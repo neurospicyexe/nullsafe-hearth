@@ -300,7 +300,7 @@ describe("letters door", () => {
   it("Halseth down: says so instead of an empty thread", async () => {
     overrides.fetchInbox = async () => null;
     const html = renderToStaticMarkup(await LettersPage(params("cypher")));
-    expect(html).toContain("Can&#x27;t reach Halseth right now.");
+    expect(html).toContain("Couldn&#x27;t load the letters left for you.");
     expect(html).not.toContain("No letters yet");
   });
 });

@@ -43,7 +43,7 @@ describe("/synthesis", () => {
     expect(html).toContain("t1");
     expect(html).toContain("daily digest");
     expect(html).toContain("cross-companion");
-    expect(html).toContain("most recent 200 fetched");
+    expect(html).toContain("(most recent 200 fetched");
     expect(html).toContain('href="/synthesis?companion=cross"');
     expect(html).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(html).not.toContain("style=");

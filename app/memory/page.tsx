@@ -98,7 +98,7 @@ export default async function MemoryPage() {
       <h1 className="h-page-title">Memory</h1>
       <Link href="/synthesis" className="h-foot-link">Synthesis summaries</Link>
       {notesDown && <p className="h-home-quiet">{HALSETH_DOWN}</p>}
-      <MemoryBrowserClient entries={entries} />
+      {!(notesDown && entries.length === 0) && <MemoryBrowserClient entries={entries} />}
     </div>
   );
 }

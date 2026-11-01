@@ -642,8 +642,13 @@ export async function fetchAllDeltas(
 }
 
 export async function fetchTasks(status?: string): Promise<Task[]> {
+  return (await fetchTasksOrNull(status)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a caller can tell down from empty. */
+export async function fetchTasksOrNull(status?: string): Promise<Task[] | null> {
   const q = status ? `?status=${status}` : "";
-  return (await hGetSafe<Task[]>(`/tasks${q}`)) ?? [];
+  return hGetSafe<Task[]>(`/tasks${q}`);
 }
 
 export async function fetchEvents(): Promise<CalendarEvent[]> {
@@ -725,13 +730,23 @@ export async function fetchMindHandoffsOrNull(limit = 30): Promise<MindHandoff[]
 }
 
 export async function fetchInterCompanionNotes(limit = 30): Promise<InterCompanionNote[]> {
-  return (await hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`)) ?? [];
+  return (await fetchInterCompanionNotesOrNull(limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a caller can tell down from empty. */
+export async function fetchInterCompanionNotesOrNull(limit = 30): Promise<InterCompanionNote[] | null> {
+  return hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`);
 }
 
 export async function fetchDreams(companionId?: string, limit = 20): Promise<Dream[]> {
+  return (await fetchDreamsOrNull(companionId, limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a caller can tell down from empty. */
+export async function fetchDreamsOrNull(companionId?: string, limit = 20): Promise<Dream[] | null> {
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
-  return (await hGetSafe<Dream[]>(`/dreams?${q}`)) ?? [];
+  return hGetSafe<Dream[]>(`/dreams?${q}`);
 }
 
 export async function fetchDreamSeeds(): Promise<DreamSeed[]> {

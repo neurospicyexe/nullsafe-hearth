@@ -3,7 +3,13 @@
 // imports so it stays pure (tags arrive as raw D1 JSON text, or as an array once parsed).
 const LETTER_TAGS = ["letter", "letter_to_raziel"];
 
-export function isLetterRow(tags: string | string[] | null | undefined): boolean {
+// A dropped row is excluded by LETTER_WHERE (review_state != 'dropped'), so the letters door does not
+// list it: it stays a journal row, with its "dropped" badge, rather than vanishing from everywhere.
+export function isLetterRow(
+  tags: string | string[] | null | undefined,
+  reviewState?: string | null,
+): boolean {
+  if (reviewState === "dropped") return false;
   let parsed: unknown = tags;
   if (typeof tags === "string") {
     try {

@@ -7,6 +7,8 @@ import type { Note, InboxItem } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
 import { LetterFormClient } from "../client";
 import { parseCompanionId } from "@/lib/companion-page";
+import { HALSETH_DOWN } from "@/lib/archive-copy";
+import { ms } from "@/lib/time-order";
 
 export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
@@ -34,8 +36,10 @@ export default async function CompanionLettersPage({ params }: { params: Promise
     fetchInbox(100, id),
   ]);
 
-  const lettersOut = notes.status === "fulfilled" ? (notes.value ?? []) : [];
-  const inbox    = inboxRes.status === "fulfilled" ? inboxRes.value : null;
+  // A rejected or null source is an outage, never "no letters": track each so the page can say which.
+  const outRows = notes.status === "fulfilled" ? notes.value : null;
+  const inbox   = inboxRes.status === "fulfilled" ? inboxRes.value : null;
+  const lettersOut = outRows ?? [];
 
   // Belt and braces: a Halseth that predates ?agent= ignores it and returns every writer's letters.
   const lettersIn  = (inbox?.items ?? []).filter((n) => n.agent === id);
@@ -43,7 +47,7 @@ export default async function CompanionLettersPage({ params }: { params: Promise
   const letters: LetterItem[] = [
     ...lettersIn.map((n): LetterItem  => ({ kind: "incoming", note: n, at: n.created_at })),
     ...lettersOut.map((n): LetterItem => ({ kind: "outgoing", note: n, at: n.created_at })),
-  ].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  ].sort((a, b) => ms(a.at) - ms(b.at));
 
   return (
     <>
@@ -57,12 +61,12 @@ export default async function CompanionLettersPage({ params }: { params: Promise
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         <LetterFormClient companionId={id} companionName={config.display} />
 
-        {inbox === null && (
-          <p className="empty">Can&apos;t reach Halseth right now.</p>
-        )}
+        {inbox === null && outRows === null && <p className="empty">{HALSETH_DOWN}</p>}
+        {inbox === null && outRows !== null && <p className="empty">Couldn&apos;t load the letters left for you.</p>}
+        {inbox !== null && outRows === null && <p className="empty">Couldn&apos;t load the letters you left for them.</p>}
 
         {letters.length === 0 ? (
-          inbox === null ? null : (
+          inbox === null || outRows === null ? null : (
             <p className="empty">
               No letters yet. Write something. {config.display} will find it next session.
             </p>

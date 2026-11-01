@@ -43,6 +43,13 @@ describe("/memory", () => {
     expect(html).not.toContain("No entries");
     expect(html).toContain("calm");
   });
+  it("full outage (notes null, nothing else) skips the browser", async () => {
+    m.fetchCompanionJournal.mockResolvedValue(null);
+    const html = renderToStaticMarkup(await Page());
+    expect(html).toContain("Can&#x27;t reach Halseth right now.");
+    expect(html).not.toContain("0 entries");
+    expect(html).not.toContain("No entries");
+  });
   it("renders data with no hex string in the markup", async () => {
     m.fetchCompanionJournal.mockResolvedValue([note("a"), note("b", "cypher")]);
     m.fetchTensions.mockResolvedValue([
