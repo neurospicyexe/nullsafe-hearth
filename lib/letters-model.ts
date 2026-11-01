@@ -15,7 +15,7 @@ function companionOf(noteType: string): string {
 }
 
 // Journal rows are "YYYY-MM-DD HH:MM:SS" (UTC, no zone); notes are ISO with Z. Parse both.
-function ms(at: string): number {
+export function ms(at: string): number {
   const iso = /[zZ]$|[+-]\d\d:?\d\d$/.test(at) ? at.replace(" ", "T") : `${at.replace(" ", "T")}Z`;
   const t = Date.parse(iso);
   return Number.isNaN(t) ? 0 : t;

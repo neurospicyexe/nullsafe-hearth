@@ -2660,3 +2660,16 @@ body:has(.h-reader) { min-height: 0; }
 .h-dot.h-tone-cypher { background: var(--h-cypher); }
 .h-dot.h-tone-gaia { background: var(--h-gaia); }
 .h-dot.h-tone-none { background: var(--h-muted); }
+
+/* ── Sessions and handovers, one list ────────────────────────────────────── */
+.h-sessions { display: flex; flex-direction: column; gap: 12px; }
+.h-session { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); color: var(--h-ink); }
+.h-session-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.h-session-meta { margin: 0; font-size: 0.875rem; color: var(--h-faint); }
+.h-session-when { margin-left: auto; }
+.h-session-spine { margin: 0; font-size: 1rem; line-height: 1.6; overflow-wrap: anywhere; }
+.h-session-last { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--h-muted); overflow-wrap: anywhere; }
+.h-session-last-full { margin: 0; font-size: 1rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-session-full summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; color: var(--h-lamp); font-weight: 600; }
+.h-session-full summary:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-session-full[open] .h-reading { display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; }

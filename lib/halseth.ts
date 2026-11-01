@@ -715,7 +715,12 @@ export type MindHandoff = {
 };
 
 export async function fetchMindHandoffs(limit = 30): Promise<MindHandoff[]> {
-  return (await hGetSafe<MindHandoff[]>(`/ingest/mind-handoffs?limit=${limit}`)) ?? [];
+  return (await fetchMindHandoffsOrNull(limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchMindHandoffsOrNull(limit = 30): Promise<MindHandoff[] | null> {
+  return hGetSafe<MindHandoff[]>(`/ingest/mind-handoffs?limit=${limit}`);
 }
 
 export async function fetchInterCompanionNotes(limit = 30): Promise<InterCompanionNote[]> {
@@ -792,9 +797,12 @@ export type SessionEntry = {
 };
 
 export async function fetchSessions(days = 30, limit = 100): Promise<SessionEntry[]> {
-  return (
-    (await hGetSafe<SessionEntry[]>(`/sessions?days=${days}&limit=${limit}`)) ?? []
-  );
+  return (await fetchSessionsOrNull(days, limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchSessionsOrNull(days = 365, limit = 200): Promise<SessionEntry[] | null> {
+  return hGetSafe<SessionEntry[]>(`/sessions?days=${days}&limit=${limit}`);
 }
 
 // ── Companion Blocks ──────────────────────────────────────────────────────────
