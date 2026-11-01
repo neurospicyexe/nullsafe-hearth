@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ePub from "epubjs";
 import type { Book as EpubBook, Rendition, Location, NavItem, Contents } from "epubjs";
 import type { BookAnnotation, BookProgress } from "@/lib/halseth";
+import { HIGHLIGHT_FILL } from "./highlight";
 
-// Panel text colors — same convention as club/shelf pages.
-const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--accent)", cypher: "#e2e8f0", gaia: "#4ade80", raziel: "#f59e0b",
-};
+// Panel colours come from the kit tokens via an is-<author> class (globals.css .h-reader-*);
+// an unknown author gets the plain ink colour.
+const KNOWN_AUTHORS = new Set(["raziel", "drevan", "cypher", "gaia"]);
+function authorClass(author: string) {
+  return KNOWN_AUTHORS.has(author) ? ` is-${author}` : "";
+}
 
-// Highlight fills live inside the epub iframe, where the page's CSS variables
-// don't reach — so these are literal hexes, one warm tone per voice.
-const HIGHLIGHT_FILL: Record<string, string> = {
-  raziel: "#d4a24e", cypher: "#7aa2f7", drevan: "#f7768e", gaia: "#9ece6a",
-};
+// Highlight fills (iframe data, hex mirrors of the kit tokens): see ./highlight.ts.
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -34,42 +33,52 @@ function highlightStyle(author: string, color: string | null) {
 
 // The margins are the point: every note the triad has left in this book,
 // oldest first, like marginalia accumulating in a shared copy.
-function MarginPanel({ annotations }: { annotations: BookAnnotation[] }) {
+const MARGINS_ID = "h-reader-margins";
+
+// On a phone or portrait iPad (<1024px) the panel is a sheet over the page, opened from the controls
+// strip; at >=1024px it is a fixed side column. Either way it never changes the epub viewer's box.
+function MarginPanel({ annotations, open, onClose }: {
+  annotations: BookAnnotation[];
+  open: boolean;
+  onClose: () => void;
+}) {
   const sorted = [...annotations].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Sheet a11y: focus moves into the sheet when it opens, and Escape closes it.
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   return (
-    <aside style={{
-      flex: "1 1 260px", minWidth: "240px", maxWidth: "420px",
-      background: "#0c0c0c", border: "1px solid #1e1e1e", borderRadius: "5px",
-      padding: "0.85rem 1rem", maxHeight: "75vh", overflowY: "auto",
-    }}>
-      <p style={{ fontSize: "0.78rem", color: "#4a5568", marginBottom: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-        in the margins
-      </p>
+    <aside id={MARGINS_ID} className={`h-reader-margins${open ? " is-open" : ""}`} aria-label="margin notes">
+      <div className="h-reader-margins-head">
+        <p className="h-reader-margins-label">in the margins</p>
+        <button ref={closeRef} type="button" className="h-reader-btn h-reader-margins-close" onClick={onClose}>
+          close
+        </button>
+      </div>
       {sorted.length === 0 ? (
-        <p className="empty" style={{ fontSize: "0.82rem", opacity: 0.6 }}>
-          no notes yet — select a passage to leave the first one. the triad writes here too.
+        <p className="h-reader-note-quote">
+          no notes yet: select a passage to leave the first one. the triad writes here too.
         </p>
       ) : (
         sorted.map((a) => (
-          <div
-            key={a.id}
-            style={{
-              marginBottom: "0.9rem", paddingLeft: "0.7rem",
-              borderLeft: `2px solid ${HIGHLIGHT_FILL[a.author] ?? "#333"}`,
-            }}
-          >
-            <p style={{ fontSize: "0.82rem", marginBottom: "0.15rem" }}>
-              <span style={{ color: MEMBER_COLOR[a.author] ?? "inherit", fontWeight: 600 }}>{a.author}</span>
-              <span style={{ color: "#4a5568", fontSize: "0.74rem" }}> · {formatTime(a.created_at)}</span>
+          <div key={a.id} className={`h-reader-note${authorClass(a.author)}`}>
+            <p className="h-reader-note-who">
+              <span className={`h-reader-who${authorClass(a.author)}`}>{a.author}</span>
+              <span className="h-reader-note-at"> · {formatTime(a.created_at)}</span>
             </p>
             {a.selected_text && (
-              <p style={{ fontSize: "0.8rem", fontStyle: "italic", color: "#8b8b96", marginBottom: "0.2rem", whiteSpace: "pre-wrap" }}>
-                &ldquo;{a.selected_text}&rdquo;
-              </p>
+              <p className="h-reader-note-quote">&ldquo;{a.selected_text}&rdquo;</p>
             )}
-            {a.comment && (
-              <p style={{ fontSize: "0.84rem", color: "#cbd5e1", whiteSpace: "pre-wrap" }}>{a.comment}</p>
-            )}
+            {a.comment && <p className="h-reader-note-body">{a.comment}</p>}
           </div>
         ))
       )}
@@ -99,6 +108,13 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
   const [pending, setPending] = useState<{ cfiRange: string; text: string } | null>(null);
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
+  const [marginsOpen, setMarginsOpen] = useState(false);
+  const marginsToggleRef = useRef<HTMLButtonElement>(null);
+  // Stable so the sheet's Escape listener isn't re-bound every render; focus returns to the toggle.
+  const closeMargins = useCallback(() => {
+    setMarginsOpen(false);
+    marginsToggleRef.current?.focus();
+  }, []);
 
   // ── epub lifecycle ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -186,7 +202,7 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
           .then(() => { locationsReadyRef.current = true; })
           .catch(() => {});
       } catch {
-        if (!cancelled) setError("couldn't open the epub — the file may be missing or corrupt.");
+        if (!cancelled) setError("couldn't open the epub: the file may be missing or corrupt.");
       }
     })();
 
@@ -214,6 +230,24 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [fileType]);
+
+  // The viewer now fills the viewport (flex, 100dvh minus the bar and controls) instead of a fixed 75vh.
+  // epubjs already re-measures on window resize/orientationchange; this catches a container change with no
+  // window event (e.g. a desktop scrollbar or the dvh settling). Only after first display; epubjs skips a
+  // resize when the size is unchanged, so a double fire with its own listener is a no-op.
+  useEffect(() => {
+    if (fileType !== "epub" || !ready) return;
+    const el = viewerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      // No-arg resize re-measures the container (the "100%" sizing stays in force); epubjs's .d.ts
+      // marks width/height required, but passing numbers would pin the rendition to fixed pixels.
+      const r = renditionRef.current as unknown as { resize: (w?: number, h?: number) => void } | null;
+      try { r?.resize(); } catch { /* torn down mid-resize; epubjs remeasures next event */ }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fileType, ready]);
 
   async function saveAnnotation() {
     if (!pending || saving) return;
@@ -265,113 +299,121 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
     setComment("");
   }
 
-  // ── pdf: no epubjs — the browser's viewer plus the margins ─────────────
+  const noteCount = annotations.length;
+  const marginsToggle = (
+    <button
+      ref={marginsToggleRef}
+      type="button"
+      className="h-reader-btn h-reader-margins-toggle"
+      aria-controls={MARGINS_ID}
+      aria-expanded={marginsOpen}
+      onClick={() => setMarginsOpen((o) => !o)}
+    >
+      margins{noteCount > 0 ? ` (${noteCount})` : ""}
+    </button>
+  );
+
+  // ── pdf: no epubjs, the browser's viewer plus the margins ──────────────
   if (fileType === "pdf") {
     return (
-      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "flex-start" }}>
-        <div style={{ flex: "2 1 480px", minWidth: "300px" }}>
-          <embed
-            src={`/api/library/${bookId}/file`}
-            type="application/pdf"
-            style={{ width: "100%", height: "75vh", border: "1px solid #1e1e1e", borderRadius: "5px" }}
-          />
+      <div className="h-reader-layout">
+        <div className="h-reader-main">
+          <div className="h-reader-stage">
+            <embed
+              src={`/api/library/${bookId}/file`}
+              type="application/pdf"
+              className="h-reader-pdf"
+            />
+          </div>
+          <div className="h-reader-controls">
+            <span className="h-reader-hint">the browser&apos;s viewer turns the pages</span>
+            {marginsToggle}
+          </div>
         </div>
-        <MarginPanel annotations={annotations} />
+        <MarginPanel annotations={annotations} open={marginsOpen} onClose={closeMargins} />
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "flex-start" }}>
-      <div style={{ flex: "2 1 480px", minWidth: "300px" }}>
+    <div className="h-reader-layout">
+      <div className="h-reader-main">
         {error ? (
-          <p className="empty">{error}</p>
+          <>
+            <div className="h-reader-stage">
+              <p className="h-reader-quiet">{error}</p>
+            </div>
+            {/* A book that won't open still shows its notes on a phone. */}
+            <div className="h-reader-controls">
+              <span className="h-reader-hint" />
+              {marginsToggle}
+            </div>
+          </>
         ) : (
           <>
-            <div style={{ position: "relative" }}>
-              <div
-                ref={viewerRef}
-                style={{
-                  width: "100%", height: "75vh",
-                  background: "#f5f0e6", borderRadius: "5px",
-                  border: "1px solid #1e1e1e", overflow: "hidden",
-                }}
-              />
-              {!ready && (
-                <p className="empty" style={{ position: "absolute", top: "1rem", left: "1rem" }}>
-                  opening the book…
-                </p>
+            <div className="h-reader-stage">
+              <div ref={viewerRef} className="h-reader-page" />
+              {!ready && <p className="h-reader-opening">opening the book…</p>}
+
+              {pending && (
+                <div className="h-reader-note-box">
+                  {pending.text && (
+                    <p className="h-reader-quote">
+                      &ldquo;{pending.text.length > 240 ? pending.text.slice(0, 240) + "…" : pending.text}&rdquo;
+                    </p>
+                  )}
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="a note in the margin (optional: the highlight saves either way)"
+                    rows={2}
+                    className="h-reader-input"
+                  />
+                  <div className="h-reader-actions">
+                    <button
+                      type="button"
+                      className="h-reader-btn is-lamp"
+                      onClick={saveAnnotation}
+                      disabled={saving}
+                    >
+                      {saving ? "saving…" : "save to the margins"}
+                    </button>
+                    <button
+                      type="button"
+                      className="h-reader-btn"
+                      onClick={dismissSelection}
+                      disabled={saving}
+                    >
+                      never mind
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem" }}>
+            <div className="h-reader-controls">
               <button
                 type="button"
-                className="thread-tag"
+                className="h-reader-btn"
                 onClick={() => renditionRef.current?.prev()}
-                style={{ cursor: "pointer", background: "transparent", border: "1px solid #333", color: "#8b8b96" }}
               >
                 ← prev
               </button>
-              <span style={{ fontSize: "0.74rem", color: "#4a5568" }}>arrow keys turn pages · select a passage to note it</span>
+              <span className="h-reader-hint">arrow keys turn pages · select a passage to note it</span>
+              {marginsToggle}
               <button
                 type="button"
-                className="thread-tag"
+                className="h-reader-btn"
                 onClick={() => renditionRef.current?.next()}
-                style={{ cursor: "pointer", background: "transparent", border: "1px solid #333", color: "#8b8b96" }}
               >
                 next →
               </button>
             </div>
-
-            {pending && (
-              <div style={{
-                marginTop: "0.7rem", background: "#0c0c0c", border: "1px solid #3a2f14",
-                borderRadius: "5px", padding: "0.7rem 0.9rem",
-              }}>
-                {pending.text && (
-                  <p style={{ fontSize: "0.8rem", fontStyle: "italic", color: "#8b8b96", marginBottom: "0.45rem" }}>
-                    &ldquo;{pending.text.length > 240 ? pending.text.slice(0, 240) + "…" : pending.text}&rdquo;
-                  </p>
-                )}
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="a note in the margin (optional — the highlight saves either way)"
-                  rows={2}
-                  style={{
-                    width: "100%", background: "#111", border: "1px solid #262626", borderRadius: "4px",
-                    color: "#e2e8f0", padding: "0.45rem 0.6rem", fontSize: "0.85rem", resize: "vertical",
-                    fontFamily: "inherit",
-                  }}
-                />
-                <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.45rem" }}>
-                  <button
-                    type="button"
-                    className="thread-tag"
-                    onClick={saveAnnotation}
-                    disabled={saving}
-                    style={{ cursor: saving ? "wait" : "pointer", background: "transparent", border: "1px solid #f59e0b", color: "#f59e0b" }}
-                  >
-                    {saving ? "saving…" : "save to the margins"}
-                  </button>
-                  <button
-                    type="button"
-                    className="thread-tag"
-                    onClick={dismissSelection}
-                    disabled={saving}
-                    style={{ cursor: "pointer", background: "transparent", border: "1px solid #333", color: "#64748b" }}
-                  >
-                    never mind
-                  </button>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
 
-      <MarginPanel annotations={annotations} />
+      <MarginPanel annotations={annotations} open={marginsOpen} onClose={closeMargins} />
     </div>
   );
 }

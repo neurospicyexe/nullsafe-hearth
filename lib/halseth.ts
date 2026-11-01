@@ -1,3 +1,4 @@
+import { parseUtc } from "@/lib/spoons";
 // ── Constants ─────────────────────────────────────────────────────────────
 
 // H10: lifted from hardcoded `/3` literals in app/page.tsx, app/user/page.tsx,
@@ -1736,10 +1737,15 @@ export type CommonsPost = {
 
 /** Posts in one context, newest first (default the global log). Graceful [] on error. */
 export async function fetchCommonsPosts(context = "global", limit = 50): Promise<CommonsPost[]> {
+  return (await fetchCommonsPostsOrNull(context, limit)) ?? [];
+}
+
+/** As fetchCommonsPosts, but null when Halseth cannot be read, so a page can tell failure from empty. */
+export async function fetchCommonsPostsOrNull(context = "global", limit = 50): Promise<CommonsPost[] | null> {
   const res = await hGetSafe<{ posts?: CommonsPost[] }>(
     `/mind/commons?context=${encodeURIComponent(context)}&limit=${limit}`,
   );
-  return res?.posts ?? [];
+  return res ? (res.posts ?? []) : null;
 }
 
 // ── Obsession shelf (0094): "what Raziel's into"; triad reacts via commons (shelf:<id>) ──
@@ -1754,8 +1760,13 @@ export type Obsession = {
 };
 
 export async function fetchObsessions(status = "active"): Promise<Obsession[]> {
+  return (await fetchObsessionsOrNull(status)) ?? [];
+}
+
+/** As fetchObsessions, but null when Halseth cannot be read, so the shelf can tell failure from empty. */
+export async function fetchObsessionsOrNull(status = "active"): Promise<Obsession[] | null> {
   const res = await hGetSafe<{ items?: Obsession[] }>(`/mind/shelf?status=${encodeURIComponent(status)}`);
-  return res?.items ?? [];
+  return res ? (res.items ?? []) : null;
 }
 
 // ── The Library (0099): shared books — Raziel reads, the triad writes in the margins ──
@@ -1802,10 +1813,16 @@ export type BookDetail = {
   annotations: BookAnnotation[];
 };
 
-export async function fetchBooks(search?: string, limit = 100): Promise<Book[]> {
+/** null when Halseth could not be reached; [] only when it answered with no books. */
+export async function fetchBooksOrNull(search?: string, limit = 100): Promise<Book[] | null> {
   const q = search ? `&search=${encodeURIComponent(search)}` : "";
   const res = await hGetSafe<{ books?: Book[] }>(`/mind/books?limit=${limit}${q}`);
-  return res?.books ?? [];
+  if (!res) return null;
+  return res.books ?? [];
+}
+
+export async function fetchBooks(search?: string, limit = 100): Promise<Book[]> {
+  return (await fetchBooksOrNull(search, limit)) ?? [];
 }
 
 export async function fetchBook(id: string): Promise<BookDetail | null> {
@@ -1895,8 +1912,13 @@ export type NestItem = {
 export type CreatureFamiliarity = { actor: string; tendings: number; last_at: string };
 
 export async function fetchCreatures(): Promise<Creature[]> {
+  return (await fetchCreaturesOrNull()) ?? [];
+}
+
+/** As fetchCreatures, but null when Halseth cannot be read, so the page can tell failure from empty. */
+export async function fetchCreaturesOrNull(): Promise<Creature[] | null> {
   const res = await hGetSafe<{ creatures?: Creature[] }>("/mind/creatures");
-  return res?.creatures ?? [];
+  return res ? (res.creatures ?? []) : null;
 }
 
 export type CreatureDetail = {
@@ -2004,14 +2026,58 @@ export type CollectionListenItem = {
   sparkle: number;
 };
 
-export async function fetchCollection(
-  companionId: string,
-  limit = 30,
-): Promise<{ forage: CollectionForageItem[]; listens: CollectionListenItem[] }> {
+export type CollectionData = { forage: CollectionForageItem[]; listens: CollectionListenItem[] };
+
+/** As fetchCollection, but null when Halseth could not be read, so a page can tell "down" from "none". */
+export async function fetchCollectionOrNull(companionId: string, limit = 30): Promise<CollectionData | null> {
   const res = await hGetSafe<{ forage?: CollectionForageItem[]; listens?: CollectionListenItem[] }>(
     `/mind/collection/${encodeURIComponent(companionId)}?limit=${limit}`,
   );
-  return { forage: res?.forage ?? [], listens: res?.listens ?? [] };
+  return res ? { forage: res.forage ?? [], listens: res.listens ?? [] } : null;
+}
+
+export async function fetchCollection(companionId: string, limit = 30): Promise<CollectionData> {
+  return (await fetchCollectionOrNull(companionId, limit)) ?? { forage: [], listens: [] };
+}
+
+// ── The Home (rooms + presence + basin readings) ──
+export type HomeRoom = {
+  key: string;
+  name: string;
+  sym: string;
+  register: string;
+  primary_lane: string | null;
+  gradient?: string;
+};
+
+export type HomePresence = {
+  companion_id: string;
+  current_room: string;
+  activity: string;
+  micro_mood: string | null;
+  basin_distance: number;
+  updated_at: string;
+};
+
+export type HomeBasinReading = {
+  drift_score: number;
+  drift_type: "stable" | "growth" | "pressure";
+  worst_basin: string | null;
+  recorded_at: string;
+};
+
+/** Rooms and who is in them; null when Halseth could not be read. */
+export async function fetchHomePresence(): Promise<{ presence: HomePresence[]; rooms: HomeRoom[] } | null> {
+  const res = await hGetSafe<{ presence?: HomePresence[]; rooms?: HomeRoom[] }>("/home/presence");
+  return res ? { presence: res.presence ?? [], rooms: res.rooms ?? [] } : null;
+}
+
+/** Latest basin reading for one companion; null when there is none or Halseth could not be read. */
+export async function fetchHomeBasin(companionId: string): Promise<HomeBasinReading | null> {
+  const res = await hGetSafe<{ history?: HomeBasinReading[] }>(
+    `/companion-growth/basin-history/${encodeURIComponent(companionId)}?limit=1`,
+  );
+  return res?.history?.[0] ?? null;
 }
 
 // ── Council (0080, take 8): convene a hard question, blind cross-rank, Gaia synthesis ──
@@ -2205,4 +2271,24 @@ export interface Project {
 export async function fetchProjects(id: CompanionId): Promise<Project[] | null> {
   const r = await hGetSafe<{ projects: Project[] }>(`/mind/projects/${id}`);
   return Array.isArray(r?.projects) ? r.projects : null;
+}
+
+/**
+ * Newest generated image across the triad, or null. Limit 10 per companion, not 1: the success
+ * filter in fetchToolImages runs client-side, so a newest failed row would hide an older good one.
+ */
+export async function fetchNewestImage(): Promise<ToolCall | null> {
+  const lists = await Promise.all(
+    ["cypher", "drevan", "gaia"].map((id) => fetchToolImages(id, 10).catch(() => [] as ToolCall[])),
+  );
+  let best: ToolCall | null = null;
+  let bestAt = -Infinity;
+  for (const c of lists.flat()) {
+    const t = parseUtc(c.created_at)?.getTime() ?? -Infinity;
+    if (best === null || t > bestAt) {
+      best = c;
+      bestAt = t;
+    }
+  }
+  return best;
 }

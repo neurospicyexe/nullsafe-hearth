@@ -86,7 +86,7 @@ Growth + autonomy endpoints (return empty arrays gracefully if not yet migrated)
 - `GET /mind/growth/markers?companion_id=`
 - `GET /mind/autonomy/runs/:companion_id?limit=`
 - `GET /mind/autonomy/seeds/:companion_id`
-- `GET /companion-growth/basin-history/:companion_id?limit=` -- per-companion basin readings (used directly in `app/home/page.tsx` via raw fetch, NOT via hGetSafe)
+- `GET /companion-growth/basin-history/:companion_id?limit=` -- per-companion basin readings (`fetchHomeBasin` in `lib/halseth.ts`, used by `app/home/page.tsx`)
 
 `GET /mind/health`, `/mind/patterns`, `/mind/recent` never existed in Halseth (Brain era); the `/api/mind` route that polled them was deleted 2026-10-08. `/mind` (the page) reads companion notes + `human_journal` directly.
 

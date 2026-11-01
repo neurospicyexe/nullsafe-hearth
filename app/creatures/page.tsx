@@ -1,18 +1,12 @@
-import { fetchCreatures, fetchCreature, creatureMood } from "@/lib/halseth";
+import { fetchCreaturesOrNull, fetchCreature, creatureMood } from "@/lib/halseth";
 import type { Creature, CreatureInteraction, CreatureDetail, NestItem, CreatureMilestone } from "@/lib/halseth";
+import { memberClass } from "@/lib/kit";
 import ClientTime from "@/components/ClientTime";
 import TendButtons from "./TendButtons";
 
 export const dynamic = "force-dynamic";
 
 const COMPANION_IDS = new Set(["cypher", "drevan", "gaia"]);
-
-const ACTOR_COLOR: Record<string, string> = {
-  raziel: "#f59e0b",
-  drevan: "var(--accent)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-};
 
 const MILESTONE_LABEL: Record<string, string> = {
   first_approach: "first approach",
@@ -24,50 +18,48 @@ const MILESTONE_LABEL: Record<string, string> = {
   whole_sky: "the whole sky",
 };
 
-function Bar({ label, value, color }: { label: string; value: number; color: string }) {
+type Tone = "trust" | "quiet" | "loud" | "urgent" | "energy";
+
+function Bar({ label, value, tone }: { label: string; value: number; tone: Tone }) {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
-    <div style={{ marginTop: "0.4rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", opacity: 0.7 }}>
-        <span>{label}</span><span>{value.toFixed(2)}</span>
+    <div className="h-creature-bar">
+      <div className="h-creature-bar-head">
+        <span>{label}{tone === "urgent" && <span className="h-creature-bar-mark" aria-label="urgent">!</span>}</span><span>{value.toFixed(2)}</span>
       </div>
-      <div style={{ height: "6px", borderRadius: "3px", background: "var(--surface, #1a1a1a)", overflow: "hidden", marginTop: "0.2rem" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: color, transition: "width 0.3s" }} />
+      <div className="h-creature-bar-track">
+        <div className={`h-creature-bar-fill is-${tone}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
 }
 
-// Drives read as needs: green when quiet, amber/red as they get loud. Energy inverts
-// (low energy is a roosting crow, not a starving one) so it renders as its own hue.
-function driveColor(v: number): string {
-  return v > 0.7 ? "#f87171" : v > 0.45 ? "#f59e0b" : "#4ade80";
+// Drives read as needs: quiet when low, warmer as they get loud. Energy inverts
+// (low energy is a roosting crow, not a starving one) so it renders as its own tone.
+function driveTone(v: number): Tone {
+  return v > 0.7 ? "urgent" : v > 0.45 ? "loud" : "quiet";
 }
 
 function DriveBars({ creature }: { creature: Creature }) {
   const d = creature.drives;
-  if (!d) return <Bar label="restlessness" value={creature.restlessness ?? 0} color={driveColor(creature.restlessness ?? 0)} />;
+  if (!d) return <Bar label="restlessness" value={creature.restlessness ?? 0} tone={driveTone(creature.restlessness ?? 0)} />;
   return (
-    <div style={{ marginTop: "0.2rem" }}>
-      <Bar label="hunger" value={d.hunger} color={driveColor(d.hunger)} />
-      <Bar label="boredom" value={d.boredom} color={driveColor(d.boredom)} />
-      <Bar label="missing you" value={d.missing} color={driveColor(d.missing)} />
-      <Bar label="energy" value={d.energy} color="#60a5fa" />
+    <div>
+      <Bar label="hunger" value={d.hunger} tone={driveTone(d.hunger)} />
+      <Bar label="boredom" value={d.boredom} tone={driveTone(d.boredom)} />
+      <Bar label="missing you" value={d.missing} tone={driveTone(d.missing)} />
+      <Bar label="energy" value={d.energy} tone="energy" />
     </div>
   );
 }
 
-function activityLabel(i: CreatureInteraction): { label: string; color: string; prefix: string } {
+function activityLabel(i: CreatureInteraction): { label: string; cls: string; prefix: string } {
   if (i.actor === "sol" && i.action === "appear") {
-    return { prefix: "✦", label: "appeared", color: "#c084fc" }; // Sol's own moment — purple
+    return { prefix: "✦", label: "appeared", cls: "is-sol" }; // Sol's own moment
   }
-  if (COMPANION_IDS.has(i.actor)) {
-    return { prefix: "→", label: i.action, color: ACTOR_COLOR[i.actor] ?? "#e2e8f0" };
-  }
-  if (i.actor === "raziel") {
-    return { prefix: "♡", label: i.action, color: ACTOR_COLOR.raziel };
-  }
-  return { prefix: "·", label: i.action, color: "inherit" };
+  if (COMPANION_IDS.has(i.actor)) return { prefix: "→", label: i.action, cls: memberClass(i.actor) };
+  if (i.actor === "raziel") return { prefix: "♡", label: i.action, cls: "is-raziel" };
+  return { prefix: "·", label: i.action, cls: "is-other" };
 }
 
 function NestSection({ nest }: { nest: NestItem[] }) {
@@ -75,48 +67,40 @@ function NestSection({ nest }: { nest: NestItem[] }) {
   const given = nest.filter(n => n.gifted_to).slice(0, 3);
   if (kept.length === 0 && given.length === 0) {
     return (
-      <div style={{ marginTop: "0.75rem" }}>
-        <div className="section-row-meta" style={{ fontSize: "0.73rem", marginBottom: "0.35rem" }}>the nest</div>
-        <p className="section-row-meta" style={{ fontSize: "0.8rem" }}>
-          empty — he keeps what he overhears and what he&apos;s given (tend with a give)
-        </p>
+      <div className="h-creature-section">
+        <h3 className="h-creature-h3">the nest</h3>
+        <p className="h-creature-quiet">empty: he keeps what he overhears and what he&apos;s given (tend with a give)</p>
       </div>
     );
   }
+  const treasured = kept.filter(k => k.treasured === 1).length;
   return (
-    <div style={{ marginTop: "0.75rem" }}>
-      <div className="section-row-meta" style={{ fontSize: "0.73rem", marginBottom: "0.35rem" }}>
-        the nest — {kept.length} kept{kept.filter(k => k.treasured === 1).length > 0 ? `, ${kept.filter(k => k.treasured === 1).length} treasured` : ""}
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+    <div className="h-creature-section">
+      <h3 className="h-creature-h3">
+        the nest: {kept.length} kept{treasured > 0 ? `, ${treasured} treasured` : ""}
+      </h3>
+      <div className="h-creature-chips">
         {/* The count line above already says how many are kept; clipping to 12 under it made the
             rest unreachable on the page that exists to show them. */}
         {kept.map(item => (
           <span
             key={item.id}
-            title={`${item.given_by ? `from ${item.given_by}` : item.source} — sparkle ${item.sparkle.toFixed(2)}`}
-            style={{
-              fontSize: "0.75rem",
-              padding: "0.15rem 0.5rem",
-              borderRadius: "999px",
-              border: `1px solid ${item.treasured === 1 ? "#f59e0b" : "var(--border)"}`,
-              color: item.treasured === 1 ? "#f59e0b" : "var(--muted)",
-              opacity: 0.4 + Math.min(1, Math.max(0, item.sparkle)) * 0.6,
-              whiteSpace: "nowrap",
-            }}
+            title={`${item.given_by ? `from ${item.given_by}` : item.source}, sparkle ${item.sparkle.toFixed(2)}`}
+            className={`h-creature-chip${item.treasured === 1 ? " is-treasured" : ""}`}
+            style={{ opacity: 0.4 + Math.min(1, Math.max(0, item.sparkle)) * 0.6 }}
           >
             {item.treasured === 1 ? "★ " : ""}{item.content}
           </span>
         ))}
       </div>
       {given.length > 0 && (
-        <div style={{ marginTop: "0.4rem" }}>
+        <ul className="h-creature-given">
           {given.map(g => (
-            <p key={g.id} className="section-row-meta" style={{ fontSize: "0.75rem", margin: "0.1rem 0" }}>
-              → gave &quot;{g.content}&quot; to {g.gifted_to}{g.gifted_at && <> — <ClientTime iso={g.gifted_at} /></>}
-            </p>
+            <li key={g.id}>
+              → gave &quot;{g.content}&quot; to {g.gifted_to}{g.gifted_at && <> · <ClientTime iso={g.gifted_at} /></>}
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
@@ -125,23 +109,20 @@ function NestSection({ nest }: { nest: NestItem[] }) {
 function MilestoneSection({ milestones, next, trust }: { milestones: CreatureMilestone[]; next: { id: string; threshold: number } | null; trust: number }) {
   if (milestones.length === 0 && !next) return null;
   return (
-    <div style={{ marginTop: "0.75rem" }}>
-      <div className="section-row-meta" style={{ fontSize: "0.73rem", marginBottom: "0.35rem" }}>milestones</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }}>
+    <div className="h-creature-section">
+      <h3 className="h-creature-h3">milestones</h3>
+      <div className="h-creature-chips">
         {milestones.map(m => (
           <span
             key={m.milestone_id}
             title={`${m.text ?? ""}${m.witnessed_by ? ` (witnessed by ${m.witnessed_by})` : " (before anyone was counting)"}`}
-            style={{
-              fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: "999px",
-              background: "var(--surface, #1a1a1a)", color: "#c084fc", whiteSpace: "nowrap",
-            }}
+            className="h-creature-chip is-moment"
           >
             ✦ {MILESTONE_LABEL[m.milestone_id] ?? m.milestone_id}
           </span>
         ))}
         {next && (
-          <span className="section-row-meta" style={{ fontSize: "0.73rem" }}>
+          <span className="h-creature-meta">
             next: {MILESTONE_LABEL[next.id] ?? next.id} at trust {next.threshold.toFixed(2)} (now {trust.toFixed(2)})
           </span>
         )}
@@ -150,134 +131,109 @@ function MilestoneSection({ milestones, next, trust }: { milestones: CreatureMil
   );
 }
 
-function CreatureCard({ detail }: { detail: { creature: Creature } & Partial<CreatureDetail> }) {
-  const creature = detail.creature;
-  const interactions = detail.interactions ?? [];
+function CreatureCard({ creature, detail }: { creature: Creature; detail: CreatureDetail | null }) {
+  const interactions = detail?.interactions ?? [];
   const isPet = creature.kind === "companion_pet";
   const mood = creatureMood(creature);
-  const knownBest = (detail.familiarity ?? []).filter(f => f.actor !== "raziel")[0];
+  const knownBest = (detail?.familiarity ?? []).filter(f => f.actor !== "raziel")[0];
   return (
-    <div className="home-section-card" style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
-      {/* Header row */}
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "0.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+    <article className="h-creature">
+      <div className="h-creature-head">
+        <div className="h-creature-who">
           {creature.avatar_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={creature.avatar_url} alt={creature.name} width={32} height={32}
-              style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+            <img className="h-creature-avatar" src={creature.avatar_url} alt={creature.name} width={40} height={40} />
           )}
-          <span className="home-section-title" style={{ margin: 0 }}>{creature.name}</span>
+          <h2 className="h-creature-name">{creature.name}</h2>
         </div>
-        <span className="section-row-meta" style={{ fontSize: "0.7rem", whiteSpace: "nowrap" }}>
-          {isPet ? "system pet" : "real animal"}
-        </span>
+        <span className="h-creature-meta">{isPet ? "system pet" : "real animal"}</span>
       </div>
 
-      {/* Species + mood + disposition + live state */}
-      {creature.species && (
-        <p className="section-row-meta" style={{ margin: 0, fontSize: "0.78rem" }}>{creature.species}</p>
-      )}
-      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
-        {mood && <span style={{ fontSize: "0.85rem" }}>mood: <strong>{mood}</strong></span>}
-        {creature.disposition && (
-          <span style={{ fontSize: "0.85rem" }}>disposition: <strong>{creature.disposition}</strong></span>
-        )}
-        {creature.state && creature.state !== "content" && (
-          <span style={{ fontSize: "0.85rem" }}>right now: <strong>{creature.state}</strong></span>
-        )}
-        {creature.tier && <span style={{ fontSize: "0.85rem", opacity: 0.7 }}>{creature.tier}</span>}
+      {creature.species && <p className="h-creature-meta">{creature.species}</p>}
+      <div className="h-creature-state">
+        {mood && <span>mood: <strong>{mood}</strong></span>}
+        {creature.disposition && <span>disposition: <strong>{creature.disposition}</strong></span>}
+        {creature.state && creature.state !== "content" && <span>right now: <strong>{creature.state}</strong></span>}
+        {creature.tier && <span className="h-creature-meta">{creature.tier}</span>}
       </div>
 
-      {creature.bio && (
-        <p className="section-row-meta" style={{ fontSize: "0.82rem", marginTop: "0.3rem" }}>{creature.bio}</p>
-      )}
+      {creature.bio && <p className="h-creature-bio">{creature.bio}</p>}
 
-      {/* Trust + drives */}
-      <Bar label="trust" value={creature.trust} color="var(--accent)" />
+      <Bar label="trust" value={creature.trust} tone="trust" />
       <DriveBars creature={creature} />
 
       {knownBest && (
-        <p className="section-row-meta" style={{ fontSize: "0.75rem", marginTop: "0.35rem" }}>
-          knows {knownBest.actor} best ({knownBest.tendings} tendings)
-        </p>
+        <p className="h-creature-meta">knows {knownBest.actor} best ({knownBest.tendings} tendings)</p>
       )}
 
-      {/* Tend in place — feed/play/talk/give as raziel */}
+      {/* Tend in place: feed/play/talk/give as raziel */}
       <TendButtons creatureId={creature.id} />
 
-      {/* Inner life (pet only): milestones + nest */}
-      {isPet && (
-        <MilestoneSection
-          milestones={detail.milestones ?? []}
-          next={detail.next_milestone ?? null}
-          trust={creature.trust}
-        />
-      )}
-      {isPet && <NestSection nest={detail.nest ?? []} />}
-
-      {/* Activity log */}
-      <div style={{ marginTop: "0.75rem" }}>
-        <div className="section-row-meta" style={{ fontSize: "0.73rem", marginBottom: "0.35rem" }}>
-          recent activity
-          {creature.last_interaction_at && (
-            <> — last <ClientTime iso={creature.last_interaction_at} /></>
+      {detail === null ? (
+        <p className="h-creature-quiet is-section">
+          Couldn&apos;t load the rest of this card from Halseth.
+          {creature.last_interaction_at && <> Last tended <ClientTime iso={creature.last_interaction_at} />.</>}
+        </p>
+      ) : (
+        <>
+          {isPet && (
+            <MilestoneSection milestones={detail.milestones ?? []} next={detail.next_milestone ?? null} trust={creature.trust} />
           )}
-        </div>
-        {interactions.length === 0 ? (
-          <p className="section-row-meta" style={{ fontSize: "0.8rem" }}>none yet</p>
-        ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {interactions.map(i => {
-              const { prefix, label, color } = activityLabel(i);
-              return (
-                <li key={i.id} className="section-row" style={{ alignItems: "baseline", padding: "0.2rem 0" }}>
-                  <span style={{ color, marginRight: "0.3rem", fontSize: "0.78rem" }}>{prefix}</span>
-                  <span style={{ color, fontSize: "0.82rem" }}>{i.actor}</span>
-                  <span style={{ fontSize: "0.82rem", marginLeft: "0.3rem" }}>{label}</span>
-                  {i.note && (
-                    <span className="section-row-meta" style={{ marginLeft: "0.3rem", fontSize: "0.78rem" }}>
-                      — {i.note}
-                    </span>
-                  )}
-                  <span className="section-row-meta" style={{ marginLeft: "auto", fontSize: "0.72rem", whiteSpace: "nowrap" }}>
-                    <ClientTime iso={i.created_at} />
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    </div>
+          {isPet && <NestSection nest={detail.nest ?? []} />}
+
+          <div className="h-creature-section">
+            <h3 className="h-creature-h3">
+              recent activity
+              {creature.last_interaction_at && <> · last <ClientTime iso={creature.last_interaction_at} /></>}
+            </h3>
+            {interactions.length === 0 ? (
+              <p className="h-creature-quiet">none yet</p>
+            ) : (
+              <ul className="h-creature-feed">
+                {interactions.map(i => {
+                  const { prefix, label, cls } = activityLabel(i);
+                  return (
+                    <li key={i.id} className={`h-creature-row ${cls}`}>
+                      <span className="h-creature-row-who">{prefix} {i.actor} {label}</span>
+                      {/* Notes are the actor's own words (Sol's included): shown as written. */}
+                      {i.note && <span className="h-creature-row-note">{i.note}</span>}
+                      <span className="h-creature-row-at"><ClientTime iso={i.created_at} /></span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
+    </article>
   );
 }
 
 export default async function CreaturesPage() {
-  const creatures = await fetchCreatures();
-  const details = await Promise.all(creatures.map(c => fetchCreature(c.id)));
+  const creatures = await fetchCreaturesOrNull();
+  const details = creatures ? await Promise.all(creatures.map(c => fetchCreature(c.id))) : [];
 
   return (
-    <>
-      <div className="page-header">
-        <h1 className="page-title">Creatures</h1>
-        <p className="page-subtitle">
-          presences who live in the system — the corvid + Raziel&apos;s animals. trust builds slowly through
-          interaction and cools when untended. drives are live; the nest is what he keeps. tend them right here.
-        </p>
-      </div>
+    <div className="h-creatures">
+      <h1 className="h-page-title">Creatures</h1>
+      <p className="h-creatures-lede">
+        presences who live in the system: the corvid and Raziel&apos;s animals. Trust builds slowly through
+        tending and cools when untended. Drives are live; the nest is what he keeps. Tend them right here.
+      </p>
 
-      {creatures.length === 0 ? (
-        <p className="empty">No creatures yet.</p>
+      {creatures === null ? (
+        <p className="h-creature-quiet">Can&apos;t reach Halseth right now.</p>
+      ) : creatures.length === 0 ? (
+        <p className="h-creature-quiet">No creatures yet.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
-          {creatures.map((c, i) => (
-            <CreatureCard
-              key={c.id}
-              detail={{ ...(details[i] ?? { interactions: [] }), creature: { ...c, ...(details[i]?.creature ?? {}) } }}
-            />
-          ))}
+        <div className="h-creatures-grid">
+          {creatures.map((c, i) => {
+            const detail = details[i] ?? null;
+            return <CreatureCard key={c.id} creature={{ ...c, ...(detail?.creature ?? {}) }} detail={detail} />;
+          })}
         </div>
       )}
-    </>
+    </div>
   );
 }

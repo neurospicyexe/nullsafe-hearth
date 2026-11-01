@@ -1,107 +1,30 @@
-export const dynamic = 'force-dynamic';
+import { fetchHomePresence, fetchHomeBasin } from "@/lib/halseth";
+import type { HomeBasinReading, HomePresence, HomeRoom } from "@/lib/halseth";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+export const dynamic = "force-dynamic";
 
-type Room = {
-  key: string;
-  name: string;
-  sym: string;
-  register: string;
-  primary_lane: string | null;
-  gradient: string;
+const COMPANIONS = ["cypher", "drevan", "gaia"] as const;
+type CompanionKey = (typeof COMPANIONS)[number];
+
+const COMPANION_META: Record<CompanionKey, { label: string; abbr: string }> = {
+  cypher: { label: "Cypher", abbr: "Cy" },
+  drevan: { label: "Drevan", abbr: "Dr" },
+  gaia: { label: "Gaia", abbr: "Ga" },
 };
 
-type Presence = {
-  companion_id: string;
-  current_room: string;
-  activity: string;
-  micro_mood: string | null;
-  basin_distance: number;
-  updated_at: string;
-};
+const DRIFT_TYPES = ["stable", "growth", "pressure"] as const;
 
-type BasinReading = {
-  drift_score: number;
-  drift_type: "stable" | "growth" | "pressure";
-  worst_basin: string | null;
-  recorded_at: string;
-} | null;
-
-type HomeData = {
-  rooms: Room[];
-  companions: Presence[];
-  basins: Record<string, BasinReading>;
-};
-
-// ── Data fetching ─────────────────────────────────────────────────────────────
-
-async function fetchHomeData(): Promise<HomeData | null> {
-  const base = process.env.HALSETH_URL;
-  const secret = process.env.HALSETH_SECRET;
-  if (!base) return null;
-  const h: HeadersInit = secret ? { Authorization: `Bearer ${secret}` } : {};
-
-  try {
-    const signal = AbortSignal.timeout(10_000);
-    const [presRes, cyRes, drRes, gaRes] = await Promise.all([
-      fetch(`${base}/home/presence`, { headers: h, cache: 'no-store', signal }),
-      fetch(`${base}/companion-growth/basin-history/cypher?limit=1`, { headers: h, cache: 'no-store', signal }),
-      fetch(`${base}/companion-growth/basin-history/drevan?limit=1`, { headers: h, cache: 'no-store', signal }),
-      fetch(`${base}/companion-growth/basin-history/gaia?limit=1`, { headers: h, cache: 'no-store', signal }),
-    ]);
-
-    const presData = presRes.ok
-      ? (await presRes.json()) as { presence: Presence[]; rooms: Room[] }
-      : { presence: [], rooms: [] };
-
-    const toBasin = async (res: Response): Promise<BasinReading> => {
-      if (!res.ok) return null;
-      const d = (await res.json()) as { history?: BasinReading[] };
-      return d.history?.[0] ?? null;
-    };
-
-    const [cyBasin, drBasin, gaBasin] = await Promise.all([
-      toBasin(cyRes),
-      toBasin(drRes),
-      toBasin(gaRes),
-    ]);
-
-    return {
-      rooms: presData.rooms,
-      companions: presData.presence,
-      basins: { cypher: cyBasin, drevan: drBasin, gaia: gaBasin },
-    };
-  } catch {
-    return null;
-  }
+function driftClass(type: string | undefined) {
+  return type === "stable" || type === "growth" || type === "pressure" ? `is-${type}` : "is-none";
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const COMPANION_META: Record<string, { label: string; abbr: string; color: string }> = {
-  cypher: { label: "Cypher",  abbr: "Cy", color: "#e2e8f0" },
-  drevan: { label: "Drevan",  abbr: "Dr", color: "#818cf8" },
-  gaia:   { label: "Gaia",    abbr: "Ga", color: "#4ade80" },
-};
-
-const DRIFT_COLOR: Record<string, string> = {
-  stable:   "#4ade80",
-  growth:   "#60a5fa",
-  pressure: "#f59e0b",
-};
-
-const DRIFT_BG: Record<string, string> = {
-  stable:   "rgba(74,222,128,0.12)",
-  growth:   "rgba(96,165,250,0.12)",
-  pressure: "rgba(245,158,11,0.18)",
-};
-
-function driftColor(type: string | undefined) {
-  return DRIFT_COLOR[type ?? ""] ?? "#94a3b8";
+function driftLabel(type: string) {
+  return type === "pressure" ? "! pressure" : type;
 }
 
-function driftBg(type: string | undefined) {
-  return DRIFT_BG[type ?? ""] ?? "transparent";
+// room.gradient is authored data; pass it through only as a plain colour/gradient, never a url().
+function roomWash(gradient: unknown): string | null {
+  return typeof gradient === "string" && gradient.trim() && !/url\(/i.test(gradient) ? gradient : null;
 }
 
 function fmt(score: number) {
@@ -117,238 +40,116 @@ function timeAgo(iso: string) {
   return `${m}m ago`;
 }
 
-// ── Analysis Panel ────────────────────────────────────────────────────────────
+type Basins = Record<CompanionKey, HomeBasinReading | null>;
 
-function AnalysisPanel({ companions, basins }: { companions: Presence[]; basins: Record<string, BasinReading> }) {
-  const rows = (["cypher", "drevan", "gaia"] as const).map(id => ({
-    id,
-    meta: COMPANION_META[id],
-    presence: companions.find(c => c.companion_id === id) ?? null,
-    basin: basins[id],
-  }));
-
+function RoomCard({ room, occupants, basins }: { room: HomeRoom; occupants: HomePresence[]; basins: Basins }) {
+  const wash = roomWash(room.gradient);
+  const style = wash ? ({ "--room-wash": wash } as React.CSSProperties) : undefined;
   return (
-    <div className="card">
-      <div className="card-title">Basin Readings</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        {rows.map(({ id, meta, presence, basin }) => (
-          <div
-            key={id}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.25rem",
-              padding: "0.75rem",
-              borderRadius: "0.5rem",
-              background: driftBg(basin?.drift_type),
-              border: `1px solid ${driftColor(basin?.drift_type)}33`,
-            }}
-          >
-            {/* Top row: name + room + timestamp */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-              <span style={{ color: meta.color, fontWeight: 600, fontSize: "0.9rem" }}>{meta.label}</span>
-              {presence && (
-                <span style={{ color: "var(--muted)", fontSize: "0.78rem" }}>
-                  {presence.current_room} · {presence.activity}
-                </span>
-              )}
-              {basin?.recorded_at && (
-                <span style={{ color: "var(--muted)", fontSize: "0.72rem", marginLeft: "auto" }}>
-                  {timeAgo(basin.recorded_at)}
-                </span>
-              )}
-            </div>
-
-            {/* Bottom row: drift type badge + score + worst_basin */}
-            {basin ? (
-              <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", flexWrap: "wrap" }}>
-                <span style={{
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  color: driftColor(basin.drift_type),
-                  padding: "0.1rem 0.4rem",
-                  borderRadius: "0.25rem",
-                  background: `${driftColor(basin.drift_type)}22`,
-                }}>
-                  {basin.drift_type}
-                </span>
-                <span style={{ fontFamily: "monospace", fontSize: "0.85rem", color: "var(--foreground)" }}>
-                  {fmt(basin.drift_score)}
-                </span>
-                {basin.worst_basin && (
-                  <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
-                    ↑ {basin.worst_basin}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>no reading</span>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+    <li className={`h-rooms-room${occupants.length > 0 ? " is-occupied" : ""}`} style={style}>
+      <span className="h-rooms-swatch" aria-hidden="true" />
+      <span className="h-rooms-sym">{room.sym}</span>
+      <span className="h-rooms-room-name">{room.name}</span>
+      <span className="h-rooms-register">{room.register}</span>
+      {occupants.length > 0 && (
+        <span className="h-rooms-chips">
+          {occupants.map((o) => {
+            const key = o.companion_id as CompanionKey;
+            const meta = COMPANION_META[key];
+            const basin = basins[key] ?? null;
+            return (
+              <span key={o.companion_id} className={`h-rooms-chip is-${o.companion_id}`}>
+                {meta ? meta.abbr : o.companion_id}
+                {basin && <span className={`h-rooms-drift ${driftClass(basin.drift_type)}`}> {driftLabel(basin.drift_type)}</span>}
+              </span>
+            );
+          })}
+        </span>
+      )}
+    </li>
   );
 }
 
-// ── Topology Render ───────────────────────────────────────────────────────────
-
-function CompanionChip({ id, basin }: { id: string; basin: BasinReading }) {
-  const meta = COMPANION_META[id];
-  const color = driftColor(basin?.drift_type);
+function Topology({ rooms, companions, basins }: { rooms: HomeRoom[]; companions: HomePresence[]; basins: Basins }) {
+  const laneRooms = rooms.filter((r) => r.primary_lane !== null);
+  const commonRooms = rooms.filter((r) => r.primary_lane === null);
+  const at = (key: string) => companions.filter((c) => c.current_room === key);
   return (
-    <span style={{
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "0.25rem",
-      fontSize: "0.72rem",
-      fontWeight: 700,
-      color: meta.color,
-      background: `${color}22`,
-      border: `1px solid ${color}55`,
-      borderRadius: "9999px",
-      padding: "0.1rem 0.45rem",
-    }}>
-      <span style={{
-        width: "0.45rem",
-        height: "0.45rem",
-        borderRadius: "50%",
-        background: color,
-        flexShrink: 0,
-        boxShadow: basin?.drift_type === "pressure" ? `0 0 5px ${color}` : "none",
-      }} />
-      {meta.abbr}
-    </span>
-  );
-}
-
-function TopologyPanel({ rooms, companions, basins }: HomeData) {
-  // Separate lane rooms from commons for layout
-  const laneRooms = rooms.filter(r => r.primary_lane !== null);
-  const commonRooms = rooms.filter(r => r.primary_lane === null);
-
-  function roomCompanions(roomKey: string) {
-    return companions.filter(c => c.current_room === roomKey);
-  }
-
-  function RoomCard({ room }: { room: Room }) {
-    const occupants = roomCompanions(room.key);
-    const isOccupied = occupants.length > 0;
-
-    // Pressure glow if any occupant is under pressure
-    const pressureOccupant = occupants.find(o => basins[o.companion_id]?.drift_type === "pressure");
-
-    return (
-      <div style={{
-        position: "relative",
-        borderRadius: "0.5rem",
-        overflow: "hidden",
-        border: isOccupied
-          ? `1px solid ${pressureOccupant ? "#f59e0b66" : "rgba(255,255,255,0.2)"}`
-          : "1px solid var(--border)",
-        boxShadow: pressureOccupant ? "0 0 12px rgba(245,158,11,0.25)" : "none",
-        minHeight: "5.5rem",
-      }}>
-        {/* Room gradient background */}
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          background: room.gradient,
-          opacity: isOccupied ? 0.85 : 0.35,
-        }} />
-
-        {/* Content */}
-        <div style={{ position: "relative", padding: "0.75rem", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <div>
-            <div style={{ fontSize: "1.1rem", marginBottom: "0.15rem" }}>{room.sym}</div>
-            <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--foreground)" }}>{room.name}</div>
-            <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.3 }}>{room.register}</div>
-          </div>
-
-          {/* Companion chips */}
-          {occupants.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", marginTop: "0.5rem" }}>
-              {occupants.map(o => (
-                <CompanionChip key={o.companion_id} id={o.companion_id} basin={basins[o.companion_id] ?? null} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="card">
-      <div className="card-title">The Home</div>
-
-      {/* Lane rooms */}
+    <section className="h-rooms-section">
+      <h2 className="h-rooms-h2">The Home</h2>
       {laneRooms.length > 0 && (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-          gap: "0.5rem",
-          marginBottom: "0.5rem",
-        }}>
-          {laneRooms.map(r => <RoomCard key={r.key} room={r} />)}
-        </div>
+        <ul className="h-rooms-grid">
+          {laneRooms.map((r) => <RoomCard key={r.key} room={r} occupants={at(r.key)} basins={basins} />)}
+        </ul>
       )}
-
-      {/* Commons */}
       {commonRooms.length > 0 && (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
-          gap: "0.5rem",
-        }}>
-          {commonRooms.map(r => <RoomCard key={r.key} room={r} />)}
-        </div>
+        <ul className="h-rooms-grid is-commons">
+          {commonRooms.map((r) => <RoomCard key={r.key} room={r} occupants={at(r.key)} basins={basins} />)}
+        </ul>
       )}
-
-      {/* Legend */}
-      <div style={{ marginTop: "0.75rem", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-        {(["stable", "growth", "pressure"] as const).map(type => (
-          <div key={type} style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.72rem", color: "var(--muted)" }}>
-            <span style={{ width: "0.5rem", height: "0.5rem", borderRadius: "50%", background: driftColor(type), flexShrink: 0 }} />
-            {type}
-          </div>
+      <ul className="h-rooms-legend">
+        {DRIFT_TYPES.map((type) => (
+          <li key={type} className={`h-rooms-drift ${driftClass(type)}`}>{driftLabel(type)}</li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+function Readings({ companions, basins }: { companions: HomePresence[]; basins: Basins }) {
+  return (
+    <section className="h-rooms-section">
+      <h2 className="h-rooms-h2">Basin Readings</h2>
+      <ul className="h-rooms-readings">
+        {COMPANIONS.map((id) => {
+          const meta = COMPANION_META[id];
+          const presence = companions.find((c) => c.companion_id === id) ?? null;
+          const basin = basins[id];
+          return (
+            <li key={id} className="h-rooms-reading">
+              <div className="h-rooms-reading-top">
+                <span className={`h-rooms-who is-${id}`}>{meta.label}</span>
+                {presence && <span className="h-rooms-meta">{presence.current_room} · {presence.activity}</span>}
+                {basin?.recorded_at && <span className="h-rooms-meta is-right">{timeAgo(basin.recorded_at)}</span>}
+              </div>
+              {basin ? (
+                <div className="h-rooms-reading-bottom">
+                  <span className={`h-rooms-drift ${driftClass(basin.drift_type)}`}>{driftLabel(basin.drift_type)}</span>
+                  <span className="h-rooms-score">{fmt(basin.drift_score)}</span>
+                  {basin.worst_basin && <span className="h-rooms-worst">↑ {basin.worst_basin}</span>}
+                </div>
+              ) : (
+                <span className="h-rooms-meta">no reading</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
 
 export default async function HomePage() {
-  const data = await fetchHomeData();
-
-  if (!data || data.rooms.length === 0) {
-    return (
-      <>
-        <div className="page-header">
-          <h1 className="page-title">The Home</h1>
-          <p className="page-subtitle">inhabited place-graph + basin readings</p>
-        </div>
-        <div className="card">
-          <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-            Home substrate not available. Ensure Halseth is deployed with migration 0065.
-          </p>
-        </div>
-      </>
-    );
-  }
+  const [home, ...readings] = await Promise.all([
+    fetchHomePresence(),
+    ...COMPANIONS.map((c) => fetchHomeBasin(c)),
+  ]);
+  const basins: Basins = { cypher: readings[0] ?? null, drevan: readings[1] ?? null, gaia: readings[2] ?? null };
 
   return (
-    <>
-      <div className="page-header">
-        <h1 className="page-title">The Home</h1>
-        <p className="page-subtitle">inhabited place-graph + basin readings</p>
-      </div>
-      <TopologyPanel {...data} />
-      <AnalysisPanel companions={data.companions} basins={data.basins} />
-    </>
+    <div className="h-rooms">
+      <h1 className="h-page-title">The Home</h1>
+      {home === null ? (
+        <p className="h-rooms-quiet">Can&apos;t reach Halseth right now.</p>
+      ) : home.rooms.length === 0 ? (
+        <p className="h-rooms-quiet">Home substrate not available. Ensure Halseth is deployed with migration 0065.</p>
+      ) : (
+        <>
+          <p className="h-rooms-lede">inhabited place-graph + basin readings</p>
+          <Topology rooms={home.rooms} companions={home.presence} basins={basins} />
+          <Readings companions={home.presence} basins={basins} />
+        </>
+      )}
+    </div>
   );
 }

@@ -1,118 +1,141 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { failureLine, type Pending } from "@/lib/write-queue";
+import { recommendWrite } from "@/lib/club-model";
+import { useWriteQueue } from "@/components/shell/WriteQueueProvider";
 
 const KINDS = ["song", "album", "book", "article", "video", "forage", "other"] as const;
 
-const inputStyle: React.CSSProperties = {
-  background: "#111", border: "1px solid #2a2a2a", color: "inherit",
-  padding: "0.35rem 0.55rem", borderRadius: "4px", fontSize: "0.83rem", width: "100%",
-};
+type Phase = "editing" | "waiting" | "done";
 
-export default function RecommendForm() {
+// Raziel's pick for the round, written through the queue: it confirms at once, can be undone during
+// the grace window, and keeps every field if the write does not land.
+export default function RecommendForm({ roundId }: { roundId: string }) {
+  const queue = useWriteQueue();
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const [phase, setPhase] = useState<Phase>("editing");
+  const [inGrace, setInGrace] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState("other");
   const [creator, setCreator] = useState("");
   const [url, setUrl] = useState("");
   const [pitch, setPitch] = useState("");
+  const pendingRef = useRef<Pending | null>(null);
 
-  async function submit(e: React.FormEvent) {
+  useEffect(() => {
+    if (!inGrace) return;
+    const t = window.setInterval(() => {
+      const p = pendingRef.current;
+      if (!p || !p.waiting()) {
+        setInGrace(false);
+        window.clearInterval(t);
+      }
+    }, 250);
+    return () => window.clearInterval(t);
+  }, [inGrace]);
+
+  function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || busy) return;
-    setBusy(true);
+    if (!title.trim() || phase !== "editing") return;
+    const pending = queue.submit(
+      recommendWrite(roundId, {
+        title: title.trim(),
+        media_kind: kind,
+        creator: creator.trim() || null,
+        url: url.trim() || null,
+        pitch: pitch.trim() || null,
+      }),
+    );
+    pendingRef.current = pending;
     setError(null);
-    try {
-      const res = await fetch("/api/club/recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          media_kind: kind,
-          creator: creator.trim() || null,
-          url: url.trim() || null,
-          pitch: pitch.trim() || null,
-        }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError((body as { error?: string }).error ?? `failed (${res.status})`);
+    setPhase("waiting");
+    setInGrace(true);
+    void pending.done.then((r) => {
+      if (pendingRef.current !== pending) return; // undone here
+      pendingRef.current = null;
+      setInGrace(false);
+      if (r === "undone") {
+        setPhase("editing");
         return;
       }
-      setDone(true);
-      router.refresh();
-    } catch {
-      setError("network error");
-    } finally {
-      setBusy(false);
-    }
+      if (r.ok) {
+        setPhase("done");
+        router.refresh();
+        return;
+      }
+      setError(failureLine(r)); // the fields stay as typed, so a retry is one tap
+      setPhase("editing");
+    });
   }
 
-  if (done) {
-    return <p style={{ fontSize: "0.83rem", color: "#4ade80" }}>pick submitted</p>;
+  function undo() {
+    const p = pendingRef.current;
+    if (!p || !p.waiting()) return;
+    pendingRef.current = null;
+    p.undo();
+    setInGrace(false);
+    setPhase("editing");
+  }
+
+  if (phase !== "editing") {
+    return (
+      <div className="h-club-line" role="status">
+        <span className="h-club-msg">Recommended</span>
+        {phase === "waiting" && inGrace && (
+          <button type="button" className="h-club-btn" onClick={undo}>undo</button>
+        )}
+      </div>
+    );
   }
 
   return (
-    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
-      <div style={{ display: "flex", gap: "0.5rem" }}>
+    <form onSubmit={submit} className="h-club-form">
+      <div className="h-club-form-row">
         <input
           type="text"
+          className="h-club-input is-grow"
           placeholder="title *"
+          aria-label="Title"
           value={title}
           onChange={e => setTitle(e.target.value)}
           required
-          style={{ ...inputStyle, flex: 1 }}
         />
-        <select
-          value={kind}
-          onChange={e => setKind(e.target.value)}
-          style={{ ...inputStyle, width: "auto" }}
-        >
+        <select className="h-club-input" aria-label="Kind" value={kind} onChange={e => setKind(e.target.value)}>
           {KINDS.map(k => <option key={k} value={k}>{k}</option>)}
         </select>
       </div>
       <input
         type="text"
+        className="h-club-input"
         placeholder="creator (optional)"
+        aria-label="Creator"
         value={creator}
         onChange={e => setCreator(e.target.value)}
-        style={inputStyle}
       />
       <input
         type="text"
+        className="h-club-input"
         placeholder="url (optional)"
+        aria-label="Link"
         value={url}
         onChange={e => setUrl(e.target.value)}
-        style={inputStyle}
       />
       <textarea
+        className="h-club-input is-area"
         placeholder="why this? (optional)"
+        aria-label="Why this"
         value={pitch}
         onChange={e => setPitch(e.target.value)}
         rows={2}
-        style={{ ...inputStyle, resize: "vertical" }}
       />
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <button
-          type="submit"
-          disabled={busy || !title.trim()}
-          className="thread-tag"
-          style={{
-            cursor: busy || !title.trim() ? "default" : "pointer",
-            background: "transparent",
-            border: "1px solid #e2e8f0",
-            color: "#e2e8f0",
-            padding: "0.3rem 0.7rem",
-            opacity: !title.trim() ? 0.4 : 1,
-          }}
-        >
-          {busy ? "submitting…" : "recommend"}
+      <div className="h-club-line">
+        <button type="submit" className="h-club-btn is-lamp" disabled={!title.trim()}>
+          Recommend
         </button>
-        {error && <span style={{ fontSize: "0.8rem", color: "#ef4444" }}>{error}</span>}
+        {error && <span className="h-club-msg is-warn" role="status">{error}</span>}
       </div>
     </form>
   );

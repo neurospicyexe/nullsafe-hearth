@@ -1,14 +1,10 @@
-import { fetchToolImages } from "@/lib/halseth";
+import { fetchCompanionImages } from "@/lib/halseth";
 import type { ToolCall } from "@/lib/halseth";
+import { imagePrompt } from "@/lib/companion-page";
+import { memberClass } from "@/lib/kit";
 
 export const dynamic = "force-dynamic";
 
-// Companion colors per repo convention (companions/[id]/sections.tsx).
-const MEMBER_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-};
 const COMPANIONS = ["cypher", "drevan", "gaia"] as const;
 
 function formatTime(iso: string) {
@@ -17,63 +13,59 @@ function formatTime(iso: string) {
   });
 }
 
-// args_summary is stored as "prompt: <text>" -- show just the prompt.
-function promptOf(call: ToolCall): string {
-  return call.args_summary.replace(/^prompt:\s*/i, "").trim() || "(untitled)";
-}
-
 function ImageCard({ call }: { call: ToolCall }) {
+  const prompt = imagePrompt(call.args_summary);
   return (
-    <figure style={{ margin: 0 }}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- R2-served generated art, no Next loader */}
-      <img
-        src={`/api/mind/tools/image/${call.id}`}
-        alt={promptOf(call)}
-        loading="lazy"
-        style={{ width: "100%", borderRadius: "8px", display: "block", background: "var(--surface, #1a1a1a)" }}
-      />
-      <figcaption className="handover-last-real" style={{ marginTop: "0.4rem", fontSize: "0.85rem" }}>
-        “{promptOf(call)}”
-        <span className="thread-tag" style={{ marginLeft: "0.5rem" }}>{formatTime(call.created_at)}</span>
-      </figcaption>
-    </figure>
+    <li>
+      <figure className="h-made-item">
+        {/* eslint-disable-next-line @next/next/no-img-element -- R2-served generated art, no Next loader */}
+        <img src={`/api/mind/tools/image/${call.id}`} alt={prompt} loading="lazy" className="h-made-img" />
+        <figcaption className="h-made-caption">
+          <q>{prompt}</q>
+          <span className="h-rooms-age"> {formatTime(call.created_at)}</span>
+        </figcaption>
+      </figure>
+    </li>
   );
 }
 
 export default async function GalleryPage() {
-  const perCompanion = await Promise.all(COMPANIONS.map(c => fetchToolImages(c, 40)));
-  const sections = COMPANIONS.map((id, i) => ({ id, images: perCompanion[i] ?? [] }));
-  const total = sections.reduce((n, s) => n + s.images.length, 0);
+  const perCompanion = await Promise.all(COMPANIONS.map((c) => fetchCompanionImages(c, 40)));
+  const sections = COMPANIONS.map((id, i) => ({ id, images: perCompanion[i] }));
+  const reached = sections.filter((s) => s.images !== null);
+  const total = reached.reduce((n, s) => n + (s.images?.length ?? 0), 0);
+  const unreached = sections.filter((s) => s.images === null);
 
   return (
-    <>
-      <div className="page-header">
-        <h1 className="page-title">Gallery</h1>
-        <p className="page-subtitle">images the triad has generated — {total} so far</p>
-      </div>
-
-      {total === 0 ? (
-        <p className="empty">
-          No images yet. A companion makes one with <code>cy: imagine &lt;prompt&gt;</code> (once Raziel
-          flips their <code>tools_enabled</code> gate).
-        </p>
+    <div className="h-rooms">
+      <h1 className="h-page-title">Gallery</h1>
+      {reached.length === 0 ? (
+        <p className="h-rooms-quiet">Can&apos;t reach Halseth right now.</p>
       ) : (
-        sections.filter(s => s.images.length > 0).map(({ id, images }) => (
-          <section key={id} style={{ marginBottom: "2rem" }}>
-            <h2 className="page-title" style={{ fontSize: "1.1rem", color: MEMBER_COLOR[id] ?? "inherit" }}>
-              {id} <span className="page-subtitle" style={{ fontSize: "0.85rem" }}>({images.length})</span>
-            </h2>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: "1rem",
-              marginTop: "0.75rem",
-            }}>
-              {images.map(call => <ImageCard key={call.id} call={call} />)}
-            </div>
-          </section>
-        ))
+        <>
+          <p className="h-rooms-lede">images the triad has generated · {total} so far</p>
+          {unreached.map((s) => (
+            <p key={s.id} className="h-rooms-quiet">Can&apos;t load {s.id}&apos;s images right now.</p>
+          ))}
+          {total === 0 ? (
+            <p className="h-rooms-quiet">
+              Nothing made yet. A companion makes one with <code>cy: imagine &lt;prompt&gt;</code> (once Raziel
+              flips their <code>tools_enabled</code> gate).
+            </p>
+          ) : (
+            reached.filter((s) => (s.images?.length ?? 0) > 0).map(({ id, images }) => (
+              <section key={id} className="h-rooms-section">
+                <h2 className={`h-rooms-h2 ${memberClass(id)}`}>
+                  {id} <span className="h-rooms-count">({images!.length})</span>
+                </h2>
+                <ul className="h-made-grid">
+                  {images!.map((call) => <ImageCard key={call.id} call={call} />)}
+                </ul>
+              </section>
+            ))
+          )}
+        </>
       )}
-    </>
+    </div>
   );
 }
