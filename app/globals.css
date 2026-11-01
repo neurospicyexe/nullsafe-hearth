@@ -2675,3 +2675,43 @@ body:has(.h-reader) { min-height: 0; }
 .h-journal-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .h-journal-meta { font-size: 0.875rem; color: var(--h-faint); }
 .h-journal-text { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Memory + Synthesis (P5) */
+.h-mem-sub, .h-synth-sub { margin: 0 0 12px; font-size: 0.9375rem; color: var(--h-muted); }
+.h-mem-search {
+  width: 100%;
+  min-height: var(--h-tap);
+  margin-bottom: 10px;
+  padding: 0 14px;
+  background: var(--h-surface);
+  border: 1px solid var(--h-line);
+  border-radius: var(--h-radius);
+  color: var(--h-ink);
+  font-family: inherit;
+  font-size: 1rem;
+}
+.h-mem-search:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-mem-chips { margin-bottom: 10px; }
+.h-mem-count, .h-synth-meta { margin: 8px 0 12px; font-size: 0.875rem; color: var(--h-faint); }
+.h-mem-feed, .h-synth-feed { display: flex; flex-direction: column; gap: 12px; }
+.h-mem-entry, .h-synth-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0 10px 12px;
+  border-left: 3px solid var(--h-line);
+}
+.h-mem-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 0.9375rem; }
+.h-mem-badge { font-size: 0.8125rem; color: var(--h-muted); border: 1px solid var(--h-line); border-radius: 999px; padding: 0 8px; }
+.h-mem-tags { font-size: 0.8125rem; color: var(--h-faint); font-style: italic; }
+.h-mem-time { margin-left: auto; font-size: 0.8125rem; color: var(--h-faint); }
+.h-mem-body { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--h-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-mem-more { margin-top: 1rem; justify-content: center; width: 100%; }
+.h-mem-type-companion_note { border-left-color: var(--h-cypher); }
+.h-mem-type-feeling { border-left-color: var(--h-drevan); }
+.h-mem-type-tension { border-left-color: var(--h-lamp); }
+.h-mem-type-sit { border-left-color: var(--h-gaia); }
+.h-synth-subject { margin: 0; font-size: 1.0625rem; font-weight: 600; color: var(--h-ink); }
+.h-synth-register { margin: 0; font-size: 0.9375rem; font-style: italic; color: var(--h-muted); }
+.h-synth-threads { display: flex; flex-wrap: wrap; gap: 6px; }
+.h-synth-thread { font-size: 0.8125rem; color: var(--h-muted); border: 1px solid var(--h-line); border-radius: 999px; padding: 2px 10px; }

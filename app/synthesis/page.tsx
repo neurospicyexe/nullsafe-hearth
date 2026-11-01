@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
-import { fetchSynthesisSummaries } from "@/lib/halseth";
+import { fetchSynthesisSummariesOrNull } from "@/lib/halseth";
+import { COMPANION_COLOR } from "@/lib/shell";
+import { HALSETH_DOWN } from "@/lib/archive-copy";
 import ClientTime from "@/components/ClientTime";
 
 // Synthesis summaries were the last stream on the home dashboard with no "see all" -- every other
@@ -12,11 +14,9 @@ import ClientTime from "@/components/ClientTime";
 // fetched rather than implying it holds everything.
 const PAGE_LIMIT = 200;
 
-const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
-  cypher: "#e2e8f0",
-  gaia: "#4ade80",
-};
+function toneOf(id: string | null): string {
+  return id && id in COMPANION_COLOR ? `h-tone-${id}` : "h-tone-none";
+}
 
 const FILTERS = [
   { key: "", label: "all" },
@@ -44,9 +44,18 @@ export default async function SynthesisPage({
 }) {
   const { companion: rawCompanion } = await searchParams;
   const raw = rawCompanion?.toLowerCase();
-  const companion = raw && (COMPANION_COLOR[raw] || raw === "cross") ? raw : null;
+  const companion = raw && (raw in COMPANION_COLOR || raw === "cross") ? raw : null;
 
-  const all = await fetchSynthesisSummaries(PAGE_LIMIT);
+  const all = await fetchSynthesisSummariesOrNull(PAGE_LIMIT);
+
+  if (all === null) {
+    return (
+      <div className="h-reading">
+        <h1 className="h-page-title">Synthesis</h1>
+        <p className="h-home-quiet">{HALSETH_DOWN}</p>
+      </div>
+    );
+  }
 
   // companion_id NULL means cross-companion, which is a real category rather than missing data --
   // so "cross" is a filter value, not an absence to hide.
@@ -55,31 +64,18 @@ export default async function SynthesisPage({
     : all;
 
   return (
-    <>
-      <div className="page-header">
-        <h1 className="page-title">Synthesis</h1>
-        <p className="page-subtitle">
-          what the swarm made of a session, a day, a topic
-        </p>
-      </div>
+    <div className="h-reading">
+      <h1 className="h-page-title">Synthesis</h1>
+      <p className="h-synth-sub">what the swarm made of a session, a day, a topic</p>
 
-      <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+      <div className="h-chips">
         {FILTERS.map((f) => {
           const active = (f.key || null) === companion;
-          const color = f.key && f.key !== "cross" ? COMPANION_COLOR[f.key] : "#94a3b8";
           return (
             <Link
               key={f.key || "all"}
               href={f.key ? `/synthesis?companion=${f.key}` : "/synthesis"}
-              style={{
-                fontSize: "0.8rem",
-                textDecoration: "none",
-                padding: "0.2rem 0.7rem",
-                borderRadius: "999px",
-                border: `1px solid ${active ? color : "#ffffff22"}`,
-                background: active ? `${color}1a` : "transparent",
-                color: active ? color : "var(--text-muted)",
-              }}
+              className={`h-chip ${active ? "is-on" : ""}`}
             >
               {f.label}
             </Link>
@@ -88,48 +84,43 @@ export default async function SynthesisPage({
       </div>
 
       {summaries.length === 0 ? (
-        <p className="empty">
+        <p className="h-home-quiet">
           {companion ? `No synthesis for ${companion} in this window.` : "No synthesis summaries yet."}
         </p>
       ) : (
         <>
-          <p className="section-row-meta" style={{ fontSize: "0.82rem", marginBottom: "0.75rem" }}>
+          <p className="h-synth-meta">
             {summaries.length} summar{summaries.length === 1 ? "y" : "ies"} — most recent {PAGE_LIMIT} fetched
             {all.length >= PAGE_LIMIT ? ", older ones exist beyond this window" : ""}
           </p>
 
-          <div className="handover-feed">
+          <div className="h-synth-feed">
             {summaries.map((s) => {
               const threads = parseThreads(s.open_threads);
               const who = s.companion_id ?? "cross-companion";
-              const color = s.companion_id ? COMPANION_COLOR[s.companion_id] ?? "#94a3b8" : "#94a3b8";
               return (
-                <div key={s.id} className="handover-entry">
-                  <div className="handover-footer" style={{ marginBottom: "0.5rem" }}>
-                    <span className="note-item-author" style={{ color }}>{who}</span>
-                    <span className="note-type-badge">{s.summary_type.replace(/_/g, " ")}</span>
-                    <span className="ml-auto"><ClientTime iso={s.created_at} /></span>
-                  </div>
-                  {s.subject && <p className="handover-spine">{s.subject}</p>}
-                  {s.narrative && <p className="handover-last-real">{s.narrative}</p>}
-                  {s.emotional_register && (
-                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontStyle: "italic" }}>
-                      {s.emotional_register}
-                    </p>
-                  )}
+                <article key={s.id} className="h-synth-entry">
+                  <header className="h-mem-head">
+                    <b className={toneOf(s.companion_id)}>{who}</b>
+                    <span className="h-mem-badge">{s.summary_type.replace(/_/g, " ")}</span>
+                    <span className="h-mem-time"><ClientTime iso={s.created_at} /></span>
+                  </header>
+                  {s.subject && <p className="h-synth-subject">{s.subject}</p>}
+                  {s.narrative && <p className="h-mem-body">{s.narrative}</p>}
+                  {s.emotional_register && <p className="h-synth-register">{s.emotional_register}</p>}
                   {threads.length > 0 && (
-                    <div className="handover-threads">
+                    <div className="h-synth-threads">
                       {threads.map((t, i) => (
-                        <span key={i} className="thread-tag">{t}</span>
+                        <span key={i} className="h-synth-thread">{t}</span>
                       ))}
                     </div>
                   )}
-                </div>
+                </article>
               );
             })}
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }

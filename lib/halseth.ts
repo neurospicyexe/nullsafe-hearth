@@ -1061,7 +1061,12 @@ export type SynthesisSummary = {
 };
 
 export async function fetchSynthesisSummaries(limit = 20): Promise<SynthesisSummary[]> {
-  return (await hGetSafe<SynthesisSummary[]>(`/ingest/synthesis-summaries?limit=${limit}`)) ?? [];
+  return (await fetchSynthesisSummariesOrNull(limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchSynthesisSummariesOrNull(limit = 20): Promise<SynthesisSummary[] | null> {
+  return hGetSafe<SynthesisSummary[]>(`/ingest/synthesis-summaries?limit=${limit}`);
 }
 
 // ── Inter-Companion Notes ─────────────────────────────────────────────────────

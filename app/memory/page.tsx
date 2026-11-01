@@ -1,17 +1,19 @@
 export const dynamic = "force-dynamic";
 
 import {
-  fetchAllCompanionNotes,
+  fetchCompanionJournal,
   fetchSomaFeelings,
   fetchTensions,
   fetchSittingNotes,
 } from "@/lib/halseth";
+import Link from "next/link";
+import { HALSETH_DOWN } from "@/lib/archive-copy";
 import MemoryBrowserClient, { type MemoryEntry } from "./MemoryBrowserClient";
 
 export default async function MemoryPage() {
   const [notes, feelings, tensions, sitsC, sitsD, sitsG] =
     await Promise.allSettled([
-      fetchAllCompanionNotes(150),
+      fetchCompanionJournal(undefined, 150),
       fetchSomaFeelings(undefined, 150),
       fetchTensions(undefined, 60),
       fetchSittingNotes("cypher"),
@@ -21,7 +23,9 @@ export default async function MemoryPage() {
 
   const entries: MemoryEntry[] = [];
 
-  if (notes.status === "fulfilled") {
+  const notesDown = notes.status === "rejected" || notes.value === null;
+
+  if (notes.status === "fulfilled" && notes.value) {
     for (const n of notes.value) {
       // tags comes from D1 as raw JSON text, not a parsed array
       let parsedTags: string[] | undefined;
@@ -88,5 +92,12 @@ export default async function MemoryPage() {
 
   entries.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 
-  return <MemoryBrowserClient entries={entries} />;
+  return (
+    <div className="h-reading">
+      <h1 className="h-page-title">Memory</h1>
+      <Link href="/synthesis" className="h-foot-link">Synthesis summaries</Link>
+      {notesDown && <p className="h-home-quiet">{HALSETH_DOWN}</p>}
+      <MemoryBrowserClient entries={entries} />
+    </div>
+  );
 }
