@@ -97,6 +97,7 @@ export default async function SessionsPage() {
                 {h.title && <p className="h-session-spine">{h.title}</p>}
                 {h.summary && <p className="h-session-last-full">{h.summary}</p>}
                 {h.next_steps && <p className="h-session-meta">next: {h.next_steps}</p>}
+                {h.state_hint && <p className="h-session-meta">{h.state_hint}</p>}
               </article>
             ))}
           </div>

@@ -24,24 +24,40 @@ function threadsOf(raw: string | null): string[] {
   }
 }
 
+function bodyOf(h: HandoverPacket): NonNullable<ArchiveSession["body"]> {
+  return { spine: h.spine, lastRealThing: h.last_real_thing, threads: threadsOf(h.open_threads), anchor: h.active_anchor };
+}
+
+// Handovers whose session fell outside the /sessions window still show, as rows of their own.
 export function joinSessions(sessions: SessionEntry[], handovers: HandoverPacket[]): ArchiveSession[] {
   const bySession = new Map<string, HandoverPacket>();
   for (const h of handovers) if (!bySession.has(h.session_id)) bySession.set(h.session_id, h);
-  return sessions
-    .map((s): ArchiveSession => {
-      const h = bySession.get(s.id);
-      return {
-        id: s.id,
-        companion: s.companion_id,
-        sessionType: s.session_type,
-        at: s.created_at,
-        motion: s.motion_state,
-        spine: s.spine ?? "",
-        lastRealThing: s.last_real_thing,
-        body: h
-          ? { spine: h.spine, lastRealThing: h.last_real_thing, threads: threadsOf(h.open_threads), anchor: h.active_anchor }
-          : null,
-      };
-    })
-    .sort((a, b) => ms(b.at) - ms(a.at));
+  const known = new Set(sessions.map((s) => s.id));
+  const rows = sessions.map((s): ArchiveSession => {
+    const h = bySession.get(s.id);
+    return {
+      id: s.id,
+      companion: s.companion_id,
+      sessionType: s.session_type,
+      at: s.created_at,
+      motion: s.motion_state,
+      spine: s.spine ?? "",
+      lastRealThing: s.last_real_thing,
+      body: h ? bodyOf(h) : null,
+    };
+  });
+  for (const [sid, h] of bySession) {
+    if (known.has(sid)) continue;
+    rows.push({
+      id: sid || h.id,
+      companion: h.companion_id ?? null,
+      sessionType: h.session_type,
+      at: h.created_at,
+      motion: h.motion_state,
+      spine: h.spine,
+      lastRealThing: h.last_real_thing,
+      body: bodyOf(h),
+    });
+  }
+  return rows.sort((a, b) => ms(b.at) - ms(a.at));
 }

@@ -21,7 +21,7 @@ describe("joinSessions", () => {
     expect(r.body).toEqual({ spine: "hs", lastRealThing: "hl", threads: ["x", "y"], anchor: "truck" });
   });
   it("gives null body when the handover is outside the window, keeping spine", () => {
-    const [r] = joinSessions([sess({ id: "a" })], [ho({ session_id: "zzz" })]);
+    const r = joinSessions([sess({ id: "a" })], [ho({ session_id: "zzz" })]).find((x) => x.id === "a")!;
     expect(r.body).toBeNull();
     expect(r.spine).toBe("the spine");
   });
@@ -48,5 +48,23 @@ describe("joinSessions", () => {
     );
     const s = JSON.stringify(out);
     for (const k of ["hrv_range", "emotional_frequency", "front_state", "notes", "depth", "co_con", "low", "sfs", "nn"]) expect(s).not.toContain(k);
+  });
+  it("keeps a handover whose session is outside the window as its own row", () => {
+    const out = joinSessions(
+      [sess({ id: "a", created_at: "2026-10-30 10:00:00" })],
+      [ho({ session_id: "gone", id: "hg", spine: "orphan spine", created_at: "2026-10-31 09:00:00", companion_id: "gaia", session_type: "work", motion_state: "floating", open_threads: '["t"]' })],
+    );
+    expect(out.map((r) => r.id)).toEqual(["gone", "a"]);
+    expect(out[0]).toMatchObject({ companion: "gaia", sessionType: "work", motion: "floating", spine: "orphan spine", at: "2026-10-31 09:00:00" });
+    expect(out[0].body?.threads).toEqual(["t"]);
+  });
+  it("one orphan row per session_id (newest handover wins)", () => {
+    const out = joinSessions([], [ho({ session_id: "g", id: "1", spine: "new" }), ho({ session_id: "g", id: "2", spine: "old" })]);
+    expect(out).toHaveLength(1);
+    expect(out[0].spine).toBe("new");
+  });
+  it("orphan rows carry no care or plural fields", () => {
+    const out = joinSessions([], [ho({ session_id: "g", session_front_state: "sfs" })]);
+    expect(JSON.stringify(out)).not.toContain("sfs");
   });
 });

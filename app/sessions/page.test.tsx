@@ -80,4 +80,17 @@ describe("/sessions", () => {
     const html = renderToStaticMarkup(await Page());
     for (const t of ["cypher", "T1", "S1", "N1"]) expect(html).toContain(t);
   });
+  it("renders an orphan handover as its own row with details", async () => {
+    m.fetchSessionsOrNull.mockResolvedValue([]);
+    m.fetchHandovers.mockResolvedValue([{ ...handover("gone"), spine: "orphan spine" }]);
+    const html = renderToStaticMarkup(await Page());
+    expect(html).toContain("orphan spine");
+    expect(html.match(/<details/g)).toHaveLength(1);
+  });
+  it("shows state_hint on mind handoffs", async () => {
+    m.fetchMindHandoffsOrNull.mockResolvedValue([
+      { id: "1", agent_id: "cypher", title: "T1", summary: null, next_steps: null, open_loops: null, state_hint: "HINTLINE", created_at: "2026-10-30 09:00:00" },
+    ]);
+    expect(renderToStaticMarkup(await Page())).toContain("HINTLINE");
+  });
 });
