@@ -7,7 +7,6 @@ export type RoomConfig = {
   sym: string;
   name: string;
   desc: string;
-  gradient: string;
   imageUrl?: string;
 };
 
@@ -47,19 +46,19 @@ export default function HalsethRoom({ rooms, initialRoom }: Props) {
   return (
     <>
       {/* Room display */}
-      <div className="room-display">
+      <div className={`room-display${active.imageUrl ? "" : " is-plain"}`}>
         {active.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={active.imageUrl} alt={active.name} className="room-image" />
         ) : (
-          <div className="room-gradient" style={{ background: active.gradient }} />
+          <div className="room-plain" />
         )}
         <div className="room-overlay">
           <p className="room-name">{active.name}</p>
           <p className="room-desc">{active.desc}</p>
         </div>
         {saving && (
-          <div style={{ position: "absolute", top: "0.75rem", right: "0.75rem", fontSize: "0.72rem", color: "rgba(255,255,255,0.7)" }}>
+          <div className="room-saving">
             saving…
           </div>
         )}

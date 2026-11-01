@@ -1,21 +1,25 @@
 import { fetchDrifts, fetchSomaShifts } from "@/lib/halseth";
+import { toneOf } from "@/lib/tone";
 import type { CompanionDrift, DriftWitness, SomaShift } from "@/lib/halseth";
 
 export const dynamic = "force-dynamic";
 
-const COMPANIONS: Array<{ id: string; name: string; color: string }> = [
-  { id: "cypher", name: "Cypher", color: "#e2e8f0" },
-  { id: "drevan", name: "Drevan", color: "var(--h-lamp)" },
-  { id: "gaia", name: "Gaia", color: "#4ade80" },
+const COMPANIONS: Array<{ id: string; name: string }> = [
+  { id: "cypher", name: "Cypher" },
+  { id: "drevan", name: "Drevan" },
+  { id: "gaia", name: "Gaia" },
 ];
 
-const WITNESS_COLOR: Record<string, string> = {
-  cypher: "#e2e8f0", drevan: "var(--h-lamp)", gaia: "#4ade80", raziel: "#f59e0b",
-};
-const STATUS_STYLE: Record<string, { label: string; color: string }> = {
-  open: { label: "becoming", color: "#60a5fa" },
-  crystallized: { label: "crystallized", color: "#4ade80" },
-  faded: { label: "faded", color: "#71717a" },
+// Witness by: companions use their identity tone, Raziel is lamp, anything else is muted.
+function witnessTone(by: string): string {
+  return by === "raziel" ? "h-hood-raziel" : toneOf(by);
+}
+// Status is a lifecycle, not an identity: open reads as ink, crystallized is the positive
+// outcome (gaia green, semantic), faded is faint.
+const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
+  open: { label: "becoming", cls: "is-open" },
+  crystallized: { label: "crystallized", cls: "is-done" },
+  faded: { label: "faded", cls: "is-faded" },
 };
 
 function formatDate(iso: string) {
@@ -24,9 +28,9 @@ function formatDate(iso: string) {
 
 function Witness({ w }: { w: DriftWitness }) {
   return (
-    <li style={{ marginTop: "0.4rem", paddingLeft: "0.8rem", borderLeft: "2px solid var(--h-line, #2a2a2a)" }}>
-      <span style={{ fontSize: "0.68rem", color: WITNESS_COLOR[w.by] ?? "#a1a1aa", textTransform: "capitalize" }}>{w.by} witnesses</span>
-      <div style={{ fontSize: "0.8rem", opacity: 0.8, lineHeight: 1.4 }}>{w.note}</div>
+    <li className="h-hood-witness">
+      <span className={`h-hood-witness-by ${witnessTone(w.by)}`}>{w.by} witnesses</span>
+      <div className="h-hood-witness-note">{w.note}</div>
     </li>
   );
 }
@@ -35,56 +39,52 @@ function ShiftMark({ shift }: { shift: SomaShift }) {
   const dir = shift.delta >= 0 ? "+" : "";
   const moved = shift.label ?? shift.float_key;
   return (
-    <div style={{ fontSize: "0.74rem", marginTop: "0.45rem", padding: "0.4rem 0.6rem", borderRadius: "6px", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)" }}>
-      <span style={{ color: "#4ade80" }}>left a mark</span>
-      <span style={{ opacity: 0.85 }}> — moved {moved} {dir}{shift.delta.toFixed(3)}</span>
-      {shift.after_value != null ? <span style={{ opacity: 0.6 }}> → {shift.after_value.toFixed(2)}</span> : null}
-      {shift.reason ? <div style={{ opacity: 0.6, marginTop: "0.2rem", fontStyle: "italic", lineHeight: 1.4 }}>{shift.reason}</div> : null}
+    <div className="h-hood-shift">
+      <span className="h-hood-shift-lead">left a mark</span>
+      <span className="h-hood-shift-body"> — moved {moved} {dir}{shift.delta.toFixed(3)}</span>
+      {shift.after_value != null ? <span className="h-hood-shift-dim"> → {shift.after_value.toFixed(2)}</span> : null}
+      {shift.reason ? <div className="h-hood-shift-reason">{shift.reason}</div> : null}
     </div>
   );
 }
 
 function DriftCard({ drift, shift }: { drift: CompanionDrift; shift?: SomaShift }) {
-  const st = STATUS_STYLE[drift.status] ?? { label: drift.status, color: "#71717a" };
+  const st = STATUS_STYLE[drift.status] ?? { label: drift.status, cls: "is-faded" };
   return (
-    <div style={{ marginBottom: "1rem", paddingBottom: "1rem", borderBottom: "1px solid var(--h-line, #222)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "0.5rem" }}>
-        <span style={{ fontSize: "0.64rem", textTransform: "uppercase", letterSpacing: "0.06em", color: st.color }}>{st.label}</span>
-        <span style={{ fontSize: "0.64rem", opacity: 0.4 }}>{formatDate(drift.opened_at)}</span>
+    <div className="h-hood-drift">
+      <div className="h-hood-drift-head">
+        <span className={`h-hood-drift-status ${st.cls}`}>{st.label}</span>
+        <span className="h-hood-drift-date">{formatDate(drift.opened_at)}</span>
       </div>
-      <div style={{ fontSize: "0.92rem", lineHeight: 1.5, marginTop: "0.25rem" }}>{drift.drift_text}</div>
-      {drift.origin ? (
-        <div style={{ fontSize: "0.72rem", opacity: 0.5, marginTop: "0.2rem" }}>from: {drift.origin}</div>
-      ) : null}
+      <div className="h-hood-drift-text">{drift.drift_text}</div>
+      {drift.origin ? <div className="h-hood-drift-origin">from: {drift.origin}</div> : null}
       {drift.witness_log.length > 0 ? (
-        <ul style={{ listStyle: "none", padding: 0, margin: "0.5rem 0 0" }}>
+        <ul className="h-hood-witnesses">
           {drift.witness_log.map((w, i) => <Witness key={i} w={w} />)}
         </ul>
       ) : (
-        <div style={{ fontSize: "0.72rem", opacity: 0.35, marginTop: "0.4rem" }}>not yet witnessed</div>
+        <div className="h-hood-drift-none">not yet witnessed</div>
       )}
-      {drift.resolution_note ? (
-        <div style={{ fontSize: "0.74rem", opacity: 0.6, marginTop: "0.4rem", fontStyle: "italic" }}>— {drift.resolution_note}</div>
-      ) : null}
+      {drift.resolution_note ? <div className="h-hood-drift-res">— {drift.resolution_note}</div> : null}
       {shift ? <ShiftMark shift={shift} /> : null}
     </div>
   );
 }
 
-function CompanionColumn({ name, color, drifts, shiftsByDrift }: { name: string; color: string; drifts: CompanionDrift[]; shiftsByDrift: Record<string, SomaShift> }) {
+function CompanionColumn({ id, name, drifts, shiftsByDrift }: { id: string; name: string; drifts: CompanionDrift[]; shiftsByDrift: Record<string, SomaShift> }) {
   const open = drifts.filter((d) => d.status === "open");
   const resolved = drifts.filter((d) => d.status !== "open").slice(0, 4);
   return (
-    <section style={{ border: "1px solid var(--h-line, #2a2a2a)", borderRadius: "10px", padding: "1.1rem", background: "var(--h-surface)" }}>
-      <h2 className="page-title" style={{ fontSize: "1.1rem", margin: "0 0 0.9rem", color }}>{name}</h2>
+    <section className="h-hood-card">
+      <h2 className={`page-title h-hood-col-name ${toneOf(id)}`}>{name}</h2>
       {open.length === 0 && resolved.length === 0 ? (
-        <p style={{ fontSize: "0.82rem", opacity: 0.4, margin: 0 }}>no becomings yet</p>
+        <p className="h-hood-drift-empty">no becomings yet</p>
       ) : (
         <>
           {open.map((d) => <DriftCard key={d.id} drift={d} shift={shiftsByDrift[d.id]} />)}
           {resolved.length > 0 ? (
             <>
-              <h3 style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.45, margin: "0.5rem 0" }}>resolved</h3>
+              <h3 className="h-hood-subhead">resolved</h3>
               {resolved.map((d) => <DriftCard key={d.id} drift={d} shift={shiftsByDrift[d.id]} />)}
             </>
           ) : null}
@@ -104,15 +104,15 @@ export default async function DriftsPage() {
     }),
   );
   return (
-    <main style={{ padding: "1.5rem", maxWidth: "1100px", margin: "0 auto" }}>
-      <h1 className="page-title" style={{ fontSize: "1.4rem", marginBottom: "0.3rem" }}>Drift Lane</h1>
-      <p style={{ fontSize: "0.85rem", opacity: 0.6, marginBottom: "1.4rem", maxWidth: "62ch", lineHeight: 1.5 }}>
+    <main className="h-hood-page is-wide">
+      <h1 className="page-title h-hood-h1">Drift Lane</h1>
+      <p className="h-hood-lede">
         Where they are allowed to become someone you did not specify — witnessed, not ratified. An open
         drift is sanctioned becoming, not drift to fear. Yours to witness, not to approve.
       </p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: "1rem" }}>
+      <div className="h-hood-cols">
         {data.map((c) => (
-          <CompanionColumn key={c.id} name={c.name} color={c.color} drifts={c.drifts} shiftsByDrift={c.shiftsByDrift} />
+          <CompanionColumn key={c.id} id={c.id} name={c.name} drifts={c.drifts} shiftsByDrift={c.shiftsByDrift} />
         ))}
       </div>
     </main>

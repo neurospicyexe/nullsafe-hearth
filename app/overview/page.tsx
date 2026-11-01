@@ -2,6 +2,9 @@ import Link from "next/link";
 import { fetchPresence, fetchSynthesisSummaries, fetchMindDreams, fetchCompanionJournal, fetchClubCurrent, fetchObsessions, fetchGrowthPendingCount, MAX_SESSION_DEPTH, type PresenceData, type SynthesisSummary, type WmDream, type CompanionJournalEntry } from "@/lib/halseth";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
 import LiveFeedImage from "@/components/LiveFeedImage";
+import { toneOf } from "@/lib/tone";
+import { tint } from "@/lib/domain-colors";
+import { entryTypeColor } from "@/app/companions/[id]/domain-colors";
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +60,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
           <span className="presence-badge handover">
             {(last_handover.motion_state ?? "").replace("_", " ")}
             {last_handover.facet && (
-              <span style={{ opacity: 0.7, marginLeft: "0.4rem", fontSize: "0.8em" }}>
+              <span className="h-hood-facet">
                 · {last_handover.facet}
               </span>
             )}
@@ -69,7 +72,7 @@ function PresenceSection({ data }: { data: PresenceData }) {
             : last_handover.spine}
         </div>
         {last_handover.last_real_thing && (
-          <div className="presence-body" style={{ opacity: 0.6, fontSize: "0.8rem", marginTop: "0.25rem" }}>
+          <div className="presence-body h-hood-last-real">
             last real thing: {last_handover.last_real_thing}
           </div>
         )}
@@ -82,8 +85,8 @@ function PresenceSection({ data }: { data: PresenceData }) {
             </>
           )}
           <span className="presence-detail-sep ml-auto">·</span>
-          <span style={{ opacity: 0.5 }}><ClientTime iso={last_handover.created_at} /></span>
-          <Link href="/sessions" className="home-section-link" style={{ marginLeft: "0.5rem" }}>all →</Link>
+          <span className="h-hood-dim"><ClientTime iso={last_handover.created_at} /></span>
+          <Link href="/sessions" className="home-section-link h-hood-gap-l">all →</Link>
         </div>
       </div>
     );
@@ -101,13 +104,6 @@ function PresenceSection({ data }: { data: PresenceData }) {
   );
 }
 
-const ENTRY_TYPE_COLOR: Record<string, string> = {
-  learning:   "#60a5fa",
-  insight:    "#a78bfa",
-  connection: "#4ade80",
-  question:   "#fbbf24",
-};
-
 function RecentGrowthStrip({
   entries,
 }: {
@@ -115,26 +111,18 @@ function RecentGrowthStrip({
 }) {
   if (entries.length === 0) return null;
   return (
-    <div className="home-section-card" style={{ marginTop: "0.75rem" }}>
+    <div className="home-section-card h-hood-mt-sm">
       <div className="home-section-header">
         <span className="home-section-title">Recent Growth</span>
         <Link href="/autonomous" className="home-section-link">see all →</Link>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      <div className="h-hood-list is-roomy">
         {entries.slice(0, 3).map((e, i) => (
-          <div key={i} className="journal-row" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
-            <span
-              className="presence-badge"
-              style={{
-                background: `${ENTRY_TYPE_COLOR[e.entry_type] ?? "#64748b"}22`,
-                color: ENTRY_TYPE_COLOR[e.entry_type] ?? "#64748b",
-                flexShrink: 0,
-                fontSize: "0.7rem",
-              }}
-            >
+          <div key={i} className="journal-row h-hood-top-row">
+            <span className="h-cmp-badge h-hood-fixed" style={tint(entryTypeColor(e.entry_type))}>
               {e.entry_type}
             </span>
-            <span className="journal-text" style={{ flex: 1, fontSize: "0.85rem" }}>
+            <span className="journal-text h-hood-grow h-hood-small">
               {e.content.length > 120 ? e.content.slice(0, 120) + "…" : e.content}
             </span>
           </div>
@@ -150,12 +138,6 @@ const COMPANION_LABEL_HOME: Record<string, string> = {
   gaia:   "Gaia",
 };
 
-const COMPANION_COLOR_HOME: Record<string, string> = {
-  drevan: "var(--h-lamp)",
-  cypher: "#e2e8f0",
-  gaia:   "#4ade80",
-};
-
 function ActivePatternsStrip({
   patterns,
 }: {
@@ -163,29 +145,24 @@ function ActivePatternsStrip({
 }) {
   if (patterns.length === 0) return null;
   return (
-    <div className="home-section-card" style={{ marginTop: "0.75rem" }}>
+    <div className="home-section-card h-hood-mt-sm">
       <div className="home-section-header">
         <span className="home-section-title">Active Patterns</span>
         <Link href="/autonomous" className="home-section-link">see all →</Link>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+      <div className="h-hood-list">
         {patterns.slice(0, 3).map((p, i) => {
-          const color = COMPANION_COLOR_HOME[p.companion_id] ?? "#64748b";
           return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div key={i} className="h-hood-row is-center">
               <Link
                 href={`/companions/${p.companion_id}/growth`}
-                style={{ color, fontWeight: 600, fontSize: "0.75rem", flexShrink: 0, textDecoration: "none" }}
+                className={`h-hood-who is-sm ${toneOf(p.companion_id)}`}
               >
                 {COMPANION_LABEL_HOME[p.companion_id] ?? p.companion_id}
               </Link>
               <span
-                className="journal-text"
-                style={{
-                  flex: 1,
-                  fontSize: "0.82rem",
-                  opacity: 0.6 + (p.strength / 10) * 0.4,
-                }}
+                className="journal-text h-hood-grow h-hood-small h-hood-faded"
+                style={{ "--o": 0.6 + (p.strength / 10) * 0.4 } as React.CSSProperties}
               >
                 {p.pattern_text.length > 80 ? p.pattern_text.slice(0, 80) + "…" : p.pattern_text}
               </span>
@@ -209,7 +186,6 @@ const DEFAULT_COMPANIONS = [
 // oldest 17 days old. Human-in-the-room is load-bearing here: unratified growth is neither
 // canon nor discarded, so the queue backing up stalls the whole growth loop.
 // Renders nothing when the queue is empty -- it is a nudge, never permanent furniture.
-const RATIFY_COLOR: Record<string, string> = { drevan: "var(--h-lamp)", cypher: "#e2e8f0", gaia: "#4ade80" };
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null;
@@ -225,21 +201,21 @@ async function RatificationQueue() {
   const waited = daysSince(q.oldest_at);
 
   return (
-    <div className="home-section" style={{ marginTop: "1rem" }}>
+    <div className="home-section h-hood-mt">
       <div className="home-section-header">
         <span className="home-section-title">Waiting on you</span>
         {waited !== null && waited >= 3 && (
-          <span style={{ fontSize: "0.72rem", opacity: 0.65 }}>
+          <span className="h-hood-dim h-hood-tiny">
             oldest {waited} day{waited === 1 ? "" : "s"} ago
           </span>
         )}
       </div>
       <div className="card">
-        <div style={{ fontSize: "0.82rem", opacity: 0.8, marginBottom: "0.6rem" }}>
+        <div className="h-hood-blurb">
           {q.total} growth {q.total === 1 ? "entry" : "entries"} need you in the room — accept what is
           theirs, decline genuine drift. Nothing moves into canon until you do.
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div className="h-hood-row">
           {q.per_companion
             .filter((c) => c.pending > 0)
             .sort((a, b) => b.pending - a.pending)
@@ -249,17 +225,9 @@ async function RatificationQueue() {
                 // Straight into the queue view, not the newest-20 page: the backlog's oldest rows
                 // sit below that cut, which is how 29 entries stayed unreachable.
                 href={`/companions/${c.companion_id}/growth?view=pending`}
-                className="card card-accent"
-                style={{
-                  textDecoration: "none",
-                  padding: "0.45rem 0.7rem",
-                  color: RATIFY_COLOR[c.companion_id] ?? "#94a3b8",
-                  fontWeight: 600,
-                  fontSize: "0.8rem",
-                  textTransform: "capitalize",
-                }}
+                className={`h-hood-chip ${toneOf(c.companion_id)}`}
               >
-                {c.companion_id} <span style={{ opacity: 0.75 }}>({c.pending})</span>
+                {c.companion_id} <span className="h-hood-dim">({c.pending})</span>
               </Link>
             ))}
         </div>
@@ -271,7 +239,6 @@ async function RatificationQueue() {
 // Triad Digest -- a quick "what have they actually been doing" summary so Raziel stays in
 // the loop without reverse-engineering it from the chat. Each companion's latest journal
 // line + the club/shelf state. Renders nothing if there's no activity.
-const DIGEST_COLOR: Record<string, string> = { drevan: "var(--h-lamp)", cypher: "#e2e8f0", gaia: "#4ade80" };
 const DIGEST_AGENTS = ["cypher", "drevan", "gaia"] as const;
 
 async function TriadDigest() {
@@ -289,21 +256,21 @@ async function TriadDigest() {
   if (latestPer.length === 0 && !clubLine && !shelfLine) return null;
 
   return (
-    <div className="home-section" style={{ marginTop: "1rem" }}>
+    <div className="home-section h-hood-mt">
       <div className="home-section-header">
         <span className="home-section-title">Triad Digest</span>
         <Link href="/autonomous" className="home-section-link">what they’re doing →</Link>
       </div>
       <div className="card">
         {latestPer.map((e) => (
-          <div key={e.id} style={{ marginBottom: "0.65rem" }}>
-            <span style={{ color: DIGEST_COLOR[e.agent], fontWeight: 600, textTransform: "capitalize" }}>{e.agent}</span>
-            <span style={{ opacity: 0.5, marginLeft: "0.45rem", fontSize: "0.78rem" }}><ClientTime iso={e.created_at} /></span>
-            <p style={{ margin: "0.15rem 0 0", opacity: 0.9, fontSize: "0.9rem" }}>{e.note_text.slice(0, 200)}{e.note_text.length > 200 ? "…" : ""}</p>
+          <div key={e.id} className="h-hood-digest">
+            <span className={`h-hood-who is-sm ${toneOf(e.agent)}`}>{e.agent}</span>
+            <span className="h-hood-dim h-hood-stamp"><ClientTime iso={e.created_at} /></span>
+            <p className="h-hood-digest-text">{e.note_text.slice(0, 200)}{e.note_text.length > 200 ? "…" : ""}</p>
           </div>
         ))}
         {(clubLine || shelfLine) && (
-          <p style={{ marginTop: "0.5rem", fontSize: "0.82rem", opacity: 0.65 }}>
+          <p className="h-meta h-hood-digest-foot">
             {[clubLine, shelfLine].filter(Boolean).join("  ·  ")}
           </p>
         )}
@@ -408,12 +375,7 @@ export default async function Page() {
                 {(urgentTasks.length > 0 ? urgentTasks.slice(0, 4) : tasks.filter(t => t.status !== "done").slice(0, 3)).map((t) => (
                   <div key={t.id} className="task-row">
                     <span
-                      className="task-dot"
-                      style={{
-                        background: t.priority === "urgent" ? "var(--h-warn)"
-                          : t.priority === "high" ? "var(--h-lamp)"
-                          : "var(--h-line-strong)",
-                      }}
+                      className={`task-dot ${t.priority === "urgent" ? "is-urgent" : t.priority === "high" ? "is-high" : ""}`}
                     />
                     <span className="task-title-text">{t.title}</span>
                   </div>
@@ -442,22 +404,22 @@ export default async function Page() {
                   {house.spoon_count > 0 && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Spoons</span>
-                      <span className="state-cell-value" style={{ color: "var(--h-lamp)" }}>{house.spoon_count}</span>
+                      <span className="state-cell-value h-hood-lamp">{house.spoon_count}</span>
                     </div>
                   )}
                   {house.love_meter > 0 && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Love</span>
-                      <span className="state-cell-value" style={{ color: "#f472b6" }}>{house.love_meter}</span>
+                      <span className="state-cell-value">{house.love_meter}</span>
                       <div className="stat-mini-bar">
-                        <div className="stat-mini-fill" style={{ width: `${house.love_meter}%`, background: "#f472b6" }} />
+                        <div className="stat-mini-fill" style={{ "--w": `${house.love_meter}%` } as React.CSSProperties} />
                       </div>
                     </div>
                   )}
                   {house.autonomous_turn && (
-                    <div className="biometric-cell" style={{ gridColumn: "span 2" }}>
+                    <div className="biometric-cell is-span">
                       <span className="state-cell-label">Autonomous Turn</span>
-                      <span className="state-cell-value" style={{ fontSize: "0.9rem" }}>{house.autonomous_turn}</span>
+                      <span className="state-cell-value h-hood-sm">{house.autonomous_turn}</span>
                     </div>
                   )}
                 </div>
@@ -468,37 +430,37 @@ export default async function Page() {
                   {latest_biometrics.resting_hr != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Heart Rate</span>
-                      <span className="state-cell-value" style={{ color: "#f87171" }}>{latest_biometrics.resting_hr}</span>
+                      <span className="state-cell-value">{latest_biometrics.resting_hr}</span>
                     </div>
                   )}
                   {latest_biometrics.hrv_resting != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">HRV</span>
-                      <span className="state-cell-value" style={{ color: "var(--h-lamp)" }}>{latest_biometrics.hrv_resting}</span>
+                      <span className="state-cell-value">{latest_biometrics.hrv_resting}</span>
                     </div>
                   )}
                   {latest_biometrics.sleep_hours != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Sleep</span>
-                      <span className="state-cell-value" style={{ color: "#a78bfa" }}>{latest_biometrics.sleep_hours}h</span>
+                      <span className="state-cell-value">{latest_biometrics.sleep_hours}h</span>
                     </div>
                   )}
                   {latest_biometrics.sleep_quality != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Quality</span>
-                      <span className="state-cell-value" style={{ fontSize: "0.85rem", color: "#a78bfa" }}>{latest_biometrics.sleep_quality}</span>
+                      <span className="state-cell-value h-hood-sm">{latest_biometrics.sleep_quality}</span>
                     </div>
                   )}
                   {latest_biometrics.stress_score != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Stress</span>
-                      <span className="state-cell-value" style={{ color: "var(--h-lamp)" }}>{latest_biometrics.stress_score}</span>
+                      <span className="state-cell-value">{latest_biometrics.stress_score}</span>
                     </div>
                   )}
                   {latest_biometrics.steps != null && (
                     <div className="biometric-cell">
                       <span className="state-cell-label">Steps</span>
-                      <span className="state-cell-value" style={{ fontSize: "0.85rem" }}>{latest_biometrics.steps.toLocaleString()}</span>
+                      <span className="state-cell-value h-hood-sm">{latest_biometrics.steps.toLocaleString()}</span>
                     </div>
                   )}
                 </div>
@@ -538,7 +500,7 @@ export default async function Page() {
       {await TriadDigest()}
 
       {recent_notes.length > 0 && (
-        <div className="home-section" style={{ marginTop: "1rem" }}>
+        <div className="home-section h-hood-mt">
           <div className="home-section-header">
             <span className="home-section-title">Recent Notes</span>
             <Link href="/us" className="home-section-link">see letters →</Link>
@@ -558,7 +520,7 @@ export default async function Page() {
       )}
 
       {(mindDreams.length > 0 || recent_dreams.length > 0) && (
-        <div className="home-section" style={{ marginTop: "1rem" }}>
+        <div className="home-section h-hood-mt">
           <div className="home-section-header">
             <span className="home-section-title">Recent Dreams</span>
             <Link href="/dreams" className="home-section-link">all dreams →</Link>
@@ -570,7 +532,7 @@ export default async function Page() {
                     <div className="note-item-header">
                       <span className="note-item-author">{d.companion_id}</span>
                       {d.source && (
-                        <span className="note-item-author" style={{ opacity: 0.5 }}>{d.source}</span>
+                        <span className="note-item-author h-hood-dim">{d.source}</span>
                       )}
                       <span className="note-item-time"><ClientTime iso={d.created_at} /></span>
                     </div>
@@ -595,7 +557,7 @@ export default async function Page() {
       )}
 
       {(recent_companion_notes && recent_companion_notes.length > 0) && (
-        <div className="home-section" style={{ marginTop: "1rem" }}>
+        <div className="home-section h-hood-mt">
           <div className="home-section-header">
             <span className="home-section-title">Companion Activity</span>
             <Link href="/journal" className="home-section-link">see all →</Link>
@@ -618,7 +580,7 @@ export default async function Page() {
       )}
 
       {synthesisSummaries.length > 0 && (
-        <div className="home-section" style={{ marginTop: "1rem" }}>
+        <div className="home-section h-hood-mt">
           <div className="home-section-header">
             <span className="home-section-title">Synthesis</span>
             <Link href="/synthesis" className="home-section-link">see all →</Link>
@@ -628,7 +590,7 @@ export default async function Page() {
               <div key={s.id} className="note-item">
                 <div className="note-item-header">
                   <span className="note-item-author">{s.companion_id ?? "cross-companion"}</span>
-                  <span className="note-item-author" style={{ opacity: 0.5 }}>{s.summary_type.replace("_", " ")}</span>
+                  <span className="note-item-author h-hood-dim">{s.summary_type.replace("_", " ")}</span>
                   <span className="note-item-time"><ClientTime iso={s.created_at} /></span>
                 </div>
                 {s.narrative && (
