@@ -260,12 +260,6 @@ export type MindJournalEntry = {
   created_at: string;
 };
 
-export type MindData = {
-  health: MindHealth | null;
-  patterns: { themes: string[]; temporal: string } | null;
-  recent_journals: MindJournalEntry[];
-};
-
 // ── Biometrics ────────────────────────────────────────────────────────────────
 
 export type BiometricSnapshot = {
@@ -387,14 +381,6 @@ export type GaiaWitnessEntry = {
     | "lane_enforcement";
   content: string;
   seal_phrase: string | null;
-};
-
-export type Routine = {
-  id: string;
-  routine_name: string;
-  owner: string | null;
-  logged_at: string;
-  notes: string | null;
 };
 
 export type Note = {
@@ -614,27 +600,6 @@ export async function fetchWounds(): Promise<LivingWound[] | null> {
   return hGetSafe<LivingWound[]>("/wounds");
 }
 
-const LOCAL_TZ = "America/Chicago";
-
-/** YYYY-MM-DD calendar day of a timestamp in the household timezone. */
-export function localDay(d: Date | string): string {
-  return new Date(d).toLocaleDateString("en-CA", { timeZone: LOCAL_TZ });
-}
-
-export async function fetchRoutinesToday(): Promise<Routine[] | null> {
-  // Halseth filters by UTC DATE(logged_at), but the household day (America/Chicago)
-  // spans two UTC dates after 19:00 local. Fetch both candidate UTC dates and
-  // filter to the local calendar day so evening taps don't vanish from "today".
-  const today = localDay(new Date());
-  const utcToday = new Date().toISOString().slice(0, 10);
-  const dates = [...new Set([today, utcToday])];
-  const batches = await Promise.all(dates.map((d) => hGetSafe<Routine[]>(`/routines?date=${d}`)));
-  if (batches.every((b) => b === null)) return null;
-  const rows = batches.flatMap((b) => b ?? []).filter((r) => localDay(r.logged_at) === today);
-  rows.sort((a, b) => a.logged_at.localeCompare(b.logged_at));
-  return rows;
-}
-
 export async function fetchAllDeltas(
   limit = 50,
 ): Promise<RelationalDelta[] | null> {
@@ -720,10 +685,6 @@ export type MindHandoff = {
   created_at: string;
 };
 
-export async function fetchMindHandoffs(limit = 30): Promise<MindHandoff[]> {
-  return (await fetchMindHandoffsOrNull(limit)) ?? [];
-}
-
 /** Null when Halseth could not be reached, so a page can tell down from empty. */
 export async function fetchMindHandoffsOrNull(limit = 30): Promise<MindHandoff[] | null> {
   return hGetSafe<MindHandoff[]>(`/ingest/mind-handoffs?limit=${limit}`);
@@ -747,10 +708,6 @@ export async function fetchDreamsOrNull(companionId?: string, limit = 20): Promi
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
   return hGetSafe<Dream[]>(`/dreams?${q}`);
-}
-
-export async function fetchDreamSeeds(): Promise<DreamSeed[]> {
-  return (await fetchDreamSeedsOrNull()) ?? [];
 }
 
 /** Null when Halseth could not be reached, so a page can tell down from empty. */
@@ -1191,12 +1148,6 @@ export async function fetchOrientForChat(agentId: string): Promise<CompanionOrie
       .map((n) => n.content)
       .join("\n"),
   };
-}
-
-export async function fetchCompanionDreams(companionId?: string, limit = 30): Promise<WmDream[]> {
-  const q = new URLSearchParams({ limit: String(limit) });
-  if (companionId) q.set("companion_id", companionId);
-  return (await hGetSafe<WmDream[]>(`/ingest/companion-dreams?${q}`)) ?? [];
 }
 
 /** Null when Halseth could not be reached, so a page can tell down from empty. */

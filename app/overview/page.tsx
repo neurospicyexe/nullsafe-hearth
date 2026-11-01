@@ -390,7 +390,7 @@ export default async function Page() {
           {(house.current_room || latest_biometrics || house.spoon_count > 0 || house.love_meter > 0) && (
             <div className="state-stats-group">
               {house.current_room && (
-                <Link href="/halseth" className="card card-accent room-link">
+                <Link href="/halseth" className="card room-link">
                   <span className="state-cell-label">Room</span>
                   <span className="state-cell-value state-cell-value-lg">{house.current_room}</span>
                   {house.companion_activity && (

@@ -55,7 +55,7 @@ function EmotionalLandscape({ deltas }: { deltas: Delta[] }) {
   const max = Math.max(...Object.values(counts), 1);
 
   return (
-    <div className="card card-accent">
+    <div className="card">
       <div className="card-title">Emotional Landscape</div>
       <div className="valence-bars">
         {order.map((v) => {
