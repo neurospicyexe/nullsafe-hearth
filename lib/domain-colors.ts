@@ -12,6 +12,16 @@ export const INK = "var(--h-ink)";
 export const MUTED = "var(--h-muted)";
 export const QUIET = "var(--h-faint)";
 
+/** Relational-delta valence: one meaning on every page. globals.css .valence-fill, .valence-badge and
+ * .delta-valence follow the same tokens (lib/__tests__/valence-drift-colors.test.ts keeps them in step). */
+export const VALENCE: Record<string, string> = {
+  toward: INK,
+  tender: MUTED,
+  neutral: QUIET,
+  repair: OK,
+  rupture: WARN,
+};
+
 /** Sets --c (a kit token, never a literal) for `.h-cmp-badge` / `.h-cmp-tint`. */
 export function tint(color: string): CSSProperties {
   return { "--c": color } as CSSProperties;

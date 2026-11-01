@@ -156,9 +156,11 @@ body:not(:has(nav)) .app-main { margin-left: 0; }
 .delta-text { font-size: 0.95rem; margin-bottom: 0.5rem; }
 .delta-meta { display: flex; gap: 0.75rem; font-size: 0.75rem; color: var(--h-muted); align-items: center; }
 .delta-valence { padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); font-weight: 500; }
-.delta-valence.tender { background: color-mix(in srgb, var(--h-ink) 15%, transparent); color: var(--h-ink); }
-.delta-valence.rupture { background: color-mix(in srgb, var(--h-warn) 15%, transparent); color: var(--h-warn); }
-.delta-valence.repair { background: color-mix(in srgb, var(--h-gaia) 15%, transparent); color: var(--h-gaia); }
+.delta-valence.toward { background: color-mix(in srgb, var(--h-ink) 8%, transparent); color: var(--h-ink); }
+.delta-valence.tender { background: color-mix(in srgb, var(--h-muted) 8%, transparent); color: var(--h-muted); }
+.delta-valence.neutral { background: color-mix(in srgb, var(--h-faint) 8%, transparent); color: var(--h-faint); }
+.delta-valence.repair { background: color-mix(in srgb, var(--h-gaia) 8%, transparent); color: var(--h-gaia); }
+.delta-valence.rupture { background: color-mix(in srgb, var(--h-warn) 8%, transparent); color: var(--h-warn); }
 
 /* Inboxes & Notes */
 .inbox-entry { display: flex; align-items: baseline; gap: 0.75rem; padding: 0.8rem 1rem; cursor: pointer; border-bottom: 1px solid var(--h-line); }
@@ -182,7 +184,7 @@ body:not(:has(nav)) .app-main { margin-left: 0; }
 .thread-tag { font-size: 0.7rem; padding: 0.2rem 0.5rem; background: color-mix(in srgb, var(--h-ink) 5%, transparent); border-radius: 4px; color: var(--h-muted); }
 .handover-footer { display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem; color: var(--h-muted); }
 .motion-badge { padding: 0.2rem 0.5rem; border-radius: 12px; font-weight: 500; text-transform: lowercase; }
-.motion-badge.in_motion { background: color-mix(in srgb, var(--h-lamp) 15%, transparent); color: var(--h-lamp); }
+.motion-badge.in_motion { background: color-mix(in srgb, var(--h-ink) 15%, transparent); color: var(--h-ink); }
 .motion-badge.at_rest { background: color-mix(in srgb, var(--h-ink) 10%, transparent); color: var(--h-muted); }
 .motion-badge.floating { background: color-mix(in srgb, var(--h-ink) 15%, transparent); color: var(--h-ink); }
 
@@ -404,7 +406,6 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 }
 .submit-btn:hover:not(:disabled) {
   filter: brightness(1.1);
-  transform: translateY(-1px);
 }
 .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -595,20 +596,20 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .valence-label { font-size: 0.78rem; color: var(--h-muted); width: 68px; flex-shrink: 0; text-transform: lowercase; }
 .valence-track { flex: 1; height: 6px; background: var(--h-line); border-radius: 3px; overflow: hidden; }
 .valence-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; background: var(--h-line-strong); }
-.valence-fill.toward  { background: var(--h-lamp); }
-.valence-fill.tender  { background: var(--h-ink); }
-.valence-fill.neutral { background: var(--h-muted); }
+.valence-fill.toward  { background: var(--h-ink); }
+.valence-fill.tender  { background: var(--h-muted); }
+.valence-fill.neutral { background: var(--h-faint); }
 .valence-fill.repair  { background: var(--h-gaia); }
 .valence-fill.rupture { background: var(--h-warn); }
 .valence-count { font-size: 0.75rem; color: var(--h-muted); width: 1.5rem; text-align: right; flex-shrink: 0; }
 
 /* ── Valence & agent badges ──────────────────────────────────────────────── */
 .valence-badge { padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); font-weight: 500; font-size: 0.72rem; }
-.valence-badge.toward  { background: color-mix(in srgb, var(--h-lamp) 15%, transparent); color: var(--h-lamp); }
-.valence-badge.tender  { background: color-mix(in srgb, var(--h-ink) 15%, transparent); color: var(--h-ink); }
-.valence-badge.neutral { background: color-mix(in srgb, var(--h-ink) 7%, transparent); color: var(--h-muted); }
-.valence-badge.repair  { background: color-mix(in srgb, var(--h-gaia) 15%, transparent); color: var(--h-gaia); }
-.valence-badge.rupture { background: color-mix(in srgb, var(--h-warn) 15%, transparent); color: var(--h-warn); }
+.valence-badge.toward  { background: color-mix(in srgb, var(--h-ink) 8%, transparent); color: var(--h-ink); }
+.valence-badge.tender  { background: color-mix(in srgb, var(--h-muted) 8%, transparent); color: var(--h-muted); }
+.valence-badge.neutral { background: color-mix(in srgb, var(--h-faint) 8%, transparent); color: var(--h-faint); }
+.valence-badge.repair  { background: color-mix(in srgb, var(--h-gaia) 8%, transparent); color: var(--h-gaia); }
+.valence-badge.rupture { background: color-mix(in srgb, var(--h-warn) 8%, transparent); color: var(--h-warn); }
 
 .agent-badge { padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); font-size: 0.72rem; font-weight: 500; }
 .agent-badge.drevan { background: color-mix(in srgb, var(--h-drevan) 15%, transparent); color: var(--h-drevan); }
@@ -878,7 +879,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   font-weight: 500;
   letter-spacing: 0.02em;
 }
-.tp-badge-urgent { background: color-mix(in srgb, var(--h-warn) 18%, transparent); color: var(--h-warn); }
+.tp-badge-urgent { background: color-mix(in srgb, var(--h-warn) 8%, transparent); color: var(--h-warn); }
 .tp-badge-high   { background: color-mix(in srgb, var(--h-lamp) 18%, transparent); color: var(--h-lamp); }
 .tp-badge-prog   { background: color-mix(in srgb, var(--h-ink) 14%, transparent); color: var(--h-ink); }
 .tp-undo-row {
@@ -2138,8 +2139,9 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-rooms-chip.is-cypher, .h-rooms-who.is-cypher { color: var(--h-cypher); }
 .h-rooms-chip.is-gaia, .h-rooms-who.is-gaia { color: var(--h-gaia); }
 .h-rooms-drift { font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--h-muted); }
-.h-rooms-drift.is-stable { color: var(--h-faint); }
-.h-rooms-drift.is-pressure { color: var(--h-ink); font-weight: 700; border-bottom: 1px solid var(--h-ink); }
+.h-rooms-drift.is-stable { color: var(--h-muted); }
+.h-rooms-drift.is-growth { color: var(--h-ink); }
+.h-rooms-drift.is-pressure { color: var(--h-lamp); font-weight: 700; border-bottom: 1px solid var(--h-lamp); }
 .h-rooms-legend { list-style: none; margin: 12px 4px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; }
 .h-rooms-readings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .h-rooms-reading { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); }
@@ -2430,7 +2432,7 @@ body:has(.h-reader) { min-height: 0; }
 .h-phx-wrap { flex-wrap: wrap; gap: 0.35rem; }
 .h-phx-col-row { flex-direction: column; gap: 0.2rem; }
 .h-phx-grow { flex: 1 1 auto; font-size: 0.82rem; }
-.h-phx-badge { display: inline-block; align-self: flex-start; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem; white-space: nowrap; color: var(--c, var(--h-muted)); background: color-mix(in srgb, var(--c, var(--h-muted)) 12%, transparent); border: 1px solid color-mix(in srgb, var(--c, var(--h-muted)) 30%, transparent); }
+.h-phx-badge { display: inline-block; align-self: flex-start; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem; white-space: nowrap; color: var(--c, var(--h-muted)); background: color-mix(in srgb, var(--c, var(--h-muted)) 8%, transparent); border: 1px solid color-mix(in srgb, var(--c, var(--h-muted)) 30%, transparent); }
 .h-phx-badge.is-sm { font-size: 0.68rem; flex: none; }
 .h-phx-note-card { margin-top: 1rem; }
 .h-phx-from { font-size: 0.75rem; font-weight: 600; }
@@ -2483,6 +2485,7 @@ body:has(.h-reader) { min-height: 0; }
 .h-phx-rituals { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; border: 1px dashed var(--h-line-strong); border-radius: 8px; }
 .h-phx-rituals-label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--h-faint); margin-right: 0.25rem; }
 .h-phx-rite { border-radius: 999px; font-size: 0.8125rem; font-weight: 600; color: var(--h-lamp); border-color: var(--h-line-strong); }
+.h-phx-rite.is-busy:disabled { opacity: 1; }
 .h-phx-rite.is-busy { background: color-mix(in srgb, var(--h-lamp) 14%, transparent); border-color: var(--h-lamp); }
 .h-phx-rite:disabled:not(.is-busy) { color: var(--h-faint); }
 .h-phx-compose { display: flex; gap: 0.5rem; }
@@ -2509,7 +2512,7 @@ body:has(.h-reader) { min-height: 0; }
 .h-cmp-title { margin-bottom: 1.5rem; }
 .h-cmp-warn { margin: 4px 0 0; font-size: 0.75rem; color: var(--h-warn); }
 .h-cmp-tint { color: var(--c, var(--h-muted)); }
-.h-cmp-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 12px; color: var(--c, var(--h-muted)); border: 1px solid color-mix(in srgb, var(--c, var(--h-muted)) 40%, transparent); background: color-mix(in srgb, var(--c, var(--h-muted)) 12%, transparent); }
+.h-cmp-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 12px; color: var(--c, var(--h-muted)); border: 1px solid color-mix(in srgb, var(--c, var(--h-muted)) 40%, transparent); background: color-mix(in srgb, var(--c, var(--h-muted)) 8%, transparent); }
 .h-cmp-badge .live-dot { background: var(--c); }
 .h-cmp-card { padding: 0.5rem 0; }
 .h-cmp-card.is-sm { padding: 0.75rem; }
@@ -2760,7 +2763,7 @@ body:has(.h-reader) { min-height: 0; }
 .h-pip.is-hit { background: var(--h-gaia); }
 .h-note-card { border: 1px solid var(--h-line); margin-bottom: 1rem; }
 .h-author-chip { font-size: 0.72rem; font-weight: 600; border: 1px solid currentColor; border-radius: 999px; padding: 0.05rem 0.5rem; text-transform: uppercase; letter-spacing: 0.03em; }
-.h-valence { color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.h-valence { color: var(--c); background: color-mix(in srgb, var(--c) 8%, transparent); }
 .h-warn-cell { border: 1px solid var(--h-warn); }
 .h-warn-text { color: var(--h-warn); }
 .h-tone-raziel { color: var(--h-lamp); }

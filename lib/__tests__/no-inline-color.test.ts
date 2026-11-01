@@ -55,6 +55,10 @@ function styleBlocks(src: string): { text: string; at: number }[] {
 }
 
 describe("no inline color in TSX", () => {
+  it("scans a real file set", () => {
+    expect(files.length).toBeGreaterThan(50);
+  });
+
   it("has no hex literal outside the allowlist", () => {
     const hits: string[] = [];
     for (const f of files) {

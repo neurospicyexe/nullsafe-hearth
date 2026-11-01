@@ -19,6 +19,7 @@ describe("globals.css color literals", () => {
     let buf = "";
     let line = 1;
     let depth = 0;
+    let declarations = 0;
     for (let i = 0; i < css.length; i++) {
       const c = css[i];
       if (c === "/" && css[i + 1] === "*") {
@@ -31,7 +32,7 @@ describe("globals.css color literals", () => {
       if (c === "\n") line++;
       if (c === "{") {
         depth++;
-        selector = buf.trim().split(/\s*\n\s*/).pop()!.trim();
+        selector = buf.trim().replace(/\s*[\r\n]+\s*/g, " ");
         buf = "";
         continue;
       }
@@ -42,7 +43,10 @@ describe("globals.css color literals", () => {
       }
       buf += c;
       if (c === ";" || css[i + 1] === "}") {
-        if (depth > 0 && selector && !/^:root/.test(selector) && !SELECTOR_ALLOWLIST.has(selector.split(",")[0].trim())) {
+        if (depth > 0 && selector && buf.includes(":")) declarations++;
+        // A comma list or multi-line selector is exempt only when EVERY selector in it is allowlisted.
+        const allAllowed = selector.split(",").every((x) => SELECTOR_ALLOWLIST.has(x.trim()));
+        if (depth > 0 && selector && !/^:root/.test(selector) && !allAllowed) {
           for (const m of buf.matchAll(LITERAL_RE)) {
             if (BLACK_ALPHA_RE.test(m[0])) continue;
             hits.push(`app/globals.css:${line}: ${selector}: ${m[0]}`);
@@ -51,6 +55,7 @@ describe("globals.css color literals", () => {
         if (c === ";") buf = "";
       }
     }
+    expect(declarations, "parser saw too few declarations; it is not reading the file").toBeGreaterThan(100);
     expect(hits, `color literals outside :root (use a --h-* token or color-mix):\n${hits.join("\n")}`).toEqual([]);
   });
 });

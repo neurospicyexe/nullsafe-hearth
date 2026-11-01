@@ -3,7 +3,7 @@ import Link from "next/link";
 import CompanionMoodCard from "@/components/CompanionMoodCard";
 import ClientTime from "@/components/ClientTime";
 import { toneOf } from "@/lib/tone";
-import { tint, OK, WARN, INK, MUTED, QUIET } from "@/lib/domain-colors";
+import { tint, VALENCE } from "@/lib/domain-colors";
 
 export const dynamic = 'force-dynamic';
 
@@ -19,19 +19,10 @@ function AuthorChip({ companionId }: { companionId: string | null | undefined })
   );
 }
 
-// Soft canon (2026-07-21): the five canon valence words keep distinct tones; anything else
-// (typos, future words) falls through to the plain chip. Kit tokens only: repair ok, rupture warn,
-// the rest neutral steps.
-const VALENCE_COLOR: Record<string, string> = {
-  toward: INK,
-  tender: MUTED,
-  repair: OK,
-  rupture: WARN,
-  neutral: QUIET,
-};
-
+// Soft canon (2026-07-21): the five canon valence words keep distinct tones (VALENCE in
+// lib/domain-colors.ts); anything else (typos, future words) falls through to the plain chip.
 function ValenceChip({ value }: { value: string }) {
-  const canon = VALENCE_COLOR[value.trim().toLowerCase()];
+  const canon = VALENCE[value.trim().toLowerCase()];
   return (
     <span className={canon ? "delta-valence h-valence" : "delta-valence"} style={canon ? tint(canon) : undefined}>
       {value}
