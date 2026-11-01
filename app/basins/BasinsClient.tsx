@@ -73,9 +73,7 @@ function TrajectorySvg({ rows }: { rows: BasinHistory[] }) {
             r={p.caleth_confirmed ? 4 : 3}
           >
             <title>
-              {`${p.drift_type}${p.caleth_confirmed ? " (caleth-confirmed)" : ""} · score ${(p.drift_score * 100).toFixed(0)}${p.worst_basin ? ` · ${p.worst_basin}` : ""}
-${new Date(p.t).toLocaleString()}${p.notes ? `
-${p.notes}` : ""}`}
+              {`${p.drift_type}${p.caleth_confirmed ? " (caleth-confirmed)" : ""} · score ${(p.drift_score * 100).toFixed(0)}${p.worst_basin ? ` · ${p.worst_basin}` : ""}\n${new Date(p.t).toLocaleString()}${p.notes ? `\n${p.notes}` : ""}`}
             </title>
           </circle>
         </g>
