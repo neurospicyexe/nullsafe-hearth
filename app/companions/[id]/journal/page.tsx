@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { notFound } from "next/navigation";
 import { parseCompanionId } from "@/lib/companion-page";
 import { fetchCompanionJournal } from "@/lib/halseth";
+import { isLetterRow } from "@/lib/journal-model";
 import { COMPANION_CONFIG, JournalSection } from "../sections";
 
 export function generateStaticParams() {
@@ -20,10 +21,13 @@ export default async function CompanionJournalPage({ params }: { params: Promise
   // (Discord speech transcripts and clerk rows stay reachable from /all and search).
   const journalEntries = await fetchCompanionJournal(id, 200, { substantive: true }).catch(() => null);
 
+  // Letters live behind their own door and are not in the pill count; dropped letters stay here.
+  const listed = journalEntries ? journalEntries.filter((e) => !isLetterRow(e.tags, e.review_state)) : null;
+
   return (
     <div>
       <h1 style={{ marginBottom: "1.5rem" }}>{config.display} · Identity Journal</h1>
-      <JournalSection entries={journalEntries ?? []} />
+      <JournalSection entries={listed ?? []} />
     </div>
   );
 }

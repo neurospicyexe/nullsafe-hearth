@@ -112,6 +112,25 @@ describe("unknown companion", () => {
     await JournalPage(params("Cypher"));
     expect(halseth.fetchCompanionJournal).toHaveBeenCalledWith("cypher", 200, { substantive: true });
   });
+  it("journal lists no letter rows (the pill count excludes them) but keeps dropped letters", async () => {
+    const row = (id: string, tags: string | null, review_state = "kept") => ({ id, note_text: `text-${id}`, tags, review_state });
+    overrides.fetchCompanionJournal = async () => [
+      row("plain", '["reflection"]'),
+      row("letter", '["letter_to_raziel"]'),
+      row("dropped", '["letter"]', "dropped"),
+    ];
+    const html = renderToStaticMarkup((await JournalPage(params("cypher"))) as React.ReactElement);
+    expect(html).toContain("text-plain");
+    expect(html).not.toContain("text-letter");
+    expect(html).toContain("text-dropped");
+  });
+  it("/all reads live: no generateStaticParams, like the overview", async () => {
+    const mod = (await import("./all/page")) as Record<string, unknown>;
+    const overview = (await import("./page")) as Record<string, unknown>;
+    expect(mod.generateStaticParams).toBeUndefined();
+    expect(overview.generateStaticParams).toBeUndefined();
+    expect(mod.dynamic).toBe("force-dynamic");
+  });
   it("the layout 404s too, so no sub-route ever renders with a bad id", async () => {
     await expect(Layout({ children: null, ...params("blue") })).rejects.toThrow("NEXT_NOT_FOUND");
   });
@@ -132,7 +151,7 @@ describe("mixed-case id is lowercased before every fetch", () => {
 
   it("/all (the old overview, 21 fetches)", async () => {
     await AllPage(params("Cypher"));
-    expect(halseth.fetchCompanionJournal).toHaveBeenCalledWith("cypher", 6);
+    expect(halseth.fetchCompanionJournal).toHaveBeenCalledWith("cypher", 6, { substantive: true });
     expect(halseth.fetchMindState).toHaveBeenCalledWith("cypher");
     expect(halseth.fetchCypherAudit).toHaveBeenCalled();
     expect(allCalls().length).toBeGreaterThanOrEqual(19);

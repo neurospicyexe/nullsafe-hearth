@@ -1865,6 +1865,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
   --h-faint: #9a8f7f;
   --h-lamp: #e9ad48;
   --h-drevan: #e47a52;
+  --h-warn: #e47a52; /* warn lines (spoons, needs); the doll-up retunes this one token */
   --h-cypher: #c4d0dd;
   --h-gaia: #86c27f;
   --h-paper: #f5f0e6;
@@ -2024,7 +2025,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .h-spoons-chip[aria-pressed="true"] { background: var(--h-lamp); color: var(--h-ground); border-color: var(--h-lamp); }
 .h-spoons-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 20px 2px; min-height: var(--h-tap); }
 .h-spoons-msg { font-size: 0.9375rem; color: var(--h-ink); }
-.h-spoons-msg.is-warn { color: var(--h-drevan); }
+.h-spoons-msg.is-warn { color: var(--h-warn); }
 .h-spoons-hint { font-size: 0.875rem; color: var(--h-faint); }
 .h-spoons-unsaved { margin: 0; padding: 0 20px 8px; font-size: 0.8125rem; color: var(--h-muted); }
 .h-spoons-actions { display: flex; gap: 6px; }
@@ -2153,7 +2154,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 }
 .h-needs-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: var(--h-tap); }
 .h-needs-msg { font-size: 0.9375rem; color: var(--h-ink); }
-.h-needs-msg.is-warn { color: var(--h-drevan); }
+.h-needs-msg.is-warn { color: var(--h-warn); }
 .h-needs-btn:focus-visible, .h-needs-input:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
 .h-needs-section { padding-top: 24px; }
 .h-needs-h2 { margin: 0 4px 10px; font-size: 0.9375rem; font-weight: 700; color: var(--h-muted); }
