@@ -267,7 +267,7 @@ describe("letters door", () => {
       ],
       unread_count: 1,
     });
-    overrides.fetchNotes = async () => [
+    overrides.fetchLettersOut = async () => [
       { id: "n1", note_type: "letter:cypher", content: "from Raziel", created_at: "2026-10-25T10:00:00Z" },
     ];
     const html = renderToStaticMarkup(await LettersPage(params("cypher")));

@@ -2647,3 +2647,8 @@ body:has(.h-reader) { min-height: 0; }
 }
 .h-archive-search input:focus-visible, .h-archive-search button:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
 .h-archive-search-note { font-size: 0.875rem; color: var(--h-faint); }
+
+/* ── Letters, both directions ────────────────────────────────────────────── */
+.h-letters-filter { margin: 0 0 16px; }
+.h-letter-out { display: flex; flex-direction: column; gap: 6px; max-width: 68ch; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-left: 3px solid var(--h-lamp); border-radius: var(--h-radius); color: var(--h-ink); }
+.h-letter-out-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1rem; line-height: 1.6; }

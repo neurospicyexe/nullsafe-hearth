@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchNotes, fetchInbox } from "@/lib/halseth";
+import { fetchLettersOut, fetchInbox } from "@/lib/halseth";
 import type { Note, InboxItem } from "@/lib/halseth";
 import { COMPANION_CONFIG, fmtTime } from "../sections";
 import { LetterFormClient } from "../client";
@@ -12,7 +12,7 @@ export function generateStaticParams() {
   return [{ id: "drevan" }, { id: "cypher" }, { id: "gaia" }];
 }
 
-const RAZIEL_COLOR = "#f59e0b";
+const RAZIEL_COLOR = "var(--h-lamp)";
 
 type LetterItem =
   | { kind: "incoming"; note: InboxItem;     at: string }
@@ -30,14 +30,13 @@ export default async function CompanionLettersPage({ params }: { params: Promise
   // excluded), scoped to this companion in Halseth, so Discord speech in the journal can never push
   // them out of a window. Each links to /letters/[id], which marks it read (the door's unread count).
   const [notes, inboxRes] = await Promise.allSettled([
-    fetchNotes(200),
+    fetchLettersOut(100, id),
     fetchInbox(100, id),
   ]);
 
-  const allNotes = notes.status === "fulfilled" ? notes.value : [];
+  const lettersOut = notes.status === "fulfilled" ? (notes.value ?? []) : [];
   const inbox    = inboxRes.status === "fulfilled" ? inboxRes.value : null;
 
-  const lettersOut = allNotes.filter((n) => n.note_type === `letter:${id}`);
   // Belt and braces: a Halseth that predates ?agent= ignores it and returns every writer's letters.
   const lettersIn  = (inbox?.items ?? []).filter((n) => n.agent === id);
 
