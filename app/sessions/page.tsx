@@ -1,127 +1,105 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { fetchSessions } from "@/lib/halseth";
-import { COMPANION_CONFIG } from "@/app/companions/[id]/sections";
+import { fetchSessionsOrNull, fetchHandovers, fetchMindHandoffsOrNull } from "@/lib/halseth";
+import { joinSessions } from "@/lib/sessions-model";
+import { HALSETH_DOWN } from "@/lib/archive-copy";
+import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 
-const FALLBACK_COLOR = "#6b7280";
+export const metadata = { title: "Sessions and handovers | Hearth" };
 
-const MOTION_ICON: Record<string, string> = {
-  in_motion: "→",
-  at_rest:   "·",
-  floating:  "~",
-};
+const MOTION_WORD: Record<string, string> = { in_motion: "in motion", at_rest: "at rest", floating: "floating" };
 
-const SESSION_TYPE_COLOR: Record<string, string> = {
-  work:             "#3b82f6",
-  "companion-work": "#6366f1",
-  hangout:          "#f97316",
-  checkin:          "#22c55e",
-  ritual:           "#a855f7",
-};
+function clip(text: string, n: number): string {
+  return text.length > n ? `${text.slice(0, n)}…` : text;
+}
 
 export default async function SessionsPage() {
-  const sessions = await fetchSessions(60, 100);
+  const [sessions, handovers, mind] = await Promise.all([
+    fetchSessionsOrNull(365, 200),
+    fetchHandovers(100),
+    fetchMindHandoffsOrNull(30),
+  ]);
+
+  const rows = sessions ? joinSessions(sessions, handovers ?? []) : null;
 
   return (
-    <>
-      <div className="page-header">
-        <h1 className="page-title">Sessions</h1>
-        <p className="page-subtitle">past and present presence records</p>
-      </div>
-
-      {sessions.length === 0 && (
-        <div className="pending-notice">
-          <div className="pending-dot" />
-          No sessions found.
-        </div>
+    <div className="h-reading">
+      <h1 className="h-page-title">Sessions and handovers</h1>
+      {rows === null ? (
+        <p className="h-home-quiet">{HALSETH_DOWN}</p>
+      ) : (
+        <>
+          {handovers === null && <p className="h-home-quiet">Full handovers didn&apos;t load.</p>}
+          {rows.length === 0 ? (
+            <p className="h-home-quiet">No closed sessions yet.</p>
+          ) : (
+            <div className="h-sessions">
+              {rows.map((s) => {
+                const motion = s.motion ? (MOTION_WORD[s.motion] ?? s.motion) : null;
+                return (
+                  <article key={s.id} className="h-session">
+                    <header className="h-session-head">
+                      <b className={toneOf(s.companion)}>{s.companion ?? "unattributed"}</b>
+                      {s.sessionType && <span className="h-session-meta">{s.sessionType}</span>}
+                      {s.facet && <span className="h-session-meta">{s.facet}</span>}
+                      {motion && <span className="h-session-meta">{motion}</span>}
+                      <span className="h-session-meta h-session-when">
+                        <ClientTime iso={s.at} />
+                      </span>
+                    </header>
+                    {s.spine && <p className="h-session-spine">{s.spine}</p>}
+                    {s.lastRealThing && <p className="h-session-last">{clip(s.lastRealThing, 160)}</p>}
+                    {s.body && (
+                      <details className="h-session-full">
+                        <summary>Full handover</summary>
+                        <div className="h-reading">
+                          <p className="h-session-spine">{s.body.spine}</p>
+                          {s.body.lastRealThing && <p className="h-session-last-full">{s.body.lastRealThing}</p>}
+                          {s.body.threads.length > 0 && (
+                            <div className="h-chips">
+                              {s.body.threads.map((t, i) => (
+                                <span key={i} className="h-chip">{t}</span>
+                              ))}
+                            </div>
+                          )}
+                          {s.body.anchor && <p className="h-session-meta">anchor: {s.body.anchor}</p>}
+                        </div>
+                      </details>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
-      <div className="card" style={{ padding: "0.5rem 0" }}>
-        {sessions.map((s) => {
-          const companionColor = s.companion_id ? (COMPANION_CONFIG[s.companion_id]?.color ?? FALLBACK_COLOR) : FALLBACK_COLOR;
-          const typeColor = s.session_type ? (SESSION_TYPE_COLOR[s.session_type] ?? null) : null;
-          const motionIcon = s.motion_state ? (MOTION_ICON[s.motion_state] ?? null) : null;
-
-          return (
-            <div key={s.id} className="journal-row" style={{ alignItems: "flex-start", gap: "0.75rem", flexDirection: "column" }}>
-
-
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%", flexWrap: "wrap" }}>
-                {s.companion_id && (
-                  <span style={{
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: companionColor,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}>
-                    {s.companion_id}
+      <section className="h-section">
+        <h2 className="h-section-title">WebMind handoffs</h2>
+        {mind === null ? (
+          <p className="h-home-quiet">Couldn&apos;t load the WebMind handoffs.</p>
+        ) : mind.length === 0 ? (
+          <p className="h-home-quiet">No WebMind handoffs yet.</p>
+        ) : (
+          <div className="h-sessions">
+            {mind.map((h) => (
+              <article key={h.id} className="h-session">
+                <header className="h-session-head">
+                  <b className={toneOf(h.agent_id)}>{h.agent_id}</b>
+                  <span className="h-session-meta h-session-when">
+                    <ClientTime iso={h.created_at} />
                   </span>
-                )}
-                {s.session_type && typeColor && (
-                  <span style={{
-                    fontSize: "0.72rem",
-                    padding: "0.1rem 0.45rem",
-                    background: `${typeColor}18`,
-                    border: `1px solid ${typeColor}33`,
-                    borderRadius: "3px",
-                    color: typeColor,
-                  }}>
-                    {s.session_type}
-                  </span>
-                )}
-                {motionIcon && (
-                  <span style={{ fontSize: "0.75rem", color: "#64748b" }} title={s.motion_state ?? undefined}>
-                    {motionIcon}
-                  </span>
-                )}
-                <span className="journal-time" style={{ marginLeft: "auto", flexShrink: 0 }}>
-                  <ClientTime iso={s.created_at} />
-                </span>
-              </div>
-
-
-              {s.spine && (
-                <p style={{ margin: 0, fontSize: "0.92rem", color: "#e2e8f0", lineHeight: 1.45 }}>
-                  {s.spine}
-                </p>
-              )}
-
-
-              {s.last_real_thing && (
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "#94a3b8", lineHeight: 1.4, fontStyle: "italic" }}>
-                  {s.last_real_thing.length > 160 ? s.last_real_thing.slice(0, 160) + "…" : s.last_real_thing}
-                </p>
-              )}
-
-
-              <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-                {s.front_state && (
-                  <span className="page-subtitle" style={{ fontSize: "0.75rem" }}>
-                    front: {s.front_state}
-                  </span>
-                )}
-                {s.facet && (
-                  <span className="page-subtitle" style={{ fontSize: "0.75rem" }}>
-                    {s.facet}
-                  </span>
-                )}
-                {s.emotional_frequency && (
-                  <span className="page-subtitle" style={{ fontSize: "0.75rem" }}>
-                    {s.emotional_frequency}
-                  </span>
-                )}
-                {s.notes && (
-                  <span className="page-subtitle" style={{ fontSize: "0.75rem", fontStyle: "italic" }}>
-                    {s.notes.length > 80 ? s.notes.slice(0, 80) + "…" : s.notes}
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </>
+                </header>
+                {h.title && <p className="h-session-spine">{h.title}</p>}
+                {h.summary && <p className="h-session-last-full">{h.summary}</p>}
+                {h.next_steps && <p className="h-session-meta">next: {h.next_steps}</p>}
+                {h.state_hint && <p className="h-session-meta">{h.state_hint}</p>}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

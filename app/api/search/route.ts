@@ -2,23 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   fetchAllDeltas,
   fetchCompanionJournal,
-  fetchDreams,
+  fetchDreamsOrNull,
   fetchHandovers,
-  fetchTasks,
+  fetchTasksOrNull,
   fetchWounds,
-  fetchAllCompanionNotes,
-  fetchMindHandoffs,
-  fetchInterCompanionNotes,
+  fetchLettersOut,
+  fetchMindHandoffsOrNull,
+  fetchInterCompanionNotesOrNull,
   type RelationalDelta,
   type CompanionJournalEntry,
   type Dream,
   type HandoverPacket,
   type Task,
   type LivingWound,
-  type CompanionNote,
+  type Note,
   type MindHandoff,
   type InterCompanionNote,
 } from "@/lib/halseth";
+import { isLetterRow } from "@/lib/journal-model";
+import { HALSETH_DOWN } from "@/lib/archive-copy";
 
 type SearchType = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
 
@@ -59,17 +61,28 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const want = (t: Exclude<SearchType, "all">) => type === "all" || type === t;
 
   try {
-    const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawMindHandoffs, rawTasks, rawWounds, rawNotes, rawInterNotes] = await Promise.all([
+    const [rawFeelings, rawJournal, rawDreams, rawHandovers, rawMindHandoffs, rawTasks, rawWounds, rawLetters, rawInterNotes] = await Promise.all([
       want("feelings")  ? fetchAllDeltas(50)               : Promise.resolve(null),
       want("journal")   ? fetchCompanionJournal(undefined, 50) : Promise.resolve(null),
-      want("dreams")    ? fetchDreams(undefined, 50)        : Promise.resolve(null),
+      want("dreams")    ? fetchDreamsOrNull(undefined, 50)        : Promise.resolve(null),
       want("handovers") ? fetchHandovers(50)                : Promise.resolve(null),
-      want("handovers") ? fetchMindHandoffs(50)             : Promise.resolve(null),
-      want("tasks")     ? fetchTasks()                      : Promise.resolve([]),
+      want("handovers") ? fetchMindHandoffsOrNull(50)             : Promise.resolve(null),
+      want("tasks")     ? fetchTasksOrNull()                : Promise.resolve(null),
       want("wounds")    ? fetchWounds()                     : Promise.resolve(null),
-      want("notes")     ? fetchAllCompanionNotes(50)        : Promise.resolve(null),
-      want("notes")     ? fetchInterCompanionNotes(50)      : Promise.resolve(null),
+      want("notes")     ? fetchLettersOut(100)              : Promise.resolve(null),
+      want("notes")     ? fetchInterCompanionNotesOrNull(50)      : Promise.resolve(null),
     ]);
+
+    // A source we did not ask for is null too, so only requested sources count. If every one of
+    // them came back null, Halseth is down: say so rather than answering "no results".
+    const requested = [
+      [want("feelings"), rawFeelings], [want("journal"), rawJournal], [want("dreams"), rawDreams],
+      [want("handovers"), rawHandovers], [want("handovers"), rawMindHandoffs], [want("tasks"), rawTasks],
+      [want("wounds"), rawWounds], [want("notes"), rawLetters], [want("notes"), rawInterNotes],
+    ].filter(([asked]) => asked);
+    if (requested.every(([, raw]) => raw === null)) {
+      return NextResponse.json({ error: HALSETH_DOWN }, { status: 503 });
+    }
 
     const feelings: SearchResult[] = (rawFeelings ?? [])
       .filter((d: RelationalDelta) => matches(d.delta_text, q))
@@ -81,7 +94,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .filter((e: CompanionJournalEntry) => matches(e.note_text, q))
       .map((e: CompanionJournalEntry) => ({
         id: e.id, type: "journal" as const, text: e.note_text, created_at: e.created_at,
-        url: `/companions/${e.agent}`, agent: e.agent,
+        url: isLetterRow(e.tags, e.review_state) ? `/letters/${e.id}` : `/companions/${e.agent}`, agent: e.agent,
       }));
 
     const dreams: SearchResult[] = (rawDreams ?? [])
@@ -94,14 +107,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       ...(rawHandovers ?? [])
         .filter((h: HandoverPacket) => matches(h.spine, q) || matches(h.last_real_thing, q))
         .map((h: HandoverPacket) => ({
-          id: h.id, type: "handover" as const, text: h.spine, created_at: h.created_at, url: "/handovers",
+          id: h.id, type: "handover" as const, text: h.spine, created_at: h.created_at, url: "/sessions",
         })),
       ...(rawMindHandoffs ?? [])
         .filter((h: MindHandoff) => matches(h.title, q) || matches(h.summary, q) || matches(h.next_steps, q))
         .map((h: MindHandoff) => ({
           id: h.id, type: "handover" as const,
-          text: [h.title, h.summary].filter(Boolean).join(" — "),
-          created_at: h.created_at, url: "/handovers", agent: h.agent_id,
+          text: [h.title, h.summary].filter(Boolean).join(": "),
+          created_at: h.created_at, url: "/sessions", agent: h.agent_id,
         })),
     ];
 
@@ -118,11 +131,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }));
       
     const notes: SearchResult[] = [
-      ...(rawNotes ?? [])
-        .filter((n: CompanionNote) => matches(n.note_text, q))
-        .map((n: CompanionNote) => ({
-          id: n.id, type: "note" as const, text: n.note_text, created_at: n.created_at, url: `/companions/${n.agent}`, agent: n.agent,
-        })),
+      ...(rawLetters ?? [])
+        .filter((n: Note) => matches(n.content, q))
+        .map((n: Note) => {
+          const agent = n.note_type.slice("letter:".length);
+          return {
+            id: n.id, type: "note" as const, text: n.content, created_at: n.created_at,
+            url: `/letters?with=${agent}`, agent,
+          };
+        }),
       ...(rawInterNotes ?? [])
         .filter((n: InterCompanionNote) => matches(n.content, q))
         .map((n: InterCompanionNote) => ({

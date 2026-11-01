@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 
 export type MemoryEntry = {
@@ -24,18 +25,6 @@ const TYPE_LABEL: Record<string, string> = {
   sit:            "sit",
 };
 
-const TYPE_COLOR: Record<string, string> = {
-  companion_note: "#60a5fa",
-  feeling:        "#f472b6",
-  tension:        "#fbbf24",
-  sit:            "#4ade80",
-};
-
-const COMPANION_COLOR: Record<string, string> = {
-  drevan: "var(--accent)",
-  cypher: "#e2e8f0",
-  gaia:   "#4ade80",
-};
 
 const PAGE_SIZE = 30;
 
@@ -68,29 +57,22 @@ export default function MemoryBrowserClient({ entries }: { entries: MemoryEntry[
 
   return (
     <>
-      <div className="page-header">
-        <h1 className="page-title">Memory</h1>
-        <p className="page-subtitle">
-          {entries.length} entries · notes, feelings, tensions, sits
-        </p>
-      </div>
+      <p className="h-mem-sub">{entries.length} entries · notes, feelings, tensions, sits</p>
 
-      {/* Search */}
       <input
         type="search"
         placeholder="Search…"
         value={query}
         onChange={e => handleQuery(e.target.value)}
-        className="input"
-        style={{ maxWidth: "28rem", marginBottom: "0.75rem" }}
+        className="h-mem-search"
+        aria-label="Search memory"
       />
 
-      {/* Type filter */}
-      <div className="filter-tabs" style={{ marginBottom: "0.5rem" }}>
+      <div className="h-chips h-mem-chips">
         {ALL_TYPES.map(t => (
           <button
             key={t}
-            className={`filter-tab ${typeFilter === t ? "active" : ""}`}
+            className={`h-chip ${typeFilter === t ? "is-on" : ""}`}
             onClick={() => handleType(t)}
           >
             {t === "all" ? "all types" : TYPE_LABEL[t] ?? t}
@@ -98,13 +80,11 @@ export default function MemoryBrowserClient({ entries }: { entries: MemoryEntry[
         ))}
       </div>
 
-      {/* Companion filter */}
-      <div className="filter-tabs" style={{ marginBottom: "0.75rem" }}>
+      <div className="h-chips h-mem-chips">
         {ALL_COMPANIONS.map(c => (
           <button
             key={c}
-            className={`filter-tab ${compFilter === c ? "active" : ""}`}
-            style={c !== "all" ? { color: COMPANION_COLOR[c] } : undefined}
+            className={`h-chip ${c !== "all" ? toneOf(c) : ""} ${compFilter === c ? "is-on" : ""}`}
             onClick={() => handleComp(c)}
           >
             {c}
@@ -112,57 +92,36 @@ export default function MemoryBrowserClient({ entries }: { entries: MemoryEntry[
         ))}
       </div>
 
-      {/* Result count */}
-      <div style={{ fontSize: "0.75rem", opacity: 0.4, marginBottom: "0.75rem" }}>
+      <div className="h-mem-count">
         {filtered.length} result{filtered.length !== 1 ? "s" : ""}
         {(typeFilter !== "all" || compFilter !== "all" || query.trim()) &&
           ` · filtered from ${entries.length}`}
       </div>
 
-      {/* Feed */}
       {filtered.length === 0 ? (
-        <p className="empty">No entries match these filters.</p>
+        <p className="h-home-quiet">No entries match these filters.</p>
       ) : (
         <>
-          <div className="full-notes-feed">
-            {paged.map(e => {
-              const typeColor = TYPE_COLOR[e.type] ?? "#64748b";
-              const compColor = COMPANION_COLOR[e.companion] ?? "#64748b";
-              return (
-                <div
-                  key={e.id}
-                  className="full-note-entry"
-                  style={{ borderLeft: `3px solid ${typeColor}` }}
-                >
-                  <div className="note-header">
-                    <span className="note-author" style={{ color: compColor }}>
-                      {e.companion}
-                    </span>
-                    <span
-                      className="note-type-badge"
-                      style={{ background: `${typeColor}22`, color: typeColor }}
-                    >
-                      {TYPE_LABEL[e.type] ?? e.type}
-                    </span>
-                    {Array.isArray(e.tags) && e.tags.length > 0 && (
-                      <span className="note-item-tags">{e.tags.join(" · ")}</span>
-                    )}
-                    <span className="note-time">
-                      <ClientTime iso={e.created_at} />
-                    </span>
-                  </div>
-                  <div className="note-body">{e.content}</div>
-                </div>
-              );
-            })}
+          <div className="h-mem-feed">
+            {paged.map(e => (
+              <article key={e.id} className={`h-mem-entry h-mem-type-${e.type}`}>
+                <header className="h-mem-head">
+                  <b className={toneOf(e.companion)}>{e.companion}</b>
+                  <span className="h-mem-badge">{TYPE_LABEL[e.type] ?? e.type}</span>
+                  {Array.isArray(e.tags) && e.tags.length > 0 && (
+                    <span className="h-mem-tags">{e.tags.join(" · ")}</span>
+                  )}
+                  <span className="h-mem-time">
+                    <ClientTime iso={e.created_at} />
+                  </span>
+                </header>
+                <p className="h-mem-body">{e.content}</p>
+              </article>
+            ))}
           </div>
 
           {hasMore && (
-            <button
-              className="btn"
-              style={{ marginTop: "1rem", width: "100%" }}
-              onClick={() => setPage(p => p + 1)}
-            >
+            <button className="h-chip h-mem-more" onClick={() => setPage(p => p + 1)}>
               Load more ({filtered.length - paged.length} remaining)
             </button>
           )}

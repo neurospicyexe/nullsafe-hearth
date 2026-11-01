@@ -1,4 +1,5 @@
 import { parseUtc } from "@/lib/spoons";
+import { newestFirst } from "@/lib/time-order";
 // ── Constants ─────────────────────────────────────────────────────────────
 
 // H10: lifted from hardcoded `/3` literals in app/page.tsx, app/user/page.tsx,
@@ -508,6 +509,17 @@ export async function fetchVoiceScores(companionId: string, days = 30): Promise<
   return r?.scores ?? null;
 }
 
+// Raziel's outgoing letters (note_type letter:<companion>). Halseth filters server-side via
+// note_type; the client-side filter is a belt for an older Halseth that ignores the param.
+export async function fetchLettersOut(limit = 100, companion?: CompanionId): Promise<Note[] | null> {
+  const q = new URLSearchParams({ limit: String(limit), note_type: companion ? `letter:${companion}` : "letter:*" });
+  const rows = await hGetSafe<Note[]>(`/notes?${q}`);
+  if (!Array.isArray(rows)) return null;
+  return rows
+    .filter((n) => n.author === "raziel" && typeof n.note_type === "string" && n.note_type.startsWith("letter:"))
+    .sort(newestFirst((n) => n.created_at));
+}
+
 export async function fetchNotes(limit = 30): Promise<Note[]> {
   return (await hGetSafe<Note[]>(`/notes?limit=${limit}`)) ?? [];
 }
@@ -630,8 +642,13 @@ export async function fetchAllDeltas(
 }
 
 export async function fetchTasks(status?: string): Promise<Task[]> {
+  return (await fetchTasksOrNull(status)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a caller can tell down from empty. */
+export async function fetchTasksOrNull(status?: string): Promise<Task[] | null> {
   const q = status ? `?status=${status}` : "";
-  return (await hGetSafe<Task[]>(`/tasks${q}`)) ?? [];
+  return hGetSafe<Task[]>(`/tasks${q}`);
 }
 
 export async function fetchEvents(): Promise<CalendarEvent[]> {
@@ -704,21 +721,41 @@ export type MindHandoff = {
 };
 
 export async function fetchMindHandoffs(limit = 30): Promise<MindHandoff[]> {
-  return (await hGetSafe<MindHandoff[]>(`/ingest/mind-handoffs?limit=${limit}`)) ?? [];
+  return (await fetchMindHandoffsOrNull(limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchMindHandoffsOrNull(limit = 30): Promise<MindHandoff[] | null> {
+  return hGetSafe<MindHandoff[]>(`/ingest/mind-handoffs?limit=${limit}`);
 }
 
 export async function fetchInterCompanionNotes(limit = 30): Promise<InterCompanionNote[]> {
-  return (await hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`)) ?? [];
+  return (await fetchInterCompanionNotesOrNull(limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a caller can tell down from empty. */
+export async function fetchInterCompanionNotesOrNull(limit = 30): Promise<InterCompanionNote[] | null> {
+  return hGetSafe<InterCompanionNote[]>(`/ingest/inter-companion-notes?limit=${limit}`);
 }
 
 export async function fetchDreams(companionId?: string, limit = 20): Promise<Dream[]> {
+  return (await fetchDreamsOrNull(companionId, limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a caller can tell down from empty. */
+export async function fetchDreamsOrNull(companionId?: string, limit = 20): Promise<Dream[] | null> {
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
-  return (await hGetSafe<Dream[]>(`/dreams?${q}`)) ?? [];
+  return hGetSafe<Dream[]>(`/dreams?${q}`);
 }
 
 export async function fetchDreamSeeds(): Promise<DreamSeed[]> {
-  return (await hGetSafe<DreamSeed[]>("/dream-seeds")) ?? [];
+  return (await fetchDreamSeedsOrNull()) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchDreamSeedsOrNull(): Promise<DreamSeed[] | null> {
+  return hGetSafe<DreamSeed[]>("/dream-seeds");
 }
 
 // ── Human Journal ─────────────────────────────────────────────────────────────
@@ -734,7 +771,12 @@ export type HumanJournalEntry = {
 };
 
 export async function fetchHumanJournal(limit = 50): Promise<HumanJournalEntry[]> {
-  return (await hGetSafe<HumanJournalEntry[]>(`/journal?limit=${limit}`)) ?? [];
+  return (await fetchHumanJournalOrNull(limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchHumanJournalOrNull(limit = 50): Promise<HumanJournalEntry[] | null> {
+  return hGetSafe<HumanJournalEntry[]>(`/journal?limit=${limit}`);
 }
 
 // ── SOMA Feelings ─────────────────────────────────────────────────────────────
@@ -781,9 +823,12 @@ export type SessionEntry = {
 };
 
 export async function fetchSessions(days = 30, limit = 100): Promise<SessionEntry[]> {
-  return (
-    (await hGetSafe<SessionEntry[]>(`/sessions?days=${days}&limit=${limit}`)) ?? []
-  );
+  return (await fetchSessionsOrNull(days, limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchSessionsOrNull(days = 365, limit = 200): Promise<SessionEntry[] | null> {
+  return hGetSafe<SessionEntry[]>(`/sessions?days=${days}&limit=${limit}`);
 }
 
 // ── Companion Blocks ──────────────────────────────────────────────────────────
@@ -1032,7 +1077,12 @@ export type SynthesisSummary = {
 };
 
 export async function fetchSynthesisSummaries(limit = 20): Promise<SynthesisSummary[]> {
-  return (await hGetSafe<SynthesisSummary[]>(`/ingest/synthesis-summaries?limit=${limit}`)) ?? [];
+  return (await fetchSynthesisSummariesOrNull(limit)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchSynthesisSummariesOrNull(limit = 20): Promise<SynthesisSummary[] | null> {
+  return hGetSafe<SynthesisSummary[]>(`/ingest/synthesis-summaries?limit=${limit}`);
 }
 
 // ── Inter-Companion Notes ─────────────────────────────────────────────────────
@@ -1147,6 +1197,11 @@ export async function fetchCompanionDreams(companionId?: string, limit = 30): Pr
   const q = new URLSearchParams({ limit: String(limit) });
   if (companionId) q.set("companion_id", companionId);
   return (await hGetSafe<WmDream[]>(`/ingest/companion-dreams?${q}`)) ?? [];
+}
+
+/** Null when Halseth could not be reached, so a page can tell down from empty. */
+export async function fetchCompanionDreamsOrNull(limit = 100): Promise<WmDream[] | null> {
+  return hGetSafe<WmDream[]>(`/ingest/companion-dreams?${new URLSearchParams({ limit: String(limit) })}`);
 }
 
 export type CompanionTension = {

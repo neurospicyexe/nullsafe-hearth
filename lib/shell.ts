@@ -75,14 +75,10 @@ export const HUBS: Record<"needs" | "together" | "archive" | "hood", Door[]> = {
   ],
   archive: [
     { href: "/letters", label: "Letters" },
-    { href: "/handovers", label: "Handovers" },
-    { href: "/sessions", label: "Sessions" },
+    { href: "/journal", label: "Journals" },
+    { href: "/sessions", label: "Sessions and handovers" },
     { href: "/dreams", label: "Dreams" },
-    { href: "/memory", label: "Memory" },
-    { href: "/synthesis", label: "Synthesis" },
-    { href: "/journal", label: "Journal" },
-    { href: "/overview", label: "Old home" },
-    { href: "/hood", label: "Under the hood" },
+    { href: "/memory", label: "Memory and synthesis" },
   ],
   hood: [
     { href: "/halseth", label: "Halseth" },
@@ -108,6 +104,7 @@ export const HUBS: Record<"needs" | "together" | "archive" | "hood", Door[]> = {
     { href: "/tasks", label: "Tasks" },
     { href: "/house", label: "House" },
     { href: "/phoenix", label: "Phoenix" },
+    { href: "/overview", label: "Old home" },
   ],
 };
 

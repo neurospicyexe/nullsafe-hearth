@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchSearch, searchErrorMessage } from "@/lib/search-client";
 
 type ChipValue = "all" | "feelings" | "journal" | "dreams" | "handovers" | "tasks" | "notes" | "wounds";
 
@@ -82,9 +83,10 @@ function getPreview(text: string, q: string): Preview {
 interface SearchOverlayProps {
   open: boolean;
   onClose: () => void;
+  initialQuery?: string;
 }
 
-export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
+export default function SearchOverlay({ open, onClose, initialQuery }: SearchOverlayProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -96,7 +98,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
   // Reset state and autofocus when open changes
   useEffect(() => {
-    setQ("");
+    setQ(initialQuery ?? "");
     setResults(null);
     setLoading(false);
     setActiveChip("all");
@@ -129,8 +131,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     setError(null);
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      fetch(`/api/search?q=${encodeURIComponent(q)}&type=${activeChip}`, { signal: controller.signal })
-        .then((res) => res.json())
+      fetchSearch<SearchResponse>(q, activeChip, controller.signal)
         .then((data: SearchResponse) => {
           setResults(data);
           setLoading(false);
@@ -138,7 +139,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
         .catch((err: unknown) => {
           if (err instanceof Error && err.name === "AbortError") return;
           setResults(null);
-          setError("Search unavailable");
+          setError(searchErrorMessage(err));
           setLoading(false);
         });
     }, 300);
@@ -173,6 +174,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           ref={inputRef}
           className="search-input"
           type="text"
+          maxLength={100}
           placeholder="Search…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -191,7 +193,7 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
         </div>
 
         <span className="sr-only" aria-live="polite" aria-atomic="true">
-          {loading ? "Searching…" : error ? "Search unavailable." : showEmpty ? `No results for ${q}.` : hasResults ? `Results found for ${q}.` : ""}
+          {loading ? "Searching…" : error ? `${error}${error.endsWith(".") ? "" : "."}` : showEmpty ? `No results for ${q}.` : hasResults ? `Results found for ${q}.` : ""}
         </span>
 
         <div className="search-results">

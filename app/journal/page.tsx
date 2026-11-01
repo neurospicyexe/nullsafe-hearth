@@ -1,84 +1,75 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { fetchCompanionJournal, fetchHumanJournal } from "@/lib/halseth";
+import Link from "next/link";
+import { fetchCompanionJournal, fetchHumanJournalOrNull } from "@/lib/halseth";
+import { isLetterRow } from "@/lib/journal-model";
+import { HALSETH_DOWN } from "@/lib/archive-copy";
+import { toneOf } from "@/lib/tone";
 import ClientTime from "@/components/ClientTime";
 
+export const metadata = { title: "Journals | Hearth" };
+
 function agentDisplayName(agent: string): string {
-  switch (agent) {
-    case "drevan": return "Drevan";
-    case "cypher": return "Cypher";
-    case "gaia":   return "Gaia";
-    default:       return agent.charAt(0).toUpperCase() + agent.slice(1);
-  }
+  return agent.charAt(0).toUpperCase() + agent.slice(1);
 }
 
 export default async function JournalPage() {
-  const [companionEntries, humanEntries] = await Promise.all([
-    fetchCompanionJournal(undefined, 200).then((e) => e ?? []),
-    fetchHumanJournal(100),
+  const [companion, human] = await Promise.all([
+    fetchCompanionJournal(undefined, 200, { substantive: true }),
+    fetchHumanJournalOrNull(100),
   ]);
 
+  const companionEntries = companion ? companion.filter((e) => !isLetterRow(e.tags, e.review_state)) : null;
+
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">Journal</h1>
-        <p className="page-subtitle">companion reflections and personal record</p>
-      </div>
+    <div className="h-reading">
+      <h1 className="h-page-title">Journals</h1>
 
-      {/* ── Companion Journal ──────────────────────────────────────────── */}
-      <div className="home-section-header" style={{ marginBottom: "0.75rem" }}>
-        <span className="home-section-title">Companion Reflections</span>
-      </div>
-      <div className="card" style={{ padding: "0.5rem 0", marginBottom: "2rem" }}>
-        {companionEntries.map((entry) => (
-          <div key={entry.id} className="journal-row">
-            <span className={`journal-agent cc-${entry.agent}`}>
-              {agentDisplayName(entry.agent)}
-            </span>
-            <span className="journal-text">{entry.note_text}</span>
-            {entry.review_state && (
-              <span className={`review-badge ${entry.review_state}`}>{entry.review_state}</span>
-            )}
-            <span className="journal-time"><ClientTime iso={entry.created_at} /></span>
-          </div>
-        ))}
-        {companionEntries.length === 0 && (
-          <p className="empty" style={{ padding: "1rem" }}>No companion entries yet.</p>
+      <section className="h-section">
+        <h2 className="h-section-title">Companion journal</h2>
+        {companionEntries === null ? (
+          <p className="h-home-quiet">{HALSETH_DOWN}</p>
+        ) : companionEntries.length === 0 ? (
+          <p className="h-home-quiet">No companion entries yet.</p>
+        ) : (
+          companionEntries.map((e) => (
+            <article key={e.id} className="h-journal-entry">
+              <header className="h-journal-head">
+                <b className={toneOf(e.agent)}>{agentDisplayName(e.agent)}</b>
+                {e.review_state && e.review_state !== "kept" && (
+                  <span className="h-journal-meta">{e.review_state}</span>
+                )}
+                <span className="h-journal-meta"><ClientTime iso={e.created_at} /></span>
+              </header>
+              <p className="h-journal-text">{e.note_text}</p>
+            </article>
+          ))
         )}
-      </div>
+        <Link href="/letters" className="h-foot-link">Letters are in their own door</Link>
+      </section>
 
-      {/* ── Human Journal ─────────────────────────────────────────────── */}
-      <div className="home-section-header" style={{ marginBottom: "0.75rem" }}>
-        <span className="home-section-title">My Record</span>
-      </div>
-      <div className="card" style={{ padding: "0.5rem 0" }}>
-        {humanEntries.map((entry) => (
-          <div key={entry.id} className="journal-row">
-            <span className="journal-agent cc-raziel">Raziel</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <span className="journal-text">{entry.entry_text}</span>
-              {(entry.emotion_tag || entry.mood_score != null) && (
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.2rem", flexWrap: "wrap" }}>
-                  {entry.emotion_tag && (
-                    <span className="page-subtitle" style={{ fontSize: "0.78rem" }}>
-                      {entry.emotion_tag}{entry.sub_emotion ? ` · ${entry.sub_emotion}` : ""}
-                    </span>
-                  )}
-                  {entry.mood_score != null && (
-                    <span className="page-subtitle" style={{ fontSize: "0.78rem" }}>
-                      mood {entry.mood_score}/100
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-            <span className="journal-time"><ClientTime iso={entry.created_at} /></span>
-          </div>
-        ))}
-        {humanEntries.length === 0 && (
-          <p className="empty" style={{ padding: "1rem" }}>No personal entries yet.</p>
+      <section className="h-section">
+        <h2 className="h-section-title">My record</h2>
+        {human === null ? (
+          <p className="h-home-quiet">{HALSETH_DOWN}</p>
+        ) : human.length === 0 ? (
+          <p className="h-home-quiet">No personal entries yet.</p>
+        ) : (
+          human.map((e) => (
+            <article key={e.id} className="h-journal-entry">
+              <header className="h-journal-head">
+                {e.emotion_tag && (
+                  <span className="h-journal-meta">
+                    {e.emotion_tag}{e.sub_emotion ? ` · ${e.sub_emotion}` : ""}
+                  </span>
+                )}
+                <span className="h-journal-meta"><ClientTime iso={e.created_at} /></span>
+              </header>
+              <p className="h-journal-text">{e.entry_text}</p>
+            </article>
+          ))
         )}
-      </div>
+      </section>
     </div>
   );
 }

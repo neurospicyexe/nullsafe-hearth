@@ -91,8 +91,11 @@ describe("reachability", () => {
       ...Object.values(HUBS).flatMap((h) => h.map((d) => d.href)),
     ]);
     // /questions is absorbed into /needs (open questions + "Recently answered" live there).
-    const absorbed = new Set(["/today", "/checkin", "/questions"]);
-    const missing = NAV_HREFS.filter((h) => !absorbed.has(h) && !reachable.has(h));
+    // /handovers is absorbed into /sessions (redirect below).
+    const absorbed = new Set(["/today", "/checkin", "/questions", "/handovers"]);
+    // /synthesis is linked from the Memory page, not a door; app/memory/page.test.tsx pins that link.
+    const linkedFromPages = new Set(["/synthesis"]);
+    const missing = NAV_HREFS.filter((h) => !absorbed.has(h) && !linkedFromPages.has(h) && !reachable.has(h));
     expect(missing).toEqual([]);
   });
   it("companion colors are css vars", () => {
@@ -116,6 +119,35 @@ describe("redirects", () => {
     const r = redirects.find((x) => x.source === "/questions");
     expect(r).toBeDefined();
     expect(r!.destination).toBe("/needs");
+    expect((r as { permanent?: boolean }).permanent).toBe(false);
+  });
+});
+
+describe("archive hub", () => {
+  it("has exactly the five doors in order", () => {
+    expect(HUBS.archive.map((d) => [d.href, d.label])).toEqual([
+      ["/letters", "Letters"],
+      ["/journal", "Journals"],
+      ["/sessions", "Sessions and handovers"],
+      ["/dreams", "Dreams"],
+      ["/memory", "Memory and synthesis"],
+    ]);
+  });
+  it("drops the retired doors", () => {
+    const hrefs = HUBS.archive.map((d) => d.href);
+    for (const h of ["/handovers", "/synthesis", "/overview", "/hood"]) expect(hrefs).not.toContain(h);
+  });
+  it("keeps Old home under the hood", () => {
+    expect(HUBS.hood).toContainEqual({ href: "/overview", label: "Old home" });
+  });
+});
+
+describe("handovers redirect", () => {
+  it("forwards /handovers to /sessions, temporarily", async () => {
+    const redirects = await nextConfig.redirects!();
+    const r = redirects.find((x) => x.source === "/handovers");
+    expect(r).toBeDefined();
+    expect(r!.destination).toBe("/sessions");
     expect((r as { permanent?: boolean }).permanent).toBe(false);
   });
 });
