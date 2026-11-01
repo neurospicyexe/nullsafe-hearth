@@ -691,7 +691,7 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus 
 .room-display.is-plain .room-overlay { background: none; }
 .room-display.is-plain .room-name { color: var(--h-ink); text-shadow: none; }
 .room-display.is-plain .room-desc { color: var(--h-muted); text-shadow: none; }
-.room-saving { position: absolute; top: 0.75rem; right: 0.75rem; font-size: 0.72rem; color: var(--h-muted); }
+.room-saving { position: absolute; top: 0.75rem; right: 0.75rem; font-size: 0.72rem; color: var(--h-ink); }
 .room-overlay {
   position: absolute;
   bottom: 0; left: 0; right: 0;
@@ -2816,7 +2816,7 @@ body:has(.h-reader) { min-height: 0; }
 .h-basin-pt.is-stable { fill: var(--h-muted); }
 .h-basin-pt.is-growth { fill: var(--h-ink); }
 .h-basin-pt.is-pressure { fill: var(--h-lamp); }
-.h-basin-pt.is-ringed { stroke: var(--h-ink); stroke-width: 1.5; }
+.h-basin-ring { fill: none; stroke: var(--h-ink); stroke-width: 1.25; }
 .h-basin-tint.is-stable { color: var(--h-muted); }
 .h-basin-tint.is-growth { color: var(--h-ink); }
 .h-basin-tint.is-pressure { color: var(--h-lamp); }

@@ -180,7 +180,8 @@ describe("Hood heavy pages: rendered markup", () => {
     expectKitOnly(html);
     expect(html).toContain("h-tone-drevan");
     expect(html).toContain("h-basin-pt is-pressure");
-    expect(html).toContain("is-ringed");
+    expect(html.match(/h-basin-ring/g)).toHaveLength(1); // only the confirmed point, drawn as its own outline
+    expect(html).not.toContain("is-ringed");
   });
   it("manage", () => {
     const bundle = {

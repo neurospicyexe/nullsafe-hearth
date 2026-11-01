@@ -63,14 +63,19 @@ function TrajectorySvg({ rows }: { rows: BasinHistory[] }) {
       <path d={path} fill="none" stroke="currentColor" strokeOpacity={0.35} strokeWidth={1.5} />
       {pts.map((p) => (
         <g key={p.id}>
+          {p.caleth_confirmed ? (
+            <circle className="h-basin-ring" cx={x(p.t)} cy={y(p.drift_score)} r={7} />
+          ) : null}
           <circle
-            className={`h-basin-pt ${driftClass(p.drift_type)}${p.caleth_confirmed ? " is-ringed" : ""}`}
+            className={`h-basin-pt ${driftClass(p.drift_type)}`}
             cx={x(p.t)}
             cy={y(p.drift_score)}
-            r={p.caleth_confirmed ? 5 : 3}
+            r={p.caleth_confirmed ? 4 : 3}
           >
             <title>
-              {`${p.drift_type}${p.caleth_confirmed ? " (caleth-confirmed)" : ""} · score ${(p.drift_score * 100).toFixed(0)}${p.worst_basin ? ` · ${p.worst_basin}` : ""}\n${new Date(p.t).toLocaleString()}${p.notes ? `\n${p.notes}` : ""}`}
+              {`${p.drift_type}${p.caleth_confirmed ? " (caleth-confirmed)" : ""} · score ${(p.drift_score * 100).toFixed(0)}${p.worst_basin ? ` · ${p.worst_basin}` : ""}
+${new Date(p.t).toLocaleString()}${p.notes ? `
+${p.notes}` : ""}`}
             </title>
           </circle>
         </g>
