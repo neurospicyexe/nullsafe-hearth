@@ -30,7 +30,7 @@ function rundown(over: Partial<CompanionRundown> = {}): CompanionRundown {
 
 const BASE_SLUGS = [
   "journal", "notes", "sitting", "letters", "growth", "worldview", "loops", "blocks",
-  "feelings", "relational", "deltas", "autonomy", "projects", "made", "all",
+  "feelings", "relational", "deltas", "autonomy", "projects", "thinking", "made", "all",
 ];
 
 describe("parseCompanionId", () => {
@@ -76,6 +76,7 @@ describe("doorGroups", () => {
       ["growth", "Growth"],
       ["feelings", "Feelings"],
       ["upto", "What I've been up to"],
+      ["thinking", "Thinking"],
       ["made", "Made"],
       ["all", "Everything else"],
     ]);
@@ -98,19 +99,20 @@ describe("doorGroups", () => {
 });
 
 describe("companionDoors", () => {
-  it("returns the six doors with counts mapped", () => {
+  it("returns the seven doors with counts mapped", () => {
     expect(companionDoors("gaia", rundown())).toEqual([
       { href: "/companions/gaia/journal", label: "Journal", count: 1 },
       { href: "/companions/gaia/letters", label: "Letters", count: 2 },
       { href: "/companions/gaia/growth", label: "Growth", count: 3 },
       { href: "/companions/gaia/feelings", label: "Feelings", count: 4 },
       { href: "/companions/gaia/autonomy", label: "What I've been up to", count: 5 },
+      { href: "/companions/gaia/thinking", label: "Thinking" },
       { href: "/companions/gaia/made", label: "Made", count: 6 },
     ]);
   });
   it("has no count keys when the rundown is null", () => {
     const doors = companionDoors("drevan", null);
-    expect(doors).toHaveLength(6);
+    expect(doors).toHaveLength(7);
     for (const d of doors) expect("count" in d, d.href).toBe(false);
   });
 });

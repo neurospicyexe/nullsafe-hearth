@@ -22,7 +22,7 @@ export function parseCompanionId(raw: string): CompanionId | null {
   return (COMPANION_IDS as readonly string[]).includes(id) ? (id as CompanionId) : null;
 }
 
-export type DoorKey = "journal" | "letters" | "growth" | "feelings" | "upto" | "made";
+export type DoorKey = "journal" | "letters" | "growth" | "feelings" | "upto" | "made" | "thinking";
 export interface DoorGroup {
   key: DoorKey | "all";
   label: string;
@@ -67,12 +67,13 @@ export function doorGroups(id: CompanionId): DoorGroup[] {
         { slug: "projects", label: "Projects" },
       ],
     },
+    { key: "thinking", label: "Thinking", routes: [{ slug: "thinking", label: "Thinking" }] },
     { key: "made", label: "Made", routes: [{ slug: "made", label: "Made" }] },
     { key: "all", label: "Everything else", routes: [{ slug: "all", label: "Everything else" }] },
   ];
 }
 
-const DOOR_COUNT: Record<DoorKey, keyof CompanionRundown["doors"]> = {
+const DOOR_COUNT: Partial<Record<DoorKey, keyof CompanionRundown["doors"]>> = {
   journal: "journal",
   letters: "letters_unread",
   growth: "growth",
@@ -87,7 +88,8 @@ export function companionDoors(id: CompanionId, r: CompanionRundown | null): Doo
   for (const g of doorGroups(id)) {
     if (g.key === "all") continue;
     const door: Door = { href: `/companions/${id}/${g.routes[0].slug}`, label: g.label };
-    if (r) door.count = r.doors[DOOR_COUNT[g.key]];
+    const countKey = DOOR_COUNT[g.key];
+    if (r && countKey) door.count = r.doors[countKey];
     doors.push(door);
   }
   return doors;

@@ -2925,3 +2925,22 @@ html:has(.h-companion[data-mood="bright"]) { --h-room-top: color-mix(in srgb, va
 html:has(.h-companion[data-mood="warm"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 94%); }
 html:has(.h-companion[data-mood="heavy"]) { --h-room-top: color-mix(in srgb, var(--h-ink), var(--h-ground) 96%); }
 html:has(.h-companion[data-mood="still"]) { --h-room-top: color-mix(in srgb, var(--h-lamp), var(--h-ground) 97%); }
+
+/* ── B62: the companions' thinking (home strip, per-companion stream, interest trail) ── */
+.h-think-list { list-style: none; margin: 0; padding: 0 4px; display: flex; flex-direction: column; gap: 10px; }
+.h-think-line { font-size: 0.9375rem; line-height: 1.5; color: var(--h-ink); overflow-wrap: anywhere; }
+.h-think-name { font-weight: 700; }
+.h-think-subject { font-weight: 700; color: var(--h-ink); text-decoration: underline; text-decoration-color: var(--h-line); text-underline-offset: 3px; }
+a.h-think-subject:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-think-age { font-size: 0.8125rem; color: var(--h-faint); }
+.h-think-frame { margin: 0 4px 12px; font-size: 0.8125rem; color: var(--h-faint); }
+.h-think-interests { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.h-think-interest { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; background: var(--h-surface); border: 1px solid var(--h-line); border-radius: var(--h-radius); color: var(--h-ink); text-decoration: none; min-height: var(--h-tap); }
+.h-think-interest:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-think-interest-name { font-weight: 700; overflow-wrap: anywhere; }
+.h-think-interest-meta { font-size: 0.8125rem; color: var(--h-muted); }
+.h-think-interest-why { font-size: 0.9375rem; color: var(--h-muted); overflow-wrap: anywhere; }
+.h-think-trail { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.h-think-step { display: flex; flex-direction: column; gap: 2px; padding: 0 4px; }
+.h-think-step-head { font-weight: 700; font-size: 0.9375rem; }
+.h-think-step-why { font-size: 1rem; line-height: 1.5; overflow-wrap: anywhere; }

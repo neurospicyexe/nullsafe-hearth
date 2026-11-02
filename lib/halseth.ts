@@ -2307,3 +2307,68 @@ export async function fetchNewestImage(): Promise<ToolCall | null> {
   }
   return best;
 }
+
+// ── B62 step 2: the companions' own thinking (why trail) ─────────────────────
+// Endpoints may 404 until Halseth deploys them; every fetcher returns null on any failure and the
+// pages treat null exactly like "nothing yet".
+export type ThinkingKind =
+  | "born" | "returned" | "made" | "cooled" | "put_down" | "picked_up" | "like" | "dislike" | "refusal";
+
+export interface ThinkingItem {
+  id: string;
+  companion_id: CompanionId;
+  source: "interest" | "preference" | "refusal";
+  kind: ThinkingKind;
+  subject: string;
+  why: string | null;
+  why_private: boolean | number;
+  interest_id: string | null;
+  created_at: string;
+}
+
+export interface Interest {
+  id: string;
+  name: string;
+  why: string | null;
+  why_private: boolean | number;
+  status: "active" | "resting" | "put_down";
+  heat: number;
+  band: "warm" | "cooling" | "cold";
+  born_from?: string | null;
+  created_at: string;
+  last_event_at: string | null;
+  last_event_kind: string | null;
+  event_count: number;
+}
+
+export interface InterestEvent {
+  id: string;
+  kind: string;
+  why: string | null;
+  why_private: boolean | number;
+  ref?: string | null;
+  created_at: string;
+}
+
+export async function fetchThinking(limit = 20, companion?: CompanionId): Promise<ThinkingItem[] | null> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (companion) q.set("companion_id", companion);
+  const r = await hGetSafe<{ items?: ThinkingItem[] }>(`/mind/thinking?${q}`);
+  return r && Array.isArray(r.items) ? r.items : null;
+}
+
+export async function fetchInterests(companion: CompanionId): Promise<Interest[] | null> {
+  const r = await hGetSafe<{ interests?: Interest[] }>(`/mind/interests/${encodeURIComponent(companion)}`);
+  return r && Array.isArray(r.interests) ? r.interests : null;
+}
+
+export async function fetchInterestTrail(
+  companion: CompanionId,
+  interestId: string,
+): Promise<{ interest: Interest; events: InterestEvent[] } | null> {
+  const r = await hGetSafe<{ interest?: Interest; events?: InterestEvent[] }>(
+    `/mind/interests/${encodeURIComponent(companion)}/${encodeURIComponent(interestId)}`,
+  );
+  if (!r || !r.interest) return null;
+  return { interest: r.interest, events: Array.isArray(r.events) ? r.events : [] };
+}

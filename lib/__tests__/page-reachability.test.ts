@@ -45,6 +45,8 @@ const KNOWN_LINKED: Record<string, string> = {
   "/companions/[id]/projects": "companion",
   "/companions/[id]/relational": "companion",
   "/companions/[id]/sitting": "companion",
+  "/companions/[id]/thinking": "companion",
+  "/companions/[id]/thinking/[interestId]": "thinking",
   "/companions/[id]/witness": "companion",
   "/companions/[id]/worldview": "companion",
 };
