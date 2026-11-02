@@ -2,7 +2,7 @@
 // that is not drevan/cypher/gaia is a 404 BEFORE any Halseth call (recon trap 4).
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { CompanionRundown, Project, SomaData, ToolCall } from "@/lib/halseth";
+import type { CompanionRundown, Make, Project, SomaData } from "@/lib/halseth";
 
 // Every lib/halseth export that is a function becomes a mock; the overrides below shape the few
 // the new pages read. The default ([]) keeps the old overview's `.filter/.slice` paths alive.
@@ -167,7 +167,7 @@ describe("mixed-case id is lowercased before every fetch", () => {
 
   it("made", async () => {
     await MadePage(params("Cypher"));
-    expect(halseth.fetchCompanionImages).toHaveBeenCalledWith("cypher", 40);
+    expect(halseth.fetchCompanionMakes).toHaveBeenCalledWith("cypher", 40);
     noRawId();
   });
 
@@ -225,7 +225,7 @@ describe("overview", () => {
 
 describe("made", () => {
   it("Halseth down reads Can't reach Halseth right now., not Nothing made yet.", async () => {
-    overrides.fetchCompanionImages = async () => null;
+    overrides.fetchCompanionMakes = async () => null;
     const html = renderToStaticMarkup(await MadePage(params("gaia")));
     expect(html).toContain("Can&#x27;t reach Halseth right now.");
     expect(html).not.toContain("Nothing made yet.");
@@ -236,15 +236,17 @@ describe("made", () => {
     expect(html).toContain("Nothing made yet.");
   });
 
-  it("shows each image through the proxy with its cleaned prompt", async () => {
-    const call: ToolCall = {
-      id: "t1", companion_id: "gaia", tool: "generate_image", args_summary: "prompt: a moss lantern",
-      status: "success", provider: null, result_ref: "r2/x", result_summary: null, created_at: "2026-10-29T10:00:00Z",
+  it("shows an old image through the inline proxy with a Download link", async () => {
+    const make: Make = {
+      id: "img_" + "a".repeat(32), kind: "image", title: "a moss lantern", why: null, interest_name: null,
+      status: "ready", heard_back: null, version: 1, parent_id: null, created_at: "2026-10-29T10:00:00Z",
+      files: { file: { mime: "image/png" } },
     };
-    overrides.fetchCompanionImages = async () => [call];
+    overrides.fetchCompanionMakes = async () => [make];
     const html = renderToStaticMarkup(await MadePage(params("gaia")));
-    expect(html).toContain('src="/api/mind/tools/image/t1"');
+    expect(html).toContain(`src="/api/makes/img_${"a".repeat(32)}/file?inline=1"`);
     expect(html).toContain('alt="a moss lantern"');
+    expect(html).toContain(`href="/api/makes/img_${"a".repeat(32)}/file" download=""`);
   });
 });
 

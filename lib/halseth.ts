@@ -1865,6 +1865,49 @@ export async function fetchCompanionImages(companionId: CompanionId, limit = 40)
   return res.calls.filter(c => c.status === "success" && c.result_ref);
 }
 
+// ── Makes (B62): what the companions made, as files Raziel can download ──
+export type MakeKind =
+  | "writing" | "page" | "music_code" | "drawing" | "scad" | "music_audio" | "video" | "image";
+export type MakeStatus = "pending" | "ready" | "failed";
+export type MakeFile = { mime?: string; ext?: string };
+export type Make = {
+  id: string;                    // 32 hex, or img_<callId> for an old generate_image row
+  kind: MakeKind;
+  title: string;
+  why: string | null;            // null when the companion kept it private
+  interest_name: string | null;
+  status: MakeStatus;
+  fail_reason?: string | null;   // not in the contract's list shape; shown when Halseth sends it
+  heard_back: string | null;
+  version: number;
+  parent_id: string | null;
+  created_at: string;
+  files: { source?: MakeFile; file?: MakeFile; preview?: MakeFile };
+};
+
+/** The shelf for one companion, newest first. Null when Halseth could not be read. */
+export async function fetchCompanionMakes(companionId: CompanionId, limit = 40): Promise<Make[] | null> {
+  const res = await hGetSafe<{ makes?: Make[] }>(`/mind/makes/${companionId}?limit=${limit}`);
+  return Array.isArray(res?.makes) ? res.makes : null;
+}
+
+const MAKE_SOURCE_CAP = 70_000; // Halseth rejects sources over 64 KB; a little slack, never a stream of megabytes
+
+/** The raw source text of a writing / page / music_code make, for the card. Null on any failure. */
+export async function fetchMakeSource(id: string): Promise<string | null> {
+  if (!/^[0-9a-f]{32}$/.test(id)) return null;
+  try {
+    const res = await fetchWithTimeout(`${base()}/mind/makes/file/${id}/source`, {
+      headers: authHeader(),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return (await res.text()).slice(0, MAKE_SOURCE_CAP);
+  } catch {
+    return null;
+  }
+}
+
 // ── Creatures (0078, take 10): corvid + Raziel's animals as named presences ──
 export type Creature = {
   id: string;

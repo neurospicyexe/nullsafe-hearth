@@ -1,44 +1,42 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
-import { fetchCompanionImages } from "@/lib/halseth";
-import { ageLabel } from "@/lib/home-model";
-import { COMPANION_NAME, imagePrompt, parseCompanionId } from "@/lib/companion-page";
+import { fetchCompanionMakes, fetchMakeSource } from "@/lib/halseth";
+import { needsSource } from "@/lib/makes";
+import { COMPANION_NAME, parseCompanionId } from "@/lib/companion-page";
+import MakeCard from "./MakeCard";
 
-// Images this companion generated, through the same proxy and prompt cleanup as /gallery.
+// The shelf: everything this companion made (files, writing, pages, beats, and the older generated
+// images Halseth merges in), each with a Download link. Raziel uploads the videos and drawings by
+// hand from here, so the links are buttons, not captions.
 export default async function CompanionMadePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
   const id = parseCompanionId(rawId);
   if (!id) notFound();
 
-  const images = await fetchCompanionImages(id, 40);
+  const makes = await fetchCompanionMakes(id, 40);
   const now = new Date();
+  const sources = new Map<string, string | null>();
+  if (makes) {
+    await Promise.all(
+      makes.filter(needsSource).map(async (m) => {
+        sources.set(m.id, await fetchMakeSource(m.id));
+      }),
+    );
+  }
 
   return (
     <div className="h-companion">
       <h1 className="h-companion-title">What {COMPANION_NAME[id]} made</h1>
-      {images === null ? (
+      {makes === null ? (
         <p className="h-companion-quiet">Can&apos;t reach Halseth right now.</p>
-      ) : images.length === 0 ? (
+      ) : makes.length === 0 ? (
         <p className="h-companion-quiet">Nothing made yet.</p>
       ) : (
-        <ul className="h-made-grid">
-          {images.map((call) => {
-            const prompt = imagePrompt(call.args_summary);
-            const age = ageLabel(call.created_at, now);
-            return (
-              <li key={call.id}>
-                <figure className="h-made-item">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- R2-served generated art, no Next loader */}
-                  <img src={`/api/mind/tools/image/${call.id}`} alt={prompt} loading="lazy" className="h-made-img" />
-                  <figcaption className="h-made-caption">
-                    <q>{prompt}</q>
-                    {age && <span className="h-companion-age"> {age}</span>}
-                  </figcaption>
-                </figure>
-              </li>
-            );
-          })}
+        <ul className="h-make-list">
+          {makes.map((m) => (
+            <MakeCard key={m.id} make={m} source={sources.get(m.id) ?? null} now={now} />
+          ))}
         </ul>
       )}
     </div>
