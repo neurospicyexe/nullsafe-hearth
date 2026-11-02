@@ -2339,6 +2339,8 @@ export interface Interest {
   last_event_at: string | null;
   last_event_kind: string | null;
   event_count: number;
+  /** The last line when set down (Drevan 11-02: what it was, why picked up, why stopped). Null unless put_down or private. Absent on older Halseth. */
+  put_down_why?: string | null;
 }
 
 export interface InterestEvent {

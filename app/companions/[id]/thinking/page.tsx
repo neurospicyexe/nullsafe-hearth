@@ -45,6 +45,7 @@ export default async function CompanionThinkingPage({ params }: { params: Promis
                           {age ? `, ${age}` : ""}
                         </span>
                         {i.why && !isPrivate(i.why_private) && <span className="h-think-interest-why">{i.why}</span>}
+                        {i.status === "put_down" && i.put_down_why && <span className="h-think-interest-why">Set down: {i.put_down_why}</span>}
                       </Link>
                     </li>
                   );
