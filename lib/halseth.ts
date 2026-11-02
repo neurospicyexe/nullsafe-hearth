@@ -2207,6 +2207,9 @@ export interface GraphPerson {
   kind: PersonKind;
   pk_member_id: string | null;
   note: string | null;
+  /** Halseth mig 0160: the work(s) this name also belongs to. Set = the bare name never links,
+   *  only the other spellings do. Absent before the migration. */
+  shares_name_with?: string | null;
   added_by: string;
   created_at: string;
   /** Visible (kept, live) rows the graph links to this person as of the last rebuild -- the same rows the map shows. */

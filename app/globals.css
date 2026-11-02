@@ -1674,7 +1674,9 @@ html[data-still] *::after {
 .people-name { color: var(--h-ink); font-weight: 600; text-decoration: none; }
 .people-kind, .people-count { font-size: 0.8rem; color: var(--h-muted); }
 .people-sub { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--h-muted); }
-.people-remove { grid-row: 1; grid-column: 2; min-height: 32px; padding: 0 0.75rem; border-radius: 8px; border: 1px solid var(--h-line); background: transparent; color: var(--h-muted); cursor: pointer; }
+.people-actions { grid-row: 1; grid-column: 2; display: flex; gap: 0.4rem; align-items: start; }
+.people-edit { grid-column: 1 / -1; margin-top: 0.4rem; }
+.people-remove {min-height: 32px; padding: 0 0.75rem; border-radius: 8px; border: 1px solid var(--h-line); background: transparent; color: var(--h-muted); cursor: pointer; }
 .people-centre { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem 1rem; border: 1px solid var(--h-lamp); border-radius: 12px; text-decoration: none; color: var(--h-ink); }
 .people-centre-name { font-size: 1.15rem; font-weight: 700; }
 .people-centre-sub { font-size: 0.9rem; color: var(--h-ink); overflow-wrap: anywhere; }
