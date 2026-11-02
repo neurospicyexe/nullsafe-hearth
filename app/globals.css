@@ -2944,3 +2944,8 @@ a.h-think-subject:focus-visible { outline: 2px solid var(--h-lamp); outline-offs
 .h-think-step { display: flex; flex-direction: column; gap: 2px; padding: 0 4px; }
 .h-think-step-head { font-weight: 700; font-size: 0.9375rem; }
 .h-think-step-why { font-size: 1rem; line-height: 1.5; overflow-wrap: anywhere; }
+
+/* People: errors sit beside the button that caused them and stay until the next action. */
+.people-err { grid-column: 1 / -1; margin: 0; font-size: 0.88rem; color: var(--h-ink); border-left: 2px solid var(--h-warn); padding-left: 0.6rem; overflow-wrap: anywhere; }
+.people-id-warn { font-size: 0.78rem; color: var(--h-ink); border-left: 2px solid var(--h-warn); padding-left: 0.5rem; }
+.people-unseen { color: var(--h-ink); border-left: 2px solid var(--h-warn); padding-left: 0.5rem; }
