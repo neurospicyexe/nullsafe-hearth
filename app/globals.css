@@ -1684,6 +1684,9 @@ html[data-still] *::after {
 .people-centre-sub { font-size: 0.9rem; color: var(--h-ink); overflow-wrap: anywhere; }
 .people-heading { font-size: 1rem; margin: 0.5rem 0 0; }
 .people-hint { margin: 0; font-size: 0.82rem; color: var(--h-muted); }
+.people-preview { margin: 0; font-size: 0.85rem; color: var(--h-ink); border-left: 2px solid var(--h-line-strong); padding-left: 0.6rem; }
+.people-warn { margin: 0; font-size: 0.85rem; color: var(--h-ink); border-left: 2px solid var(--h-warn); padding-left: 0.6rem; }
+.people-count-note { font-size: 0.78rem; color: var(--h-muted); }
 
 /* Hearth v2 tokens */
 :root {

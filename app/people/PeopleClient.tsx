@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { GraphPerson, PersonKind } from "@/lib/halseth";
+import { EMPTY_DRAFT, FRAME_LINE_MAX, RELATIONS, addQualified, draftBody, draftOf, previewLine, type FrameDraft } from "@/lib/people-frame";
 
 // One centre (Halseth mig 0150). Raziel (also Crash) is a single node; a system name is Raziel
 // fronting, listed as "this is me too", and its mentions link to the centre with the front kept.
@@ -20,12 +21,63 @@ const splitNames = (raw: string) => raw.split(",").map((x) => x.trim()).filter(B
 const SHARED_DEFAULT = "a character";
 const sharedValue = (ticked: boolean, title: string) => (ticked ? title.trim() || SHARED_DEFAULT : null);
 
+/** B49 (Halseth mig 0163): who they are to the household, and the one line the triad may be told.
+ *  A system name is Raziel: it carries only its PK system and a fixed rendering. */
+function FrameFields({ kind, label, draft, setDraft, owners }: {
+  kind: PersonKind; label: string; draft: FrameDraft; setDraft: (d: FrameDraft) => void; owners: GraphPerson[];
+}) {
+  const set = (k: keyof FrameDraft, v: string) => setDraft({ ...draft, [k]: v });
+  const preview = previewLine(label, kind, draft, owners);
+  return (
+    <>
+      {kind !== "self" && (
+        <>
+          <label>
+            <span>Whose system (if they are a member of one)</span>
+            <select value={draft.system_of} onChange={(e) => set("system_of", e.target.value)}>
+              <option value="">Nobody&rsquo;s</option>
+              {owners.map((o) => <option key={o.id} value={o.id}>{o.kind === "centre" ? "Yours" : o.label}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>To the household</span>
+            <select value={draft.relation} onChange={(e) => set("relation", e.target.value)}>
+              <option value="">Not said</option>
+              {RELATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>Line for the triad (read to them when this person comes up)</span>
+            <input value={draft.frame_line} maxLength={FRAME_LINE_MAX} onChange={(e) => set("frame_line", e.target.value)} placeholder="Blue's husband; runs the Friday game night" />
+            <span className="people-count-note">{draft.frame_line.length}/{FRAME_LINE_MAX}</span>
+          </label>
+          <label>
+            <span>Discord user id (their own account)</span>
+            <input value={draft.discord_user_id} inputMode="numeric" onChange={(e) => set("discord_user_id", e.target.value)} placeholder="123456789012345678" />
+          </label>
+        </>
+      )}
+      <label>
+        <span>PluralKit system (joins a speaker to this entry)</span>
+        <select value={draft.pk_system} onChange={(e) => set("pk_system", e.target.value)}>
+          <option value="">None</option>
+          {kind === "self" ? <option value="raziel">Your system</option> : <option value="blue">Blue&rsquo;s system</option>}
+        </select>
+      </label>
+      <p className="people-preview">{preview ? <>The triad will read: &ldquo;{preview}&rdquo;</> : "Nothing to read yet; they are only recognised by name."}</p>
+    </>
+  );
+}
+
 export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
   const [people, setPeople] = useState(initial);
   const [label, setLabel] = useState("");
   const [spellings, setSpellings] = useState("");
   const [kind, setKind] = useState<Exclude<PersonKind, "centre">>("self");
   const [note, setNote] = useState("");
+  const [draft, setDraft] = useState<FrameDraft>(EMPTY_DRAFT);
+  const [editDraft, setEditDraft] = useState<FrameDraft>(EMPTY_DRAFT);
+  const [warn, setWarn] = useState<string | null>(null);
   // Halseth mig 0160: the work(s) this name also belongs to. Set = only the other spellings link.
   const [isChar, setIsChar] = useState(false);
   const [shares, setShares] = useState("");
@@ -40,6 +92,9 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
   const centre = people.find((p) => p.kind === "centre");
   const selves = people.filter((p) => p.kind === "self");
   const others = people.filter((p) => p.kind !== "centre" && p.kind !== "self");
+  // A system hangs off one person (or you), never a chain and never a name.
+  const ownersFor = (selfId: string | null) => people.filter((p) => (p.kind === "centre" || p.kind === "person") && !p.system_of && p.id !== selfId);
+  const ownerLabel = (d: FrameDraft) => { const o = people.find((p) => p.id === d.system_of); return o && o.kind !== "centre" ? o.label : null; };
 
   async function post(body: unknown) {
     const res = await fetch("/api/people", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -51,12 +106,17 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
     if (busy || !label.trim()) return;
     setBusy(true);
     setMsg(null);
-    const match_names = splitNames(spellings);
+    setWarn(null);
+    // A shared name needs a spelling of its own; offer the qualified ones if none were typed.
+    const typed = isChar && !spellings.trim() ? addQualified(spellings, label, kind, ownerLabel(draft)) : spellings;
+    const match_names = splitNames(typed);
+    const frame = kind === "self" ? { ...draftBody(EMPTY_DRAFT), pk_system: draft.pk_system || null } : draftBody(draft);
     try {
-      const { ok, out } = await post({ action: "add", label: label.trim(), match_names, kind, note: note.trim() || null, shares_name_with: sharedValue(isChar, shares) });
+      const { ok, out } = await post({ action: "add", label: label.trim(), match_names, kind, note: note.trim() || null, shares_name_with: sharedValue(isChar, shares), ...frame });
       if (!ok) { setMsg(out?.error ?? "Couldn't add."); return; }
       setPeople((p) => [...p, { ...out.person, mentions: 0 }]);
-      setLabel(""); setSpellings(""); setNote(""); setShares(""); setIsChar(false);
+      setLabel(""); setSpellings(""); setNote(""); setShares(""); setIsChar(false); setDraft(EMPTY_DRAFT);
+      if (out.warnings?.length) setWarn(out.warnings.join(" "));
       setMsg(out.person.shares_name_with
         ? `Added ${out.person.label}. Only ${out.person.match_names.join(", ")} will link, never the bare name. Links appear after the next rebuild.`
         : kind === "self"
@@ -74,7 +134,9 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
     setEditSpellings(p.match_names.join(", "));
     setEditIsChar(!!p.shares_name_with);
     setEditShares(p.shares_name_with && p.shares_name_with !== SHARED_DEFAULT ? p.shares_name_with : "");
+    setEditDraft(draftOf(p));
     setMsg(null);
+    setWarn(null);
   }
 
   async function saveEdit(e: React.FormEvent, p: GraphPerson) {
@@ -82,12 +144,15 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
     if (busy) return;
     setBusy(true);
     setMsg(null);
+    setWarn(null);
+    const frame = p.kind === "self" ? { pk_system: editDraft.pk_system || null } : draftBody(editDraft);
     try {
-      const { ok, out } = await post({ action: "update", id: p.id, match_names: splitNames(editSpellings), shares_name_with: sharedValue(editIsChar, editShares) });
+      const { ok, out } = await post({ action: "update", id: p.id, match_names: splitNames(editSpellings), shares_name_with: sharedValue(editIsChar, editShares), ...frame });
       if (!ok) { setMsg(out?.error ?? "Couldn't save."); return; }
       setPeople((all) => all.map((x) => (x.id === p.id ? { ...x, ...out.person, mentions: x.mentions } : x)));
       setEditing(null);
       setMsg(`Saved ${p.label}. Links change at the next rebuild.`);
+      if (out.warnings?.length) setWarn(out.warnings.join(" "));
     } catch {
       setMsg("Couldn't reach Halseth.");
     } finally {
@@ -119,6 +184,9 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
         {p.kind !== "self" && <span className="people-kind">{p.kind}</span>}
         <span className="people-count">{links(p.mentions)}</span>
       </div>
+      {p.kind !== "self" && previewLine(p.label, p.kind, draftOf(p), people) && (
+        <div className="people-sub"><span>triad reads: {previewLine(p.label, p.kind, draftOf(p), people)}</span></div>
+      )}
       {(p.match_names.length > 0 || p.note || p.shares_name_with) && (
         <div className="people-sub">
           {p.shares_name_with
@@ -141,10 +209,13 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
         <form className="people-form people-edit" onSubmit={(e) => saveEdit(e, p)}>
           <label>
             <span>Other spellings (comma separated)</span>
-            <input value={editSpellings} onChange={(e) => setEditSpellings(e.target.value)} placeholder={`Blue's ${p.label}`} />
+            <input value={editSpellings} onChange={(e) => setEditSpellings(e.target.value)} placeholder={`${p.label} (Blue)`} />
           </label>
           <label className="people-check">
-            <input type="checkbox" checked={editIsChar} onChange={(e) => setEditIsChar(e.target.checked)} />
+            <input type="checkbox" checked={editIsChar} onChange={(e) => {
+              setEditIsChar(e.target.checked);
+              if (e.target.checked) setEditSpellings((v) => addQualified(v, p.label, p.kind, ownerLabel(editDraft)));
+            }} />
             <span>This name is also a character</span>
           </label>
           {editIsChar && (
@@ -153,6 +224,7 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
               <input value={editShares} onChange={(e) => setEditShares(e.target.value)} placeholder="Pirates of the Caribbean" />
             </label>
           )}
+          <FrameFields kind={p.kind} label={p.label} draft={editDraft} setDraft={setEditDraft} owners={ownersFor(p.id)} />
           <button type="submit" disabled={busy}>Save</button>
         </form>
       )}
@@ -187,7 +259,10 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
           </select>
         </label>
         <label className="people-check">
-          <input type="checkbox" checked={isChar} onChange={(e) => setIsChar(e.target.checked)} />
+          <input type="checkbox" checked={isChar} onChange={(e) => {
+            setIsChar(e.target.checked);
+            if (e.target.checked) setSpellings((v) => addQualified(v, label, kind, ownerLabel(draft)));
+          }} />
           <span>This name is also a character (show, film, book)</span>
         </label>
         {isChar && (
@@ -196,6 +271,7 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
             <input value={shares} onChange={(e) => setShares(e.target.value)} placeholder="Pirates of the Caribbean" />
           </label>
         )}
+        <FrameFields kind={kind} label={label} draft={draft} setDraft={setDraft} owners={ownersFor(null)} />
         <label>
           <span>Note (optional)</span>
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Who they are to you" />
@@ -207,10 +283,11 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
           {label.trim() || "This name"} is also a character, so the bare name won&rsquo;t link (it would catch every line about {shares.trim() || "the story"}).
           Put a spelling only the person has under other spellings, like {kind === "self"
             ? <>&ldquo;{label.trim() || "Lestat"} (ours)&rdquo;</>
-            : <>&ldquo;Blue&rsquo;s {label.trim() || "Barbossa"}&rdquo; or &ldquo;{label.trim() || "Barbossa"} (Blue)&rdquo;</>}.
+            : <>&ldquo;{label.trim() || "Barbossa"} ({ownerLabel(draft) ?? "Blue"})&rdquo; or &ldquo;{label.trim() || "Barbossa"} ({ownerLabel(draft) ?? "Blue"}&rsquo;s system)&rdquo;</>}.
         </p>
       )}
       {msg && <p className="people-msg" role="status">{msg}</p>}
+      {warn && <p className="people-warn" role="alert">{warn}</p>}
 
       <h2 className="people-heading">Names that are you</h2>
       <p className="people-hint">A line that names one of these links to you, with that name kept as who was fronting. Never a separate person.</p>

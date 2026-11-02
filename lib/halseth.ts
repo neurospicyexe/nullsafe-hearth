@@ -2210,6 +2210,12 @@ export interface GraphPerson {
   /** Halseth mig 0160: the work(s) this name also belongs to. Set = the bare name never links,
    *  only the other spellings do. Absent before the migration. */
   shares_name_with?: string | null;
+  /** Halseth mig 0163 (B49). Absent before the migration. system_of = the owner's person id. */
+  system_of?: string | null;
+  relation?: string | null;
+  frame_line?: string | null;
+  discord_user_id?: string | null;
+  pk_system?: string | null;
   added_by: string;
   created_at: string;
   /** Visible (kept, live) rows the graph links to this person as of the last rebuild -- the same rows the map shows. */
