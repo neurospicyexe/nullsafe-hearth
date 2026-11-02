@@ -1,11 +1,11 @@
 import type { Make } from "@/lib/halseth";
 import { ageLabel } from "@/lib/home-model";
-import { KIND_LABEL, inlineImage, makeLinks, makeUrl, strudelShell } from "@/lib/makes";
+import { KIND_LABEL, inlineImage, makeLinks, makeUrl, playerUrl } from "@/lib/makes";
 import MakePlayer from "./MakePlayer";
 
 // One make on the shelf. Rendering rules: raster images through the inline proxy (an SVG drawing shows
 // its PNG, never its source), media in native controls, writing as escaped text, and companion HTML /
-// Strudel only behind a click in a sandboxed frame. `source` is the fetched text for those kinds.
+// Strudel only behind a click, framed from their own CSP-locked routes. `source` is the text of a writing.
 export default function MakeCard({ make, source, now }: { make: Make; source: string | null; now: Date }) {
   const age = ageLabel(make.created_at, now);
   const links = makeLinks(make);
@@ -39,19 +39,9 @@ export default function MakeCard({ make, source, now }: { make: Make; source: st
       {ready && make.kind === "writing" && (
         <pre className="h-make-text">{source ?? "The text could not be loaded."}</pre>
       )}
-      {ready && make.kind === "page" && (
-        source === null ? (
-          <p className="h-companion-quiet">The page could not be loaded.</p>
-        ) : (
-          <MakePlayer title={make.title} srcDoc={source} label="open it" />
-        )
-      )}
+      {ready && make.kind === "page" && <MakePlayer title={make.title} src={playerUrl("page", make.id)} label="open it" />}
       {ready && make.kind === "music_code" && (
-        source === null ? (
-          <p className="h-companion-quiet">The pattern could not be loaded.</p>
-        ) : (
-          <MakePlayer title={make.title} srcDoc={strudelShell(source)} label="play" />
-        )
+        <MakePlayer title={make.title} src={playerUrl("music_code", make.id)} label="play" />
       )}
 
       {(links.download || links.source) && (

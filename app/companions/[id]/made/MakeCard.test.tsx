@@ -82,37 +82,40 @@ describe("kinds", () => {
     expect(h).not.toContain("<strong>");
     expect(h).toContain(`href="/api/makes/${ID}/source" download=""`);
   });
-  it("page: no iframe until the click, then allow-scripts only", () => {
+  it("page: no iframe until the click, then a same-origin route framed with allow-scripts only", () => {
     const m = make({ kind: "page", files: { source: { ext: "html" } } });
-    expect(html(m, "<h1>hi</h1>")).not.toContain("<iframe");
-    render(<MakeCard make={m} source="<h1>hi</h1>" now={NOW} />);
+    expect(html(m)).not.toContain("<iframe");
+    render(<MakeCard make={m} source={null} now={NOW} />);
     expect(document.querySelector("iframe")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "open it" }));
     const frame = document.querySelector("iframe")!;
     expect(frame.getAttribute("sandbox")).toBe("allow-scripts");
-    expect(frame.getAttribute("srcdoc")).toBe("<h1>hi</h1>");
-    expect(frame.getAttribute("src")).toBeNull();
+    expect(frame.getAttribute("src")).toBe(`/api/makes/page?id=${ID}`);
+    expect(frame.getAttribute("srcdoc")).toBeNull();
   });
-  it("music_code: click mounts a sandboxed frame whose shell loads strudel 1.1.0 and carries the pattern as data", () => {
+  it("music_code: click frames the player route, still allow-scripts only", () => {
     const m = make({ kind: "music_code", files: { source: { ext: "js" } } });
-    expect(html(m, 's("bd")')).not.toContain("<iframe");
-    render(<MakeCard make={m} source={'s("bd*4")</script><script>alert(1)'} now={NOW} />);
+    expect(html(m)).not.toContain("<iframe");
+    render(<MakeCard make={m} source={null} now={NOW} />);
     fireEvent.click(screen.getByRole("button", { name: "play" }));
     const frame = document.querySelector("iframe")!;
     expect(frame.getAttribute("sandbox")).toBe("allow-scripts");
-    const doc = frame.getAttribute("srcdoc")!;
+    expect(frame.getAttribute("src")).toBe(`/api/makes/player?id=${ID}`);
+  });
+  it("the player shell loads strudel 1.1.0, reads the pattern from a JSON block it cannot escape, and has stop", () => {
+    const doc = strudelShell('s("bd*4")</script><script>alert(1)');
     expect(doc).toContain('src="https://unpkg.com/@strudel/web@1.1.0"');
+    expect(doc).toContain('<script type="application/json" id="code">');
     expect(doc).toContain("initStrudel()");
     expect(doc).toContain("evaluate(CODE)");
     expect(doc).toContain("hush()");
     expect(doc).toContain('id="stop"');
-    // the pattern cannot close the script tag
-    expect(doc.match(/<\/script>/g)!.length).toBe(2);
+    expect(doc).not.toContain("alert(1)</script>");
     expect(doc).toContain("\\u003c/script\\u003e");
   });
-  it("strudelShell round-trips the pattern through its JSON string", () => {
+  it("strudelShell round-trips the pattern through its JSON block", () => {
     const code = 's("bd")\n// "quoted" \u2028 </script>';
-    const m = strudelShell(code).match(/var CODE = (.*);\n/)!;
+    const m = strudelShell(code).match(/id="code">(.*)<\/script>/)!;
     expect(JSON.parse(m[1])).toBe(code);
   });
 });
@@ -133,8 +136,7 @@ describe("status", () => {
   it("failed without a reason still reads cleanly", () => {
     expect(html(make({ status: "failed" }))).toContain("Didn&#x27;t come out.");
   });
-  it("a ready page or writing whose text could not load says so instead of an empty frame", () => {
-    expect(html(make({ kind: "page", files: { source: {} } }), null)).toContain("could not be loaded");
+  it("a writing whose text could not load says so", () => {
     expect(html(make({ kind: "writing", files: { source: {} } }), null)).toContain("could not be loaded");
   });
 });

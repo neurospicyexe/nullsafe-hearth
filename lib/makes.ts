@@ -57,10 +57,30 @@ export function inlineImage(m: Make): string | null {
   return null;
 }
 
-/** Kinds whose text Hearth must fetch to render the card. */
+/** Kinds whose text the shelf page fetches itself (writing). Page and music_code are framed from their own routes. */
 export function needsSource(m: Make): boolean {
-  return m.status === "ready" && (m.kind === "writing" || m.kind === "page" || m.kind === "music_code");
+  return m.status === "ready" && m.kind === "writing";
 }
+
+/** Same-origin routes that serve companion-made code with its own strict CSP, framed sandboxed. */
+export function playerUrl(kind: "page" | "music_code", id: string): string {
+  return `/api/makes/${kind === "page" ? "page" : "player"}?id=${id}`;
+}
+
+// These routes are excluded from next.config's global headers and set their own. `sandbox allow-scripts`
+// in the CSP keeps the document in an opaque origin even if someone opens the URL directly.
+const FRAME_BASE = "default-src 'none'; sandbox allow-scripts; frame-ancestors 'self'";
+export const PAGE_CSP = `${FRAME_BASE}; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:`;
+export const PLAYER_CSP =
+  `${FRAME_BASE}; script-src 'unsafe-inline' blob: https://unpkg.com; style-src 'unsafe-inline'; ` +
+  "connect-src https://unpkg.com https://raw.githubusercontent.com https://strudel.b-cdn.net; worker-src blob:; media-src blob:";
+export const FRAME_HEADERS = {
+  "Content-Type": "text/html; charset=utf-8",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "SAMEORIGIN",
+  "Referrer-Policy": "no-referrer",
+  "Cache-Control": "private, no-store",
+} as const;
 
 /** JSON for a <script> body: JSON.stringify plus the characters that could end the script or the line. */
 function scriptSafe(value: string): string {
@@ -74,8 +94,8 @@ function scriptSafe(value: string): string {
 export const STRUDEL_SRC = "https://unpkg.com/@strudel/web@1.1.0";
 
 /**
- * The player shell for a music_code make: a tiny HTML document for a sandboxed srcdoc iframe.
- * The pattern is data in a JSON string, evaluated only on the play click (audio needs the gesture).
+ * The player shell for a music_code make, served by /api/makes/player into a sandboxed iframe.
+ * The pattern is data (a JSON script block, never executed as markup), evaluated only on the play click.
  * Per the @strudel/web README: initStrudel() once, evaluate(code) to play, hush() to stop.
  */
 export function strudelShell(code: string): string {
@@ -88,11 +108,12 @@ export function strudelShell(code: string): string {
   #msg{color:#b3a897;font-size:14px}
 </style>
 <script src="${STRUDEL_SRC}"></script>
+<script type="application/json" id="code">${scriptSafe(code)}</script>
 <button id="play" type="button">play</button>
 <button id="stop" type="button">stop</button>
 <span id="msg"></span>
 <script>
-  var CODE = ${scriptSafe(code)};
+  var CODE = JSON.parse(document.getElementById("code").textContent);
   var msg = document.getElementById("msg");
   var ready = null;
   function boot() {

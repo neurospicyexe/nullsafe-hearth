@@ -28,7 +28,9 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
+        // The two make-frame routes (B62) set their own CSP and may be framed by Hearth itself;
+        // everything else keeps the strict global policy below.
+        source: "/((?!api/makes/player$|api/makes/page$).*)",
         headers: [
           { key: "X-Frame-Options",       value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
@@ -38,8 +40,7 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              // unpkg is the Strudel player (B62 music_code makes): its srcdoc iframe inherits this policy.
-              "script-src 'self' 'unsafe-inline' https://unpkg.com",
+              "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
               // blob: is epub.js -- it unzips the book in-browser and serves every
               // internal image (and sometimes the chapter iframe itself) as a blob URL.
@@ -47,7 +48,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "frame-src 'self' blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              `connect-src 'self' https://unpkg.com https://raw.githubusercontent.com https://strudel.b-cdn.net https://vercel.live wss://ws-us3.pusher.com${halsethOrigin ? ` ${halsethOrigin}` : ""}`,
+              `connect-src 'self' https://vercel.live wss://ws-us3.pusher.com${halsethOrigin ? ` ${halsethOrigin}` : ""}`,
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
