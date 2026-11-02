@@ -48,9 +48,9 @@ const VERB: Record<string, string> = {
 const WHY_LEAD: Record<string, string> = {
   born: "because",
   picked_up: "because",
-  returned: "back to it because",
-  made: "made this because",
-  put_down: "putting it down because",
+  returned: "because",
+  made: "because",
+  put_down: "because",
   like: "because",
   dislike: "because",
   refusal: "because",
