@@ -90,6 +90,8 @@ Growth + autonomy endpoints (return empty arrays gracefully if not yet migrated)
 
 `GET /mind/health`, `/mind/patterns`, `/mind/recent` never existed in Halseth (Brain era); the `/api/mind` route that polled them was deleted 2026-10-08. `/mind` (the page) reads companion notes + `human_journal` directly.
 
+Removed 2026-11-01 (B15, no callers in Hearth, bots or Halseth): `/api/deltas`, `/api/feelings`, `/api/routines`, `/api/wounds`, `/api/mind/dream/[id]/pin` and `/examine`. Pages that need those reads call Halseth directly (e.g. `app/threads/page.tsx`); the Halseth endpoints themselves are untouched.
+
 ## Key Data Shape Notes
 
 - `/presence` returns `open_threads` already parsed as `string[]`, `recent_companion_notes.tags` already parsed as `string[]`
