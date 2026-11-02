@@ -13,7 +13,7 @@ export default function MakeCard({ make, source, now }: { make: Make; source: st
   const ready = make.status === "ready";
 
   return (
-    <li className="h-make" data-kind={make.kind} data-status={make.status}>
+    <li id={`make-${make.id}`} className="h-make" data-kind={make.kind} data-status={make.status}>
       <div className="h-make-head">
         <span className="h-make-kind">{KIND_LABEL[make.kind] ?? make.kind}</span>
         <h2 className="h-make-title">{make.title}</h2>

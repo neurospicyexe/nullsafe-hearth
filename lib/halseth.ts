@@ -1949,13 +1949,16 @@ export type CreatureMilestone = {
 export type NestItem = {
   id: string;
   content: string;
-  source: string;            // gift | overheard:house
+  source: string;            // gift | overheard:house | make
   given_by: string | null;
   sparkle: number;
   treasured: number;         // 0 | 1
   gifted_to: string | null;
   gifted_at: string | null;
   created_at: string;
+  /** mig 0166 (B62 step 6): a hoarded make is a reference; given_by = the maker. Absent pre-0166. */
+  ref_type?: string | null;
+  ref_id?: string | null;
 };
 
 export type CreatureFamiliarity = { actor: string; tendings: number; last_at: string };

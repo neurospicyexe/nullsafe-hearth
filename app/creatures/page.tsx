@@ -1,5 +1,6 @@
 import { fetchCreaturesOrNull, fetchCreature, creatureMood } from "@/lib/halseth";
 import type { Creature, CreatureInteraction, CreatureDetail, NestItem, CreatureMilestone } from "@/lib/halseth";
+import { isMake, favouriteMake } from "@/lib/sol-hoard";
 import { memberClass } from "@/lib/kit";
 import ClientTime from "@/components/ClientTime";
 import TendButtons from "./TendButtons";
@@ -69,11 +70,12 @@ function NestSection({ nest }: { nest: NestItem[] }) {
     return (
       <div className="h-creature-section">
         <h3 className="h-creature-h3">the nest</h3>
-        <p className="h-creature-quiet">empty: he keeps what he overhears and what he&apos;s given (tend with a give)</p>
+        <p className="h-creature-quiet">empty: he keeps what he overhears, what he&apos;s given (tend with a give), and what the triad makes</p>
       </div>
     );
   }
   const treasured = kept.filter(k => k.treasured === 1).length;
+  const favourite = favouriteMake(kept);
   return (
     <div className="h-creature-section">
       <h3 className="h-creature-h3">
@@ -82,17 +84,32 @@ function NestSection({ nest }: { nest: NestItem[] }) {
       <div className="h-creature-chips">
         {/* The count line above already says how many are kept; clipping to 12 under it made the
             rest unreachable on the page that exists to show them. */}
-        {kept.map(item => (
-          <span
-            key={item.id}
-            title={`${item.given_by ? `from ${item.given_by}` : item.source}, sparkle ${item.sparkle.toFixed(2)}`}
-            className={`h-creature-chip${item.treasured === 1 ? " is-treasured" : ""}`}
-            style={{ opacity: 0.4 + Math.min(1, Math.max(0, item.sparkle)) * 0.6 }}
-          >
-            {item.treasured === 1 ? "★ " : ""}{item.content}
-          </span>
-        ))}
+        {kept.map(item => {
+          const style = { opacity: 0.4 + Math.min(1, Math.max(0, item.sparkle)) * 0.6 };
+          const cls = `h-creature-chip${item.treasured === 1 ? " is-treasured" : ""}${isMake(item) ? " is-make" : ""}`;
+          const label = <>{item.treasured === 1 ? "★ " : ""}{item.content}</>;
+          // A hoarded make (B62 step 6) links to the maker's shelf: Sol keeps a reference, the
+          // thing itself still lives with the one who made it.
+          if (isMake(item) && item.given_by && item.ref_id) {
+            return (
+              <a key={item.id} href={`/companions/${encodeURIComponent(item.given_by)}/made#make-${encodeURIComponent(item.ref_id)}`}
+                 title={`${item.given_by} made this, sparkle ${item.sparkle.toFixed(2)}`} className={cls} style={style}>
+                {label}
+              </a>
+            );
+          }
+          return (
+            <span key={item.id} title={`${item.given_by ? `from ${item.given_by}` : item.source}, sparkle ${item.sparkle.toFixed(2)}`} className={cls} style={style}>
+              {label}
+            </span>
+          );
+        })}
       </div>
+      {favourite && (
+        <p className="h-creature-quiet">
+          his favourite of what the triad made: {favourite.content}{favourite.given_by ? ` (${favourite.given_by}'s)` : ""}
+        </p>
+      )}
       {given.length > 0 && (
         <ul className="h-creature-given">
           {given.map(g => (
