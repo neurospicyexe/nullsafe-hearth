@@ -185,7 +185,9 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
       {shares.trim() && (
         <p className="people-hint">
           {label.trim() || "This name"} is also a character, so the bare name won&rsquo;t link (it would catch every line about {shares.trim()}).
-          Put a spelling only the person has under other spellings, like &ldquo;Blue&rsquo;s {label.trim() || "Barbossa"}&rdquo; or &ldquo;{label.trim() || "Barbossa"} (Blue)&rdquo;.
+          Put a spelling only the person has under other spellings, like {kind === "self"
+            ? <>&ldquo;{label.trim() || "Lestat"} (ours)&rdquo;</>
+            : <>&ldquo;Blue&rsquo;s {label.trim() || "Barbossa"}&rdquo; or &ldquo;{label.trim() || "Barbossa"} (Blue)&rdquo;</>}.
         </p>
       )}
       {msg && <p className="people-msg" role="status">{msg}</p>}
