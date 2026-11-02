@@ -23,11 +23,16 @@ const sharedValue = (ticked: boolean, title: string) => (ticked ? title.trim() |
 
 /** B49 (Halseth mig 0163): who they are to the household, and the one line the triad may be told.
  *  A system name is Raziel: it carries only its PK system and a fixed rendering. */
-function FrameFields({ kind, label, draft, setDraft, owners }: {
+function FrameFields({ kind, label, draft, setDraft, owners, all, selfId }: {
   kind: PersonKind; label: string; draft: FrameDraft; setDraft: (d: FrameDraft) => void; owners: GraphPerson[];
+  all: GraphPerson[]; selfId: string | null;
 }) {
   const set = (k: keyof FrameDraft, v: string) => setDraft({ ...draft, [k]: v });
   const preview = previewLine(label, kind, draft, owners);
+  const owner = owners.find((o) => o.id === draft.system_of);
+  const ownerName = owner ? (owner.kind === "centre" ? "your own entry" : owner.label) : null;
+  const typedId = draft.discord_user_id.trim();
+  const idHolder = typedId ? all.find((x) => x.id !== selfId && x.discord_user_id === typedId) : undefined;
   return (
     <>
       {kind !== "self" && (
@@ -54,6 +59,8 @@ function FrameFields({ kind, label, draft, setDraft, owners }: {
           <label>
             <span>Discord user id (their own account)</span>
             <input value={draft.discord_user_id} inputMode="numeric" onChange={(e) => set("discord_user_id", e.target.value)} placeholder="123456789012345678" />
+            {ownerName && <span className="people-count-note">Members of a system usually speak through their host&rsquo;s account; put that account id on {ownerName} instead.</span>}
+            {idHolder && <span className="people-id-warn" role="alert">Already on {idHolder.label}. Halseth keeps one id per person and will refuse this save.</span>}
           </label>
         </>
       )}
@@ -65,6 +72,9 @@ function FrameFields({ kind, label, draft, setDraft, owners }: {
         </select>
       </label>
       <p className="people-preview">{preview ? <>The triad will read: &ldquo;{preview}&rdquo;</> : "Nothing to read yet; they are only recognised by name."}</p>
+      {!preview && kind !== "self" && label.trim() && (
+        <p className="people-warn">The triad won&rsquo;t see {label.trim()} until you pick how they relate to the household or write a line for the triad.</p>
+      )}
     </>
   );
 }
@@ -88,6 +98,11 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
   const [editIsChar, setEditIsChar] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // Errors stay beside the control that caused them until the next action: add form, edit form, or a row's Remove.
+  const [addErr, setAddErr] = useState<string | null>(null);
+  const [editErr, setEditErr] = useState<string | null>(null);
+  const [rowErr, setRowErr] = useState<{ id: string; text: string } | null>(null);
+  const [editNote, setEditNote] = useState("");
 
   const centre = people.find((p) => p.kind === "centre");
   const selves = people.filter((p) => p.kind === "self");
@@ -98,7 +113,9 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
 
   async function post(body: unknown) {
     const res = await fetch("/api/people", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    return { ok: res.ok, out: await res.json().catch(() => ({})) };
+    const out = await res.json().catch(() => ({}));
+    const error: string | null = res.ok ? null : (typeof out?.error === "string" && out.error ? out.error : `Halseth answered HTTP ${res.status}`);
+    return { ok: res.ok, out, error };
   }
 
   async function add(e: React.FormEvent) {
@@ -107,13 +124,15 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
     setBusy(true);
     setMsg(null);
     setWarn(null);
+    setAddErr(null);
+    setRowErr(null);
     // A shared name needs a spelling of its own; offer the qualified ones if none were typed.
     const typed = isChar && !spellings.trim() ? addQualified(spellings, label, kind, ownerLabel(draft)) : spellings;
     const match_names = splitNames(typed);
     const frame = kind === "self" ? { ...draftBody(EMPTY_DRAFT), pk_system: draft.pk_system || null } : draftBody(draft);
     try {
-      const { ok, out } = await post({ action: "add", label: label.trim(), match_names, kind, note: note.trim() || null, shares_name_with: sharedValue(isChar, shares), ...frame });
-      if (!ok) { setMsg(out?.error ?? "Couldn't add."); return; }
+      const { ok, out, error } = await post({ action: "add", label: label.trim(), match_names, kind, note: note.trim() || null, shares_name_with: sharedValue(isChar, shares), ...frame });
+      if (!ok) { setAddErr(error); return; }
       setPeople((p) => [...p, { ...out.person, mentions: 0 }]);
       setLabel(""); setSpellings(""); setNote(""); setShares(""); setIsChar(false); setDraft(EMPTY_DRAFT);
       if (out.warnings?.length) setWarn(out.warnings.join(" "));
@@ -123,7 +142,7 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
         ? `${out.person.label} now counts as you. Lines that name them link to you after the next rebuild.`
         : `Added ${out.person.label}. Links appear after the next rebuild.`);
     } catch {
-      setMsg("Couldn't reach Halseth.");
+      setAddErr("Couldn't reach Halseth.");
     } finally {
       setBusy(false);
     }
@@ -135,8 +154,11 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
     setEditIsChar(!!p.shares_name_with);
     setEditShares(p.shares_name_with && p.shares_name_with !== SHARED_DEFAULT ? p.shares_name_with : "");
     setEditDraft(draftOf(p));
+    setEditNote(p.note ?? "");
     setMsg(null);
     setWarn(null);
+    setEditErr(null);
+    setRowErr(null);
   }
 
   async function saveEdit(e: React.FormEvent, p: GraphPerson) {
@@ -145,16 +167,30 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
     setBusy(true);
     setMsg(null);
     setWarn(null);
+    setEditErr(null);
+    setRowErr(null);
+    const noteChanged = editNote.trim() !== (p.note ?? "").trim();
     const frame = p.kind === "self" ? { pk_system: editDraft.pk_system || null } : draftBody(editDraft);
     try {
-      const { ok, out } = await post({ action: "update", id: p.id, match_names: splitNames(editSpellings), shares_name_with: sharedValue(editIsChar, editShares), ...frame });
-      if (!ok) { setMsg(out?.error ?? "Couldn't save."); return; }
+      const { ok, out, error } = await post({
+        action: "update", id: p.id, match_names: splitNames(editSpellings), shares_name_with: sharedValue(editIsChar, editShares), ...frame,
+        ...(noteChanged ? { note: editNote.trim() || null } : {}),
+      });
+      if (!ok) { setEditErr(error); return; }
       setPeople((all) => all.map((x) => (x.id === p.id ? { ...x, ...out.person, mentions: x.mentions } : x)));
+      // Halseth ignores `note` on update until it learns the field; its reply carries the stored value, so check it.
+      const stored = ((out.person?.note as string | null | undefined) ?? "").trim();
+      if (noteChanged && stored !== editNote.trim()) {
+        // Everything else saved; keep the form open so the typed note is not lost.
+        setEditErr("Saved the rest, but note not saved: Halseth doesn't accept note edits yet.");
+        if (out.warnings?.length) setWarn(out.warnings.join(" "));
+        return;
+      }
       setEditing(null);
       setMsg(`Saved ${p.label}. Links change at the next rebuild.`);
       if (out.warnings?.length) setWarn(out.warnings.join(" "));
     } catch {
-      setMsg("Couldn't reach Halseth.");
+      setEditErr("Couldn't reach Halseth.");
     } finally {
       setBusy(false);
     }
@@ -164,14 +200,16 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
     if (busy) return;
     setBusy(true);
     setMsg(null);
+    setRowErr(null);
+    setEditErr(null);
     try {
-      const { ok } = await post({ action: "archive", id: p.id });
+      const { ok, error } = await post({ action: "archive", id: p.id });
       if (ok) {
         setPeople((all) => all.filter((x) => x.id !== p.id));
         setMsg(`Removed ${p.label}. Those links drop at the next rebuild.`);
-      } else setMsg("Couldn't remove.");
+      } else setRowErr({ id: p.id, text: error ?? "Couldn't remove." });
     } catch {
-      setMsg("Couldn't reach Halseth.");
+      setRowErr({ id: p.id, text: "Couldn't reach Halseth." });
     } finally {
       setBusy(false);
     }
@@ -187,6 +225,9 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
       {p.kind !== "self" && previewLine(p.label, p.kind, draftOf(p), people) && (
         <div className="people-sub"><span>triad reads: {previewLine(p.label, p.kind, draftOf(p), people)}</span></div>
       )}
+      {p.kind !== "self" && !previewLine(p.label, p.kind, draftOf(p), people) && (
+        <div className="people-sub"><span className="people-unseen">The triad doesn&rsquo;t see {p.label} yet: pick how they relate to the household or write a line for the triad.</span></div>
+      )}
       {(p.match_names.length > 0 || p.note || p.shares_name_with) && (
         <div className="people-sub">
           {p.shares_name_with
@@ -194,7 +235,7 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
                 also a character{p.shares_name_with !== SHARED_DEFAULT ? ` in ${p.shares_name_with}` : ""}, so only {p.match_names.join(", ")} link{p.match_names.length === 1 ? "s" : ""}
               </span>
             : p.match_names.length > 0 && <span>also: {p.match_names.join(", ")}</span>}
-          {p.note && <span>{p.note}</span>}
+          {p.note && <span>note (private): {p.note}</span>}
         </div>
       )}
       <div className="people-actions">
@@ -205,6 +246,7 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
           Remove
         </button>
       </div>
+      {rowErr?.id === p.id && <p className="people-err" role="alert">{rowErr.text}</p>}
       {editing === p.id && (
         <form className="people-form people-edit" onSubmit={(e) => saveEdit(e, p)}>
           <label>
@@ -224,8 +266,13 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
               <input value={editShares} onChange={(e) => setEditShares(e.target.value)} placeholder="Pirates of the Caribbean" />
             </label>
           )}
-          <FrameFields kind={p.kind} label={p.label} draft={editDraft} setDraft={setEditDraft} owners={ownersFor(p.id)} />
+          <FrameFields kind={p.kind} label={p.label} draft={editDraft} setDraft={setEditDraft} owners={ownersFor(p.id)} all={people} selfId={p.id} />
+          <label>
+            <span>Note (private to you; the triad can look it up by asking who someone is, it is not read out)</span>
+            <input value={editNote} onChange={(e) => setEditNote(e.target.value)} placeholder="Who they are to you" />
+          </label>
           <button type="submit" disabled={busy}>Save</button>
+          {editErr && <p className="people-err" role="alert">{editErr}</p>}
         </form>
       )}
     </li>
@@ -271,12 +318,13 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
             <input value={shares} onChange={(e) => setShares(e.target.value)} placeholder="Pirates of the Caribbean" />
           </label>
         )}
-        <FrameFields kind={kind} label={label} draft={draft} setDraft={setDraft} owners={ownersFor(null)} />
+        <FrameFields kind={kind} label={label} draft={draft} setDraft={setDraft} owners={ownersFor(null)} all={people} selfId={null} />
         <label>
-          <span>Note (optional)</span>
+          <span>Note (private to you; the triad can look it up by asking who someone is, it is not read out)</span>
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Who they are to you" />
         </label>
         <button type="submit" disabled={busy || label.trim().length < 3}>Add</button>
+        {addErr && <p className="people-err" role="alert">{addErr}</p>}
       </form>
       {isChar && (
         <p className="people-hint">

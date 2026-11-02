@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 //   POST { action: "archive", id }                                      -> POST /mind/people/:id/archive
 //   POST { action: "update", id, match_names?, shares_name_with?, + the 0163 fields } -> POST /mind/people/:id
 // 0163 fields: system_of, relation, frame_line, discord_user_id, pk_system (string = set, null = clear).
+// update also forwards `note` (string or null) when sent; Halseth ignores it until updatePerson accepts it.
 // Halseth records added_by = 'raziel'. Links appear at the next graph rebuild.
 const KINDS = new Set(["self", "person", "pet", "other"]);
 const FRAME_KEYS = ["system_of", "relation", "frame_line", "discord_user_id", "pk_system"] as const;
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
     const upd: Record<string, unknown> = {};
     if (Array.isArray(raw.match_names)) upd.match_names = raw.match_names.filter((x: unknown) => typeof x === "string");
     if (raw.shares_name_with === null || typeof raw.shares_name_with === "string") upd.shares_name_with = raw.shares_name_with;
+    if (raw.note === null || typeof raw.note === "string") upd.note = raw.note;
     Object.assign(upd, frameFields(raw));
     body = upd;
   } else {
