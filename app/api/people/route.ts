@@ -3,9 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 // Raziel's people list (Halseth mig 0149, map M5).
 //   POST { action: "add", label, match_names?: string[], kind?, note? } -> Halseth POST /mind/people
 //   POST { action: "archive", id }                                      -> POST /mind/people/:id/archive
-//   POST { action: "update", id, match_names?, shares_name_with? }      -> POST /mind/people/:id (mig 0160)
+//   POST { action: "update", id, match_names?, shares_name_with?, + the 0163 fields } -> POST /mind/people/:id
+// 0163 fields: system_of, relation, frame_line, discord_user_id, pk_system (string = set, null = clear).
 // Halseth records added_by = 'raziel'. Links appear at the next graph rebuild.
 const KINDS = new Set(["self", "person", "pet", "other"]);
+const FRAME_KEYS = ["system_of", "relation", "frame_line", "discord_user_id", "pk_system"] as const;
+/** Only string or null passes; absent stays absent (unchanged on update). Halseth validates the values. */
+function frameFields(raw: Record<string, unknown>): Record<string, string | null> {
+  const out: Record<string, string | null> = {};
+  for (const k of FRAME_KEYS) if (raw[k] === null || typeof raw[k] === "string") out[k] = raw[k] as string | null;
+  return out;
+}
 
 export async function POST(request: NextRequest) {
   const base = process.env.HALSETH_URL;
@@ -27,12 +35,14 @@ export async function POST(request: NextRequest) {
       kind: typeof raw.kind === "string" && KINDS.has(raw.kind) ? raw.kind : "person",
       note: typeof raw.note === "string" ? raw.note : null,
       shares_name_with: typeof raw.shares_name_with === "string" ? raw.shares_name_with : null,
+      ...frameFields(raw),
     };
   } else if (raw.action === "update" && typeof raw.id === "string" && /^[\w-]+$/.test(raw.id)) {
     path = `/mind/people/${raw.id}`;
     const upd: Record<string, unknown> = {};
     if (Array.isArray(raw.match_names)) upd.match_names = raw.match_names.filter((x: unknown) => typeof x === "string");
     if (raw.shares_name_with === null || typeof raw.shares_name_with === "string") upd.shares_name_with = raw.shares_name_with;
+    Object.assign(upd, frameFields(raw));
     body = upd;
   } else {
     return NextResponse.json({ error: 'need { action: "add", label }, { action: "update", id } or { action: "archive", id }' }, { status: 400 });
