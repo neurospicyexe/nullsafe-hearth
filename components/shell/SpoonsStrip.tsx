@@ -71,6 +71,26 @@ export default function SpoonsStrip() {
   const notice = unsavedLine(unsavedCount(failedKeys, checkin.owned()));
 
   const hidden = shellHidden(pathname);
+  // Pinned above the tab bar on Home only. Everywhere else it sits at the end of the page, so it
+  // never covers a list or a form (Raziel 11-01: on People it rode over the page).
+  const pinned = pathname === "/";
+
+  // While another text field has focus (phone keyboard up), step aside so the pinned strip can't
+  // ride up over the field being typed in. Its own word box doesn't count.
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    if (hidden) return;
+    const isField = (t: EventTarget | null) =>
+      t instanceof HTMLElement && !t.closest(".h-spoons") && (t.matches("input:not([type=checkbox]):not([type=radio]), textarea, select") || t.isContentEditable);
+    const onIn = (e: FocusEvent) => setTyping(isField(e.target));
+    const onOut = () => setTyping(false);
+    document.addEventListener("focusin", onIn);
+    document.addEventListener("focusout", onOut);
+    return () => {
+      document.removeEventListener("focusin", onIn);
+      document.removeEventListener("focusout", onOut);
+    };
+  }, [hidden]);
 
   useEffect(() => {
     if (hidden) return;
@@ -121,7 +141,7 @@ export default function SpoonsStrip() {
 
   const showLast = picked === null && phase !== "removed";
   return (
-    <section className="h-spoons" aria-label="Spoons check-in">
+    <section className={`h-spoons${pinned ? " is-pinned" : ""}`} hidden={typing} aria-label="Spoons check-in">
       {notice && (
         <p className="h-spoons-unsaved" role="status">
           {notice}

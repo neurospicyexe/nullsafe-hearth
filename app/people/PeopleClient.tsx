@@ -15,6 +15,10 @@ const KINDS: { id: Exclude<PersonKind, "centre">; label: string }[] = [
 ];
 
 const links = (n: number) => `${n} ${n === 1 ? "link" : "links"}`;
+const splitNames = (raw: string) => raw.split(",").map((x) => x.trim()).filter(Boolean);
+/** Halseth stores the shared-name flag as text (mig 0160); a ticked box with no title still counts. */
+const SHARED_DEFAULT = "a character";
+const sharedValue = (ticked: boolean, title: string) => (ticked ? title.trim() || SHARED_DEFAULT : null);
 
 export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
   const [people, setPeople] = useState(initial);
@@ -22,6 +26,14 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
   const [spellings, setSpellings] = useState("");
   const [kind, setKind] = useState<Exclude<PersonKind, "centre">>("self");
   const [note, setNote] = useState("");
+  // Halseth mig 0160: the work(s) this name also belongs to. Set = only the other spellings link.
+  const [isChar, setIsChar] = useState(false);
+  const [shares, setShares] = useState("");
+  // One row open for editing at a time (spellings + the shared-name flag).
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editSpellings, setEditSpellings] = useState("");
+  const [editShares, setEditShares] = useState("");
+  const [editIsChar, setEditIsChar] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -39,15 +51,43 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
     if (busy || !label.trim()) return;
     setBusy(true);
     setMsg(null);
-    const match_names = spellings.split(",").map((s) => s.trim()).filter(Boolean);
+    const match_names = splitNames(spellings);
     try {
-      const { ok, out } = await post({ action: "add", label: label.trim(), match_names, kind, note: note.trim() || null });
+      const { ok, out } = await post({ action: "add", label: label.trim(), match_names, kind, note: note.trim() || null, shares_name_with: sharedValue(isChar, shares) });
       if (!ok) { setMsg(out?.error ?? "Couldn't add."); return; }
       setPeople((p) => [...p, { ...out.person, mentions: 0 }]);
-      setLabel(""); setSpellings(""); setNote("");
-      setMsg(kind === "self"
+      setLabel(""); setSpellings(""); setNote(""); setShares(""); setIsChar(false);
+      setMsg(out.person.shares_name_with
+        ? `Added ${out.person.label}. Only ${out.person.match_names.join(", ")} will link, never the bare name. Links appear after the next rebuild.`
+        : kind === "self"
         ? `${out.person.label} now counts as you. Lines that name them link to you after the next rebuild.`
         : `Added ${out.person.label}. Links appear after the next rebuild.`);
+    } catch {
+      setMsg("Couldn't reach Halseth.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startEdit(p: GraphPerson) {
+    setEditing(p.id);
+    setEditSpellings(p.match_names.join(", "));
+    setEditIsChar(!!p.shares_name_with);
+    setEditShares(p.shares_name_with && p.shares_name_with !== SHARED_DEFAULT ? p.shares_name_with : "");
+    setMsg(null);
+  }
+
+  async function saveEdit(e: React.FormEvent, p: GraphPerson) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const { ok, out } = await post({ action: "update", id: p.id, match_names: splitNames(editSpellings), shares_name_with: sharedValue(editIsChar, editShares) });
+      if (!ok) { setMsg(out?.error ?? "Couldn't save."); return; }
+      setPeople((all) => all.map((x) => (x.id === p.id ? { ...x, ...out.person, mentions: x.mentions } : x)));
+      setEditing(null);
+      setMsg(`Saved ${p.label}. Links change at the next rebuild.`);
     } catch {
       setMsg("Couldn't reach Halseth.");
     } finally {
@@ -79,15 +119,43 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
         {p.kind !== "self" && <span className="people-kind">{p.kind}</span>}
         <span className="people-count">{links(p.mentions)}</span>
       </div>
-      {(p.match_names.length > 0 || p.note) && (
+      {(p.match_names.length > 0 || p.note || p.shares_name_with) && (
         <div className="people-sub">
-          {p.match_names.length > 0 && <span>also: {p.match_names.join(", ")}</span>}
+          {p.shares_name_with
+            ? <span>
+                also a character{p.shares_name_with !== SHARED_DEFAULT ? ` in ${p.shares_name_with}` : ""}, so only {p.match_names.join(", ")} link{p.match_names.length === 1 ? "s" : ""}
+              </span>
+            : p.match_names.length > 0 && <span>also: {p.match_names.join(", ")}</span>}
           {p.note && <span>{p.note}</span>}
         </div>
       )}
-      <button type="button" className="people-remove" onClick={() => remove(p)} disabled={busy} aria-label={`Remove ${p.label}`}>
-        Remove
-      </button>
+      <div className="people-actions">
+        <button type="button" className="people-remove" onClick={() => (editing === p.id ? setEditing(null) : startEdit(p))} disabled={busy} aria-label={`Edit ${p.label}`}>
+          {editing === p.id ? "Cancel" : "Edit"}
+        </button>
+        <button type="button" className="people-remove" onClick={() => remove(p)} disabled={busy} aria-label={`Remove ${p.label}`}>
+          Remove
+        </button>
+      </div>
+      {editing === p.id && (
+        <form className="people-form people-edit" onSubmit={(e) => saveEdit(e, p)}>
+          <label>
+            <span>Other spellings (comma separated)</span>
+            <input value={editSpellings} onChange={(e) => setEditSpellings(e.target.value)} placeholder={`Blue's ${p.label}`} />
+          </label>
+          <label className="people-check">
+            <input type="checkbox" checked={editIsChar} onChange={(e) => setEditIsChar(e.target.checked)} />
+            <span>This name is also a character</span>
+          </label>
+          {editIsChar && (
+            <label>
+              <span>Which one? (optional)</span>
+              <input value={editShares} onChange={(e) => setEditShares(e.target.value)} placeholder="Pirates of the Caribbean" />
+            </label>
+          )}
+          <button type="submit" disabled={busy}>Save</button>
+        </form>
+      )}
     </li>
   );
 
@@ -118,12 +186,30 @@ export default function PeopleClient({ initial }: { initial: GraphPerson[] }) {
             {KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
           </select>
         </label>
+        <label className="people-check">
+          <input type="checkbox" checked={isChar} onChange={(e) => setIsChar(e.target.checked)} />
+          <span>This name is also a character (show, film, book)</span>
+        </label>
+        {isChar && (
+          <label>
+            <span>Which one? (optional)</span>
+            <input value={shares} onChange={(e) => setShares(e.target.value)} placeholder="Pirates of the Caribbean" />
+          </label>
+        )}
         <label>
           <span>Note (optional)</span>
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Who they are to you" />
         </label>
         <button type="submit" disabled={busy || label.trim().length < 3}>Add</button>
       </form>
+      {isChar && (
+        <p className="people-hint">
+          {label.trim() || "This name"} is also a character, so the bare name won&rsquo;t link (it would catch every line about {shares.trim() || "the story"}).
+          Put a spelling only the person has under other spellings, like {kind === "self"
+            ? <>&ldquo;{label.trim() || "Lestat"} (ours)&rdquo;</>
+            : <>&ldquo;Blue&rsquo;s {label.trim() || "Barbossa"}&rdquo; or &ldquo;{label.trim() || "Barbossa"} (Blue)&rdquo;</>}.
+        </p>
+      )}
       {msg && <p className="people-msg" role="status">{msg}</p>}
 
       <h2 className="people-heading">Names that are you</h2>

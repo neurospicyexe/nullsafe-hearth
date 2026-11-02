@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 // Raziel's people list (Halseth mig 0149, map M5).
 //   POST { action: "add", label, match_names?: string[], kind?, note? } -> Halseth POST /mind/people
 //   POST { action: "archive", id }                                      -> POST /mind/people/:id/archive
+//   POST { action: "update", id, match_names?, shares_name_with? }      -> POST /mind/people/:id (mig 0160)
 // Halseth records added_by = 'raziel'. Links appear at the next graph rebuild.
 const KINDS = new Set(["self", "person", "pet", "other"]);
 
@@ -25,9 +26,16 @@ export async function POST(request: NextRequest) {
       match_names: Array.isArray(raw.match_names) ? raw.match_names.filter((x: unknown) => typeof x === "string") : [],
       kind: typeof raw.kind === "string" && KINDS.has(raw.kind) ? raw.kind : "person",
       note: typeof raw.note === "string" ? raw.note : null,
+      shares_name_with: typeof raw.shares_name_with === "string" ? raw.shares_name_with : null,
     };
+  } else if (raw.action === "update" && typeof raw.id === "string" && /^[\w-]+$/.test(raw.id)) {
+    path = `/mind/people/${raw.id}`;
+    const upd: Record<string, unknown> = {};
+    if (Array.isArray(raw.match_names)) upd.match_names = raw.match_names.filter((x: unknown) => typeof x === "string");
+    if (raw.shares_name_with === null || typeof raw.shares_name_with === "string") upd.shares_name_with = raw.shares_name_with;
+    body = upd;
   } else {
-    return NextResponse.json({ error: 'need { action: "add", label } or { action: "archive", id }' }, { status: 400 });
+    return NextResponse.json({ error: 'need { action: "add", label }, { action: "update", id } or { action: "archive", id }' }, { status: 400 });
   }
 
   try {

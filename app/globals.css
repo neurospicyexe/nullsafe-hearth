@@ -1655,8 +1655,8 @@ html[data-still] *::after {
 .pin-msg { color: var(--h-muted); font-size: 0.75rem; }
 @media (max-width: 767px) {
   .map-canvas { height: calc(100vh - 340px - env(safe-area-inset-bottom)); }
-  /* clears the tab bar and the spoons strip on phones */
-  .map-panel { position: fixed; left: 0.5rem; right: 0.5rem; top: auto; bottom: calc(var(--h-tabbar-h) + 160px + env(safe-area-inset-bottom)); width: auto; max-height: 48vh; }
+  /* clears the tab bar on phones (the spoons strip is pinned on Home only since 11-01) */
+  .map-panel { position: fixed; left: 0.5rem; right: 0.5rem; top: auto; bottom: calc(var(--h-tabbar-h) + 0.5rem + env(safe-area-inset-bottom)); width: auto; max-height: 48vh; }
 }
 
 /* People the map links to (Halseth mig 0149, map M5) */
@@ -1674,7 +1674,11 @@ html[data-still] *::after {
 .people-name { color: var(--h-ink); font-weight: 600; text-decoration: none; }
 .people-kind, .people-count { font-size: 0.8rem; color: var(--h-muted); }
 .people-sub { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--h-muted); }
-.people-remove { grid-row: 1; grid-column: 2; min-height: 32px; padding: 0 0.75rem; border-radius: 8px; border: 1px solid var(--h-line); background: transparent; color: var(--h-muted); cursor: pointer; }
+.people-form label.people-check { flex-direction: row; align-items: center; gap: 0.5rem; min-height: 40px; color: var(--h-ink); font-size: 0.9rem; }
+.people-form .people-check input { min-height: 0; width: 20px; height: 20px; padding: 0; accent-color: var(--h-lamp); }
+.people-actions { grid-row: 1; grid-column: 2; display: flex; gap: 0.4rem; align-items: start; }
+.people-edit { grid-column: 1 / -1; margin-top: 0.4rem; }
+.people-remove {min-height: 32px; padding: 0 0.75rem; border-radius: 8px; border: 1px solid var(--h-line); background: transparent; color: var(--h-muted); cursor: pointer; }
 .people-centre { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem 1rem; border: 1px solid var(--h-lamp); border-radius: 12px; text-decoration: none; color: var(--h-ink); }
 .people-centre-name { font-size: 1.15rem; font-weight: 700; }
 .people-centre-sub { font-size: 0.9rem; color: var(--h-ink); overflow-wrap: anywhere; }
@@ -1898,10 +1902,10 @@ body:has(.h-reader)::before {
   }
 }
 
-/* Spoons strip (Hearth v2): one-tap check-in, sticks above the tab bar. */
+/* Spoons strip (Hearth v2): one-tap check-in. Sticks above the tab bar on Home only (.is-pinned);
+   on every other page it sits at the end of the content so it never covers a list or a form. */
 .h-spoons {
-  position: sticky;
-  bottom: calc(var(--h-tabbar-h) + env(safe-area-inset-bottom));
+  position: static;
   z-index: 90;
   background: var(--h-surface);
   border-top: 1px solid var(--h-line);
@@ -1909,6 +1913,8 @@ body:has(.h-reader)::before {
   font-family: var(--h-font, system-ui, sans-serif);
   color: var(--h-ink);
 }
+.h-spoons.is-pinned { position: sticky; bottom: calc(var(--h-tabbar-h) + env(safe-area-inset-bottom)); }
+.h-spoons[hidden] { display: none; }
 .h-spoons-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 20px 10px; }
 .h-spoons-title { font-size: 1.0625rem; font-weight: 700; }
 .h-spoons-last { font-size: 0.8125rem; color: var(--h-faint); }
@@ -1935,7 +1941,7 @@ body:has(.h-reader)::before {
 .h-spoons-word { display: grid; gap: 8px; padding: 8px 20px 4px; }
 .h-spoons-chip:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
 @media (min-width: 1024px) {
-  .h-spoons { bottom: 0; }
+  .h-spoons.is-pinned { bottom: 0; }
 }
 
 /* Hearth v2 home */
