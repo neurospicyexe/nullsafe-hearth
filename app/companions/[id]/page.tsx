@@ -6,7 +6,7 @@ import { fetchCompanionRundown, fetchSomaStates } from "@/lib/halseth";
 import { COMPANION_COLOR } from "@/lib/shell";
 import { ageLabel, buildWhoIsHome } from "@/lib/home-model";
 import { PresenceRing } from "@/components/kit/PresenceRing";
-import { COMPANION_NAME, companionBars, companionDoors, parseCompanionId, rundownLines } from "@/lib/companion-page";
+import { COMPANION_NAME, companionBars, companionDoors, parseCompanionId, recordsRow, rundownLines } from "@/lib/companion-page";
 import { Bars } from "@/components/kit/Bars";
 import DoorList from "@/components/kit/DoorList";
 import LookedMark from "./LookedMark";
@@ -64,6 +64,14 @@ export default async function CompanionOverview({ params }: { params: Promise<{ 
           Everything else
         </Link>
       </section>
+
+      <nav className="h-companion-records" aria-label="Records">
+        <span>{recordsRow(id).label}:</span>
+        {recordsRow(id).links.map((l) => (
+          <Link key={l.href} href={l.href} className="h-companion-records-link">{l.label}</Link>
+        ))}
+        <span aria-hidden="true">›</span>
+      </nav>
 
       {/* Only a look Raziel could actually see gets recorded. */}
       {rundown && <LookedMark id={id} />}

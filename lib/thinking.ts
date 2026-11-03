@@ -30,8 +30,13 @@ export interface ThinkingLine {
   /** Text after the subject (why clause, private note or cooled note); "" when none. */
   tail: string;
   href: string | null;
+  /** Where "made something" goes: the maker's Made shelf. Only set for a made line. */
+  madeHref: string | null;
   at: string;
 }
+
+/** The words of a made line that link to the shelf; the rest of the verb ("for") stays plain. */
+export const MADE_LINK_TEXT = "made something";
 
 const VERB: Record<string, string> = {
   born: "picked up",
@@ -81,6 +86,7 @@ export function thinkingLine(item: ThinkingItem): ThinkingLine | null {
     subject: item.subject,
     tail,
     href: item.interest_id ? `/companions/${c}/thinking/${encodeURIComponent(item.interest_id)}` : null,
+    madeHref: item.kind === "made" ? `/companions/${c}/made` : null,
     at: item.created_at,
   };
 }

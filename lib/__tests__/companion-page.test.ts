@@ -12,6 +12,9 @@ import {
   subnavFor,
   imagePrompt,
   groupProjects,
+  companionPills,
+  mindDoors,
+  recordsRow,
 } from "../companion-page";
 import type { CompanionId, CompanionRundown, CompanionSomaState, Project } from "../halseth";
 
@@ -263,5 +266,66 @@ describe("groupProjects", () => {
 
   it("is empty for no projects", () => {
     expect(groupProjects([])).toEqual([]);
+  });
+});
+
+describe("companionPills", () => {
+  const cur = (path: string) => companionPills("drevan", path).filter((p) => p.current).map((p) => p.label);
+  it("are Now, Mind, Letters, Made, Thinking, pointing at the companion's routes", () => {
+    expect(companionPills("gaia", "/companions/gaia").map((p) => [p.label, p.href])).toEqual([
+      ["Now", "/companions/gaia"],
+      ["Mind", "/companions/gaia/mind"],
+      ["Letters", "/companions/gaia/letters"],
+      ["Made", "/companions/gaia/made"],
+      ["Thinking", "/companions/gaia/thinking"],
+    ]);
+  });
+  it("marks Now on the overview, whatever the case or trailing slash", () => {
+    expect(cur("/companions/drevan")).toEqual(["Now"]);
+    expect(cur("/companions/Drevan/")).toEqual(["Now"]);
+  });
+  it("marks Letters, Made and Thinking (including a thinking detail page)", () => {
+    expect(cur("/companions/drevan/letters")).toEqual(["Letters"]);
+    expect(cur("/companions/drevan/made")).toEqual(["Made"]);
+    expect(cur("/companions/drevan/thinking")).toEqual(["Thinking"]);
+    expect(cur("/companions/drevan/thinking/abc")).toEqual(["Thinking"]);
+  });
+  it("marks Mind for the mind page and every journal, growth, feelings and upto route plus /all", () => {
+    for (const slug of ["mind", "journal", "notes", "sitting", "growth", "worldview", "loops", "blocks", "feelings", "relational", "deltas", "autonomy", "projects", "all"]) {
+      expect(cur(`/companions/drevan/${slug}`), slug).toEqual(["Mind"]);
+    }
+  });
+  it("marks nothing for a slug this companion lacks", () => {
+    expect(cur("/companions/drevan/nope")).toEqual([]);
+  });
+});
+
+describe("mindDoors", () => {
+  it("covers every sub-route that is not a pill, so nothing is orphaned", () => {
+    const reach = new Set(mindDoors("cypher", null).map((d) => d.href));
+    for (const g of doorGroups("cypher")) {
+      if (["letters", "made", "thinking"].includes(g.key)) continue;
+      expect(reach.has(`/companions/cypher/${g.routes[0].slug}`), g.key).toBe(true);
+    }
+    expect(reach.has("/companions/cypher/sitting")).toBe(true);
+    expect(reach.has("/companions/cypher/all")).toBe(true);
+    expect(reach.has("/soma")).toBe(true);
+  });
+  it("carries the rundown counts on journal, growth, feelings and upto", () => {
+    const doors = mindDoors("gaia", rundown());
+    expect(doors.find((d) => d.href === "/companions/gaia/journal")?.count).toBe(1);
+    expect(doors.find((d) => d.href === "/companions/gaia/growth")?.count).toBe(3);
+  });
+});
+
+describe("recordsRow", () => {
+  it("names the companion and links the record pages (unscoped: they take no companion filter)", () => {
+    const r = recordsRow("drevan");
+    expect(r.label).toBe("Drevan's records");
+    expect(r.links.map((l) => [l.label, l.href])).toEqual([
+      ["drift", "/drifts"],
+      ["orient", "/orient"],
+      ["facts", "/facts"],
+    ]);
   });
 });

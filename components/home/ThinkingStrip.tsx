@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ThinkingLine } from "@/lib/thinking";
 import { toneOf } from "@/lib/tone";
 import { ageLabel } from "@/lib/home-model";
+import { MADE_LINK_TEXT } from "@/lib/thinking";
 
 /** One thinking line: the name carries the companion hue, the sentence stays in ink. */
 export function ThinkingLineItem({ line, now }: { line: ThinkingLine; now: Date }) {
@@ -11,9 +12,19 @@ export function ThinkingLineItem({ line, now }: { line: ThinkingLine; now: Date 
   ) : (
     <b className="h-think-subject">{line.subject}</b>
   );
+  // "made something" opens the maker's Made shelf; the interest it came from stays on the subject.
+  const verb =
+    line.madeHref && line.verb.startsWith(MADE_LINK_TEXT) ? (
+      <>
+        <Link href={line.madeHref} className="h-think-made">{MADE_LINK_TEXT}</Link>
+        {line.verb.slice(MADE_LINK_TEXT.length)}
+      </>
+    ) : (
+      line.verb
+    );
   return (
     <li className="h-think-line">
-      <b className={`h-think-name ${toneOf(line.companion)}`}>{line.name}</b> {line.verb} {subject}
+      <b className={`h-think-name ${toneOf(line.companion)}`}>{line.name}</b> {verb} {subject}
       {line.tail}
       {age && <span className="h-think-age"> {age}</span>}
     </li>

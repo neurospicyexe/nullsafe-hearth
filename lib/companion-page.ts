@@ -178,6 +178,65 @@ export function subnavFor(id: CompanionId, pathname: string): SubnavModel | null
   };
 }
 
+export interface CompanionPill {
+  href: string;
+  label: string;
+  current: boolean;
+}
+
+/** The slugs that belong to Mind: every route in a journal, growth, feelings or upto group, plus /all. */
+const MIND_SLUGS = new Set(["mind", "all"]);
+const PILL_OF_SLUG: Record<string, string> = { letters: "Letters", made: "Made", thinking: "Thinking" };
+
+/**
+ * The companion tab's pill row: Now . Mind . Letters . Made . Thinking. Exactly one is current for a
+ * known route (Now on the overview; Mind for mind, every journal/growth/feelings/upto route, and /all).
+ * Ids are lowercased by the caller (parseCompanionId); the slug is lowercased here.
+ */
+export function companionPills(id: CompanionId, pathname: string): CompanionPill[] {
+  const slug = (pathname.split("/").filter(Boolean)[2] ?? "").toLowerCase();
+  const base = `/companions/${id}`;
+  let active: string | null = null;
+  if (!slug) active = "Now";
+  else if (PILL_OF_SLUG[slug]) active = PILL_OF_SLUG[slug];
+  else if (MIND_SLUGS.has(slug) || groupForSlug(id, slug)) active = "Mind";
+  const pill = (label: string, slug: string): CompanionPill => ({
+    href: slug ? `${base}/${slug}` : base,
+    label,
+    current: active === label,
+  });
+  return [pill("Now", ""), pill("Mind", "mind"), pill("Letters", "letters"), pill("Made", "made"), pill("Thinking", "thinking")];
+}
+
+/** The doors on the Mind page: journal, sitting with, feelings, growth, what they've been up to, soma, everything else. */
+export function mindDoors(id: CompanionId, r: CompanionRundown | null): Door[] {
+  const base = `/companions/${id}`;
+  const count = (key: keyof CompanionRundown["doors"]) => (r ? { count: r.doors[key] } : {});
+  const groups = doorGroups(id);
+  const first = (key: DoorKey) => `${base}/${groups.find((g) => g.key === key)!.routes[0].slug}`;
+  return [
+    { href: first("journal"), label: "Journal", ...count("journal") },
+    { href: `${base}/sitting`, label: "Sitting with" },
+    { href: first("feelings"), label: "Feelings", ...count("feelings") },
+    { href: first("growth"), label: "Growth", ...count("growth") },
+    { href: first("upto"), label: "What I've been up to", ...count("upto") },
+    { href: "/soma", label: "Soma", hint: "Body-state and tensions, all three of them" },
+    { href: `${base}/all`, label: "Everything else" },
+  ];
+}
+
+/** "<Name>'s records: drift, orient, facts": the cellar pages for this companion. Those pages list all three, so the links are unscoped. */
+export function recordsRow(id: CompanionId): { label: string; links: { href: string; label: string }[] } {
+  return {
+    label: `${COMPANION_NAME[id]}'s records`,
+    links: [
+      { href: "/drifts", label: "drift" },
+      { href: "/orient", label: "orient" },
+      { href: "/facts", label: "facts" },
+    ],
+  };
+}
+
 /** Generated-image prompt as /gallery shows it: the stored "prompt: " prefix dropped. */
 export function imagePrompt(argsSummary: string): string {
   return argsSummary.replace(/^prompt:\s*/i, "").trim() || "(untitled)";
