@@ -57,9 +57,94 @@ export function inlineImage(m: Make): string | null {
   return null;
 }
 
-/** Kinds whose text the shelf page fetches itself (writing). Page and music_code are framed from their own routes. */
+/** Kinds whose source text is written by hand as code: shown under "How it was made". */
+const CODE_KINDS: ReadonlySet<MakeKind> = new Set<MakeKind>(["drawing", "scad", "page", "music_code"]);
+
+/**
+ * Which makes the shelf page fetches source text for: a ready writing (shown as the make itself) and any
+ * code make with a source (shown under "How it was made", rendered as escaped text, never run).
+ */
 export function needsSource(m: Make): boolean {
-  return m.status === "ready" && m.kind === "writing";
+  if (m.kind === "writing") return m.status === "ready";
+  return CODE_KINDS.has(m.kind) && !!m.files.source;
+}
+
+export interface Recipe {
+  /** One plain sentence: what it was made with. */
+  line: string;
+  /** What the model was handed, word for word (music_audio / video). */
+  prompt: string | null;
+  lyrics: string | null;
+  /** Small facts: "45 seconds", "instrumental", "tall (9:16)". */
+  facts: string[];
+  /** True when the card should show the hand-written code. */
+  showsCode: boolean;
+  codeLabel: string | null;
+}
+
+const str = (v: unknown): string | null => (typeof v === "string" && v.trim() !== "" ? v.trim() : null);
+
+/** How a make was made, from its kind and the recipe Halseth keeps. Null for writing (the text is the how). */
+export function makeRecipe(m: Make): Recipe | null {
+  const p = m.params ?? {};
+  const base = { prompt: null, lyrics: null, facts: [] as string[], showsCode: false, codeLabel: null };
+  switch (m.kind) {
+    case "music_audio": {
+      const facts: string[] = [];
+      if (typeof p.duration === "number" && Number.isFinite(p.duration)) facts.push(`${Math.round(p.duration)} seconds`);
+      if (p.instrumental === true) facts.push("instrumental");
+      return {
+        ...base,
+        line: "Written as a description, then turned into sound by ACE-Step, a music model.",
+        prompt: str(p.prompt),
+        lyrics: str(p.lyrics),
+        facts,
+      };
+    }
+    case "video": {
+      const facts: string[] = [];
+      if (p.aspect === "9:16") facts.push("tall (9:16)");
+      else if (p.aspect === "16:9") facts.push("wide (16:9)");
+      return {
+        ...base,
+        line: "Written as a description, then turned into moving pictures by FastWan 2.2, a video model.",
+        prompt: str(p.prompt),
+        facts,
+      };
+    }
+    case "drawing":
+      return {
+        ...base,
+        line: "Drawn in SVG: every shape written out as code, then turned into a picture by rsvg.",
+        showsCode: !!m.files.source,
+        codeLabel: "The drawing, as it was written",
+      };
+    case "scad":
+      return {
+        ...base,
+        line: "Written in OpenSCAD, code that describes a solid shape. OpenSCAD built the printable model and the preview from it.",
+        showsCode: !!m.files.source,
+        codeLabel: "The model, as it was written",
+      };
+    case "page":
+      return {
+        ...base,
+        line: "A small web page, written by hand in HTML.",
+        showsCode: !!m.files.source,
+        codeLabel: "The page, as it was written",
+      };
+    case "music_code":
+      return {
+        ...base,
+        line: "Music written as Strudel code, a language for playing patterns. Your browser plays it live.",
+        showsCode: !!m.files.source,
+        codeLabel: "The beat, as it was written",
+      };
+    case "image":
+      return { ...base, line: "Made by an image model from a written description.", prompt: str(m.title) };
+    default:
+      return null;
+  }
 }
 
 /** Same-origin routes that serve companion-made code with its own strict CSP, framed sandboxed. */

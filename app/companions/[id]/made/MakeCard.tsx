@@ -1,6 +1,6 @@
 import type { Make } from "@/lib/halseth";
 import { ageLabel } from "@/lib/home-model";
-import { KIND_LABEL, inlineImage, makeLinks, makeUrl, playerUrl } from "@/lib/makes";
+import { KIND_LABEL, inlineImage, makeLinks, makeRecipe, makeUrl, playerUrl } from "@/lib/makes";
 import MakePlayer from "./MakePlayer";
 
 // One make on the shelf. Rendering rules: raster images through the inline proxy (an SVG drawing shows
@@ -11,6 +11,7 @@ export default function MakeCard({ make, source, now }: { make: Make; source: st
   const links = makeLinks(make);
   const img = inlineImage(make);
   const ready = make.status === "ready";
+  const recipe = makeRecipe(make);
 
   return (
     <li id={`make-${make.id}`} className="h-make" data-kind={make.kind} data-status={make.status}>
@@ -60,6 +61,31 @@ export default function MakeCard({ make, source, now }: { make: Make; source: st
       )}
 
       {make.why && <p className="h-make-why">{make.why}</p>}
+      {recipe && (
+        <details className="h-make-how">
+          <summary>How it was made</summary>
+          <p className="h-make-how-line">{recipe.line}</p>
+          {recipe.prompt && (
+            <blockquote className="h-make-how-prompt">
+              <span className="h-make-label">{make.kind === "image" ? "described as" : "the description"}</span>
+              {recipe.prompt}
+            </blockquote>
+          )}
+          {recipe.lyrics && (
+            <blockquote className="h-make-how-prompt">
+              <span className="h-make-label">lyrics</span>
+              {recipe.lyrics}
+            </blockquote>
+          )}
+          {recipe.facts.length > 0 && <p className="h-make-meta">{recipe.facts.map((f) => <span key={f}>{f}</span>)}</p>}
+          {recipe.showsCode && (
+            <>
+              <span className="h-make-label">{recipe.codeLabel}</span>
+              <pre className="h-make-code">{source ?? "The code could not be loaded."}</pre>
+            </>
+          )}
+        </details>
+      )}
       {make.heard_back && <p className="h-make-heard"><span className="h-make-label">heard back</span> {make.heard_back}</p>}
       <p className="h-make-meta">
         {make.interest_name && <span>for {make.interest_name}</span>}

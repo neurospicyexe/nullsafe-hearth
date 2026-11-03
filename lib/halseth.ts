@@ -1883,6 +1883,8 @@ export type Make = {
   parent_id: string | null;
   created_at: string;
   files: { source?: MakeFile; file?: MakeFile; preview?: MakeFile };
+  /** The recipe a model was handed (music_audio / video). Null or absent for code kinds, images, older Halseth. */
+  params?: Record<string, unknown> | null;
 };
 
 /** The shelf for one companion, newest first. Null when Halseth could not be read. */

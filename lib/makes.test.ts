@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Make } from "./halseth";
-import { isMakeId, isMakeWhich, makeLinks, inlineImage, needsSource } from "./makes";
+import { isMakeId, isMakeWhich, makeLinks, inlineImage, needsSource, makeRecipe } from "./makes";
 
 const ID = "0123456789abcdef0123456789abcdef";
 const m = (over: Partial<Make>): Make => ({
@@ -34,8 +34,39 @@ describe("links", () => {
   it("source-only kinds download the source", () => {
     expect(makeLinks(m({ kind: "writing", files: { source: {} } })).download?.href).toBe(`/api/makes/${ID}/source`);
   });
-  it("only writing needs fetched text", () => {
+  it("writing and code makes with a source need fetched text; model kinds never do", () => {
     expect(needsSource(m({ kind: "writing" }))).toBe(true);
-    for (const k of ["page", "music_code", "drawing", "scad", "music_audio", "video", "image"] as const) expect(needsSource(m({ kind: k }))).toBe(false);
+    for (const k of ["page", "music_code", "drawing", "scad"] as const) {
+      expect(needsSource(m({ kind: k, files: { source: {} } }))).toBe(true);
+      expect(needsSource(m({ kind: k }))).toBe(false);
+    }
+    for (const k of ["music_audio", "video", "image"] as const) expect(needsSource(m({ kind: k, files: { source: {} } }))).toBe(false);
+  });
+});
+
+describe("how it was made", () => {
+  it("a song shows its model, the description word for word, and the facts", () => {
+    const r = makeRecipe(m({ kind: "music_audio", params: { prompt: "slow minimal ambient", duration: 45, instrumental: true } }))!;
+    expect(r.line).toMatch(/ACE-Step/);
+    expect(r).toMatchObject({ prompt: "slow minimal ambient", lyrics: null, facts: ["45 seconds", "instrumental"], showsCode: false });
+  });
+  it("a song with lyrics carries them; junk params read as nothing", () => {
+    expect(makeRecipe(m({ kind: "music_audio", params: { prompt: "p", lyrics: "la la", duration: 30 } }))!.lyrics).toBe("la la");
+    expect(makeRecipe(m({ kind: "music_audio", params: { prompt: 7, duration: "long" } }))).toMatchObject({ prompt: null, facts: [] });
+    expect(makeRecipe(m({ kind: "music_audio" }))).toMatchObject({ prompt: null, facts: [] });
+  });
+  it("a video names its model and shape", () => {
+    expect(makeRecipe(m({ kind: "video", params: { prompt: "rain", aspect: "9:16" } }))).toMatchObject({ prompt: "rain", facts: ["tall (9:16)"] });
+  });
+  it("code kinds show their code only when there is a source", () => {
+    for (const k of ["drawing", "scad", "page", "music_code"] as const) {
+      expect(makeRecipe(m({ kind: k, files: { source: {} } }))!.showsCode).toBe(true);
+      expect(makeRecipe(m({ kind: k }))!.showsCode).toBe(false);
+    }
+    expect(makeRecipe(m({ kind: "scad", files: { source: {} } }))!.line).toMatch(/OpenSCAD/);
+  });
+  it("an old image shows its description; writing has no recipe (the text is the how)", () => {
+    expect(makeRecipe(m({ kind: "image", title: "a fox at dusk" }))!.prompt).toBe("a fox at dusk");
+    expect(makeRecipe(m({ kind: "writing" }))).toBeNull();
   });
 });
