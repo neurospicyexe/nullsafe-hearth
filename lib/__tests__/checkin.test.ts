@@ -1,6 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { createWriteQueue, type QueueDeps } from "../write-queue";
-import { createCheckin, type Outcome, type WordState } from "../checkin";
+import {
+  createCheckin,
+  fieldsFromForm,
+  summaryParts,
+  todaysCheckin,
+  foldedUntilTomorrow,
+  foldMarker,
+  type Outcome,
+  type WordState,
+} from "../checkin";
 
 type Call = { url: string; method: string; body: Record<string, unknown> | undefined };
 
@@ -284,5 +293,167 @@ describe("checkin", () => {
     h.checkin.saveWord({ mood: "ok" }); // PATCH id-2 fails and is kept
     await h.advance(5000);
     expect(h.queue.failed().map((w) => w.key).sort()).toEqual(["spoons-undo-id-1-abcdef", "spoons-word-id-2-abcdef"]);
+  });
+});
+
+describe("save (the check-in card)", () => {
+  it("any one field is enough: a pain-only check-in POSTs without spoons", async () => {
+    const h = harness();
+    h.checkin.save({ pain: 4 });
+    await h.advance(5000);
+    expect(h.calls).toHaveLength(1);
+    expect(h.calls[0]).toMatchObject({ url: "/api/biometrics", method: "POST" });
+    expect(h.calls[0].body).toMatchObject({ id: "id-1-abcdef", pain: 4, source: "hearth-quick" });
+    expect("spoons" in h.calls[0].body!).toBe(false);
+    expect(h.outcomes).toEqual(["landed"]);
+  });
+
+  it("carries every field in the one POST", async () => {
+    const h = harness();
+    h.checkin.save({ spoons: 5, pain: 4, pain_where: "hips", notes: "slow morning" });
+    await h.advance(5000);
+    expect(h.calls).toHaveLength(1);
+    expect(h.calls[0].body).toMatchObject({ spoons: 5, pain: 4, pain_where: "hips", notes: "slow morning" });
+  });
+
+  it("edit after it landed PATCHes the SAME row, never a second POST", async () => {
+    const h = harness();
+    h.checkin.save({ spoons: 5, pain: 4 });
+    await h.advance(5000);
+    h.checkin.save({ pain: 6, notes: "worse" });
+    await h.advance(5000);
+    expect(h.calls.map((c) => c.method)).toEqual(["POST", "PATCH"]);
+    expect(h.calls[1].url).toBe("/api/biometrics/id-1-abcdef");
+    expect(h.calls[1].body).toEqual({ pain: 6, notes: "worse" });
+    expect(h.words).toContain("saved");
+  });
+
+  it("an edit inside the grace window rides the one POST", async () => {
+    const h = harness();
+    h.checkin.save({ spoons: 5 });
+    await h.advance(1000);
+    h.checkin.save({ spoons: 6, notes: "ok" });
+    await h.advance(5000);
+    expect(h.calls).toHaveLength(1);
+    expect(h.calls[0].body).toMatchObject({ spoons: 6, notes: "ok" });
+  });
+
+  it("adopt binds the card to today's existing row: the next save PATCHes that id", async () => {
+    const h = harness();
+    h.checkin.adopt("row-from-today-1");
+    h.checkin.save({ spoons: 3 });
+    await h.advance(5000);
+    expect(h.calls).toHaveLength(1);
+    expect(h.calls[0]).toMatchObject({ url: "/api/biometrics/row-from-today-1", method: "PATCH", body: { spoons: 3 } });
+  });
+
+  it("a PATCH Halseth refuses (4xx) is a failed save, not a crash, and says so", async () => {
+    const h = harness();
+    h.checkin.adopt("row-from-today-1");
+    h.setMode("404"); // any 4xx is a refusal the queue drops
+    h.checkin.save({ pain: 4 });
+    await h.advance(5000);
+    expect(h.words).toContain("dropped");
+  });
+
+  it("a PATCH that cannot reach the server is kept for retry (failed), and owned by the card", async () => {
+    const h = harness();
+    h.checkin.adopt("row-from-today-1");
+    h.setMode("offline");
+    h.checkin.save({ pain: 4 });
+    await h.advance(5000);
+    expect(h.words).toContain("failed");
+    expect(h.checkin.owned()).toEqual(["spoons-word-row-from-today-1"]);
+  });
+
+  it("saving nothing does nothing", async () => {
+    const h = harness();
+    h.checkin.save({});
+    await h.advance(5000);
+    expect(h.calls).toHaveLength(0);
+  });
+});
+
+describe("fieldsFromForm", () => {
+  const empty = { spoons: null, pain: null, painWhere: "", notes: "" };
+  it("is null when nothing is filled in", () => {
+    expect(fieldsFromForm(empty, null)).toBeNull();
+    expect(fieldsFromForm({ ...empty, painWhere: "  ", notes: " \n " }, null)).toBeNull();
+  });
+  it("keeps spoons 0 and pain 0 (zero is an answer)", () => {
+    expect(fieldsFromForm({ ...empty, spoons: 0, pain: 0 }, null)).toEqual({ spoons: 0, pain: 0 });
+  });
+  it("trims and caps the text fields", () => {
+    const f = fieldsFromForm({ ...empty, painWhere: " hips ", notes: "n".repeat(3000) }, null)!;
+    expect(f.pain_where).toBe("hips");
+    expect(f.notes).toHaveLength(2000);
+    expect(fieldsFromForm({ ...empty, painWhere: "w".repeat(200) }, null)!.pain_where).toHaveLength(120);
+  });
+  it("on an edit, clearing a saved field sends the clear", () => {
+    const saved = { id: "r", spoons: 5, pain: 4, pain_where: "hips", notes: "word" };
+    expect(fieldsFromForm({ spoons: 5, pain: null, painWhere: "", notes: "" }, saved)).toEqual({ spoons: 5, pain: null, pain_where: "", notes: "" });
+  });
+  it("on an edit, an untouched empty field is not sent", () => {
+    const saved = { id: "r", spoons: 5, pain: null, pain_where: null, notes: null };
+    expect(fieldsFromForm({ spoons: 6, pain: null, painWhere: "", notes: "" }, saved)).toEqual({ spoons: 6 });
+  });
+});
+
+describe("summaryParts", () => {
+  it("reads like the design: 5 spoons, 4 pain, where, the word", () => {
+    expect(summaryParts({ spoons: 5, pain: 4, pain_where: "hips", notes: "slow" })).toEqual(["5 spoons", "4 pain", "hips", "“slow”"]);
+  });
+  it("leaves out what was not given, and says 1 spoon", () => {
+    expect(summaryParts({ spoons: 1, pain: null, pain_where: null, notes: null })).toEqual(["1 spoon"]);
+    expect(summaryParts({ spoons: null, pain: 0, pain_where: null, notes: null })).toEqual(["0 pain"]);
+  });
+  it("cuts a long note to one short line with an ellipsis", () => {
+    const parts = summaryParts({ spoons: null, pain: null, pain_where: null, notes: "a very long sentence about how the whole day has been going so far for me" });
+    expect(parts).toHaveLength(1);
+    expect(parts[0].endsWith("…”")).toBe(true);
+    expect(parts[0].length).toBeLessThan(40);
+  });
+  it("collapses newlines in a note", () => {
+    expect(summaryParts({ spoons: null, pain: null, pain_where: null, notes: "a\n\nb" })).toEqual(["“a b”"]);
+  });
+});
+
+describe("todaysCheckin", () => {
+  const now = new Date(2026, 10, 3, 21, 0, 0); // local Mon evening
+  const at = (d: Date) => d.toISOString();
+  const row = (over: Record<string, unknown>) => ({ id: "row-1-abcdef", source: "hearth", spoons: null, pain: null, pain_where: null, notes: null, mood: null, recorded_at: at(new Date(2026, 10, 3, 9, 0, 0)), ...over });
+  it("finds today's hearth check-in and maps it", () => {
+    expect(todaysCheckin([row({ spoons: 5, pain: 4, pain_where: "hips", notes: "slow" })], now)).toEqual({
+      id: "row-1-abcdef", spoons: 5, pain: 4, pain_where: "hips", notes: "slow",
+    });
+  });
+  it("uses the old mood word when there are no notes", () => {
+    expect(todaysCheckin([row({ spoons: 5, mood: "foggy" })], now)?.notes).toBe("foggy");
+  });
+  it("ignores yesterday, wearable rows and rows with nothing in them", () => {
+    expect(todaysCheckin([row({ spoons: 5, recorded_at: at(new Date(2026, 10, 2, 22, 0, 0)) })], now)).toBeNull();
+    expect(todaysCheckin([row({ spoons: 5, source: "oura" })], now)).toBeNull();
+    expect(todaysCheckin([row({})], now)).toBeNull();
+  });
+  it("takes the newest of today's rows (list is newest first)", () => {
+    const r = todaysCheckin([row({ id: "new-row-12345", spoons: 3 }), row({ id: "old-row-12345", spoons: 8 })], now);
+    expect(r?.id).toBe("new-row-12345");
+  });
+  it("is null for a non-array (Halseth down)", () => {
+    expect(todaysCheckin(null, now)).toBeNull();
+    expect(todaysCheckin({ error: "x" }, now)).toBeNull();
+  });
+});
+
+describe("not now (fold until tomorrow)", () => {
+  const mon = new Date(2026, 10, 3, 21, 0, 0);
+  it("folds for the rest of the same local day only", () => {
+    const marker = foldMarker(mon);
+    expect(foldedUntilTomorrow(marker, new Date(2026, 10, 3, 23, 59, 0))).toBe(true);
+    expect(foldedUntilTomorrow(marker, new Date(2026, 10, 4, 0, 1, 0))).toBe(false);
+  });
+  it("an absent or odd marker is not folded", () => {
+    expect(foldedUntilTomorrow(null, mon)).toBe(false);
+    expect(foldedUntilTomorrow("garbage", mon)).toBe(false);
   });
 });

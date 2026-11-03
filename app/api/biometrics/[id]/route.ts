@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { biometricsPatchBody } from "@/lib/biometrics-body";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -23,11 +24,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   }
   const r = raw as Record<string, unknown>;
 
-  // Allowlist: only the fields a check-in can be amended with.
-  const body: Record<string, unknown> = {};
-  if (typeof r["spoons"] === "number" && Number.isFinite(r["spoons"])) body.spoons = r["spoons"];
-  if (typeof r["mood"] === "string") body.mood = r["mood"].slice(0, 80);
-  if (typeof r["energy"] === "number" && Number.isInteger(r["energy"])) body.energy = r["energy"];
+  // Allowlist: only the fields a check-in can be amended with (spoons, mood, energy, pain, pain_where, notes).
+  const body = biometricsPatchBody(r);
 
   try {
     const upstream = await fetch(`${cfg.base}/biometrics/${encodeURIComponent(id)}`, {

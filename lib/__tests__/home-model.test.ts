@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildWhoIsHome, buildLeftForYou, currentBook, ageLabel, greeting } from "../home-model";
+import { buildWhoIsHome, buildLeftForYou, currentBook, ageLabel, greeting, needsStrip } from "../home-model";
 import type { SomaData, InboxResponse, Book } from "../halseth";
 
 const now = new Date("2026-10-29T20:00:00Z");
@@ -134,5 +134,22 @@ describe("greeting", () => {
     expect(greeting(new Date(2026, 9, 29, 8, 0))).toBe("Thursday morning");
     expect(greeting(new Date(2026, 9, 29, 14, 0))).toBe("Thursday afternoon");
     expect(greeting(new Date(2026, 9, 29, 23, 0))).toBe("Thursday night");
+  });
+});
+
+describe("needsStrip", () => {
+  const item = (key: string, over: Record<string, unknown> = {}) => ({ key, kind: "question", id: key, companion_id: "drevan", created_at: "2026-10-29 19:00:00", title: "Which door?", detail: null, ...over });
+  it("is null at zero and when Halseth is down", () => {
+    expect(needsStrip(null, now)).toBeNull();
+    expect(needsStrip({ items: [], counts: { total: 0 } }, now)).toBeNull();
+  });
+  it("says N things need you, with the newest two", () => {
+    const m = needsStrip({ items: [item("a"), item("b"), item("c")] as never, counts: { total: 3 } }, now)!;
+    expect(m.headline).toBe("3 things need you");
+    expect(m.items.map((i) => i.key)).toEqual(["a", "b"]);
+    expect(m.items[0]).toMatchObject({ who: "Drevan", text: "Which door?", when: "1h" });
+  });
+  it("uses the singular for one", () => {
+    expect(needsStrip({ items: [item("a")] as never, counts: { total: 1 } }, now)?.headline).toBe("1 thing needs you");
   });
 });

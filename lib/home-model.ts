@@ -1,5 +1,6 @@
 // Home page model. Pure: no React, no fetching.
-import type { SomaData, InboxResponse, Book } from "./halseth";
+import type { SomaData, InboxResponse, Book, NeedsItem } from "./halseth";
+import { titleText, whoLabel } from "./needs";
 import { COMPANION_COLOR } from "./shell";
 import { parseUtc } from "./spoons";
 import { partOfDay } from "./time-of-day";
@@ -145,4 +146,25 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 /** "Thursday evening", from the viewer's local clock. */
 export function greeting(now: Date): string {
   return `${WEEKDAYS[now.getDay()]} ${partOfDay(now)}`;
+}
+
+export type NeedsStripModel = { total: number; headline: string; items: { key: string; who: string; text: string; when: string }[] };
+
+/** "N things need you" with the newest two, or null when nothing waits (the strip is hidden at 0 or when Halseth is down). */
+export function needsStrip(
+  needs: { items: NeedsItem[]; counts: { total: number } } | null,
+  now: Date,
+): NeedsStripModel | null {
+  const total = needs?.counts.total ?? 0;
+  if (!needs || total <= 0) return null;
+  return {
+    total,
+    headline: total === 1 ? "1 thing needs you" : `${total} things need you`,
+    items: needs.items.slice(0, 2).map((it) => ({
+      key: it.key,
+      who: whoLabel(it),
+      text: titleText(it),
+      when: ageLabel(it.created_at, now),
+    })),
+  };
 }
