@@ -1,5 +1,5 @@
-// Pages as search targets: the four tabs, the hub doors and every Under the hood door. Pure, no React.
-import { HOOD_SECTIONS, HUBS, TABS } from "./shell";
+// Pages as search targets: the five tabs, the cellar and every door in Us. Pure, no React.
+import { HUBS, TABS } from "./shell";
 
 export type PageEntry = {
   href: string;
@@ -9,16 +9,15 @@ export type PageEntry = {
   hub?: string;
 };
 
-const HUB_NAMES = { needs: "Needs you", together: "Together", archive: "Archive" } as const;
+const HUB_NAMES = { shared: "Us", house: "Us", cellar: "Cellar" } as const;
 
 function buildIndex(): PageEntry[] {
   const all: PageEntry[] = [
     ...TABS.map((t) => ({ href: t.href, label: t.label })),
-    { href: "/hood", label: "Under the hood", hint: "Everything behind the four tabs" },
-    ...(["needs", "together", "archive"] as const).flatMap((k) =>
+    { href: "/archive", label: "Cellar", hint: "Every record they have kept" },
+    ...(["shared", "house", "cellar"] as const).flatMap((k) =>
       HUBS[k].map((d) => ({ href: d.href, label: d.label, hint: d.hint, hub: HUB_NAMES[k] })),
     ),
-    ...HOOD_SECTIONS.flatMap((s) => s.doors.map((d) => ({ href: d.href, label: d.label, hint: d.hint, hub: "Under the hood" }))),
   ];
   // First entry wins (its hub label stays), but it borrows a later duplicate's hint when it has none.
   const byHref = new Map<string, PageEntry>();

@@ -8,7 +8,7 @@ describe("matchPages", () => {
   });
   it("finds a Hood page by name and names its hub", () => {
     const r = matchPages("facts");
-    expect(r[0]).toMatchObject({ href: "/facts", label: "Facts", hub: "Under the hood" });
+    expect(r[0]).toMatchObject({ href: "/facts", label: "Facts", hub: "Cellar" });
   });
   it("label prefix outranks a label or hint contains", () => {
     const r = matchPages("g");
@@ -23,10 +23,10 @@ describe("matchPages", () => {
   });
   it("is case-insensitive and finds the tabs and the hood hub", () => {
     expect(matchPages("NEEDS")[0].href).toBe("/needs");
-    expect(matchPages("under the")[0].href).toBe("/hood");
+    expect(matchPages("cellar")[0].href).toBe("/archive");
     expect(matchPages("home").map((p) => p.href)).toContain("/");
   });
-  it("de-duplicates by href (Guardian is in Needs and Hood)", () => {
+  it("de-duplicates by href", () => {
     const hrefs = PAGE_INDEX.map((p) => p.href);
     expect(new Set(hrefs).size).toBe(hrefs.length);
     expect(matchPages("guardian").filter((p) => p.href === "/guardian")).toHaveLength(1);
@@ -37,11 +37,12 @@ describe("matchPages", () => {
 });
 
 describe("hints survive the dedupe", () => {
-  it("finds Guardian and Basins by their Under the hood hints", () => {
+  it("finds Guardian and Basins by their cellar hints", () => {
     expect(matchPages("weekly letter").map((p) => p.href)).toContain("/guardian");
     expect(matchPages("identity drift").map((p) => p.href)).toContain("/basins");
   });
-  it("keeps the first hub label", () => {
-    expect(PAGE_INDEX.find((p) => p.href === "/guardian")?.hub).toBe("Needs you");
+  it("names the hub a page lives in", () => {
+    expect(PAGE_INDEX.find((p) => p.href === "/guardian")?.hub).toBe("Cellar");
+    expect(PAGE_INDEX.find((p) => p.href === "/creatures")?.hub).toBe("Us");
   });
 });

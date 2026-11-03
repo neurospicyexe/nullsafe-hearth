@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TABS, HUBS, activeTab, shellHidden, badgeText, COMPANION_COLOR, HOOD_SECTIONS, focusRefreshDue, FOCUS_REFRESH_MIN_MS, latestOnly } from "../shell";
+import { TABS, HUBS, CELLAR_SECTIONS, SHARED_PLACES, SHARED_QUIET, HOUSE_DOORS, activeTab, innerNavFor, shellHidden, badgeText, COMPANION_COLOR, focusRefreshDue, FOCUS_REFRESH_MIN_MS, latestOnly } from "../shell";
 import nextConfig from "../../next.config";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -51,20 +51,43 @@ const NAV_HREFS: readonly string[] = Object.freeze([
   "/phoenix",
 ]);
 
+describe("tabs", () => {
+  it("are Home, the three companions, Us, in that order", () => {
+    expect(TABS.map((t) => [t.label, t.href])).toEqual([
+      ["Home", "/"],
+      ["Drevan", "/companions/drevan"],
+      ["Cypher", "/companions/cypher"],
+      ["Gaia", "/companions/gaia"],
+      ["Us", "/together"],
+    ]);
+  });
+});
+
 describe("activeTab", () => {
-  it("maps routes to tabs", () => {
+  it("maps /companions/<id>/** to that companion", () => {
+    expect(activeTab("/companions/cypher")).toBe("Cypher");
+    expect(activeTab("/companions/drevan/made")).toBe("Drevan");
+    expect(activeTab("/companions/gaia/thinking/abc")).toBe("Gaia");
+    expect(activeTab("/companions/GAIA/letters")).toBe("Gaia");
+  });
+  it("keeps /companions alone and Home on Home", () => {
     expect(activeTab("/")).toBe("Home");
-    expect(activeTab("/needs")).toBe("Needs you");
-    expect(activeTab("/club")).toBe("Together");
-    expect(activeTab("/sessions")).toBe("Archive");
-    expect(activeTab("/companions/cypher")).toBe("Home");
+    expect(activeTab("/companions")).toBe("Home");
+  });
+  it("lights Us for shared places, the house pages, the cellar and every record page", () => {
+    for (const p of ["/together", "/club", "/club/round-1", "/creatures", "/phoenix/chat", "/needs", "/tasks", "/user", "/archive", "/hood", "/sessions", "/facts", "/letters/abc", "/overview"]) {
+      expect(activeTab(p), p).toBe("Us");
+    }
   });
   it("returns null for routes owned by no tab", () => {
     expect(activeTab("/login")).toBeNull();
   });
   it("matches on a segment boundary", () => {
     expect(activeTab("/clubhouse")).toBeNull();
-    expect(activeTab("/club/round-1")).toBe("Together");
+    expect(activeTab("/companionsfoo")).toBeNull();
+  });
+  it("every door in every group lights a tab", () => {
+    for (const d of Object.values(HUBS).flat()) expect(activeTab(d.href), d.href).not.toBeNull();
   });
 });
 
@@ -140,25 +163,6 @@ describe("retired page redirects", () => {
   });
 });
 
-describe("archive hub", () => {
-  it("has exactly the five doors in order", () => {
-    expect(HUBS.archive.map((d) => [d.href, d.label])).toEqual([
-      ["/letters", "Letters"],
-      ["/journal", "Journals"],
-      ["/sessions", "Sessions and handovers"],
-      ["/dreams", "Dreams"],
-      ["/memory", "Memory and synthesis"],
-    ]);
-  });
-  it("drops the retired doors", () => {
-    const hrefs = HUBS.archive.map((d) => d.href);
-    for (const h of ["/handovers", "/synthesis", "/overview", "/hood"]) expect(hrefs).not.toContain(h);
-  });
-  it("keeps Old home under the hood", () => {
-    expect(HUBS.hood).toContainEqual(expect.objectContaining({ href: "/overview", label: "Old home" }));
-  });
-});
-
 describe("handovers redirect", () => {
   it("forwards /handovers to /sessions, temporarily", async () => {
     const redirects = await nextConfig.redirects!();
@@ -207,47 +211,86 @@ describe("latestOnly", () => {
   });
 });
 
-describe("under the hood", () => {
-  const hoodHrefs = HUBS.hood.map((d) => d.href);
-  it("HUBS.hood is the flattened sections", () => {
-    expect(HUBS.hood).toEqual(HOOD_SECTIONS.flatMap((s) => s.doors));
+describe("Us hub", () => {
+  it("has the shared places, then the quieter row", () => {
+    expect(SHARED_PLACES.map((d) => d.label)).toEqual(["Sol", "People", "Map", "Library", "Club", "Shelf"]);
+    expect(SHARED_QUIET.map((d) => d.label)).toEqual(["Gallery", "Collection", "The Home", "Talk to them"]);
   });
-  it("has a door for every spec item", () => {
-    const labels = ["Facts", "Tray", "Guardian", "Autonomous", "Council", "Drift", "Basins", "Agency", "Map", "People", "Growth journal", "House", "Phoenix", "Imps", "Orient", "Presence", "Soma", "Wellness", "Tasks", "Shared"];
-    const have = HUBS.hood.map((d) => d.label);
-    for (const l of labels) expect(have).toContain(l);
+  it("has the you-and-house doors", () => {
+    expect(HOUSE_DOORS.map((d) => d.href)).toEqual(["/needs", "/tasks", "/house", "/wellness", "/user"]);
   });
-  it("every door href has a page file on disk", () => {
-    for (const href of hoodHrefs) {
-      expect(existsSync(join(__dirname, "..", "..", "app", href, "page.tsx")), href).toBe(true);
+});
+
+describe("the cellar", () => {
+  it("is grouped by question, in order", () => {
+    expect(CELLAR_SECTIONS.map((s) => s.title)).toEqual(["What they wrote down", "What happened", "How they work", "The machinery"]);
+  });
+  it("calls /us Relational moments, so nothing else is called Us", () => {
+    const all = CELLAR_SECTIONS.flatMap((s) => s.doors);
+    expect(all.find((d) => d.href === "/us")?.label).toBe("Relational moments");
+    expect(all.some((d) => d.label === "Us")).toBe(false);
+  });
+  it("still links every page the old /archive and /hood linked", () => {
+    const old = [
+      "/letters", "/journal", "/sessions", "/dreams", "/memory",
+      "/facts", "/tray", "/feelings", "/threads", "/drifts", "/agency", "/imps", "/orient", "/soma", "/presence",
+      "/us", "/between", "/council", "/mind", "/log", "/shared",
+      "/autonomous", "/guardian", "/basins", "/manage", "/tasks", "/map", "/people", "/halseth", "/phoenix",
+      "/user", "/house", "/wellness", "/overview",
+    ];
+    const have = new Set([...HUBS.shared, ...HUBS.house, ...HUBS.cellar].map((d) => d.href));
+    expect(old.filter((h) => !have.has(h))).toEqual([]);
+  });
+  it("care pages sit with Us (you and the house), not in the cellar sections", () => {
+    const cellar = HUBS.cellar.map((d) => d.href);
+    for (const h of ["/user", "/house", "/wellness"]) expect(cellar).not.toContain(h);
+  });
+});
+
+describe("no dead links", () => {
+  const APP = join(__dirname, "..", "..", "app");
+  const hrefs = [...TABS.map((t) => t.href), ...Object.values(HUBS).flat().map((d) => d.href)];
+  it("every tab and hub href resolves to a page file", () => {
+    const dead = hrefs.filter((h) => !existsSync(join(APP, h === "/" ? "" : h.replace(/^\/companions\/(drevan|cypher|gaia)/, "/companions/[id]"), "page.tsx")));
+    expect(dead).toEqual([]);
+  });
+  it("has no duplicate href inside one group", () => {
+    for (const [k, doors] of Object.entries(HUBS)) {
+      const h = doors.map((d) => d.href);
+      expect(new Set(h).size, k).toBe(h.length);
     }
   });
-  it("care pages appear in no hub but hood", () => {
-    const others = [...HUBS.needs, ...HUBS.together, ...HUBS.archive].map((d) => d.href);
-    for (const h of ["/user", "/house", "/wellness", "/overview"]) {
-      expect(hoodHrefs).toContain(h);
-      expect(others).not.toContain(h);
-    }
+});
+
+describe("innerNavFor", () => {
+  it("shared places get back-to-Us and the places next door", () => {
+    const nav = innerNavFor("/creatures");
+    expect(nav?.back).toEqual({ href: "/together", label: "Us" });
+    expect(nav?.links.map((l) => l.label)).toEqual(["Sol", "People", "Map", "Library", "Club", "Shelf", "Gallery", "Collection", "The Home"]);
+    expect(nav?.links.filter((l) => l.current).map((l) => l.label)).toEqual(["Sol"]);
   });
-  it("care pages are indexed only as Under the hood, and no hub page links to them", () => {
-    const care = ["/user", "/house", "/wellness", "/overview"];
-    for (const h of care) {
-      const entries = PAGE_INDEX.filter((p) => p.href === h);
-      expect(entries.length, h).toBeGreaterThan(0);
-      for (const e of entries) expect(e.hub, h).toBe("Under the hood");
-    }
-    const root = join(__dirname, "..", "..");
-    for (const f of ["app/page.tsx", "app/needs/page.tsx", "app/together/page.tsx", "app/archive/page.tsx"]) {
-      const text = readFileSync(join(root, f), "utf8");
-      for (const h of care) {
-        expect(new RegExp(`["'\`]${h}(?![\\w/-])`).test(text), `${f} links ${h}`).toBe(false);
-      }
-    }
+  it("matches sub-paths and marks the right door current", () => {
+    expect(innerNavFor("/club/round-1")?.links.find((l) => l.current)?.label).toBe("Club");
   });
-  it("hood pages light the right tab", () => {
-    expect(activeTab("/facts")).toBe("Archive");
-    expect(activeTab("/guardian")).toBe("Needs you");
-    expect(activeTab("/phoenix/chat")).toBe("Together");
-    for (const h of hoodHrefs) expect(activeTab(h), h).not.toBeNull();
+  it("the chat has the back link and no next-door row siblings marked current", () => {
+    const nav = innerNavFor("/phoenix/chat");
+    expect(nav?.back.label).toBe("Us");
+    expect(nav?.links.some((l) => l.current)).toBe(false);
+  });
+  it("house pages stay in their own group", () => {
+    expect(innerNavFor("/tasks")?.links.map((l) => l.label)).toEqual(["Needs you", "Tasks", "House", "Wellness", "You"]);
+  });
+  it("cellar record pages get back-to-Cellar and their section's pages", () => {
+    const nav = innerNavFor("/drifts");
+    expect(nav?.back).toEqual({ href: "/archive", label: "Cellar" });
+    expect(nav?.links.map((l) => l.label)).toContain("Orient");
+    expect(nav?.links.map((l) => l.label)).not.toContain("Letters");
+  });
+  it("/phoenix and /phoenix/chat do not collide (longest href wins)", () => {
+    expect(innerNavFor("/phoenix")?.back.label).toBe("Cellar");
+    expect(innerNavFor("/phoenix/chat")?.back.label).toBe("Us");
+  });
+  it("is null on Home, the tab roots, companion pages and login", () => {
+    for (const p of ["/", "/together", "/archive", "/hood", "/companions/drevan", "/login"]) expect(innerNavFor(p), p).toBeNull();
   });
 });

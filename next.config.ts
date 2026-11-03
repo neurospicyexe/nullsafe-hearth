@@ -23,6 +23,8 @@ const nextConfig: NextConfig = {
       { source: "/uplink", destination: "/", permanent: false },
       // The old constellation page already redirected in-page; the redirect lives here now.
       { source: "/graph", destination: "/map", permanent: false },
+      // Under the hood is the cellar now (nav 1b).
+      { source: "/hood", destination: "/archive", permanent: false },
     ];
   },
   async headers() {

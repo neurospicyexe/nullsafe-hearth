@@ -102,13 +102,13 @@ describe("galleryHint", () => {
 
 describe("togetherDoors", () => {
   it("attaches hints, leaves the rest identical, keeps order, never mutates", () => {
-    const before = JSON.stringify(HUBS.together);
-    const out = togetherDoors(HUBS.together, { "/club": "Voting is open.", "/library": null });
-    expect(out.map((d) => d.href)).toEqual(HUBS.together.map((d) => d.href));
+    const before = JSON.stringify(HUBS.shared);
+    const out = togetherDoors(HUBS.shared, { "/club": "Voting is open.", "/library": null });
+    expect(out.map((d) => d.href)).toEqual(HUBS.shared.map((d) => d.href));
     expect(out.find((d) => d.href === "/club")!.hint).toBe("Voting is open.");
     for (const d of out.filter((d) => d.href !== "/club")) {
-      expect(JSON.stringify(d)).toBe(JSON.stringify(HUBS.together.find((x) => x.href === d.href)));
+      expect(JSON.stringify(d)).toBe(JSON.stringify(HUBS.shared.find((x) => x.href === d.href)));
     }
-    expect(JSON.stringify(HUBS.together)).toBe(before);
+    expect(JSON.stringify(HUBS.shared)).toBe(before);
   });
 });

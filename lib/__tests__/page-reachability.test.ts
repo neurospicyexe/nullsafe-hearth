@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { TABS, HUBS, HOOD_SECTIONS } from "../shell";
+import { TABS, HUBS } from "../shell";
 import nextConfig from "../../next.config";
 
 const APP = join(__dirname, "..", "..", "app");
@@ -28,7 +28,6 @@ const KNOWN_LINKED: Record<string, string> = {
   "/letters/[id]": "letters",
   "/library/[id]": "library",
   "/login": "auth",
-  "/hood": "archive",
   "/companions/[id]": "home",
   "/companions/[id]/all": "companion",
   "/companions/[id]/audit": "companion",
@@ -40,7 +39,9 @@ const KNOWN_LINKED: Record<string, string> = {
   "/companions/[id]/journal": "companion",
   "/companions/[id]/letters": "companion",
   "/companions/[id]/loops": "companion",
+  "/archive": "together (the cellar door)",
   "/companions/[id]/made": "companion",
+  "/companions/[id]/mind": "companion",
   "/companions/[id]/notes": "companion",
   "/companions/[id]/projects": "companion",
   "/companions/[id]/relational": "companion",
@@ -55,7 +56,6 @@ describe("page reachability (spec resolution 8)", () => {
   const doors = new Set<string>([
     ...TABS.map((t) => t.href),
     ...Object.values(HUBS).flatMap((h) => h.map((d) => d.href)),
-    ...HOOD_SECTIONS.flatMap((s) => s.doors.map((d) => d.href)),
   ]);
 
   it("every page file is a tab, a door, known-linked, or a redirect source", async () => {

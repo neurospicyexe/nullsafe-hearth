@@ -7,13 +7,13 @@ import { shellHidden } from "@/lib/shell";
 import { SEARCH_EVENT, searchDetail } from "@/lib/search-handoff";
 import Header from "./Header";
 import TabBar from "./TabBar";
-import SpoonsStrip from "./SpoonsStrip";
+import InnerNav from "./InnerNav";
 import GreetingTitle from "../home/GreetingTitle";
 
 const SearchOverlay = dynamic(() => import("../SearchOverlay"), { ssr: false });
 
 /**
- * Header, page, spoons strip (one-tap check-in), tab bar.
+ * Header, page (with its inner-page header where it has one), tab bar. The check-in lives on Home.
  * The reader and login render bare, with no chrome.
  */
 export default function AppShell({ children }: { children: ReactNode }) {
@@ -49,8 +49,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="h-shell">
       <Header onSearch={() => { setInitialQuery(""); setSearchOpen(true); }}>{pathname === "/" ? <GreetingTitle /> : undefined}</Header>
-      <main className="app-main h-main">{children}</main>
-      <SpoonsStrip />
+      <main className="app-main h-main">
+        <InnerNav />
+        {children}
+      </main>
       <TabBar />
       <SearchOverlay open={searchOpen} onClose={closeSearch} initialQuery={initialQuery} />
     </div>

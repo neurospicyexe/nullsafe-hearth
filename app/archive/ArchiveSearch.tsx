@@ -20,8 +20,8 @@ export default function ArchiveSearch() {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          aria-label="Search the archive"
-          placeholder="Search the archive"
+          aria-label="Search the cellar"
+          placeholder="Search the cellar"
           autoComplete="off"
         />
         <button type="submit">Search</button>

@@ -7,11 +7,12 @@ const m = vi.hoisted(() => ({
   fetchCreatures: vi.fn(),
   fetchCreature: vi.fn(),
   fetchNewestImage: vi.fn(),
+  fetchNeeds: vi.fn(),
 }));
 vi.mock("@/lib/halseth", () => m);
 
 import Page from "./page";
-import { HUBS } from "@/lib/shell";
+import { HUBS, HOUSE_DOORS } from "@/lib/shell";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -20,13 +21,32 @@ beforeEach(() => {
   m.fetchCreatures.mockResolvedValue([]);
   m.fetchCreature.mockResolvedValue(null);
   m.fetchNewestImage.mockResolvedValue(null);
+  m.fetchNeeds.mockResolvedValue(null);
+});
+
+describe("/together sections", () => {
+  it("has Shared places, You and the house, and one door to the cellar", async () => {
+    const html = renderToStaticMarkup(await Page());
+    expect(html).toContain("Shared places");
+    expect(html).toContain("You and the house");
+    for (const d of HOUSE_DOORS) expect(html).toContain(d.label);
+    expect(html).toMatch(/href="\/archive"[^>]*>[^]*The cellar · all records/);
+  });
+  it("puts the needs count on the Needs you door, and none at zero or when down", async () => {
+    m.fetchNeeds.mockResolvedValue({ items: [], counts: { total: 3 } });
+    expect(renderToStaticMarkup(await Page())).toContain("3 new");
+    m.fetchNeeds.mockResolvedValue({ items: [], counts: { total: 0 } });
+    expect(renderToStaticMarkup(await Page())).not.toContain("h-door-count");
+    m.fetchNeeds.mockRejectedValue(new Error("down"));
+    expect(renderToStaticMarkup(await Page())).not.toContain("h-door-count");
+  });
 });
 
 describe("/together", () => {
   it("renders every door and no hints when nothing loads", async () => {
     m.fetchBooks.mockRejectedValue(new Error("down"));
     const html = renderToStaticMarkup(await Page());
-    for (const d of HUBS.together) expect(html).toContain(d.label);
+    for (const d of HUBS.shared) expect(html).toContain(d.label);
     expect(html).not.toContain("h-door-hint");
   });
   it("shows the club hint on the club door", async () => {
@@ -69,7 +89,7 @@ describe("/together", () => {
     m.fetchCreatures.mockResolvedValue(creatures);
     m.fetchCreature.mockRejectedValue(new Error("down"));
     const html = renderToStaticMarkup(await Page());
-    for (const d of HUBS.together) expect(html).toContain(d.label);
+    for (const d of HUBS.shared) expect(html).toContain(d.label);
     expect(html).not.toContain("h-door-hint");
   });
 });

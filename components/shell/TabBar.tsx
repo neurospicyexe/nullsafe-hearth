@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { TABS, activeTab, badgeText, focusRefreshDue, latestOnly, type TabLabel } from "@/lib/shell";
+import { COMPANION_COLOR, TABS, activeTab, badgeText, focusRefreshDue, latestOnly, type TabLabel } from "@/lib/shell";
 
 const icon = (children: ReactNode, round = false) => (
   <svg
@@ -21,16 +21,9 @@ const icon = (children: ReactNode, round = false) => (
   </svg>
 );
 
-const ICONS: Record<TabLabel, ReactNode> = {
+const ICONS: Record<"Home" | "Us", ReactNode> = {
   Home: icon(<path d="M4 11l8-7 8 7v9h-5v-6h-6v6H4z" />),
-  "Needs you": icon(
-    <>
-      <path d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15z" />
-      <path d="M10 21h4" />
-    </>,
-    true,
-  ),
-  Together: icon(
+  Us: icon(
     <>
       <circle cx="9" cy="9" r="3.5" />
       <circle cx="16" cy="10" r="3" />
@@ -38,8 +31,13 @@ const ICONS: Record<TabLabel, ReactNode> = {
     </>,
     true,
   ),
-  Archive: icon(<path d="M4 4h16v6H4zM4 14h16v6H4z" />),
 };
+
+/** Companion tabs carry their identity hue as a small ring; the active tab takes the same hue. */
+function tabIcon(label: TabLabel): ReactNode {
+  if (label === "Home" || label === "Us") return ICONS[label];
+  return <span className="h-tab-ring" aria-hidden="true" />;
+}
 
 export default function TabBar() {
   const pathname = usePathname() ?? "/";
@@ -86,17 +84,19 @@ export default function TabBar() {
     <nav className="h-tabbar" aria-label="Main">
       {TABS.map((tab) => {
         const active = tab.label === current;
-        const badge = tab.label === "Needs you" ? badgeText(waiting) : null;
+        const badge = tab.label === "Home" ? badgeText(waiting) : null;
+        const hue = tab.label === "Drevan" || tab.label === "Cypher" || tab.label === "Gaia" ? COMPANION_COLOR[tab.label.toLowerCase() as "drevan" | "cypher" | "gaia"] : null;
         return (
           <Link
             key={tab.href}
             href={tab.href}
-            className={`h-tab${active ? " is-active" : ""}`}
+            className={`h-tab${active ? " is-active" : ""}${hue ? " has-hue" : ""}`}
+            style={hue ? ({ "--c": hue } as React.CSSProperties) : undefined}
             aria-current={active ? "page" : undefined}
-            aria-label={badge ? `${tab.label}, ${waiting} waiting` : undefined}
+            aria-label={badge ? `${tab.label}, ${waiting} need you` : undefined}
           >
             <span className="h-tab-icon">
-              {ICONS[tab.label]}
+              {tabIcon(tab.label)}
               {badge && <span className="h-tab-badge" aria-hidden="true">{badge}</span>}
             </span>
             <span>{tab.label}</span>
