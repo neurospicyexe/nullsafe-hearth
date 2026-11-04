@@ -105,7 +105,11 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
   const [annotations, setAnnotations] = useState<BookAnnotation[]>(initialAnnotations);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [pending, setPending] = useState<{ cfiRange: string; text: string } | null>(null);
+  // kind "page" (2026-11-04): a note on the page in view, for when selecting text is awkward
+  // (iPad long-press inside the book frame). Anchored at the page's start; its opening words are
+  // stored as selected_text so a companion reading that chapter finds the note (Halseth matches
+  // notes to passages by quote).
+  const [pending, setPending] = useState<{ cfiRange: string; text: string; kind?: "selection" | "page" } | null>(null);
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
   const [marginsOpen, setMarginsOpen] = useState(false);
@@ -173,7 +177,7 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
         rendition.on("selected", (cfiRange: string, contents: Contents) => {
           contentsRef.current = contents;
           const text = contents.window.getSelection()?.toString() ?? "";
-          setPending({ cfiRange, text });
+          setPending({ cfiRange, text, kind: "selection" });
         });
 
         // Arrow keys while focus is inside the epub iframe.
@@ -280,7 +284,7 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
         ...(returned ?? {}),
       };
       setAnnotations((prev) => [...prev, ann]);
-      try {
+      if (pending.kind !== "page") try {
         renditionRef.current?.annotations.add("highlight", pending.cfiRange, {}, undefined, "hl", highlightStyle("raziel", ann.color));
       } catch { /* highlight paint is cosmetic; the note is saved */ }
       contentsRef.current?.window.getSelection()?.removeAllRanges();
@@ -291,6 +295,46 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
     } finally {
       setSaving(false);
     }
+  }
+
+  /** The always-visible note button: the live selection if there is one, else the page in view. */
+  function openNote() {
+    const rendition = renditionRef.current;
+    if (!rendition || pending) return;
+    const list = rendition.getContents() as unknown as Contents | Contents[];
+    const all = (Array.isArray(list) ? list : [list]).filter(Boolean);
+    for (const c of all) {
+      const sel = c.window.getSelection();
+      if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+        try {
+          const cfi = c.cfiFromRange(sel.getRangeAt(0));
+          contentsRef.current = c;
+          setPending({ cfiRange: cfi, text: sel.toString(), kind: "selection" });
+          return;
+        } catch { /* fall through to a page note */ }
+      }
+    }
+    const loc = lastLocationRef.current;
+    const start = loc?.start?.cfi;
+    if (!start) return;
+    let text = "";
+    const c = all[0];
+    if (c) {
+      try {
+        const s0 = c.range(start);
+        const r = c.document.createRange();
+        r.setStart(s0.startContainer, s0.startOffset);
+        const end = loc?.end?.cfi;
+        if (end) {
+          const e0 = c.range(end);
+          r.setEnd(e0.startContainer, e0.startOffset);
+        } else if (c.document.body) {
+          r.setEndAfter(c.document.body);
+        }
+        text = r.toString();
+      } catch { /* the note still saves, anchored to the page; it just carries no words */ }
+    }
+    setPending({ cfiRange: start, text: text.replace(/\s+/g, " ").trim().slice(0, 240), kind: "page" });
   }
 
   function dismissSelection() {
@@ -357,7 +401,8 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
 
               {pending && (
                 <div className="h-reader-note-box">
-                  {pending.text && (
+                  {pending.kind === "page" && <p className="h-reader-quote">a note on this page</p>}
+                  {pending.text && pending.kind !== "page" && (
                     <p className="h-reader-quote">
                       &ldquo;{pending.text.length > 240 ? pending.text.slice(0, 240) + "…" : pending.text}&rdquo;
                     </p>
@@ -365,7 +410,9 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="a note in the margin (optional: the highlight saves either way)"
+                    placeholder={pending.kind === "page"
+                      ? "your note on this page"
+                      : "a note in the margin (optional: the highlight saves either way)"}
                     rows={2}
                     className="h-reader-input"
                   />
@@ -374,7 +421,7 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
                       type="button"
                       className="h-reader-btn is-lamp"
                       onClick={saveAnnotation}
-                      disabled={saving}
+                      disabled={saving || (pending.kind === "page" && !comment.trim())}
                     >
                       {saving ? "saving…" : "save to the margins"}
                     </button>
@@ -399,7 +446,16 @@ export default function Reader({ bookId, fileType, initialProgress, initialAnnot
               >
                 ← prev
               </button>
-              <span className="h-reader-hint">arrow keys turn pages · select a passage to note it</span>
+              <span className="h-reader-hint">arrow keys turn pages · select a passage, or tap note</span>
+              <button
+                type="button"
+                className="h-reader-btn is-lamp"
+                onClick={openNote}
+                disabled={!ready || !!pending}
+                aria-label="write a margin note on the selection, or on this page"
+              >
+                ✎ note
+              </button>
               {marginsToggle}
               <button
                 type="button"
