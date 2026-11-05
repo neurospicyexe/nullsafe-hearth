@@ -1,5 +1,6 @@
 // Makes (B62): pure helpers for the shelf and the download proxy. No React, no fetching.
-import type { Make, MakeKind } from "./halseth";
+import type { CompanionId, Make, MakeKind } from "./halseth";
+import { COMPANION_IDS, COMPANION_NAME } from "./companion-page";
 
 /** A make id is 32 hex; an old generated image is img_<callId> (also 32 hex). Nothing else gets upstream. */
 export const MAKE_ID_RE = /^(img_)?[0-9a-f]{32}$/;
@@ -215,4 +216,43 @@ export function strudelShell(code: string): string {
   });
 </script>
 `;
+}
+
+export interface RecentMake {
+  key: string;
+  companion: CompanionId;
+  name: string;
+  kind: string;
+  title: string;
+  href: string;
+  at: string;
+}
+
+const RECENT_MAKE_DAYS = 14;
+
+/**
+ * The home strip's "made lately": ready makes from the last two weeks across the three shelves, newest first.
+ * Independent of interests (a make with no interest link has no thinking line, so it never reached home).
+ * Old generated images (img_ ids) stay in the Gallery.
+ */
+export function recentMakes(
+  shelves: Partial<Record<CompanionId, Make[] | null>>,
+  now: Date,
+  max = 4,
+): RecentMake[] {
+  const cutoff = now.getTime() - RECENT_MAKE_DAYS * 86_400_000;
+  const out: RecentMake[] = [];
+  for (const c of COMPANION_IDS) {
+    for (const m of shelves[c] ?? []) {
+      if (m.status !== "ready" || m.id.startsWith("img_")) continue;
+      const t = Date.parse(m.created_at.includes("T") ? m.created_at : m.created_at.replace(" ", "T") + "Z");
+      if (!Number.isFinite(t) || t < cutoff) continue;
+      out.push({
+        key: m.id, companion: c, name: COMPANION_NAME[c], kind: KIND_LABEL[m.kind] ?? m.kind,
+        title: m.title, href: `/companions/${c}/made#make-${m.id}`, at: m.created_at,
+      });
+    }
+  }
+  out.sort((a, b) => Date.parse(b.at.replace(" ", "T") + "Z") - Date.parse(a.at.replace(" ", "T") + "Z"));
+  return out.slice(0, max);
 }

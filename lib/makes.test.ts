@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Make } from "./halseth";
-import { isMakeId, isMakeWhich, makeLinks, inlineImage, needsSource, makeRecipe } from "./makes";
+import { isMakeId, isMakeWhich, makeLinks, inlineImage, needsSource, makeRecipe, recentMakes } from "./makes";
 
 const ID = "0123456789abcdef0123456789abcdef";
 const m = (over: Partial<Make>): Make => ({
@@ -68,5 +68,37 @@ describe("how it was made", () => {
   it("an old image shows its description; writing has no recipe (the text is the how)", () => {
     expect(makeRecipe(m({ kind: "image", title: "a fox at dusk" }))!.prompt).toBe("a fox at dusk");
     expect(makeRecipe(m({ kind: "writing" }))).toBeNull();
+  });
+});
+
+describe("recentMakes (home strip)", () => {
+  const now = new Date("2026-11-05T18:00:00Z");
+  const idN = (n: number) => String(n).repeat(32).slice(0, 32);
+  it("lists an interest-less ready writing from the D1 timestamp shape, newest first, linking the piece", () => {
+    const out = recentMakes(
+      {
+        cypher: [m({ id: idN(1), kind: "writing", title: "Slime", created_at: "2026-11-05 14:00:33" })],
+        gaia: [m({ id: idN(2), created_at: "2026-11-04T09:00:00Z" })],
+      },
+      now,
+    );
+    expect(out.map((r) => r.title)).toEqual(["Slime", "t"]);
+    expect(out[0].href).toBe(`/companions/cypher/made#make-${idN(1)}`);
+    expect(out[0].kind).toBe("writing");
+  });
+  it("drops pending, failed, old, legacy img_ rows, and tolerates null shelves", () => {
+    const out = recentMakes(
+      {
+        cypher: [
+          m({ id: idN(3), status: "pending" }),
+          m({ id: idN(4), status: "failed" }),
+          m({ id: idN(5), created_at: "2026-10-01T00:00:00Z" }),
+          m({ id: "img_" + idN(6), kind: "image" }),
+        ],
+        drevan: null,
+      },
+      now,
+    );
+    expect(out).toEqual([]);
   });
 });

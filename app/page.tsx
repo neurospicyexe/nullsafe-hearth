@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { fetchSomaStates, fetchBooks, fetchInbox, fetchThinking, fetchNeeds } from "@/lib/halseth";
+import { fetchSomaStates, fetchBooks, fetchInbox, fetchThinking, fetchNeeds, fetchCompanionMakes } from "@/lib/halseth";
 import { thinkingLines } from "@/lib/thinking";
+import { recentMakes } from "@/lib/makes";
 import { buildWhoIsHome, buildLeftForYou, currentBook, needsStrip } from "@/lib/home-model";
 import CheckinCard from "@/components/home/CheckinCard";
 import NeedsStrip from "@/components/home/NeedsStrip";
@@ -8,16 +9,20 @@ import WhoIsHome from "@/components/home/WhoIsHome";
 import LeftForYou from "@/components/home/LeftForYou";
 import ReadingLine from "@/components/home/ReadingLine";
 import ThinkingStrip from "@/components/home/ThinkingStrip";
+import RecentMakes from "@/components/home/RecentMakes";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [soma, inbox, books, thinking, needs] = await Promise.all([
+  const [soma, inbox, books, thinking, needs, cyMakes, drMakes, gaMakes] = await Promise.all([
     fetchSomaStates(),
     fetchInbox(3),
     fetchBooks().catch(() => []),
     fetchThinking(8).catch(() => null),
     fetchNeeds(2).catch(() => null),
+    fetchCompanionMakes("cypher", 6).catch(() => null),
+    fetchCompanionMakes("drevan", 6).catch(() => null),
+    fetchCompanionMakes("gaia", 6).catch(() => null),
   ]);
   const now = new Date();
 
@@ -29,6 +34,7 @@ export default async function HomePage() {
   const book = currentBook(books);
   const think = thinkingLines(thinking, 5);
   const strip = needsStrip(needs, now);
+  const made = recentMakes({ cypher: cyMakes, drevan: drMakes, gaia: gaMakes }, now);
 
   return (
     <div className="h-home">
@@ -39,6 +45,7 @@ export default async function HomePage() {
       <NeedsStrip model={strip} />
       {/* B62: their own thinking sits right under Who is home, above anything about Raziel. */}
       <ThinkingStrip lines={think} now={now} />
+      <RecentMakes makes={made} now={now} />
       {inbox && <LeftForYou items={left.items} />}
       {book && <ReadingLine book={book} />}
       <section className="h-home-section">
