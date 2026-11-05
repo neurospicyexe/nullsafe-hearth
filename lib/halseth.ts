@@ -1885,6 +1885,9 @@ export type Make = {
   files: { source?: MakeFile; file?: MakeFile; preview?: MakeFile };
   /** The recipe a model was handed (music_audio / video). Null or absent for code kinds, images, older Halseth. */
   params?: Record<string, unknown> | null;
+  /** Where a captured writing came from (mig 0170): a letter, a night exploration, or a piece the
+   *  companion kept by hand. Null / absent for things made with the make verb, and on older Halseth. */
+  origin_kind?: "letter" | "exploration" | "kept" | null;
 };
 
 /** The shelf for one companion, newest first. Null when Halseth could not be read. */

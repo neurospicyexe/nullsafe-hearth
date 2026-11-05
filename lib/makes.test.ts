@@ -102,3 +102,14 @@ describe("recentMakes (home strip)", () => {
     expect(out).toEqual([]);
   });
 });
+
+describe("kindLabel (mig 0170 origin)", () => {
+  it("names a captured letter and night exploration, leaves the rest as their kind", async () => {
+    const { kindLabel } = await import("./makes");
+    expect(kindLabel({ kind: "writing", origin_kind: "letter" })).toBe("letter");
+    expect(kindLabel({ kind: "writing", origin_kind: "exploration" })).toBe("night exploration");
+    expect(kindLabel({ kind: "writing", origin_kind: "kept" })).toBe("writing");
+    expect(kindLabel({ kind: "writing" })).toBe("writing");
+    expect(kindLabel({ kind: "music_code", origin_kind: null })).toBe("beat");
+  });
+});

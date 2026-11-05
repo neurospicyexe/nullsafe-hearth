@@ -25,6 +25,14 @@ export const KIND_LABEL: Record<MakeKind, string> = {
   image: "image",
 };
 
+const ORIGIN_LABEL: Record<string, string> = { letter: "letter", exploration: "night exploration" };
+
+/** The kind word on a card: a captured letter or night exploration says so; everything else is its kind. */
+export function kindLabel(m: Pick<Make, "kind" | "origin_kind">): string {
+  if (m.kind === "writing" && m.origin_kind && ORIGIN_LABEL[m.origin_kind]) return ORIGIN_LABEL[m.origin_kind]!;
+  return KIND_LABEL[m.kind] ?? m.kind;
+}
+
 export function makeUrl(id: string, which: MakeWhich, inline = false): string {
   return `/api/makes/${id}/${which}${inline ? "?inline=1" : ""}`;
 }
@@ -248,7 +256,7 @@ export function recentMakes(
       const t = Date.parse(m.created_at.includes("T") ? m.created_at : m.created_at.replace(" ", "T") + "Z");
       if (!Number.isFinite(t) || t < cutoff) continue;
       out.push({
-        key: m.id, companion: c, name: COMPANION_NAME[c], kind: KIND_LABEL[m.kind] ?? m.kind,
+        key: m.id, companion: c, name: COMPANION_NAME[c], kind: kindLabel(m),
         title: m.title, href: `/companions/${c}/made#make-${m.id}`, at: m.created_at,
       });
     }

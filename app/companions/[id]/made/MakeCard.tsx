@@ -1,6 +1,6 @@
 import type { Make } from "@/lib/halseth";
 import { ageLabel } from "@/lib/home-model";
-import { KIND_LABEL, inlineImage, makeLinks, makeRecipe, makeUrl, playerUrl } from "@/lib/makes";
+import { kindLabel, inlineImage, makeLinks, makeRecipe, makeUrl, playerUrl } from "@/lib/makes";
 import MakePlayer from "./MakePlayer";
 
 // One make on the shelf. Rendering rules: raster images through the inline proxy (an SVG drawing shows
@@ -16,7 +16,7 @@ export default function MakeCard({ make, source, now }: { make: Make; source: st
   return (
     <li id={`make-${make.id}`} className="h-make" data-kind={make.kind} data-status={make.status}>
       <div className="h-make-head">
-        <span className="h-make-kind">{KIND_LABEL[make.kind] ?? make.kind}</span>
+        <span className="h-make-kind">{kindLabel(make)}</span>
         <h2 className="h-make-title">{make.title}</h2>
       </div>
 
