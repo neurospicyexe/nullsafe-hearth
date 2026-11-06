@@ -10,6 +10,7 @@ export type NeedsAction =
   | { kind: "basin"; verb: "confirm" | "dismiss" };
 
 export function resolveWrite(item: NeedsItem, action: NeedsAction): QueuedWrite {
+  if (item.kind === "basin_move") throw new Error("a basin revision is decided on its page, not through the write queue");
   const key = `needs:${item.kind}:${item.id}`;
   const id = encodeURIComponent(item.id);
   switch (action.kind) {
@@ -40,13 +41,15 @@ export function whoLabel(item: NeedsItem): string {
 }
 
 export function titleText(item: NeedsItem): string {
+  // A basin revision: the basin's name, said as what waits (the new words are read on the basins page, never here).
+  if (item.kind === "basin_move") return item.title ? `${item.title}: a revision is waiting for your witness` : "A basin revision is waiting for your witness";
   if (item.title) return item.title;
   if (item.kind === "basin") return `Pressure drift ${(item.drift_score ?? 0).toFixed(2)}`;
   return "";
 }
 
 export function kindLabel(kind: NeedsKind): string {
-  return { question: "asks", growth: "growth to ratify", guardian: "flag", basin: "basin drift" }[kind];
+  return { question: "asks", growth: "growth to ratify", guardian: "flag", basin: "basin drift", basin_move: "basin revision" }[kind];
 }
 
 export function buttons(item: NeedsItem): { verb: string; label: string }[] {
@@ -55,7 +58,14 @@ export function buttons(item: NeedsItem): { verb: string; label: string }[] {
     case "growth": return [{ verb: "accept", label: "Accept" }, { verb: "decline", label: "Decline" }];
     case "guardian": return [{ verb: "acknowledge", label: "Seen it" }, { verb: "resolve", label: "Resolved" }];
     case "basin": return [{ verb: "confirm", label: "It's growth" }, { verb: "dismiss", label: "Noise" }];
+    case "basin_move": return []; // decided on the basins page, where old and new sit side by side
   }
+}
+
+/** Where a row sends Raziel to act on it, when its answer lives on another page (a basin revision awaiting witness). */
+export function rowLink(item: NeedsItem): { href: string; label: string } | null {
+  if (item.kind !== "basin_move" || !item.companion_id) return null;
+  return { href: `/companions/${item.companion_id}/basins`, label: "Read and decide" };
 }
 
 export function doneLine(action: NeedsAction): string {

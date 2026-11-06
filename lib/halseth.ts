@@ -2348,7 +2348,7 @@ export async function fetchPeople(): Promise<GraphPerson[] | null> {
 }
 
 // "Needs you" inbox (Halseth GET /raziel/needs): everything waiting on Raziel, one list.
-export type NeedsKind = "question" | "growth" | "guardian" | "basin";
+export type NeedsKind = "question" | "growth" | "guardian" | "basin" | "basin_move";
 export interface NeedsItem {
   key: string; // `${kind}:${id}`
   kind: NeedsKind;
@@ -2360,7 +2360,7 @@ export interface NeedsItem {
   severity?: "notice" | "warning" | "red"; // guardian only
   drift_score?: number; // basin only
 }
-export interface NeedsCounts { total: number; question: number; growth: number; guardian: number; basin: number }
+export interface NeedsCounts { total: number; question: number; growth: number; guardian: number; basin: number; basin_move?: number }
 export async function fetchNeeds(limit = 50): Promise<{ items: NeedsItem[]; counts: NeedsCounts } | null> {
   return hGetSafe<{ items: NeedsItem[]; counts: NeedsCounts }>(`/raziel/needs?limit=${limit}`);
 }

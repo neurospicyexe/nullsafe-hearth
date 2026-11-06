@@ -2,7 +2,7 @@ import Link from "next/link";
 import { fetchSomaStates, fetchBooks, fetchInbox, fetchThinking, fetchNeeds, fetchCompanionMakes } from "@/lib/halseth";
 import { thinkingLines } from "@/lib/thinking";
 import { recentMakes } from "@/lib/makes";
-import { buildWhoIsHome, buildLeftForYou, currentBook, needsStrip } from "@/lib/home-model";
+import { buildWhoIsHome, buildLeftForYou, currentBook, needsStrip, basinMoveLink } from "@/lib/home-model";
 import CheckinCard from "@/components/home/CheckinCard";
 import NeedsStrip from "@/components/home/NeedsStrip";
 import WhoIsHome from "@/components/home/WhoIsHome";
@@ -34,6 +34,7 @@ export default async function HomePage() {
   const book = currentBook(books);
   const think = thinkingLines(thinking, 5);
   const strip = needsStrip(needs, now);
+  const basinMove = basinMoveLink(needs);
   const made = recentMakes({ cypher: cyMakes, drevan: drMakes, gaia: gaMakes }, now);
 
   return (
@@ -46,6 +47,11 @@ export default async function HomePage() {
         <Link href="/companions/gaia/garden">Gaia&apos;s garden</Link>
       </p>
       <NeedsStrip model={strip} />
+      {basinMove && (
+        <p className="h-home-garden h-home-section">
+          <Link href={basinMove.href}>{basinMove.text}</Link>
+        </p>
+      )}
       {/* B62: their own thinking sits right under Who is home, above anything about Raziel. */}
       <ThinkingStrip lines={think} now={now} />
       <RecentMakes makes={made} now={now} />

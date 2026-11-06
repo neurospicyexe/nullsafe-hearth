@@ -148,6 +148,13 @@ export function greeting(now: Date): string {
   return `${WEEKDAYS[now.getDay()]} ${partOfDay(now)}`;
 }
 
+/** Gaia's revision awaiting witness, from the Needs counts already fetched (no extra call). Null when none waits. */
+export function basinMoveLink(needs: { counts: { basin_move?: number } } | null): { href: string; text: string } | null {
+  const n = needs?.counts.basin_move ?? 0;
+  if (n <= 0) return null;
+  return { href: "/companions/gaia/basins", text: n === 1 ? "Gaia has a basin revision waiting for your witness" : `${n} basin revisions are waiting for your witness` };
+}
+
 export type NeedsStripModel = { total: number; headline: string; items: { key: string; who: string; text: string; when: string }[] };
 
 /** "N things need you" with the newest two, or null when nothing waits (the strip is hidden at 0 or when Halseth is down). */

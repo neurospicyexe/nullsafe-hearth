@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildWhoIsHome, buildLeftForYou, currentBook, ageLabel, greeting, needsStrip } from "../home-model";
+import { buildWhoIsHome, buildLeftForYou, currentBook, ageLabel, greeting, needsStrip, basinMoveLink } from "../home-model";
 import type { SomaData, InboxResponse, Book } from "../halseth";
 
 const now = new Date("2026-10-29T20:00:00Z");
@@ -151,5 +151,20 @@ describe("needsStrip", () => {
   });
   it("uses the singular for one", () => {
     expect(needsStrip({ items: [item("a")] as never, counts: { total: 1 } }, now)?.headline).toBe("1 thing needs you");
+  });
+});
+
+describe("basinMoveLink", () => {
+  it("is null with no revision waiting or no Halseth", () => {
+    expect(basinMoveLink(null)).toBeNull();
+    expect(basinMoveLink({ counts: {} })).toBeNull();
+    expect(basinMoveLink({ counts: { basin_move: 0 } })).toBeNull();
+  });
+  it("links Gaia's basins page when one waits", () => {
+    expect(basinMoveLink({ counts: { basin_move: 1 } })).toEqual({ href: "/companions/gaia/basins", text: "Gaia has a basin revision waiting for your witness" });
+  });
+  it("the strip counts it in the total", () => {
+    const m = needsStrip({ items: [{ key: "basin_move:m1", kind: "basin_move", id: "m1", companion_id: "gaia", created_at: "2026-11-05 10:00:00", title: "the-line", detail: "refusal" }], counts: { total: 1 } }, new Date("2026-11-06T12:00:00Z"));
+    expect(m?.headline).toBe("1 thing needs you");
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { NeedsItem } from "@/lib/halseth";
 import type { Pending } from "@/lib/write-queue";
@@ -7,7 +8,7 @@ import { COMPANION_COLOR } from "@/lib/shell";
 import { tint } from "@/lib/domain-colors";
 import { ageLabel } from "@/lib/home-model";
 import {
-  buttons, canSend, doneLine, kindLabel, outcomeLine, resolveWrite, rowState, titleText, whoLabel,
+  buttons, canSend, doneLine, kindLabel, outcomeLine, resolveWrite, rowLink, rowState, titleText, whoLabel,
   type NeedsAction, type RowState,
 } from "@/lib/needs";
 import { useWriteQueue } from "@/components/shell/WriteQueueProvider";
@@ -22,6 +23,7 @@ function actionFor(item: NeedsItem, verb: string, answer: string): NeedsAction {
     case "growth": return { kind: "growth", verb: verb === "accept" ? "accept" : "decline" };
     case "guardian": return { kind: "guardian", verb: verb === "resolve" ? "resolve" : "acknowledge" };
     case "basin": return { kind: "basin", verb: verb === "confirm" ? "confirm" : "dismiss" };
+    case "basin_move": throw new Error("not actionable here"); // rowLink() sends it to the basins page
   }
 }
 
@@ -102,7 +104,12 @@ export default function NeedsRow({
         {item.kind === "guardian" && item.severity === "red" && <span className="h-needs-urgent">urgent</span>}
       </div>
       <p className="h-needs-title">{titleText(item)}</p>
-      {item.detail && <p className="h-needs-detail">{item.detail}</p>}
+      {item.detail && item.kind !== "basin_move" && <p className="h-needs-detail">{item.detail}</p>}
+      {rowLink(item) && (
+        <div className="h-needs-actions">
+          <Link href={rowLink(item)!.href} className="h-btn is-primary">{rowLink(item)!.label}</Link>
+        </div>
+      )}
 
       {st === "idle" && (
         <div className="h-needs-actions">

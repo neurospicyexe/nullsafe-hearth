@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  resolveWrite, whoLabel, titleText, kindLabel, buttons, doneLine, outcomeLine, canSend, rowState, countLine, listCountLine, recentAnswered,
+  resolveWrite, rowLink, whoLabel, titleText, kindLabel, buttons, doneLine, outcomeLine, canSend, rowState, countLine, listCountLine, recentAnswered,
 } from "../needs";
 import type { NeedsItem } from "../halseth";
 
@@ -147,5 +147,18 @@ describe("recentAnswered", () => {
     const input = [qa("a", "2026-10-01 00:00:00", "2026-10-02 00:00:00"), qa("b", "2026-10-01 00:00:00", "2026-10-03 00:00:00")];
     recentAnswered(input);
     expect(input.map((q: { id: string }) => q.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("basin_move (a revision awaiting Raziel's witness)", () => {
+  const m: NeedsItem = { ...base, key: "basin_move:m1", kind: "basin_move", id: "m1", companion_id: "gaia", title: "the-line", detail: "refusal" };
+  it("says what waits, has no write buttons, and links to the basins page", () => {
+    expect(kindLabel("basin_move")).toBe("basin revision");
+    expect(titleText(m)).toBe("the-line: a revision is waiting for your witness");
+    expect(whoLabel(m)).toBe("Gaia");
+    expect(buttons(m)).toEqual([]);
+    expect(rowLink(m)).toEqual({ href: "/companions/gaia/basins", label: "Read and decide" });
+    expect(rowLink(q)).toBeNull();
+    expect(() => resolveWrite(m, { kind: "basin", verb: "dismiss" })).toThrow();
   });
 });
