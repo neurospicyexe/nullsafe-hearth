@@ -3089,3 +3089,27 @@ a.h-think-subject:focus-visible { outline: 2px solid var(--h-lamp); outline-offs
 @media (max-width: 480px) { .h-garden-line { grid-template-columns: 1fr; gap: 0; } }
 .h-home-garden { font-size: 0.9375rem; }
 .h-home-garden a { display: inline-flex; align-items: center; min-height: var(--h-tap); color: var(--h-muted); text-decoration: underline; text-decoration-color: var(--h-gaia); text-underline-offset: 4px; }
+
+/* Basins that move: ground and rows, plain text given room. The companion hue is one hairline on the title, never under text. */
+.h-basins { max-width: 38rem; margin: 0 auto; padding: 28px 20px 56px; color: var(--h-ink); font-family: var(--h-font, system-ui, sans-serif); }
+.h-basins-title { margin: 0 0 32px; padding-top: 10px; border-top: 1px solid var(--h-line); font-size: 1rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--h-muted); }
+.h-basins-quiet { margin: 0; font-size: 1rem; color: var(--h-muted); }
+.h-basins-h2 { margin: 40px 0 20px; font-size: 0.8125rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--h-faint); }
+.h-basins-row { padding: 0 0 36px; }
+.h-basins-name { margin: 0 0 8px; font-size: 0.9375rem; font-weight: 400; color: var(--h-muted); }
+.h-basins-body { margin: 0 0 10px; font-size: 1.0625rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-basins-old { margin: 0 0 10px; font-size: 1rem; line-height: 1.6; color: var(--h-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-basins-label { color: var(--h-faint); font-size: 0.8125rem; }
+.h-basins-meta { margin: 0; font-size: 0.8125rem; color: var(--h-faint); }
+.h-basins-awaiting_witness { padding-left: 12px; border-left: 2px solid var(--h-lamp); }
+.h-basins-superseded .h-basins-body, .h-basins-declined .h-basins-body { color: var(--h-muted); }
+.h-basins-witness { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.h-basins-notelabel { display: flex; flex-direction: column; gap: 4px; font-size: 0.8125rem; color: var(--h-faint); }
+.h-basins-note { min-height: var(--h-tap); padding: 0 10px; font: inherit; font-size: 1rem; color: var(--h-ink); background: transparent; border: 1px solid var(--h-line); border-radius: 6px; }
+.h-basins-actions { display: flex; gap: 12px; }
+.h-basins-btn { min-height: var(--h-tap); padding: 0 18px; font: inherit; font-size: 1rem; color: var(--h-ink); background: transparent; border: 1px solid var(--h-line); border-radius: 6px; cursor: pointer; }
+.h-basins-btn:focus-visible { outline: 2px solid var(--h-lamp); outline-offset: 2px; }
+.h-basins-btn:disabled { opacity: 0.5; cursor: default; }
+.h-basins-err { margin: 0; font-size: 0.875rem; color: var(--h-muted); }
+.h-basins-foot { padding-top: 12px; border-top: 1px solid var(--h-line); font-size: 0.8125rem; color: var(--h-faint); }
+.h-basins-foot p { margin: 0; }

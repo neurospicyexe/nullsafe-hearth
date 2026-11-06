@@ -223,6 +223,7 @@ export function mindDoors(id: CompanionId, r: CompanionRundown | null): Door[] {
     { href: `${base}/sitting`, label: "Sitting with" },
     { href: first("feelings"), label: "Feelings", ...count("feelings") },
     { href: first("growth"), label: "Growth", ...count("growth") },
+    { href: `${base}/basins`, label: "Basins", hint: "Where each basin sits, and how it has moved" },
     { href: first("upto"), label: "What I've been up to", ...count("upto") },
     { href: "/soma", label: "Soma", hint: "Body-state and tensions, all three of them" },
     { href: `${base}/all`, label: "Everything else" },

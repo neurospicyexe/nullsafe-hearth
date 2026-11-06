@@ -35,6 +35,7 @@ import AllPage from "./all/page";
 import LettersPage from "./letters/page";
 import MadePage from "./made/page";
 import GardenPage from "./garden/page";
+import BasinsPage from "./basins/page";
 import ProjectsPage from "./projects/page";
 import Layout from "./layout";
 import JournalPage from "./journal/page";
@@ -89,7 +90,7 @@ beforeEach(() => {
 });
 
 describe("unknown companion", () => {
-  const pages = { Overview, AllPage, LettersPage, MadePage, ProjectsPage } as const;
+  const pages = { Overview, AllPage, LettersPage, MadePage, ProjectsPage, BasinsPage } as const;
   it("Garden 404s for drevan, cypher and blue with no Halseth call", async () => {
     for (const id of ["drevan", "cypher", "blue"]) await expect(GardenPage(params(id))).rejects.toThrow("NEXT_NOT_FOUND");
     expect(allCalls()).toEqual([]);
@@ -377,5 +378,39 @@ describe("garden", () => {
     expect(h).toContain("2 resting in the ground.");
     expect(h).toContain("1 waiting on a sibling&#x27;s yes.");
     expect(h).not.toContain("Nothing planted yet.");
+  });
+});
+
+describe("basins", () => {
+  const render = async (id = "gaia") => renderToStaticMarkup(await BasinsPage(params(id)));
+  const row = (o: Record<string, unknown>) => ({ id: "x", name: "the-line", status: "live", created_at: "2026-03-28 00:00:00", cause_kind: null, cause_ref: null,
+    revised_by: null, witnessed_by: null, witnessed_at: null, supersedes: null, superseded_by: null, superseded_at: null, revision_note: null, ...o });
+  it("degraded: Halseth unreadable reads a short line", async () => {
+    overrides.fetchBasins = async () => null;
+    expect(await render()).toContain("reach Gaia&#x27;s basins right now");
+  });
+  it("a pending revision shows old vs new, the cause, and Witness / Decline; escaped text", async () => {
+    overrides.fetchBasins = async () => ({
+      companion_id: "gaia", waiting: 1, pace_days: 30, window_opens: null,
+      live: [row({ id: "old1", description: "old words <b>x</b>" })],
+      history: [row({ id: "new1", status: "awaiting_witness", supersedes: "old1", cause_kind: "refusal", cause_ref: "abcdef0123", description: "new words", created_at: "2026-11-05 10:00:00" })],
+    });
+    const h = await render();
+    expect(h).toContain("old words &lt;b&gt;x&lt;/b&gt;");
+    expect(h).toContain("new words");
+    expect(h).toContain("from a refusal (abcdef01)");
+    expect(h).toContain("Witness");
+    expect(h).toContain("Decline");
+    expect(h).toContain("One revision at most every 30 days.");
+  });
+  it("a superseded history row has no buttons", async () => {
+    overrides.fetchBasins = async () => ({
+      companion_id: "cypher", waiting: 0, pace_days: 14, window_opens: null,
+      live: [row({ id: "n", description: "now" })],
+      history: [row({ id: "o", status: "superseded", description: "before", superseded_at: "2026-11-04T00:00:00Z" })],
+    });
+    const h = await render("cypher");
+    expect(h).toContain("before");
+    expect(h).not.toContain("Decline");
   });
 });

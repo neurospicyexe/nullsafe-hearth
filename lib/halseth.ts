@@ -1925,6 +1925,38 @@ export async function fetchGaiaGarden(): Promise<GardenData | null> {
   };
 }
 
+export type BasinLine = {
+  id: string;
+  name: string;
+  status: "live" | "awaiting_witness" | "superseded" | "declined";
+  created_at: string;
+  cause_kind: string | null;
+  cause_ref: string | null;
+  revised_by: string | null;
+  witnessed_by: string | null;
+  witnessed_at: string | null;
+  supersedes: string | null;
+  superseded_by: string | null;
+  superseded_at: string | null;
+  revision_note: string | null;
+  description?: string;
+};
+export type BasinsData = { companion_id: string; live: BasinLine[]; history: BasinLine[]; waiting: number; pace_days: number; window_opens: string | null };
+
+/** A companion's basins (mig 0172): live rows plus every superseded / declined / awaiting row. Null when unreadable or not deployed. */
+export async function fetchBasins(companionId: string): Promise<BasinsData | null> {
+  const res = await hGetSafe<Partial<BasinsData>>(`/mind/basins/${companionId}`);
+  if (!res || !Array.isArray(res.live) || !Array.isArray(res.history)) return null;
+  return {
+    companion_id: companionId,
+    live: res.live,
+    history: res.history,
+    waiting: typeof res.waiting === "number" ? res.waiting : 0,
+    pace_days: typeof res.pace_days === "number" ? res.pace_days : 0,
+    window_opens: res.window_opens ?? null,
+  };
+}
+
 const MAKE_SOURCE_CAP = 70_000; // Halseth rejects sources over 64 KB; a little slack, never a stream of megabytes
 
 /** The raw source text of a writing / page / music_code make, for the card. Null on any failure. */
