@@ -8,6 +8,7 @@ const CAUSE: Record<string, string> = {
   tension: "a tension",
   drift: "a drift reading",
   session: "a session",
+  self_model: "a self-model observation made canon",
 };
 
 const asUtc = (v: string): string => (v.includes("T") ? v : `${v.replace(" ", "T")}Z`);
