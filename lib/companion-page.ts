@@ -186,7 +186,7 @@ export interface CompanionPill {
 
 /** The slugs that belong to Mind: every route in a journal, growth, feelings or upto group, plus /all. */
 const MIND_SLUGS = new Set(["mind", "all"]);
-const PILL_OF_SLUG: Record<string, string> = { letters: "Letters", made: "Made", thinking: "Thinking" };
+const PILL_OF_SLUG: Record<string, string> = { letters: "Letters", made: "Made", thinking: "Thinking", garden: "Garden" };
 
 /**
  * The companion tab's pill row: Now . Mind . Letters . Made . Thinking. Exactly one is current for a
@@ -205,7 +205,11 @@ export function companionPills(id: CompanionId, pathname: string): CompanionPill
     label,
     current: active === label,
   });
-  return [pill("Now", ""), pill("Mind", "mind"), pill("Letters", "letters"), pill("Made", "made"), pill("Thinking", "thinking")];
+  const pills = [pill("Now", ""), pill("Mind", "mind"), pill("Letters", "letters"), pill("Made", "made")];
+  // The garden is Gaia's alone; her tab carries it beside the shelf, never for the other two.
+  if (id === "gaia") pills.push(pill("Garden", "garden"));
+  pills.push(pill("Thinking", "thinking"));
+  return pills;
 }
 
 /** The doors on the Mind page: journal, sitting with, feelings, growth, what they've been up to, soma, everything else. */

@@ -1896,6 +1896,35 @@ export async function fetchCompanionMakes(companionId: CompanionId, limit = 40):
   return Array.isArray(res?.makes) ? res.makes : null;
 }
 
+export type GardenPlanting = {
+  id: string;
+  kind: "letter" | "note" | "kept_line" | "interest_line";
+  planted_at: string;
+  written_at: string;
+  text: string;
+  to: "raziel" | "triad" | "cypher" | "drevan" | null;
+  interest_name: string | null;
+};
+export type GardenWitnessDay = { day: string; entries: { id: string; at: string; type: string; text: string }[] };
+export type GardenData = {
+  planted: GardenPlanting[];
+  witness: null | { planted_at: string; days: GardenWitnessDay[] };
+  resting: number;
+  awaiting: number;
+};
+
+/** Gaia's garden. Null when Halseth cannot be read or does not have the route yet (404). */
+export async function fetchGaiaGarden(): Promise<GardenData | null> {
+  const res = await hGetSafe<Partial<GardenData>>("/mind/garden/gaia");
+  if (!res || !Array.isArray(res.planted)) return null;
+  return {
+    planted: res.planted,
+    witness: res.witness ?? null,
+    resting: typeof res.resting === "number" ? res.resting : 0,
+    awaiting: typeof res.awaiting === "number" ? res.awaiting : 0,
+  };
+}
+
 const MAKE_SOURCE_CAP = 70_000; // Halseth rejects sources over 64 KB; a little slack, never a stream of megabytes
 
 /** The raw source text of a writing / page / music_code make, for the card. Null on any failure. */

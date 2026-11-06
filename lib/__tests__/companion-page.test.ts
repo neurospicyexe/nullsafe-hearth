@@ -277,8 +277,15 @@ describe("companionPills", () => {
       ["Mind", "/companions/gaia/mind"],
       ["Letters", "/companions/gaia/letters"],
       ["Made", "/companions/gaia/made"],
+      ["Garden", "/companions/gaia/garden"],
       ["Thinking", "/companions/gaia/thinking"],
     ]);
+  });
+  it("carries Garden for Gaia only, and marks it on her garden page", () => {
+    expect(companionPills("drevan", "/companions/drevan").map((p) => p.label)).not.toContain("Garden");
+    expect(companionPills("cypher", "/companions/cypher").map((p) => p.label)).not.toContain("Garden");
+    const on = companionPills("gaia", "/companions/gaia/garden").filter((p) => p.current).map((p) => p.label);
+    expect(on).toEqual(["Garden"]);
   });
   it("marks Now on the overview, whatever the case or trailing slash", () => {
     expect(cur("/companions/drevan")).toEqual(["Now"]);

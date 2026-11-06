@@ -34,6 +34,7 @@ import Overview from "./page";
 import AllPage from "./all/page";
 import LettersPage from "./letters/page";
 import MadePage from "./made/page";
+import GardenPage from "./garden/page";
 import ProjectsPage from "./projects/page";
 import Layout from "./layout";
 import JournalPage from "./journal/page";
@@ -89,6 +90,10 @@ beforeEach(() => {
 
 describe("unknown companion", () => {
   const pages = { Overview, AllPage, LettersPage, MadePage, ProjectsPage } as const;
+  it("Garden 404s for drevan, cypher and blue with no Halseth call", async () => {
+    for (const id of ["drevan", "cypher", "blue"]) await expect(GardenPage(params(id))).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(allCalls()).toEqual([]);
+  });
   for (const [name, Page] of Object.entries(pages)) {
     it(`${name} 404s on /companions/blue with no Halseth call`, async () => {
       await expect(Page(params("blue"))).rejects.toThrow("NEXT_NOT_FOUND");
@@ -337,5 +342,40 @@ describe("letters door", () => {
     const html = renderToStaticMarkup(await LettersPage(params("cypher")));
     expect(html).toContain("Couldn&#x27;t load the letters left for you.");
     expect(html).not.toContain("No letters yet");
+  });
+});
+
+describe("garden", () => {
+  const render = async (id = "gaia") => renderToStaticMarkup(await GardenPage(params(id)));
+  it("degraded: Halseth unreachable reads a short line, no crash", async () => {
+    overrides.fetchGaiaGarden = async () => null;
+    expect(await render()).toContain("Can&#x27;t reach the garden right now.");
+  });
+  it("empty reads Nothing planted yet., no resting or waiting lines", async () => {
+    overrides.fetchGaiaGarden = async () => ({ planted: [], witness: null, resting: 0, awaiting: 0 });
+    const h = await render("Gaia");
+    expect(h).toContain("Nothing planted yet.");
+    expect(h).not.toContain("resting");
+    expect(h).not.toContain("waiting");
+  });
+  it("populated: plantings, witness days, escaped text, counts", async () => {
+    overrides.fetchGaiaGarden = async () => ({
+      planted: [{ id: "p1", kind: "letter", planted_at: "2026-11-04T15:00:00Z", written_at: "2026-11-02T15:00:00Z",
+        text: "stay.\n<b>x</b>", to: "raziel", interest_name: null }],
+      witness: { planted_at: "2026-11-01T00:00:00Z", days: [
+        { day: "2026-11-03", entries: [{ id: "w1", at: "2026-11-03T21:42:00Z", type: "kept", text: "held the line" }] },
+      ] },
+      resting: 2, awaiting: 1,
+    });
+    const h = await render();
+    expect(h).toContain("to you");
+    expect(h).toContain("written Nov 2");
+    expect(h).toContain("&lt;b&gt;x&lt;/b&gt;");
+    expect(h).not.toContain("<b>x</b>");
+    expect(h).toContain("held the line");
+    expect(h).toContain("3:42 PM");
+    expect(h).toContain("2 resting in the ground.");
+    expect(h).toContain("1 waiting on a sibling&#x27;s yes.");
+    expect(h).not.toContain("Nothing planted yet.");
   });
 });

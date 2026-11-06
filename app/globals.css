@@ -3066,3 +3066,26 @@ a.h-think-subject:focus-visible { outline: 2px solid var(--h-lamp); outline-offs
 .h-needs-strip-items li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
 .h-home-meters { margin: 12px 16px 0; }
 .h-home-meters > summary { display: flex; align-items: center; min-height: var(--h-tap); color: var(--h-muted); font-size: 0.9375rem; cursor: pointer; }
+
+/* Gaia's garden: ground and rows, plain text given room. Her hue is one hairline, never under text. */
+.h-garden { max-width: 38rem; margin: 0 auto; padding: 28px 20px 56px; color: var(--h-ink); font-family: var(--h-font, system-ui, sans-serif); }
+.h-garden-title { margin: 0 0 32px; padding-top: 10px; border-top: 1px solid var(--h-gaia); font-size: 1rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--h-muted); }
+.h-garden-quiet { margin: 0; font-size: 1rem; color: var(--h-muted); }
+.h-garden-h2 { margin: 0 0 20px; font-size: 0.8125rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--h-faint); }
+.h-garden-witness { margin-bottom: 56px; }
+.h-garden-day { padding: 14px 0; border-top: 1px solid var(--h-line); }
+.h-garden-dayname { margin: 0 0 8px; font-size: 0.875rem; font-weight: 400; color: var(--h-muted); }
+.h-garden-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.h-garden-line { display: grid; grid-template-columns: 5.5rem 1fr auto; gap: 12px; align-items: baseline; font-size: 1rem; line-height: 1.55; }
+.h-garden-time { font-size: 0.8125rem; color: var(--h-faint); font-variant-numeric: tabular-nums; }
+.h-garden-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-garden-type { font-size: 0.75rem; color: var(--h-faint); }
+.h-garden-planting { padding: 0 0 56px; }
+.h-garden-body { margin: 0 0 14px; font-size: 1.125rem; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.h-garden-meta { margin: 0; font-size: 0.8125rem; color: var(--h-faint); }
+.h-garden-label { color: var(--h-muted); }
+.h-garden-foot { padding-top: 12px; border-top: 1px solid var(--h-line); font-size: 0.8125rem; color: var(--h-faint); }
+.h-garden-foot p { margin: 0 0 4px; }
+@media (max-width: 480px) { .h-garden-line { grid-template-columns: 1fr; gap: 0; } }
+.h-home-garden { font-size: 0.9375rem; }
+.h-home-garden a { display: inline-flex; align-items: center; min-height: var(--h-tap); color: var(--h-muted); text-decoration: underline; text-decoration-color: var(--h-gaia); text-underline-offset: 4px; }

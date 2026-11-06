@@ -42,6 +42,9 @@ export default async function HomePage() {
       {/* 3a: the check-in first, then who is home, then what needs Raziel. */}
       <CheckinCard />
       <WhoIsHome rows={rows} />
+      <p className="h-home-garden h-home-section">
+        <Link href="/companions/gaia/garden">Gaia&apos;s garden</Link>
+      </p>
       <NeedsStrip model={strip} />
       {/* B62: their own thinking sits right under Who is home, above anything about Raziel. */}
       <ThinkingStrip lines={think} now={now} />
