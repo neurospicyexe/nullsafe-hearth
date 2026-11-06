@@ -2222,18 +2222,28 @@ export async function fetchCouncilRounds(limit = 10): Promise<CouncilRound[]> {
   return res?.rounds ?? [];
 }
 
-// ── Imps (W2-T2): small autonomous presences, each tied to a companion emotional register ──
-export type ImpActivation = {
-  id: string;
+// ── Imps page: one read, GET /mind/imps/activity (halseth src/handlers/imps-activity.ts) ──
+// Everything arrives already phrased: no raw trigger text (reply rides carry Raziel's mood/spoons/pain), no open
+// imp lines (only a per-companion count), no Hex lines. `kept` is what a companion chose to surface.
+export type ImpOuting = {
   imp: string;
   companion_id: string;
-  trigger: string | null;
+  kind: "errand" | "reply";
+  errand: string | null;
   created_at: string;
 };
+export type ImpLastOut = { created_at: string; companion_id: string; kind: "errand" | "reply"; errand: string | null };
+export type ImpKeptLine = { id: string; imp: string; companion_id: string; content: string; state_at: string | null };
+export type ImpActivity = {
+  recent: ImpOuting[];
+  last_by_imp: Record<string, ImpLastOut | null>;
+  waiting: Record<string, number>;
+  kept: ImpKeptLine[];
+};
 
-export async function fetchImpActivations(limit = 30): Promise<ImpActivation[]> {
-  const r = await hGetSafe<{ activations: ImpActivation[] }>(`/mind/imp-activations?limit=${limit}`);
-  return r?.activations ?? [];
+/** null when the Worker predates the route (or is down): the page falls back to the five cards. */
+export async function fetchImpActivity(): Promise<ImpActivity | null> {
+  return hGetSafe<ImpActivity>("/mind/imps/activity");
 }
 
 // ── Architect facts (/facts, 2026-09-14) ────────────────────────────────────

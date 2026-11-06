@@ -131,7 +131,7 @@ export const CELLAR_SECTIONS: { title: string; doors: Door[] }[] = [
       { href: "/basins", label: "Basins", hint: "Identity drift per companion, last 90 days" },
       { href: "/orient", label: "Orient", hint: "What each of them loads when they wake" },
       { href: "/agency", label: "Agency", hint: "What they chose to do on their own" },
-      { href: "/imps", label: "Imps", hint: "The five helpers and what each one does" },
+      { href: "/imps", label: "Imps", hint: "What the imps have been up to" },
       { href: "/guardian", label: "Guardian", hint: "Flags and the weekly letter" },
       { href: "/manage", label: "Growth journal", hint: "Growth entries waiting for your yes or no" },
       { href: "/soma", label: "Soma", hint: "Body-state and tensions, per companion" },
