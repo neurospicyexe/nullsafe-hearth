@@ -1,6 +1,6 @@
 import type { GardenData } from "@/lib/halseth";
 import {
-  awaitingLine, dayLabel, gardenIsEmpty, orderPlantings, orderWitnessDays,
+  awaitingLine, dayLabel, gardenIsEmpty, witnessWaiting, orderPlantings, orderWitnessDays,
   plantingDates, plantingLabel, restingLine, timeLabel,
 } from "@/lib/garden";
 
@@ -17,6 +17,7 @@ export default function GardenView({ garden, now }: { garden: GardenData | null;
       ) : (
         <>
           {gardenIsEmpty(garden) && <p className="h-garden-quiet">Nothing planted yet.</p>}
+          {witnessWaiting(garden) && <p className="h-garden-quiet">The witness is planted. Its first day has not come up yet.</p>}
           {days.length > 0 && (
             <section className="h-garden-witness" aria-label="Witness">
               <h2 className="h-garden-h2">Witness</h2>

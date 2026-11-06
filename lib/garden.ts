@@ -71,6 +71,11 @@ export function awaitingLine(n: number): string {
   return n > 0 ? `${n} waiting on a sibling's yes.` : "";
 }
 
+/** Empty = nothing planted. A planted witness series with no day yet is NOT empty: it is planted, waiting to grow. */
+export function witnessWaiting(g: { witness: { days: { entries: unknown[] }[] } | null }): boolean {
+  return g.witness !== null && !g.witness.days.some((d) => d.entries.length > 0);
+}
+
 export function gardenIsEmpty(g: { planted: unknown[]; witness: { days: { entries: unknown[] }[] } | null }): boolean {
-  return g.planted.length === 0 && !(g.witness && g.witness.days.some((d) => d.entries.length > 0));
+  return g.planted.length === 0 && g.witness === null;
 }

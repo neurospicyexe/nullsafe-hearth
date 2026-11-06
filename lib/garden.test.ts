@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  awaitingLine, dayLabel, gardenIsEmpty, orderPlantings, orderWitnessDays,
+  awaitingLine, dayLabel, gardenIsEmpty, witnessWaiting, orderPlantings, orderWitnessDays,
   plantingDates, plantingLabel, restingLine, timeLabel,
 } from "./garden";
 import type { GardenPlanting } from "./halseth";
@@ -76,7 +76,10 @@ describe("lines and emptiness", () => {
   });
   it("gardenIsEmpty", () => {
     expect(gardenIsEmpty({ planted: [], witness: null })).toBe(true);
-    expect(gardenIsEmpty({ planted: [], witness: { days: [{ entries: [] }] } })).toBe(true);
+    expect(gardenIsEmpty({ planted: [], witness: { days: [{ entries: [] }] } })).toBe(false);
+    expect(witnessWaiting({ witness: { days: [] } })).toBe(true);
+    expect(witnessWaiting({ witness: { days: [{ entries: [1] }] } })).toBe(false);
+    expect(witnessWaiting({ witness: null })).toBe(false);
     expect(gardenIsEmpty({ planted: [], witness: { days: [{ entries: [1] }] } })).toBe(false);
     expect(gardenIsEmpty({ planted: [1], witness: null })).toBe(false);
   });
