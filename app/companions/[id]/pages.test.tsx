@@ -28,6 +28,7 @@ vi.mock("next/navigation", () => ({
 }));
 // The look is written by a client effect; here it only matters whether the page mounts it.
 vi.mock("./LookedMark", () => ({ default: ({ id }: { id: string }) => <i data-looked={id} /> }));
+vi.mock("./garden/GardenLookedMark", () => ({ default: () => <i data-garden-looked="gaia" /> }));
 
 import * as halseth from "@/lib/halseth";
 import Overview from "./page";
@@ -350,7 +351,13 @@ describe("garden", () => {
   const render = async (id = "gaia") => renderToStaticMarkup(await GardenPage(params(id)));
   it("degraded: Halseth unreachable reads a short line, no crash", async () => {
     overrides.fetchGaiaGarden = async () => null;
-    expect(await render()).toContain("Can&#x27;t reach the garden right now.");
+    const h = await render();
+    expect(h).toContain("Can&#x27;t reach the garden right now.");
+    expect(h).not.toContain("data-garden-looked"); // an outage is not Raziel standing on it
+  });
+  it("a loaded garden records the visit (being seen, light tier)", async () => {
+    overrides.fetchGaiaGarden = async () => ({ planted: [], witness: null, resting: 0, awaiting: 0 });
+    expect(await render()).toContain('data-garden-looked="gaia"');
   });
   it("empty reads Nothing planted yet., no resting or waiting lines", async () => {
     overrides.fetchGaiaGarden = async () => ({ planted: [], witness: null, resting: 0, awaiting: 0 });
