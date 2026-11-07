@@ -31,7 +31,8 @@ export async function POST(
         "Content-Type": "application/json",
         ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
       },
-      body: JSON.stringify({ actor: "raziel", action, ...(note ? { note } : {}) }),
+      // R28: Raziel tending from Hearth is a tend by hand (weight 1.0); with no via Halseth reads it as autonomous.
+      body: JSON.stringify({ actor: "raziel", action, via: "hand", ...(note ? { note } : {}) }),
       signal: AbortSignal.timeout(10_000),
     });
     const body = await res.json().catch(() => ({}));

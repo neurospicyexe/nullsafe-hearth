@@ -104,6 +104,16 @@ describe("CreaturesPage", () => {
       expect(html).toContain("sulked at the lamp");
     });
 
+    it("R29: lists every open grudge, each with who it is with and the unit", async () => {
+      creatures = [sol];
+      const a = { actor: "cypher", label: "still sore about dawn feeds", progress: 1, of: 2, unit: "visits" };
+      const b = { actor: "drevan", label: "still sore about being poked", progress: 5, of: 12, unit: "hours" };
+      detail = mind({ grudge: a, grudges: [a, b] });
+      const html = renderToStaticMarkup(await CreaturesPage());
+      expect(html).toContain("still sore about dawn feeds, with Cypher (1 of 2 visits)");
+      expect(html).toContain("still sore about being poked, with Drevan (5 of 12 hours)");
+    });
+
     it("an older Halseth response without the fields renders the card as before", async () => {
       creatures = [sol];
       detail = mind({});

@@ -2056,7 +2056,7 @@ export type CreatureDetail = {
 
 export type SolTraitForming = { slug: string; category: string | null; entrenchment: number };
 export type SolQuirk = { title: string; behavior: string | null; status: string };
-export type SolGrudge = { actor: string; label: string; progress: number; of: number };
+export type SolGrudge = { actor: string; label: string; progress: number; of: number; unit?: string };  // R29: visits | gives | feeds | hours (absent on an older Halseth)
 
 export async function fetchCreature(id: string): Promise<CreatureDetail | null> {
   return await hGetSafe<CreatureDetail>(`/mind/creatures/${encodeURIComponent(id)}`);

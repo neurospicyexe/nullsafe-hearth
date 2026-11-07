@@ -1,5 +1,5 @@
 import { fetchCreaturesOrNull, fetchCreature, creatureMood } from "@/lib/halseth";
-import type { Creature, CreatureInteraction, CreatureDetail, NestItem, CreatureMilestone } from "@/lib/halseth";
+import type { Creature, CreatureInteraction, CreatureDetail, NestItem, CreatureMilestone, SolGrudge } from "@/lib/halseth";
 import { isMake, favouriteMake } from "@/lib/sol-hoard";
 import { memberClass } from "@/lib/kit";
 import ClientTime from "@/components/ClientTime";
@@ -159,12 +159,26 @@ function dots(entrenchment: number): string {
   return "●".repeat(n) + "○".repeat(5 - n);
 }
 
+// Same names Halseth's tenderName uses for a grudge's actor; anything else is capitalized.
+const GRUDGE_NAMES: Record<string, string> = { raziel: "Raziel", cypher: "Cypher", drevan: "Drevan", gaia: "Gaia", imp: "an imp" };
+
+/** R29: "<label>, with <name> (<p> of <of> <unit>)"; actor and unit only when Halseth sent them. */
+function grudgeLine(g: SolGrudge): string {
+  const a = typeof g.actor === "string" ? g.actor.trim().toLowerCase() : "";
+  const who = a ? (GRUDGE_NAMES[a] ?? a.charAt(0).toUpperCase() + a.slice(1)) : "";
+  const unit = typeof g.unit === "string" && g.unit ? ` ${g.unit}` : "";
+  return `${g.label}${who ? `, with ${who}` : ""} (${g.progress} of ${g.of}${unit})`;
+}
+
 function MindSection({ detail }: { detail: CreatureDetail }) {
   const forming = (detail.traits_forming ?? []).slice(0, 5);
   const quirks = detail.quirks ?? [];
   const retired = detail.quirks_retired ?? [];
-  const grudge = detail.grudge ?? null;
-  if (forming.length === 0 && quirks.length === 0 && retired.length === 0 && !grudge) return null;
+  // R29: every open grudge (one per actor), each naming who it is with. An older Halseth sent only `grudge`.
+  const grudges: SolGrudge[] = detail.grudges && detail.grudges.length > 0
+    ? detail.grudges
+    : detail.grudge ? [detail.grudge] : [];
+  if (forming.length === 0 && quirks.length === 0 && retired.length === 0 && grudges.length === 0) return null;
   return (
     <>
       {forming.length > 0 && (
@@ -195,10 +209,12 @@ function MindSection({ detail }: { detail: CreatureDetail }) {
           </ul>
         </div>
       )}
-      {grudge && (
+      {grudges.length > 0 && (
         <div className="h-creature-section">
           <h3 className="h-creature-h3">Right now</h3>
-          <p className="h-creature-quiet">{grudge.label} ({grudge.progress} of {grudge.of})</p>
+          {grudges.map((g, i) => (
+            <p key={`${g.actor ?? ""}-${i}`} className="h-creature-quiet">{grudgeLine(g)}</p>
+          ))}
         </div>
       )}
       {retired.length > 0 && (
