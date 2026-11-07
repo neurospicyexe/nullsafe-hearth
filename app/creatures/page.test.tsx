@@ -61,4 +61,75 @@ describe("CreaturesPage", () => {
     expect(html).toContain("brought you a bottle cap");
     expect(html).toContain("is-sol");
   });
+
+  describe("Sol's mind (B64)", () => {
+    const mind = (extra: Record<string, unknown>) =>
+      ({ creature: sol, interactions: [], ...extra }) as unknown as CreatureDetail;
+
+    it("shows forming traits (readable, top 5, 5 dots), quirks, the grudge, and his history", async () => {
+      creatures = [sol];
+      detail = mind({
+        traits_forming: [
+          { slug: "wary-of-hands", category: "habit", entrenchment: 3 },
+          { slug: "dawn_feeder", category: null, entrenchment: 1 },
+          { slug: "t3", category: null, entrenchment: 0 },
+          { slug: "t4", category: null, entrenchment: 0 },
+          { slug: "t5", category: null, entrenchment: 0 },
+          { slug: "sixth-one", category: null, entrenchment: 0 },
+        ],
+        quirks: [
+          { title: "Being Poked", behavior: "flinches and sulks", status: "active" },
+          { title: "Dawn Feeds", behavior: "eats fast", status: "softening" },
+        ],
+        quirks_retired: [{ title: "Old Habit", behavior: "sulked at the lamp" }],
+        grudge: { actor: "raziel", label: "still sore about being poked", progress: 1, of: 2 },
+        grudges: [],
+      });
+      const html = renderToStaticMarkup(await CreaturesPage());
+      expect(html).toContain("Forming");
+      expect(html).toContain("wary of hands");
+      expect(html).toContain("dawn feeder");
+      expect(html).not.toContain("sixth one");
+      expect(html).toContain("●●●○○"); // entrenchment 3 of 5
+      expect(html).toContain("Quirks");
+      expect(html).toContain("Being Poked");
+      expect(html).toContain("flinches and sulks");
+      expect(html).toContain("softening");
+      expect(html).toContain("Right now");
+      expect(html).toContain("still sore about being poked");
+      expect(html).toContain("1 of 2");
+      expect(html).toContain("<details");
+      expect(html).toContain("his history");
+      expect(html).toContain("Old Habit");
+      expect(html).toContain("sulked at the lamp");
+    });
+
+    it("an older Halseth response without the fields renders the card as before", async () => {
+      creatures = [sol];
+      detail = mind({});
+      const html = renderToStaticMarkup(await CreaturesPage());
+      expect(html).toContain("recent activity");
+      expect(html).not.toContain("Forming");
+      expect(html).not.toContain("Right now");
+      expect(html).not.toContain("his history");
+    });
+
+    it("empty arrays and a null grudge render without sections or a crash", async () => {
+      creatures = [sol];
+      detail = mind({ traits_forming: [], quirks: [], quirks_retired: [], grudge: null, grudges: [] });
+      const html = renderToStaticMarkup(await CreaturesPage());
+      expect(html).toContain("recent activity");
+      expect(html).not.toContain("Right now");
+      expect(html).not.toContain("his history");
+    });
+
+    it("other creatures never show Sol's mind sections", async () => {
+      const pip = { id: "pet", name: "Pip", kind: "real_animal", trust: 0.5 } as unknown as Creature;
+      creatures = [pip];
+      detail = mind({ creature: pip, traits_forming: [{ slug: "x-y", category: null, entrenchment: 2 }], quirks: [{ title: "Q", behavior: "b", status: "active" }] });
+      const html = renderToStaticMarkup(await CreaturesPage());
+      expect(html).not.toContain("Forming");
+      expect(html).not.toContain("Quirks");
+    });
+  });
 });

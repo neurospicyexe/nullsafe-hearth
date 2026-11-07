@@ -148,6 +148,76 @@ function MilestoneSection({ milestones, next, trust }: { milestones: CreatureMil
   );
 }
 
+// slug -> words: "wary-of-hands" / "dawn_feeder" read as "wary of hands" / "dawn feeder".
+function slugWords(slug: string): string {
+  return slug.replace(/[-_]+/g, " ").trim();
+}
+
+// Strength as 5 dots; entrenchment is 0..5 on the Halseth side, clamped so a stray value cannot break the row.
+function dots(entrenchment: number): string {
+  const n = Math.max(0, Math.min(5, Math.round(Number.isFinite(entrenchment) ? entrenchment : 0)));
+  return "●".repeat(n) + "○".repeat(5 - n);
+}
+
+function MindSection({ detail }: { detail: CreatureDetail }) {
+  const forming = (detail.traits_forming ?? []).slice(0, 5);
+  const quirks = detail.quirks ?? [];
+  const retired = detail.quirks_retired ?? [];
+  const grudge = detail.grudge ?? null;
+  if (forming.length === 0 && quirks.length === 0 && retired.length === 0 && !grudge) return null;
+  return (
+    <>
+      {forming.length > 0 && (
+        <div className="h-creature-section">
+          <h3 className="h-creature-h3">Forming</h3>
+          <ul className="h-creature-feed">
+            {forming.map(t => (
+              <li key={t.slug} className="h-creature-row">
+                <span className="h-creature-row-who">{slugWords(t.slug)}</span>
+                <span className="h-meta" aria-label={`strength ${t.entrenchment} of 5`}>{dots(t.entrenchment)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {quirks.length > 0 && (
+        <div className="h-creature-section">
+          <h3 className="h-creature-h3">Quirks</h3>
+          <ul className="h-creature-feed">
+            {quirks.map(q => (
+              <li key={q.title} className="h-creature-row">
+                <span className="h-creature-row-who">
+                  {q.title}{q.status === "softening" && <span className="h-meta"> (softening)</span>}
+                </span>
+                {q.behavior && <span className="h-creature-row-note">{q.behavior}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {grudge && (
+        <div className="h-creature-section">
+          <h3 className="h-creature-h3">Right now</h3>
+          <p className="h-creature-quiet">{grudge.label} ({grudge.progress} of {grudge.of})</p>
+        </div>
+      )}
+      {retired.length > 0 && (
+        <details className="h-creature-section">
+          <summary className="h-creature-h3">his history</summary>
+          <ul className="h-creature-feed">
+            {retired.map((q, i) => (
+              <li key={`${q.title}-${i}`} className="h-creature-row">
+                <span className="h-creature-row-who">{q.title}</span>
+                {q.behavior && <span className="h-creature-row-note">{q.behavior}</span>}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </>
+  );
+}
+
 function CreatureCard({ creature, detail }: { creature: Creature; detail: CreatureDetail | null }) {
   const interactions = detail?.interactions ?? [];
   const isPet = creature.kind === "companion_pet";
@@ -196,6 +266,7 @@ function CreatureCard({ creature, detail }: { creature: Creature; detail: Creatu
           {isPet && (
             <MilestoneSection milestones={detail.milestones ?? []} next={detail.next_milestone ?? null} trust={creature.trust} />
           )}
+          {isPet && <MindSection detail={detail} />}
           {isPet && <NestSection nest={detail.nest ?? []} />}
 
           <div className="h-creature-section">

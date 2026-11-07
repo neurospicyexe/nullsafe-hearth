@@ -2046,7 +2046,17 @@ export type CreatureDetail = {
   next_milestone?: { id: string; threshold: number } | null;
   nest?: NestItem[];
   familiarity?: CreatureFamiliarity[];
+  // B64 Sol's mind (halseth handlers/creatures.ts MindView). Optional: an older Halseth omits them.
+  traits_forming?: SolTraitForming[];
+  quirks?: SolQuirk[];
+  quirks_retired?: Array<{ title: string; behavior: string | null }>;
+  grudge?: SolGrudge | null;
+  grudges?: SolGrudge[];
 };
+
+export type SolTraitForming = { slug: string; category: string | null; entrenchment: number };
+export type SolQuirk = { title: string; behavior: string | null; status: string };
+export type SolGrudge = { actor: string; label: string; progress: number; of: number };
 
 export async function fetchCreature(id: string): Promise<CreatureDetail | null> {
   return await hGetSafe<CreatureDetail>(`/mind/creatures/${encodeURIComponent(id)}`);
